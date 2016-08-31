@@ -1,4 +1,4 @@
-# Kismatic Platform
+# Kismatic Platform TEST
 
 [![Build Status](https://snap-ci.com/On8xdVQV0xY5VXICf0Fx0Vq7fVMDUAfU6JFc8Wtt94A/build_image)](https://snap-ci.com/apprenda/kismatic-platform/branch/master)
 
