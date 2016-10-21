@@ -3,6 +3,7 @@ package integration
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"path/filepath"
 	"regexp"
@@ -345,18 +346,11 @@ func FailIfError(err error, message ...string) {
 }
 
 func CopyKismaticToTemp() string {
-	tmpDir := os.TempDir()
-	randomness, randomErr := GenerateGUIDString()
-	if randomErr != nil {
-		log.Fatal("Error making a GUID: ", randomErr)
-	}
-	kisPath := tmpDir + "/kisint/" + randomness
-	err := os.MkdirAll(kisPath, 0777)
+	tmpDir, err := ioutil.TempDir("", "kisint")
 	if err != nil {
 		log.Fatal("Error making temp dir: ", err)
 	}
-
-	return kisPath
+	return tmpDir
 }
 
 func GenerateGUIDString() (string, error) {
