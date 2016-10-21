@@ -79,7 +79,7 @@ endif
 	go install github.com/onsi/ginkgo/ginkgo
 	go get golang.org/x/crypto/ssh
 
-	ginkgo -v integration
+	ginkgo -p -v integration
 
 mine-marvel: dist
 ifndef AWS_SECRET_ACCESS_KEY
