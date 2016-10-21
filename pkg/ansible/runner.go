@@ -118,7 +118,7 @@ func (r *runner) StartPlaybook(playbookFile string, inv Inventory, vars ExtraVar
 
 	// Create named pipe for getting JSON lines event stream
 	start := time.Now()
-	r.namedPipe = filepath.Join(os.TempDir(), fmt.Sprintf("ansible-pipe-%s", start.Format("2006-01-02-15-04-05")))
+	r.namedPipe = filepath.Join(os.TempDir(), fmt.Sprintf("ansible-pipe-%s", start.Format("2006-01-02-15-04-05.99999")))
 	if err = syscall.Mkfifo(r.namedPipe, 0644); err != nil {
 		return nil, fmt.Errorf("error creating named pipe %q: %v", r.namedPipe, err)
 	}
