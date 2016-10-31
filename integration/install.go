@@ -460,9 +460,9 @@ func MakeAWSNode(ami string, instanceType string) (AWSNodeDeets, error) {
 				Value: aws.String(thisHost),
 			},
 			{
-				Key:	aws.String("Name"),
-				Value:	aws.String(fmt.Sprintf("KismaticIntegrationNode%v", time.Now().Unix())),
-			}
+				Key:   aws.String("Name"),
+				Value: aws.String(fmt.Sprintf("KismaticIntegrationNode%v", time.Now().Unix())),
+			},
 		},
 	})
 	if errtag != nil {
