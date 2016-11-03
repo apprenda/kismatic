@@ -40,7 +40,7 @@ func WithInfrastructure(nodeCount NodeCount, distro linuxDistro, provisioner inf
 
 	By("Waiting until nodes are SSH-accessible")
 	sshKey := provisioner.SSHKey()
-	err = waitForSSH(nodes, sshKey)
+	err = WaitForSSH(nodes, sshKey)
 	Expect(err).ToNot(HaveOccurred())
 
 	f(nodes, sshKey)
@@ -59,7 +59,7 @@ func WithMiniInfrastructure(distro linuxDistro, provisioner infrastructureProvis
 
 	By("Waiting until nodes are SSH-accessible")
 	sshKey := provisioner.SSHKey()
-	err = waitForSSH(nodes, sshKey)
+	err = WaitForSSH(nodes, sshKey)
 	Expect(err).ToNot(HaveOccurred())
 
 	f(nodes.worker[0], sshKey)

@@ -44,12 +44,12 @@ func ExtractKismaticToTemp() (string, error) {
 	return tmpDir, nil
 }
 
-type installOptions struct {
-	allowPackageInstallation    bool
-	autoConfigureDockerRegistry bool
-	dockerRegistryIP            string
-	dockerRegistryPort          int
-	dockerRegistryCAPath        string
+type InstallOptions struct {
+	AllowPackageInstallation    bool
+	AutoConfigureDockerRegistry bool
+	DockerRegistryIP            string
+	DockerRegistryPort          int
+	DockerRegistryCAPath        string
 }
 
 func installKismaticMini(node NodeDeets, sshKey string) error {
@@ -93,7 +93,7 @@ func installKismaticMini(node NodeDeets, sshKey string) error {
 	return cmd.Run()
 }
 
-func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey string) error {
+func InstallKismatic(nodes provisionedNodes, installOpts InstallOptions, sshKey string) error {
 	By("Building a template")
 	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
 	FailIfError(err, "Couldn't parse template")
@@ -101,7 +101,7 @@ func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey 
 	By("Building a plan to set up an overlay network cluster on this hardware")
 	sshUser := nodes.master[0].SSHUser
 	plan := PlanAWS{
-		AllowPackageInstallation: installOpts.allowPackageInstallation,
+		AllowPackageInstallation: installOpts.AllowPackageInstallation,
 		Etcd:                 nodes.etcd,
 		Master:               nodes.master,
 		Worker:               nodes.worker,
@@ -109,9 +109,9 @@ func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey 
 		MasterNodeShortName:  nodes.master[0].Hostname,
 		SSHKeyFile:           sshKey,
 		SSHUser:              sshUser,
-		DockerRegistryCAPath: installOpts.dockerRegistryCAPath,
-		DockerRegistryIP:     installOpts.dockerRegistryIP,
-		DockerRegistryPort:   installOpts.dockerRegistryPort,
+		DockerRegistryCAPath: installOpts.DockerRegistryCAPath,
+		DockerRegistryIP:     installOpts.DockerRegistryIP,
+		DockerRegistryPort:   installOpts.DockerRegistryPort,
 	}
 
 	f, err := os.Create("kismatic-testing.yaml")

@@ -340,7 +340,7 @@ func (p packetProvisioner) waitForPublicIP(nodeID string) (*packet.Node, error) 
 	}
 }
 
-func waitForSSH(provisionedNodes provisionedNodes, sshKey string) error {
+func WaitForSSH(provisionedNodes provisionedNodes, sshKey string) error {
 	nodes := provisionedNodes.allNodes()
 	for _, n := range nodes {
 		BlockUntilSSHOpen(n.PublicIP, n.SSHUser, sshKey)

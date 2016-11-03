@@ -61,14 +61,14 @@ var _ = Describe("Happy Path Installation Tests", func() {
 	})
 
 	Describe("Installing with package installation enabled", func() {
-		installOpts := installOptions{
-			allowPackageInstallation: true,
+		installOpts := InstallOptions{
+			AllowPackageInstallation: true,
 		}
 		Context("Targeting AWS infrastructure", func() {
 			Context("using a 1/1/1 layout with Ubuntu 16.04 LTS", func() {
 				ItOnAWS("should result in a working cluster", func(provisioner infrastructureProvisioner) {
 					WithInfrastructure(NodeCount{1, 1, 1}, Ubuntu1604LTS, provisioner, func(nodes provisionedNodes, sshKey string) {
-						err := installKismatic(nodes, installOpts, sshKey)
+						err := InstallKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -76,7 +76,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 			Context("using a 1/1/1 layout with CentOS 7", func() {
 				ItOnAWS("should result in a working cluster", func(provisioner infrastructureProvisioner) {
 					WithInfrastructure(NodeCount{1, 1, 1}, CentOS7, provisioner, func(nodes provisionedNodes, sshKey string) {
-						err := installKismatic(nodes, installOpts, sshKey)
+						err := InstallKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -84,7 +84,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 			Context("using a 3/2/3 layout with CentOS 7", func() {
 				ItOnAWS("should result in a working cluster", func(provisioner infrastructureProvisioner) {
 					WithInfrastructure(NodeCount{3, 2, 3}, CentOS7, provisioner, func(nodes provisionedNodes, sshKey string) {
-						err := installKismatic(nodes, installOpts, sshKey)
+						err := InstallKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -125,8 +125,8 @@ var _ = Describe("Happy Path Installation Tests", func() {
 	})
 
 	Describe("Installing with package installation disabled", func() {
-		installOpts := installOptions{
-			allowPackageInstallation: false,
+		installOpts := InstallOptions{
+			AllowPackageInstallation: false,
 		}
 		Context("Targeting AWS infrastructure", func() {
 			Context("Using a 1/1/1 layout with Ubuntu 16.04 LTS", func() {
@@ -134,7 +134,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 					WithInfrastructure(NodeCount{1, 1, 1}, Ubuntu1604LTS, provisioner, func(nodes provisionedNodes, sshKey string) {
 						By("Installing the Kismatic RPMs")
 						InstallKismaticRPMs(nodes, Ubuntu1604LTS, sshKey)
-						err := installKismatic(nodes, installOpts, sshKey)
+						err := InstallKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -145,7 +145,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 					WithInfrastructure(NodeCount{1, 1, 1}, CentOS7, provisioner, func(nodes provisionedNodes, sshKey string) {
 						By("Installing the Kismatic RPMs")
 						InstallKismaticRPMs(nodes, CentOS7, sshKey)
-						err := installKismatic(nodes, installOpts, sshKey)
+						err := InstallKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -161,11 +161,11 @@ var _ = Describe("Happy Path Installation Tests", func() {
 			Context("Using the auto-configured docker registry", func() {
 				ItOnAWS("should result in a working cluster", func(aws infrastructureProvisioner) {
 					WithInfrastructure(nodeCount, distro, aws, func(nodes provisionedNodes, sshKey string) {
-						installOpts := installOptions{
-							allowPackageInstallation:    true,
-							autoConfigureDockerRegistry: true,
+						installOpts := InstallOptions{
+							AllowPackageInstallation:    true,
+							AutoConfigureDockerRegistry: true,
 						}
-						err := installKismatic(nodes, installOpts, sshKey)
+						err := InstallKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -178,13 +178,13 @@ var _ = Describe("Happy Path Installation Tests", func() {
 						dockerRegistryPort := 443
 						caFile, err := deployDockerRegistry(nodes.etcd[0], dockerRegistryPort, sshKey)
 						Expect(err).ToNot(HaveOccurred())
-						installOpts := installOptions{
-							allowPackageInstallation: true,
-							dockerRegistryCAPath:     caFile,
-							dockerRegistryIP:         nodes.etcd[0].PrivateIP,
-							dockerRegistryPort:       dockerRegistryPort,
+						installOpts := InstallOptions{
+							AllowPackageInstallation: true,
+							DockerRegistryCAPath:     caFile,
+							DockerRegistryIP:         nodes.etcd[0].PrivateIP,
+							DockerRegistryPort:       dockerRegistryPort,
 						}
-						err = installKismatic(nodes, installOpts, sshKey)
+						err = InstallKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})

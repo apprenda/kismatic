@@ -46,7 +46,7 @@ func validateMiniPkgInstallEnabled(provisioner infrastructureProvisioner, distro
 	By("Waiting until nodes are SSH-accessible")
 	sshUser := nodes.worker[0].SSHUser
 	sshKey := provisioner.SSHKey()
-	err = waitForSSH(nodes, sshKey)
+	err = WaitForSSH(nodes, sshKey)
 	FailIfError(err, "Error waiting for nodes to become SSH-accessible")
 	ValidateKismaticMini(nodes.worker[0], sshUser, sshKey)
 }
@@ -61,7 +61,7 @@ func validateMiniPkgInstallationDisabled(provisioner infrastructureProvisioner, 
 	sshUser := nodes.worker[0].SSHUser
 	sshKey := provisioner.SSHKey()
 	FailIfError(err, "Failed to get SSH Key")
-	err = waitForSSH(nodes, sshKey)
+	err = WaitForSSH(nodes, sshKey)
 	FailIfError(err, "Error waiting for nodes to become SSH-accessible")
 	theNode := nodes.worker[0]
 
