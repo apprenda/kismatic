@@ -134,6 +134,7 @@ func (r *runner) startPlaybook(playbookFile string, inv Inventory, vars ExtraVar
 	os.Setenv("ANSIBLE_CALLBACK_PLUGINS", filepath.Join(r.ansibleDir, "playbooks", "callback"))
 	os.Setenv("ANSIBLE_CALLBACK_WHITELIST", "json_lines")
 	os.Setenv("ANSIBLE_TIMEOUT", "60")
+	os.Setenv("ANSIBLE_SSH_ARGS", "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/tmp/ssh-%r-%h-%p")
 
 	// We always want the most verbose output from Ansible. If it's not going to
 	// stdout, it's going to a log file.
