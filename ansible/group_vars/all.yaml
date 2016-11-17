@@ -106,7 +106,8 @@ docker_certificates_group: root
 kubernetes_cluster_name: kubernetes
 kubernetes_admin_password: admin_password
 kubernetes_master_apiserver_count: "{{ groups['master'] | length }}"
-kubernetes_master_ip: https://{{ hostvars[groups['master'][0]].internal_ipv4 }}:{{ kubernetes_master_secure_port }} # TODO change to load balancer
+kubernetes_load_balanced_fqdn: "{{ hostvars[groups['master'][0]].internal_ipv4 }}"
+kubernetes_master_ip: https://{{ kubernetes_load_balanced_fqdn }}:{{ kubernetes_master_secure_port }}
 # kubernetes certificate config
 kubernetes_certificates_ca_file_name: ca.pem
 kubernetes_certificates_cert_file_name: kubenode.pem
