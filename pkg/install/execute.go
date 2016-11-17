@@ -187,6 +187,10 @@ func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan, tlsDirectory string) (
 		"enable_calico_policy":       strconv.FormatBool(p.Cluster.Networking.PolicyEnabled),
 		"allow_package_installation": strconv.FormatBool(p.Cluster.AllowPackageInstallation),
 	}
+	if p.Master.LoadBalancedFQDN != "" {
+		ev["kubernetes_load_balanced_fqdn"] = p.Master.LoadBalancedFQDN
+	}
+
 	// Setup an internal Docker registry or use a provided one
 	// Else just use DockerHub
 	if p.DockerRegistry.SetupInternal || p.DockerRegistry.Address != "" {
