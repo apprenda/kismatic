@@ -1,11 +1,11 @@
 #===============================================================================
 # VERSIONS
-kismatic_kubernetes_master_yum_version: 1.4.6_1-1
-kismatic_kubernetes_node_yum_version: 1.4.6_1-1
-kismatic_kubernetes_etcd_yum_version: 1.4.6_1-1
-kismatic_kubernetes_master_apt_version: 1.4.6-1
-kismatic_kubernetes_node_apt_version: 1.4.6-1
-kismatic_kubernetes_etcd_apt_version: 1.4.6-1
+kismatic_kubernetes_master_yum_version: 1.4.5_1-1
+kismatic_kubernetes_node_yum_version: 1.4.5_1-1
+kismatic_kubernetes_etcd_yum_version: 1.4.5_1-1
+kismatic_kubernetes_master_apt_version: 1.4.5-1
+kismatic_kubernetes_node_apt_version: 1.4.5-1
+kismatic_kubernetes_etcd_apt_version: 1.4.5-1
 calico_docker_version: v0.22.0
 calico_kube_policy_controller_version: v0.4.0
 kubedns_version: "1.8"
