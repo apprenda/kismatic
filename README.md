@@ -1,3 +1,4 @@
+[![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](LICENSE)
 [![Build Status](https://snap-ci.com/ulSrRsof30gMr7eaXZ_eufLs7XQtmS6Lw4eYwkmATn4/build_image)](https://snap-ci.com/apprenda/kismatic/branch/master)
 
 # Kismatic Enterprise Toolkit (KET): Design, Deployment and Operations System for Production Kubernetes Clusters
