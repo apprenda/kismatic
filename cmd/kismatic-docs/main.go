@@ -11,5 +11,5 @@ var version string
 func main() {
 
 	cmd, _ := cli.NewKismaticCommand(version, os.Stdin, os.Stdout)
-	doc.GenMarkdownTree(cmd, "./kismatic-cli-docs")
+	doc.GenMarkdownTree(cmd, "./docs/kismatic-cli")
 }

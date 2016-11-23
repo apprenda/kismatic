@@ -50,7 +50,7 @@ KET operational tools include:
 
 [Cert Generation](docs/CERT_GENERATION.md) -- Information on how KET handles certificates.
 
-[Kismatic CLI](https://github.com/apprenda/kismatic/tree/master/kismatic-cli-docs) -- Dynamically generated Cobra documentation for the Kismatic CLI.
+[Kismatic CLI](https://github.com/apprenda/kismatic/tree/master/docs/kismatic-cli) -- Dynamically generated Cobra documentation for the Kismatic CLI.
 
 [Roadmap](ROADMAP.md) -- Insight into the near-term features roadmap for the next few releases of KET.
 

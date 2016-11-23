@@ -85,7 +85,7 @@ just-integration-test: get-test-deps
 serial-integration-test: get-test-deps
 	ginkgo -v integration
 
-kismatic-cli-docs:
-	mkdir kismatic-cli-docs
+docs/kismatic-cli:
+	mkdir docs/kismatic-cli
 	go run cmd/kismatic-docs/main.go
-	cp kismatic-cli-docs/kismatic.md kismatic-cli-docs/README.md
+	cp docs/kismatic-cli/kismatic.md docs/kismatic-cli/README.md

@@ -1,6 +1,6 @@
 # KET Installation Overview
 
-[CLI documentation](https://github.com/apprenda/kismatic/tree/master/kismatic-cli-docs)
+[CLI documentation](https://github.com/apprenda/kismatic/tree/master/docs/kismatic-cli)
 
 ## What the Kismatic CLI will do:
 
