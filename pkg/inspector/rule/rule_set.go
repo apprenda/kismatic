@@ -109,6 +109,19 @@ const defaultRuleSet = `---
   when: ["worker","centos"]
   packageName: kismatic-kubernetes-node
   packageVersion: 1.4.5_1-1
+
+- kind: PackageAvailable
+  when: ["etcd", "rhel"]
+  packageName: kismatic-etcd
+  packageVersion: 1.4.5_1-1
+- kind: PackageAvailable
+  when: ["master","rhel"]
+  packageName: kismatic-kubernetes-master
+  packageVersion: 1.4.5_1-1
+- kind: PackageAvailable
+  when: ["worker","rhel"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.4.5_1-1
 `
 
 // DefaultRules returns the list of rules that are built into the inspector
