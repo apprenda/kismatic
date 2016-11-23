@@ -15,6 +15,7 @@ import (
 const (
 	Ubuntu1604LTS = linuxDistro("ubuntu1604LTS")
 	CentOS7       = linuxDistro("centos7")
+	RedHat7       = linuxDistro("rhel7")
 
 	AWSTargetRegion     = "us-east-1"
 	AWSSubnetID         = "subnet-25e13d08"
@@ -142,6 +143,8 @@ func (p awsProvisioner) ProvisionNodes(nodeCount NodeCount, distro linuxDistro) 
 		ami = aws.Ubuntu1604LTSEast
 	case CentOS7:
 		ami = aws.CentOS7East
+	case RedHat7:
+		ami = aws.RedHat7East
 	default:
 		panic(fmt.Sprintf("Used an unsupported distribution: %s", distro))
 	}

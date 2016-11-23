@@ -33,6 +33,11 @@ var _ = Describe("kismatic install validate tests", func() {
 					validateMiniPkgInstallationDisabled(aws, CentOS7)
 				})
 			})
+			Context("using a Minikube RedHat 7 layout", func() {
+				ItOnAWS("should succeed if and only if all packages are installed on the node", func(aws infrastructureProvisioner) {
+					validateMiniPkgInstallationDisabled(aws, RedHat7)
+				})
+			})
 		})
 	})
 })
