@@ -200,7 +200,7 @@ The pod and service network ranges each need to be assigned a single contiguous 
 
 Pod Network IP Block Size >= (Worker Node Count + Master Node Count) * 64
 
-Our default CIDR block for a pod is **172.16.0.0/16**, which would allow for a maximum of roughly 65k pods and 1000 nodes.
+Our default CIDR block for a pod is **172.16.0.0/16**, which would allow for a maximum of roughly 65k pods and roughly 1000 nodes with 64 addresses per node.
 
 Similarly, the service network needs to be large enough to handle all of the Services that might be created on the cluster. Our default is **172.17.0.0/16**, which would allow for 65k services and that ought to be enough for anybody.
 
