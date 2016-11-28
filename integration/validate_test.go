@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"os"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -8,6 +9,9 @@ import (
 )
 
 var _ = Describe("kismatic install validate tests", func() {
+	BeforeEach(func() {
+		os.Chdir(kisPath)
+	})
 	Context("Targeting AWS infrastructure", func() {
 		Describe("Running validation with package installation enabled", func() {
 			Context("using a Minikube Ubuntu layout", func() {
