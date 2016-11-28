@@ -20,7 +20,7 @@ From an ssh session, type:
 
 From a terminal window, type
 
-`curl -L https://kismatic-installer.s3-accelerate.amazonaws.com/latest-darwin/kismatic.tar.gz | tar -zx`
+`wget -O - https://kismatic-installer.s3-accelerate.amazonaws.com/latest-darwin/kismatic.tar.gz | tar -zx`
 
 ## Generate A Plan File
 
