@@ -6,26 +6,69 @@
       baseurl: "{{ yum_repository_url }}"
       gpgkey: "{{ yum_gpg_key_url }}"
       gpgcheck: yes
-    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
   - name: clean Kismatic yum cache
     command: 'yum --enablerepo=kismatic clean metadata'
-    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
   - name: install apt-transport-https package
     package: name=apt-transport-https state=latest
-    when: ansible_distribution == 'Ubuntu'
-  - name: add Kismatic deb repository
-    apt_repository:
-      repo: 'deb {{ deb_repository_url }} xenial main'
-      validate_certs: no
-    when: ansible_distribution == 'Ubuntu'
   - name: add Kismatic deb key
     apt_key:
       url: "{{ deb_gpg_key_url }}"
-      validate_certs: no
-    when: ansible_distribution == 'Ubuntu'
+      id: "4C708F2F"
+  - name: add Kismatic deb repository
+    apt_repository:
+      repo: 'deb {{ deb_repository_url }} xenial main'
   - name: apt-get update
     apt:
       update_cache: yes
-    when: ansible_distribution == 'Ubuntu'
+
+  # install YUM packages
+  - name: install etcd yum package
+    yum: name=kismatic-etcd-{{ kismatic_kubernetes_etcd_yum_version }} state=present
+    when: "'etcd' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes master yum package
+    yum: name=kismatic-kubernetes-master-{{ kismatic_kubernetes_master_yum_version }} state=present
+    when: "'master' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes worker yum package
+    yum: name=kismatic-kubernetes-node-{{ kismatic_kubernetes_node_yum_version }} state=present
+    when: "'worker' in group_names and 'master' not in group_names and 'etcd' not in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  # install DEB packages
+  - name: install etcd deb package
+    apt: name=kismatic-etcd={{ kismatic_kubernetes_etcd_apt_version }} state=present
+    when: "'etcd' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes master deb package
+    apt: name=kismatic-kubernetes-master={{ kismatic_kubernetes_master_apt_version }} state=present
+    when: "'master' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes worker deb package
+    apt: name=kismatic-kubernetes-node={{ kismatic_kubernetes_node_apt_version }} state=present
+    when: "'worker' in group_names and 'master' not in group_names and 'etcd' not in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3

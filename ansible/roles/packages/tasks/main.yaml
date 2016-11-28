@@ -1,7 +1,7 @@
 ---
   # YUM repo
   - name: ping Kismatic yum repository
-    uri: url="{{ yum_gpg_key_url }}"
+    uri: url="{{ yum_repository_url }}"
     notify:
       - add Kismatic yum repository
       - clean Kismatic yum cache # required to get new versions of packagess
@@ -15,7 +15,7 @@
 
   # DEB repo
   - name: ping Kismatic deb repository
-    uri: url="{{ deb_gpg_key_url }}"
+    uri: url="{{ deb_repository_url }}"
     notify:
       - install apt-transport-https package
       - add Kismatic deb repository
@@ -31,27 +31,18 @@
 
   - meta: flush_handlers  #Run handlers
 
-  # install packages
-  - name: install etcd package
-    package: name=kismatic-etcd{% if ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' %}-{{ kismatic_kubernetes_etcd_yum_version }}{% elif ansible_distribution == 'Ubuntu' %}={{ kismatic_kubernetes_etcd_apt_version }}{% endif %} state=present
-    when: "'etcd' in group_names"
-    register: result
-    until: result|success
-    retries: 3
-    delay: 3
+  - name: install yum packages
+    command: /bin/true
+    notify:
+      - install etcd yum package
+      - install kubernetes master yum package
+      - install kubernetes worker yum package
+    when: ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux'
 
-  - name: install kubernetes master package
-    package: name=kismatic-kubernetes-master{% if ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' %}-{{ kismatic_kubernetes_master_yum_version }}{% elif ansible_distribution == 'Ubuntu' %}={{ kismatic_kubernetes_master_apt_version }}{% endif %}  state=present
-    when: "'master' in group_names"
-    register: result
-    until: result|success
-    retries: 3
-    delay: 3
-
-  - name: install kubernetes worker package
-    package: name=kismatic-kubernetes-node{% if ansible_distribution == 'CentOS' or ansible_distribution == 'Red Hat Enterprise Linux' %}-{{ kismatic_kubernetes_node_yum_version }}{% elif ansible_distribution == 'Ubuntu' %}={{ kismatic_kubernetes_node_apt_version }}{% endif %}  state=present
-    when: "'worker' in group_names and 'master' not in group_names and 'etcd' not in group_names"
-    register: result
-    until: result|success
-    retries: 3
-    delay: 3
+  - name: install deb packages
+    command: /bin/true
+    notify:
+      - install etcd deb package
+      - install kubernetes master deb package
+      - install kubernetes worker deb package
+    when: ansible_distribution == 'Ubuntu'

@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	copyKismaticYumRepo        = `sudo curl https://s3.amazonaws.com/kismatic-rpm/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
+	copyKismaticYumRepo        = `sudo curl https://bintray.com/apprenda/kismatic-rpm/rpm -o /etc/yum.repos.d/kismatic.repo`
 	installEtcdYum             = `sudo yum -y install kismatic-etcd`
 	installDockerEngineYum     = `sudo yum -y install kismatic-docker-engine`
 	installKubernetesMasterYum = `sudo yum -y install kismatic-kubernetes-master`
 	installKubernetesYum       = `sudo yum -y install kismatic-kubernetes-node`
 
-	copyKismaticKeyDeb         = `wget -qO - https://kismatic-deb.s3.amazonaws.com/public.key | sudo apt-key add - `
-	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://kismatic-deb.s3.amazonaws.com/ xenial main"`
+	copyKismaticKeyDeb         = `wget -qO - https://bintray.com/user/downloadSubjectPublicKey?username=apprenda | sudo apt-key add - `
+	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://dl.bintray.com/apprenda/kismatic-deb xenial main"`
 	updateAptGet               = `sudo apt-get update`
 	installEtcdApt             = `sudo apt-get -y install kismatic-etcd`
 	installDockerApt           = `sudo apt-get -y install kismatic-docker-engine`
