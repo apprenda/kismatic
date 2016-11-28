@@ -16,17 +16,84 @@
       state: latest
       update_cache: yes
     when: ansible_distribution == 'Ubuntu'
-  - name: add Kismatic deb repository
-    apt_repository:
-      repo: 'deb {{ deb_repository_url }} xenial main'
-      validate_certs: no
-    when: ansible_distribution == 'Ubuntu'
   - name: add Kismatic deb key
     apt_key:
       url: "{{ deb_gpg_key_url }}"
+      validate_certs: no
+    when: ansible_distribution == 'Ubuntu'
+  - name: add Kismatic deb repository
+    apt_repository:
+      repo: 'deb {{ deb_repository_url }} xenial main'
       validate_certs: no
     when: ansible_distribution == 'Ubuntu'
   - name: apt-get update
     apt:
       update_cache: yes
     when: ansible_distribution == 'Ubuntu'
+
+
+# install YUM packages
+  - name: install etcd yum package
+    yum: name=kismatic-etcd-{{ kismatic_kubernetes_etcd_yum_version }} state=present
+    when: "'etcd' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes master yum package
+    yum: name=kismatic-kubernetes-master-{{ kismatic_kubernetes_master_yum_version }} state=present
+    when: "'master' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes worker yum package
+    yum: name=kismatic-kubernetes-node-{{ kismatic_kubernetes_node_yum_version }} state=present
+    when: "'worker' in group_names and 'master' not in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  # install DEB packages
+  - name: install etcd deb package
+    apt: name=kismatic-etcd={{ kismatic_kubernetes_etcd_apt_version }} state=present
+    when: "'etcd' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install docker-engine deb package
+    apt: name=kismatic-docker-engine={{ kismatic_docker_engine_apt_version }} state=present
+    when: "'worker' in group_names or 'master' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes networking package
+    apt: name=kismatic-kubernetes-networking={{ kismatic_kubernetes_master_apt_version }} state=present
+    when: "'worker' in group_names or 'master' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes worker deb package
+    apt: name=kismatic-kubernetes-node={{ kismatic_kubernetes_node_apt_version }} state=present
+    when: "'worker' in group_names or 'master' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
+  - name: install kubernetes master deb package
+    apt: name=kismatic-kubernetes-master={{ kismatic_kubernetes_master_apt_version }} state=present
+    when: "'master' in group_names"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
