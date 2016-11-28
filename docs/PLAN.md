@@ -196,11 +196,13 @@ For this to work, Kubernetes makes use of technologies built in to Docker and Li
 
 To provide these behaviors, Kubernetes needs to be able to issue IP addresses from two IP ranges: a **pod network** and a **services network**. This is in addition to the IP addresses nodes will be assigned on their **local network**.
 
-The pod and service network ranges each need to be assigned a single contiguous CIDR block large enough to handle your workloads and any future scaling. Worker and Master nodes will reserve IP addresses in blocks of 64, so the pod network must be sized so that:
+The pod and service network ranges each need to be assigned a single contiguous CIDR block large enough to handle your workloads and any future scaling. With Calico, Worker and Master nodes are assigned IP addresses for allocation in blocks of 64 IPs; newly created pods will receive an address from this block until all IPs are consumed, at which point an additional block will be allocated to the node.
 
-Pod Network IP Block Size >= (Worker Node Count + Master Node Count) * 64
+Thus, your pod network must be sized so that:
 
-Our default CIDR block for a pod is **172.16.0.0/16**, which would allow for a maximum of roughly 65k pods and roughly 1000 nodes with 64 addresses per node.
+`Pod Network IP Block Size >= (Worker Node Count + Master Node Count) * 64`
+
+Our default CIDR block for a pod is **172.16.0.0/16**, which would allow for a maximum of roughly 65k pods in total or roughly 1000 nodes with 64 pods per node or fewer.
 
 Similarly, the service network needs to be large enough to handle all of the Services that might be created on the cluster. Our default is **172.17.0.0/16**, which would allow for 65k services and that ought to be enough for anybody.
 
