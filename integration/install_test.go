@@ -2,6 +2,7 @@ package integration
 
 import (
 	"io/ioutil"
+	"os"
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
@@ -13,6 +14,9 @@ import (
 )
 
 var _ = Describe("Happy Path Installation Tests", func() {
+	BeforeEach(func() {
+		os.Chdir(kisPath)
+	})
 	Describe("Calling installer with no input", func() {
 		It("should output help text", func() {
 			c := exec.Command("./kismatic")
@@ -50,6 +54,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 			})
 		})
 	})
+
 	Describe("Calling installer with a plan targeting bad infrastructure", func() {
 		Context("Using a 1/1/1 Ubuntu 16.04 layout pointing to bad ip addresses", func() {
 			It("should bomb validate and apply", func() {
@@ -92,9 +97,9 @@ var _ = Describe("Happy Path Installation Tests", func() {
 			Context("using a 1/2/1 layout with CentOS 7, with DNS", func() {
 				ItOnAWS("should result in a working cluster", func(provisioner infrastructureProvisioner) {
 					WithInfrastructureAndDNS(NodeCount{1, 2, 1}, CentOS7, provisioner, func(nodes provisionedNodes, sshKey string) {
-						err := installKismaticWithDNS(nodes, installOpts, sshKey)
+						err := installKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
-						err = verifyMasterNodeFailure(nodes, installOpts, provisioner, sshKey)
+						err = verifyMasterNodeFailure(nodes, provisioner, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
