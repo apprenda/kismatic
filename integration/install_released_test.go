@@ -7,13 +7,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+const previousKismaticVersion = "v1.0.0"
+
 // Test a specific released version of Kismatic
 var _ = Describe("Installing with previous version of Kismatic", func() {
-	var path string
+	var kisReleasedPath string
 	BeforeEach(func() {
 		// setup previous version of Kismatic
-		kisReleasedPath, err := DownloadKismaticRelease(previousKismaticVersion)
-		path = kisReleasedPath
+		var err error
+		kisReleasedPath, err = DownloadKismaticRelease(previousKismaticVersion)
 		if err != nil {
 			Fail("Failed to download kismatic released")
 		}
@@ -21,7 +23,7 @@ var _ = Describe("Installing with previous version of Kismatic", func() {
 	})
 	AfterEach(func() {
 		if !leaveIt() {
-			os.RemoveAll(path)
+			os.RemoveAll(kisReleasedPath)
 		}
 	})
 	installOpts := installOptions{

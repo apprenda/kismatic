@@ -10,8 +10,6 @@ import (
 	"testing"
 )
 
-const previousKismaticVersion = "v1.0.0"
-
 func TestKismaticPlatform(t *testing.T) {
 	if !testing.Short() {
 		RegisterFailHandler(Fail)
