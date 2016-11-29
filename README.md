@@ -34,9 +34,9 @@ KET operational tools include:
 | Etcd (for Kubernetes) | 3.0.13 |
 | Etcd (for Calico) | 2.37 |
 
-[Download latest install tarball (OSX)](https://d1ayccm1desop2.cloudfront.net/latest-darwin/kismatic.tar.gz)
+[Download latest install tarball (OSX)](https://kismatic-installer.s3-accelerate.amazonaws.com/latest-darwin/kismatic.tar.gz)
 
-[Download latest install tarball (Linux)](https://d1ayccm1desop2.cloudfront.net/latest/kismatic.tar.gz)
+[Download latest install tarball (Linux)](https://kismatic-installer.s3-accelerate.amazonaws.com/latest/kismatic.tar.gz)
 
 # Usage Documentation
 
