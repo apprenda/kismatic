@@ -9,6 +9,9 @@ import (
 )
 
 var _ = Describe("install step commands", func() {
+	BeforeEach(func() {
+		os.Chdir(kisPath)
+	})
 	Context("Running the api server play against an existing cluster", func() {
 		ItOnAWS("should return successfully", func(provisioner infrastructureProvisioner) {
 			WithMiniInfrastructure(CentOS7, provisioner, func(node NodeDeets, sshKey string) {

@@ -1,11 +1,16 @@
 package integration
 
 import (
+	"os"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("kismatic install add-worker tests", func() {
+	BeforeEach(func() {
+		os.Chdir(kisPath)
+	})
 	Context("Targeting AWS infrastructure", func() {
 		Context("Using Ubuntu 16.04 LTS", func() {
 			ItOnAWS("should successfully add a new worker", func(provisioner infrastructureProvisioner) {

@@ -28,15 +28,15 @@ KET operational tools include:
 ## Dependencies
 | Dependency | Current version |
 | --- | --- |
-| Kubernetes | 1.4.5 |
+| Kubernetes | 1.4.6 |
 | Docker | 1.11.2 |
 | Calico | 1.6 |
 | Etcd (for Kubernetes) | 3.0.13 |
 | Etcd (for Calico) | 2.37 |
 
-[Download latest install tarball (OSX)](https://kismatic-installer.s3-accelerate.amazonaws.com/latest-darwin/kismatic.tar.gz)
+[Download latest install tarball (OSX)](https://d1ayccm1desop2.cloudfront.net/latest-darwin/kismatic.tar.gz)
 
-[Download latest install tarball (Linux)](https://kismatic-installer.s3-accelerate.amazonaws.com/latest/kismatic.tar.gz)
+[Download latest install tarball (Linux)](https://d1ayccm1desop2.cloudfront.net/latest/kismatic.tar.gz)
 
 # Usage Documentation
 
@@ -85,10 +85,10 @@ The installation consists of three phases:
 
 ###Using your cluster
 
-KET automatically configures and deploys [Kubernetes Dashboard](http://kubernetes.io/docs/user-guide/ui/) in your new cluster. Open the link provided at the end of the installation in your browser to use it. 
+KET automatically configures and deploys [Kubernetes Dashboard](http://kubernetes.io/docs/user-guide/ui/) in your new cluster. Open the link provided at the end of the installation in your browser to use it.
 
-This link will be in the form of `https://%load_balanced_fqdn%:6443/ui`, using `%load_balanced_fqdn%`(from your `kismatic-cluster.yaml` file). 
+This link will be in the form of `https://%load_balanced_fqdn%:6443/ui`, using `%load_balanced_fqdn%`(from your `kismatic-cluster.yaml` file).
 
 You will also be prompted for credentials: use `admin` for the **User Name** and `%admin_password%` (from your `kismatic-cluster.yaml` file) for the **Password**.
 
-The installer also generates a [kubeconfig file](http://kubernetes.io/docs/user-guide/kubeconfig-file/) required for [kubectl](http://kubernetes.io/docs/user-guide/kubectl-overview/), just follow the instructions provided at the end of the installation to use it. 
+The installer also generates a [kubeconfig file](http://kubernetes.io/docs/user-guide/kubeconfig-file/) required for [kubectl](http://kubernetes.io/docs/user-guide/kubectl-overview/), just follow the instructions provided at the end of the installation to use it.

@@ -3,8 +3,13 @@ package integration
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"os/exec"
+	"path"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/tls"
@@ -13,14 +18,14 @@ import (
 )
 
 const (
-	copyKismaticYumRepo        = `sudo curl https://s3.amazonaws.com/kismatic-rpm/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
+	copyKismaticYumRepo        = `sudo curl https://d2sbnx6fm4ek2f.cloudfront.net/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
 	installEtcdYum             = `sudo yum -y install kismatic-etcd`
 	installDockerEngineYum     = `sudo yum -y install kismatic-docker-engine`
 	installKubernetesMasterYum = `sudo yum -y install kismatic-kubernetes-master`
 	installKubernetesYum       = `sudo yum -y install kismatic-kubernetes-node`
 
-	copyKismaticKeyDeb         = `wget -qO - https://kismatic-deb.s3.amazonaws.com/public.key | sudo apt-key add - `
-	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://kismatic-deb.s3.amazonaws.com/ xenial main"`
+	copyKismaticKeyDeb         = `wget -qO - https://d38kcxml09yeoe.cloudfront.net/public.key | sudo apt-key add - `
+	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://d38kcxml09yeoe.cloudfront.net xenial main"`
 	updateAptGet               = `sudo apt-get update`
 	installEtcdApt             = `sudo apt-get -y install kismatic-etcd`
 	installDockerApt           = `sudo apt-get -y install kismatic-docker-engine`
@@ -50,6 +55,43 @@ var centos7Prep = nodePrep{
 	CommandsToInstallDocker:    []string{installDockerEngineYum},
 	CommandsToInstallK8sMaster: []string{installKubernetesMasterYum},
 	CommandsToInstallK8s:       []string{installKubernetesYum},
+}
+
+func ExtractKismaticToTemp() (string, error) {
+	tmpDir, err := ioutil.TempDir("", "kisint-dev-")
+	if err != nil {
+		log.Fatal("Error making temp dir: ", err)
+	}
+	By(fmt.Sprintf("Extracting Kismatic to temp directory %q", tmpDir))
+	cmd := exec.Command("tar", "-zxf", "../out/kismatic.tar.gz", "-C", tmpDir)
+	_, err = cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("error extracting kismatic to temp dir: %v", err)
+	}
+	return tmpDir, nil
+}
+
+func DownloadKismaticRelease(version string) (string, error) {
+	tmpDir, err := ioutil.TempDir("", fmt.Sprintf("kisint-%s-", strings.Replace(version, ".", "_", -1)))
+	if err != nil {
+		log.Fatal("Error making temp dir: ", err)
+	}
+	By(fmt.Sprintf("Downloading Kismatic %s to temp directory %q", version, tmpDir))
+	var url string
+	if runtime.GOOS == "darwin" {
+		url = fmt.Sprintf("https://github.com/apprenda/kismatic/releases/download/%[1]s/kismatic-%[1]s-darwin-amd64.tar.gz", version)
+	} else if runtime.GOOS == "linux" {
+		url = fmt.Sprintf("https://github.com/apprenda/kismatic/releases/download/%[1]s/kismatic-%[1]s-linux-amd64.tar.gz", version)
+	} else {
+		return "", fmt.Errorf("Unsupported OS: %s", runtime.GOOS)
+	}
+	if err := exec.Command("wget", url, "-O", path.Join(tmpDir, "kismatic-release.tar.gz")).Run(); err != nil {
+		return "", err
+	}
+	if err := exec.Command("tar", "-zxf", path.Join(tmpDir, "kismatic-release.tar.gz"), "-C", tmpDir).Run(); err != nil {
+		return "", err
+	}
+	return tmpDir, nil
 }
 
 func InstallKismaticRPMs(nodes provisionedNodes, distro linuxDistro, sshKey string) {

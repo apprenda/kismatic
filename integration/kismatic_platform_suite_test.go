@@ -10,6 +10,8 @@ import (
 	"testing"
 )
 
+const previousKismaticVersion = "v1.0.0"
+
 func TestKismaticPlatform(t *testing.T) {
 	if !testing.Short() {
 		RegisterFailHandler(Fail)
@@ -24,8 +26,10 @@ var _ = BeforeSuite(func() {
 	if err != nil {
 		Fail("Failed to extract kismatic")
 	}
-	CopyDir("test-tls/", filepath.Join(kisPath, "test-tls"))
-	os.Chdir(kisPath)
+	err = CopyDir("test-tls/", filepath.Join(kisPath, "test-tls"))
+	if err != nil {
+		Fail("Failed to copy test certs")
+	}
 })
 
 var _ = AfterSuite(func() {

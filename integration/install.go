@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -28,20 +27,6 @@ func GetSSHKeyFile() (string, error) {
 		return "", err
 	}
 	return filepath.Join(dir, ".ssh", "kismatic-integration-testing.pem"), nil
-}
-
-func ExtractKismaticToTemp() (string, error) {
-	tmpDir, err := ioutil.TempDir("", "kisint")
-	if err != nil {
-		log.Fatal("Error making temp dir: ", err)
-	}
-	By(fmt.Sprintf("Extracting Kismatic to temp directory %q", tmpDir))
-	cmd := exec.Command("tar", "-zxf", "../out/kismatic.tar.gz", "-C", tmpDir)
-	_, err = cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("error extracting kismatic to temp dir: %v", err)
-	}
-	return tmpDir, nil
 }
 
 type installOptions struct {
@@ -100,55 +85,24 @@ func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey 
 
 	By("Building a plan to set up an overlay network cluster on this hardware")
 	sshUser := nodes.master[0].SSHUser
-	plan := PlanAWS{
-		AllowPackageInstallation: installOpts.allowPackageInstallation,
-		Etcd:                 nodes.etcd,
-		Master:               nodes.master,
-		Worker:               nodes.worker,
-		MasterNodeFQDN:       nodes.master[0].Hostname,
-		MasterNodeShortName:  nodes.master[0].Hostname,
-		SSHKeyFile:           sshKey,
-		SSHUser:              sshUser,
-		DockerRegistryCAPath: installOpts.dockerRegistryCAPath,
-		DockerRegistryIP:     installOpts.dockerRegistryIP,
-		DockerRegistryPort:   installOpts.dockerRegistryPort,
+
+	masterDNS := nodes.master[0].Hostname
+	if nodes.dnsRecord != nil && nodes.dnsRecord.Name != "" {
+		masterDNS = nodes.dnsRecord.Name
 	}
-
-	f, err := os.Create("kismatic-testing.yaml")
-	FailIfError(err, "Error creating plan")
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	err = template.Execute(w, &plan)
-	FailIfError(err, "Error filling in plan template")
-	w.Flush()
-
-	By("Punch it Chewie!")
-	cmd := exec.Command("./kismatic", "install", "apply", "-f", f.Name())
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-
-}
-
-func installKismaticWithDNS(nodes provisionedNodes, installOpts installOptions, sshKey string) error {
-	By("Building a template")
-	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
-	FailIfError(err, "Couldn't parse template")
-
-	By("Building a plan to set up an overlay network cluster on this hardware")
-	sshUser := nodes.master[0].SSHUser
 	plan := PlanAWS{
 		AllowPackageInstallation: installOpts.allowPackageInstallation,
-		Etcd:                 nodes.etcd,
-		Master:               nodes.master,
-		Worker:               nodes.worker,
-		MasterNodeFQDN:       nodes.dnsRecord.Name,
-		MasterNodeShortName:  nodes.dnsRecord.Name,
-		SSHKeyFile:           sshKey,
-		SSHUser:              sshUser,
-		DockerRegistryCAPath: installOpts.dockerRegistryCAPath,
-		DockerRegistryIP:     installOpts.dockerRegistryIP,
-		DockerRegistryPort:   installOpts.dockerRegistryPort,
+		Etcd:                nodes.etcd,
+		Master:              nodes.master,
+		Worker:              nodes.worker,
+		MasterNodeFQDN:      masterDNS,
+		MasterNodeShortName: masterDNS,
+		SSHKeyFile:          sshKey,
+		SSHUser:             sshUser,
+		AutoConfiguredDockerRegistry: installOpts.autoConfigureDockerRegistry,
+		DockerRegistryCAPath:         installOpts.dockerRegistryCAPath,
+		DockerRegistryIP:             installOpts.dockerRegistryIP,
+		DockerRegistryPort:           installOpts.dockerRegistryPort,
 	}
 
 	f, err := os.Create("kismatic-testing.yaml")
@@ -165,9 +119,10 @@ func installKismaticWithDNS(nodes provisionedNodes, installOpts installOptions, 
 	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
+
 }
 
-func verifyMasterNodeFailure(nodes provisionedNodes, installOpts installOptions, provisioner infrastructureProvisioner, sshKey string) error {
+func verifyMasterNodeFailure(nodes provisionedNodes, provisioner infrastructureProvisioner, sshKey string) error {
 	By("Removing a Kubernetes master node")
 	if err := provisioner.TerminateNode(nodes.master[0]); err != nil {
 		return fmt.Errorf("Could not remove node: %v", err)
