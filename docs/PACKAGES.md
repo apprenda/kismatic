@@ -10,14 +10,14 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 1. Add the Kismatic repo to the machine
 
-`sudo curl https://s3.amazonaws.com/kismatic-rpm/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
+`sudo curl https://d2sbnx6fm4ek2f.cloudfront.net/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
 
 2. Install the RPMs for the type of node you want to create
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo yum -y install kismatic-etcd` | 
-| Kubernetes Master | `sudo yum -y install kismatic-kubernetes-master` | 
+| Etcd | `sudo yum -y install kismatic-etcd` |
+| Kubernetes Master | `sudo yum -y install kismatic-kubernetes-master` |
 | Kubernetes Worker | `sudo yum -y install kismatic-kubernetes-node` |
 | Kubernetes Master & Worker | `sudo yum -y install kismatic-kubernetes-master && sudo yum -y install kismatic-kubernetes-node` |
 
@@ -26,11 +26,11 @@ By default, Kismatic will install its own repos onto machines and use them to do
 1. Add the Kismatic repo to the machine
    1. Add the Kismatic public key to apt
 
-`wget -qO - https://kismatic-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add -` 
+`wget -qO - https://d38kcxml09yeoe.cloudfront.net/public.key | sudo apt-key add -`
 
    2. Add the Kismatic repo
 
-`sudo add-apt-repository "deb https://kismatic-deb.s3-accelerate.amazonaws.com xenial main"`
+`sudo add-apt-repository "deb https://d38kcxml09yeoe.cloudfront.net xenial main"`
 
 2. Refresh the machine's repo cache
 
@@ -40,8 +40,8 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo apt-get -y install kismatic-etcd` | 
-| Kubernetes Master | `sudo apt-get -y install kismatic-kubernetes-master` | 
+| Etcd | `sudo apt-get -y install kismatic-etcd` |
+| Kubernetes Master | `sudo apt-get -y install kismatic-kubernetes-master` |
 | Kubernetes Worker | `sudo apt-get -y install kismatic-kubernetes-node` |
 | Kubernetes Master & Worker | `sudo apt-get -y install kismatic-kubernetes-master && sudo apt-get -y install kismatic-kubernetes-node` |
 
@@ -58,9 +58,9 @@ One way to ensure you've correctly synchronized your repo is to install a test c
 1. Provision 1 node of each role
 2. Install the Kismatic packages
 3. Run `kismatic plan` to generate a new Plan file
-4. Update the Plan file to identify your nodes and using the configuration `allow_package_installation=false`. 
+4. Update the Plan file to identify your nodes and using the configuration `allow_package_installation=false`.
 5. Run `kismatic validate`
-6. During validation, the Kismatic inspector will check your packages to be sure they installed correctly and will fail if any of them are missing. 
+6. During validation, the Kismatic inspector will check your packages to be sure they installed correctly and will fail if any of them are missing.
 
 Changes to dependencies should be called out in the notes that accompany a release.
 

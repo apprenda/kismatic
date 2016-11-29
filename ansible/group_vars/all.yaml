@@ -158,10 +158,10 @@ kubernetes_dashboard_img: '{% if use_private_docker_registry is defined and use_
 pause_img: gcr.io/google_containers/pause-amd64:3.0
 # kismatic packages
 allow_package_installation: true
-yum_repository_url: https://kismatic-packages-rpm.s3-website-us-east-1.amazonaws.com
-yum_gpg_key_url: https://kismatic-packages-rpm.s3-website-us-east-1.amazonaws.com/public.key
-deb_repository_url: https://kismatic-packages-deb.s3-website-us-east-1.amazonaws.com
-deb_gpg_key_url: https://kismatic-packages-deb.s3-website-us-east-1.amazonaws.com/public.key
+yum_repository_url: https://d2sbnx6fm4ek2f.cloudfront.net
+yum_gpg_key_url: https://d2sbnx6fm4ek2f.cloudfront.net/public.key
+deb_repository_url: https://d38kcxml09yeoe.cloudfront.net
+deb_gpg_key_url: https://d38kcxml09yeoe.cloudfront.net/public.key
 # Uncomment below to use test repo
 # yum_repository_url: https://s3.amazonaws.com/kismatic-rpm-test
 # yum_gpg_key_url: https://s3.amazonaws.com/kismatic-rpm-test/public.key
