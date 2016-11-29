@@ -9,8 +9,20 @@ import (
 
 // Test a specific released version of Kismatic
 var _ = Describe("Installing with previous version of Kismatic", func() {
+	var path string
 	BeforeEach(func() {
+		// setup previous version of Kismatic
+		kisReleasedPath, err := DownloadKismaticRelease(previousKismaticVersion)
+		path = kisReleasedPath
+		if err != nil {
+			Fail("Failed to download kismatic released")
+		}
 		os.Chdir(kisReleasedPath)
+	})
+	AfterEach(func() {
+		if !leaveIt() {
+			os.RemoveAll(path)
+		}
 	})
 	installOpts := installOptions{
 		allowPackageInstallation: true,

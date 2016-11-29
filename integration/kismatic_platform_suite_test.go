@@ -20,7 +20,6 @@ func TestKismaticPlatform(t *testing.T) {
 }
 
 var kisPath string
-var kisReleasedPath string
 var _ = BeforeSuite(func() {
 	var err error
 	kisPath, err = ExtractKismaticToTemp()
@@ -31,16 +30,10 @@ var _ = BeforeSuite(func() {
 	if err != nil {
 		Fail("Failed to copy test certs")
 	}
-	// setup previous version of Kismatic
-	kisReleasedPath, err = DownloadKismaticRelease(previousKismaticVersion)
-	if err != nil {
-		Fail("Failed to download kismatic released")
-	}
 })
 
 var _ = AfterSuite(func() {
 	if !leaveIt() {
 		os.RemoveAll(kisPath)
-		os.RemoveAll(kisReleasedPath)
 	}
 })
