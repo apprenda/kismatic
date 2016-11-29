@@ -59,7 +59,7 @@ dist: vendor-ansible/out vendor-cfssl/out build
 	mkdir -p out/ansible/playbooks/inspector
 	cp -r bin/inspector/* out/ansible/playbooks/inspector
 	mkdir -p out/ansible/playbooks/kuberang/linux/amd64/
-	curl https://s3.amazonaws.com/kismatic-installer/latest/kuberang -o out/ansible/playbooks/kuberang/linux/amd64/kuberang
+	curl https://d1ayccm1desop2.cloudfront.net/latest/kuberang -o out/ansible/playbooks/kuberang/linux/amd64/kuberang
 	mkdir -p out/cfssl
 	cp -r vendor-cfssl/out/* out/cfssl
 	rm -f out/kismatic.tar.gz
