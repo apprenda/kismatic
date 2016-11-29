@@ -1,6 +1,6 @@
 boxes = [
     {
-        :name => "centos",
+        :name => "kismatic-repo",
         :eth1 => "192.168.200.80",
         :mem => "1024",
         :cpu => "1"
@@ -14,7 +14,7 @@ Vagrant.configure(2) do |config|
 
   config.vm.provision "shell" do |s|
     ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
-    s.env = {AWS_ACCESS_KEY:ENV['AWS_ACCESS_KEY'], AWS_SECRET_KEY:ENV['AWS_SECRET_KEY']}
+    s.env = {AWS_ACCESS_KEY_ID:ENV['AWS_ACCESS_KEY_ID'], AWS_SECRET_ACCESS_KEY:ENV['AWS_SECRET_ACCESS_KEY']}
     s.inline = <<-SHELL
       mkdir -p /root/.ssh
       echo #{ssh_pub_key} >> /home/vagrant/.ssh/authorized_keys
@@ -33,10 +33,11 @@ Vagrant.configure(2) do |config|
       ./awscli-bundle/install -i /usr/aws -b /usr/bin/aws
       mkdir /root/.aws
       echo "[default]" >> /root/.aws/credentials
-      echo "aws_access_key_id = ${AWS_ACCESS_KEY}" >> /root/.aws/credentials
-      echo "aws_secret_access_key = ${AWS_SECRET_KEY}" >> /root/.aws/credentials
+      echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" >> /root/.aws/credentials
+      echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> /root/.aws/credentials
       cat /root/.aws/credentials
-      aws s3 sync s3://kismatic-repo-test /usr/share/nginx/html
+      aws s3 sync s3://kismatic-packages-rpm /usr/share/nginx/html
+      aws s3 sync s3://kismatic-packages-deb /usr/share/nginx/html
     SHELL
   end
 
