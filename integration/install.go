@@ -29,6 +29,20 @@ func GetSSHKeyFile() (string, error) {
 	return filepath.Join(dir, ".ssh", "kismatic-integration-testing.pem"), nil
 }
 
+func GetBadSSHKeyFile() (string, error) {
+	dir, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	// create empty file
+	_, err = os.Create(filepath.Join(dir, ".ssh", "bad.pem"))
+	if err != nil {
+		return "", fmt.Errorf("Unable to create tag file!")
+	}
+
+	return filepath.Join(dir, ".ssh", "bad.pem"), nil
+}
+
 type installOptions struct {
 	allowPackageInstallation    bool
 	autoConfigureDockerRegistry bool
@@ -208,6 +222,12 @@ func FailIfError(err error, message ...string) {
 	if err != nil {
 		log.Printf(message[0]+": %v\n%v", err, message[1:])
 		Fail(message[0])
+	}
+}
+
+func FailIfSuccess(err error, message ...string) {
+	if err == nil {
+		Fail("Expected failure")
 	}
 }
 

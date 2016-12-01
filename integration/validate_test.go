@@ -43,6 +43,16 @@ var _ = Describe("kismatic install validate tests", func() {
 				})
 			})
 		})
+
+		Describe("Running validation with bad SSH key", func() {
+			Context("Using CentOS 7", func() {
+				ItOnAWS("should result in a ssh error", func(provisioner infrastructureProvisioner) {
+					WithMiniInfrastructureAndBadSSH(CentOS7, provisioner, func(node NodeDeets, sshKey string) {
+						ValidateKismaticMiniWithBadSSH(node, node.SSHUser, sshKey)
+					})
+				})
+			})
+		})
 	})
 })
 
