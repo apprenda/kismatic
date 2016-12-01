@@ -6,7 +6,11 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
+
+	"github.com/apprenda/kismatic/pkg/util"
+	"golang.org/x/crypto/ssh"
 )
 
 // TODO: There is need to run validation against anything that is validatable.
@@ -35,6 +39,11 @@ type validatable interface {
 
 type validator struct {
 	errs []error
+}
+
+type SSHConnection struct {
+	sshConfig *SSHConfig
+	nodes     []Node
 }
 
 func newValidator() *validator {
@@ -79,6 +88,12 @@ func (p *Plan) validate() (bool, []error) {
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
 
+	// only verify SSH when everything else is valid
+	if valid, _ := v.valid(); valid {
+		v.validateWithErrPrefix("Etcd nodes", &SSHConnection{&p.Cluster.SSH, p.Etcd.Nodes})
+		v.validateWithErrPrefix("Master nodes", &SSHConnection{&p.Cluster.SSH, p.Master.Nodes})
+		v.validateWithErrPrefix("Worker nodes", &SSHConnection{&p.Cluster.SSH, p.Worker.Nodes})
+	}
 	return v.valid()
 }
 
@@ -147,6 +162,43 @@ func (s *SSHConfig) validate() (bool, []error) {
 		v.addError(fmt.Errorf("SSH port %d is invalid. Port must be in the range 1-65535", s.Port))
 	}
 	return v.valid()
+}
+
+// validate SSH access to the nodes
+func (s *SSHConnection) validate() (bool, []error) {
+	v := newValidator()
+
+	auth, err := util.GetPublicKeyAuth(s.sshConfig.Key)
+	if err != nil {
+		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
+	} else {
+		sshClientConfig := &ssh.ClientConfig{
+			User: s.sshConfig.User,
+			Auth: []ssh.AuthMethod{
+				auth,
+			},
+			Timeout: time.Second * 5,
+		}
+		for _, node := range s.nodes {
+			if err := verifySSH(&node, s.sshConfig, sshClientConfig); err != nil {
+				v.addError(fmt.Errorf("error SSH into node: %s, %v", node.Host, err))
+			}
+		}
+	}
+
+	return v.valid()
+}
+
+func verifySSH(node *Node, sshConfig *SSHConfig, sshClientConfig *ssh.ClientConfig) error {
+	var host string
+	if node.InternalIP != "" {
+		host = node.InternalIP
+	} else {
+		host = node.IP
+	}
+	_, err := ssh.Dial("tcp", host+":"+strconv.Itoa(sshConfig.Port), sshClientConfig)
+
+	return err
 }
 
 func (ng *NodeGroup) validate() (bool, []error) {
