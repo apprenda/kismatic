@@ -1,5 +1,5 @@
 hash: 1f681ffb9129ab7e620ad8b26c2b9891001dbe9be0f57fe0f0b7912c7b2b0c75
-updated: 2016-12-01T20:37:43.397919321-05:00
+updated: 2016-12-02T10:44:44.802145215-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: c90e387c502d372dc08b794c02e8a837994946b3
@@ -63,14 +63,12 @@ imports:
 - name: github.com/go-ini/ini
   version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
 - name: github.com/google/certificate-transparency
-  version: 32acc4216ea1f20eca97a1cdbc72b73af9e27d20
+  version: 6e5648d13b43cdde25cc8274b87675230ffefbd6
   repo: https://github.com/google/certificate-transparency
   subpackages:
   - go
   - go/asn1
   - go/client
-  - go/jsonclient
-  - go/tls
   - go/x509
   - go/x509/pkix
 - name: github.com/inconshreveable/mousetrap
@@ -87,6 +85,9 @@ imports:
   - lib
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
+- name: github.com/mreiferson/go-httpclient
+  version: 63fe23f7434723dc904c901043af07931f293c47
+  repo: https://github.com/mreiferson/go-httpclient
 - name: github.com/onsi/ginkgo
   version: 00054c0bb96fc880d4e0be1b90937fad438c5290
   subpackages:
@@ -140,14 +141,8 @@ imports:
   - pkcs12
   - pkcs12/internal/rc2
   - ssh
-- name: golang.org/x/net
-  version: 3f122ce3dbbe488b7e6a8bdb26f41edec852a40b
-  repo: https://go.googlesource.com/net
-  subpackages:
-  - context
-  - context/ctxhttp
 - name: golang.org/x/sys
-  version: d5645953809d8b4752afb2c3224b1f1ad73dfa70
+  version: ca83bd2cb9abb47839b50eb4da612f00158f5870
   subpackages:
   - unix
 - name: gopkg.in/yaml.v2

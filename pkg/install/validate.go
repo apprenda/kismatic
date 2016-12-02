@@ -9,8 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/util"
 	"golang.org/x/crypto/ssh"
+
+	"github.com/apprenda/kismatic/pkg/util"
 )
 
 // TODO: There is need to run validation against anything that is validatable.
@@ -190,8 +191,14 @@ func (s *SSHConnection) validate() (bool, []error) {
 }
 
 func verifySSH(node *Node, sshConfig *SSHConfig, sshClientConfig *ssh.ClientConfig) error {
-	_, err := ssh.Dial("tcp", node.IP+":"+strconv.Itoa(sshConfig.Port), sshClientConfig)
+	server := node.IP + ":" + strconv.Itoa(sshConfig.Port)
+	conn, err := net.DialTimeout("tcp", server, time.Second*5)
+	if err != nil {
+		return fmt.Errorf("cannot ping node")
+	}
 
+	// Try to connect with a timeout
+	_, _, _, err = ssh.NewClientConn(conn, server, sshClientConfig)
 	return err
 }
 
