@@ -1,57 +1,59 @@
-hash: 68d54fc846b55cc2262edfd19e13d1a316ab2b3d49f64d5b98cdfdd497876e54
-updated: 2016-11-04T15:22:49.318832349-04:00
+hash: 1f681ffb9129ab7e620ad8b26c2b9891001dbe9be0f57fe0f0b7912c7b2b0c75
+updated: 2016-12-01T20:37:43.397919321-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: d8c88d08bd2ea15fa84ac414fe6c75b13b4c2023
+  version: c90e387c502d372dc08b794c02e8a837994946b3
   subpackages:
   - aws
-  - aws/credentials
-  - aws/session
-  - service/ec2
   - aws/awserr
-  - aws/client
-  - aws/corehandlers
-  - aws/credentials/stscreds
-  - aws/defaults
-  - aws/request
-  - private/endpoints
   - aws/awsutil
+  - aws/client
   - aws/client/metadata
-  - aws/signer/v4
-  - private/protocol
-  - private/protocol/ec2query
-  - private/waiter
-  - service/sts
+  - aws/corehandlers
+  - aws/credentials
   - aws/credentials/ec2rolecreds
   - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
+  - aws/defaults
   - aws/ec2metadata
-  - private/protocol/rest
-  - private/protocol/query/queryutil
-  - private/protocol/xml/xmlutil
+  - aws/request
+  - aws/session
+  - aws/signer/v4
+  - private/endpoints
+  - private/protocol
+  - private/protocol/ec2query
   - private/protocol/query
+  - private/protocol/query/queryutil
+  - private/protocol/rest
+  - private/protocol/restxml
+  - private/protocol/xml/xmlutil
+  - private/waiter
+  - service/ec2
+  - service/route53
+  - service/sts
 - name: github.com/cloudflare/cfssl
   version: db0d0650b6496bfe8061ec56a92edd32d8e75c30
   subpackages:
-  - csr
+  - api
+  - api/client
+  - auth
+  - certdb
+  - cli
   - cli/genkey
   - config
+  - crypto/pkcs7
+  - csr
+  - errors
   - helpers
+  - helpers/derhelpers
+  - info
   - initca
   - log
+  - ocsp/config
   - signer
   - signer/local
-  - errors
-  - cli
-  - auth
-  - ocsp/config
-  - crypto/pkcs7
-  - helpers/derhelpers
-  - certdb
-  - info
-  - signer/universal
   - signer/remote
-  - api/client
-  - api
+  - signer/universal
 - name: github.com/cpuguy83/go-md2man
   version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
   subpackages:
@@ -59,15 +61,17 @@ imports:
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
 - name: github.com/go-ini/ini
-  version: 6e4869b434bd001f6983749881c7ead3545887d8
+  version: 2ba15ac2dc9cdf88c110ec2dc0ced7fa45f5678c
 - name: github.com/google/certificate-transparency
-  version: 6e5648d13b43cdde25cc8274b87675230ffefbd6
+  version: 32acc4216ea1f20eca97a1cdbc72b73af9e27d20
   repo: https://github.com/google/certificate-transparency
   subpackages:
   - go
-  - go/client
-  - go/x509
   - go/asn1
+  - go/client
+  - go/jsonclient
+  - go/tls
+  - go/x509
   - go/x509/pkix
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
@@ -76,57 +80,54 @@ imports:
 - name: github.com/mattn/go-colorable
   version: d228849504861217f796da67fae4f6e347643f15
 - name: github.com/mattn/go-isatty
-  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+  version: 30a891c33c7cde7b02a981314b4228ec99380cca
 - name: github.com/michaelbironneau/garbler
   version: eaea49f3709333a999768eddd70d24eba599e78d
   subpackages:
   - lib
 - name: github.com/mitchellh/go-homedir
   version: 756f7b183b7ab78acdbbee5c7f392838ed459dda
-- name: github.com/mreiferson/go-httpclient
-  version: 63fe23f7434723dc904c901043af07931f293c47
-  repo: https://github.com/mreiferson/go-httpclient
 - name: github.com/onsi/ginkgo
-  version: a8ccd817611666211fdf6e6a752174a0db8374a8
+  version: 00054c0bb96fc880d4e0be1b90937fad438c5290
   subpackages:
   - config
   - internal/codelocation
+  - internal/containernode
   - internal/failer
+  - internal/leafnodes
   - internal/remote
+  - internal/spec
+  - internal/specrunner
   - internal/suite
   - internal/testingtproxy
   - internal/writer
   - reporters
   - reporters/stenographer
-  - types
-  - internal/containernode
-  - internal/leafnodes
-  - internal/spec
-  - internal/specrunner
   - reporters/stenographer/support/go-colorable
   - reporters/stenographer/support/go-isatty
+  - types
 - name: github.com/onsi/gomega
-  version: ff4bc6b6f9f5affa66635cd04d31d2a7ee21ffd6
+  version: f1f0f388b31eca4e2cbe7a6dd8a3a1dfddda5b1c
   subpackages:
+  - format
   - internal/assertion
   - internal/asyncassertion
+  - internal/oraclematcher
   - internal/testingtsupport
   - matchers
-  - types
-  - internal/oraclematcher
-  - format
   - matchers/support/goraph/bipartitegraph
   - matchers/support/goraph/edge
   - matchers/support/goraph/node
   - matchers/support/goraph/util
+  - types
 - name: github.com/packethost/packngo
-  version: 7cd5fed006859e86dd5641a6cf9812e855b7574a
+  version: 91a3a4f65e3cd6ee66d919b4e7103ae038ce66ff
 - name: github.com/russross/blackfriday
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/shurcooL/sanitized_anchor_name
   version: 1dba4b3954bc059efc3991ec364f9f9a35f597d2
 - name: github.com/spf13/cobra
-  version: 6e91dded25d73176bf7f60b40dd7aa1f0bf9be8d
+  version: 9495bc009a56819bdb0ddbc1a373e29c140bc674
   subpackages:
   - cobra
   - doc
@@ -134,15 +135,19 @@ imports:
   version: 5ccb023bc27df288a957c5e994cd44fd19619465
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
-  repo: https://go.googlesource.com/crypto
   subpackages:
-  - ocsp
-  - pbkdf2
+  - curve25519
   - pkcs12
-  - scrypt
   - pkcs12/internal/rc2
+  - ssh
+- name: golang.org/x/net
+  version: 3f122ce3dbbe488b7e6a8bdb26f41edec852a40b
+  repo: https://go.googlesource.com/net
+  subpackages:
+  - context
+  - context/ctxhttp
 - name: golang.org/x/sys
-  version: c200b10b5d5e122be351b67af224adc6128af5bf
+  version: d5645953809d8b4752afb2c3224b1f1ad73dfa70
   subpackages:
   - unix
 - name: gopkg.in/yaml.v2

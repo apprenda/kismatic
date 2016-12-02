@@ -11,3 +11,6 @@ import:
 - package: github.com/packethost/packngo
 - package: github.com/cpuguy83/go-md2man
   version: ~1.0.6
+- package: golang.org/x/crypto
+  subpackages:
+  - ssh
