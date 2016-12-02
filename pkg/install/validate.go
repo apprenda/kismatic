@@ -169,7 +169,7 @@ func (s *SSHConfig) validate() (bool, []error) {
 func (s *SSHConnection) validate() (bool, []error) {
 	v := newValidator()
 
-	auth, err := util.GetPublicKeyAuth(s.sshConfig.Key)
+	auth, err := util.GetUnencryptedPublicKeyAuth(s.sshConfig.Key)
 	if err != nil {
 		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
 	} else {

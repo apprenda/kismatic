@@ -9,8 +9,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// GetPublicKeyAuth parses SSH private key and returns PublicKeys AuthMethod
-func GetPublicKeyAuth(file string) (ssh.AuthMethod, error) {
+// GetUnencryptedPublicKeyAuth parses SSH private key and returns PublicKeys AuthMethod
+func GetUnencryptedPublicKeyAuth(file string) (ssh.AuthMethod, error) {
 	buffer, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -39,8 +39,6 @@ func isEncrypted(buffer []byte) (bool, error) {
 	if block == nil || err != nil {
 		return false, fmt.Errorf("Parse SHH key error")
 	}
-	if x509.IsEncryptedPEMBlock(block) {
-		return true, nil
-	}
-	return false, nil
+
+	return x509.IsEncryptedPEMBlock(block), nil
 }
