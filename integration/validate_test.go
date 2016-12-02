@@ -1,9 +1,12 @@
 package integration
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
+	homedir "github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -47,8 +50,12 @@ var _ = Describe("kismatic install validate tests", func() {
 		Describe("Running validation with bad SSH key", func() {
 			Context("Using CentOS 7", func() {
 				ItOnAWS("should result in a ssh error", func(provisioner infrastructureProvisioner) {
-					WithMiniInfrastructureAndBadSSH(CentOS7, provisioner, func(node NodeDeets, sshKey string) {
-						ValidateKismaticMiniWithBadSSH(node, node.SSHUser, sshKey)
+					WithMiniInfrastructure(CentOS7, provisioner, func(node NodeDeets, sshKey string) {
+						badSSHKey, err := getBadSSHKeyFile()
+						if err != nil {
+							Fail("Unexpected error generating fake SSH key: %v")
+						}
+						ValidateKismaticMiniWithBadSSH(node, node.SSHUser, badSSHKey)
 					})
 				})
 			})
@@ -120,4 +127,18 @@ func validateMiniPkgInstallationDisabled(provisioner infrastructureProvisioner, 
 
 	err = ValidateKismaticMiniDenyPkgInstallation(theNode, sshUser, sshKey)
 	Expect(err).To(BeNil())
+}
+
+func getBadSSHKeyFile() (string, error) {
+	dir, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	// create empty file
+	_, err = os.Create(filepath.Join(dir, ".ssh", "bad.pem"))
+	if err != nil {
+		return "", fmt.Errorf("Unable to create tag file!")
+	}
+
+	return filepath.Join(dir, ".ssh", "bad.pem"), nil
 }

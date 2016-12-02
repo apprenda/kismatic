@@ -94,21 +94,3 @@ func WithMiniInfrastructure(distro linuxDistro, provisioner infrastructureProvis
 
 	f(nodes.worker[0], sshKey)
 }
-
-// WithMiniInfrastructureAndBadSSH runs the spec with a Minikube-like infrastructure setup and bad SSH key
-func WithMiniInfrastructureAndBadSSH(distro linuxDistro, provisioner infrastructureProvisioner, f miniInfraDependentTest) {
-	By("Provisioning nodes")
-	nodes, err := provisioner.ProvisionNodes(NodeCount{Worker: 1}, distro)
-	if !leaveIt() {
-		defer provisioner.TerminateNodes(nodes)
-	}
-	Expect(err).ToNot(HaveOccurred())
-
-	By("Waiting until nodes are SSH-accessible")
-	sshKey := provisioner.SSHKey()
-	err = waitForSSH(nodes, sshKey)
-	Expect(err).ToNot(HaveOccurred())
-
-	badSSHKey, _ := GetBadSSHKeyFile()
-	f(nodes.worker[0], badSSHKey)
-}
