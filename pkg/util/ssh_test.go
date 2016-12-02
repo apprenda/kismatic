@@ -4,8 +4,12 @@ import "testing"
 
 func TestIsEncrypted(t *testing.T) {
 	for _, data := range testData {
-		if isEncrypted := isEncrypted(data.pemData); isEncrypted != data.encrypted {
-			t.Errorf("Expected: %t, got: %t", data.ecrypted, isEncrypted)
+		isEncrypted, err := isEncrypted(data.pemData)
+		if err != nil {
+			t.Errorf("Unexpected error: %v", err)
+		}
+		if err == nil && isEncrypted != data.encrypted {
+			t.Errorf("Expected: %t, got: %t", data.encrypted, isEncrypted)
 		}
 	}
 }
@@ -70,7 +74,7 @@ geI5+ve+J9kuJUV3lwsV9ZjE/+E7ecwbhC1z/+96cKzIZ6BCIOaWkrWp2UnJ
 -----END RSA PRIVATE KEY-----`),
 	},
 	{
-		ecrypted: true,
+		encrypted: true,
 		pemData: []byte(`
 -----BEGIN RSA PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED

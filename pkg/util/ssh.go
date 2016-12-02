@@ -34,9 +34,10 @@ func GetUnencryptedPublicKeyAuth(file string) (ssh.AuthMethod, error) {
 }
 
 func isEncrypted(buffer []byte) (bool, error) {
-	block, err := pem.Decode(buffer)
+	// There is no error, just a nil block
+	block, _ := pem.Decode(buffer)
 	// File cannot be decoded, maybe it's some unecpected format
-	if block == nil || err != nil {
+	if block == nil {
 		return false, fmt.Errorf("Parse SHH key error")
 	}
 
