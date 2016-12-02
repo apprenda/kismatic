@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"golang.org/x/crypto/ssh"
@@ -173,18 +174,23 @@ func (s *SSHConnection) validate() (bool, []error) {
 	if err != nil {
 		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
 	} else {
-		// TODO add Timeout when supported by CI
 		sshClientConfig := &ssh.ClientConfig{
 			User: s.sshConfig.User,
 			Auth: []ssh.AuthMethod{
 				auth,
 			},
 		}
+		var wg sync.WaitGroup
+		wg.Add(len(s.nodes))
 		for _, node := range s.nodes {
-			if err := verifySSH(&node, s.sshConfig, sshClientConfig); err != nil {
-				v.addError(fmt.Errorf("error SSH into node: %s, %v", node.Host, err))
-			}
+			go func(node Node) {
+				if err := verifySSH(&node, s.sshConfig, sshClientConfig); err != nil {
+					v.addError(fmt.Errorf("error SSH into node: %s, %v", node.Host, err))
+				}
+				wg.Done()
+			}(node)
 		}
+		wg.Wait()
 	}
 
 	return v.valid()

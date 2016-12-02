@@ -58,8 +58,8 @@ var _ = Describe("Happy Path Installation Tests", func() {
 	Describe("Calling installer with a plan targeting bad infrastructure", func() {
 		Context("Using a 1/1/1 Ubuntu 16.04 layout pointing to bad ip addresses", func() {
 			It("should bomb validate and apply", func() {
-				if !completesInTime(installKismaticWithABadNode, 30*time.Second) {
-					Fail("It shouldn't take 30 seconds for Kismatic to fail with bad nodes.")
+				if !completesInTime(installKismaticWithABadNode, 60*time.Second) {
+					Fail("It shouldn't take 60 seconds for Kismatic to fail with bad nodes.")
 				}
 			})
 		})
