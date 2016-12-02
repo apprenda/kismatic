@@ -29,7 +29,6 @@ func GetPublicKeyAuth(file string) (ssh.AuthMethod, error) {
 }
 
 func isEncrypted(buffer []byte) bool {
-	fmt.Println(string(buffer))
 	block, _ := pem.Decode(buffer)
 	if x509.IsEncryptedPEMBlock(block) {
 		return true
