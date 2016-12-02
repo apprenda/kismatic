@@ -190,13 +190,7 @@ func (s *SSHConnection) validate() (bool, []error) {
 }
 
 func verifySSH(node *Node, sshConfig *SSHConfig, sshClientConfig *ssh.ClientConfig) error {
-	var host string
-	if node.InternalIP != "" {
-		host = node.InternalIP
-	} else {
-		host = node.IP
-	}
-	_, err := ssh.Dial("tcp", host+":"+strconv.Itoa(sshConfig.Port), sshClientConfig)
+	_, err := ssh.Dial("tcp", node.IP+":"+strconv.Itoa(sshConfig.Port), sshClientConfig)
 
 	return err
 }
