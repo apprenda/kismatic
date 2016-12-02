@@ -16,7 +16,12 @@ func GetPublicKeyAuth(file string) (ssh.AuthMethod, error) {
 		return nil, err
 	}
 
-	if isEncrypted(buffer) {
+	isEcnrypted, err := isEncrypted(buffer)
+	if err != nil {
+		return nil, fmt.Errorf("Parse SHH key error")
+	}
+
+	if isEcnrypted {
 		return nil, fmt.Errorf("Encrypted SSH key is not permitted")
 	}
 
@@ -28,10 +33,15 @@ func GetPublicKeyAuth(file string) (ssh.AuthMethod, error) {
 	return ssh.PublicKeys(signer), nil
 }
 
-func isEncrypted(buffer []byte) bool {
+func isEncrypted(buffer []byte) (bool, error) {
 	block, _ := pem.Decode(buffer)
-	if x509.IsEncryptedPEMBlock(block) {
-		return true
+	// File cannot be decoded, maybe it's some unecpected format,
+	// Let ParsePrivateKey throw an error if the file is invalid
+	if block == nil {
+		return false, fmt.Errorf("Parse SHH key error")
 	}
-	return false
+	if x509.IsEncryptedPEMBlock(block) {
+		return true, nil
+	}
+	return false, nil
 }
