@@ -36,9 +36,21 @@ As machines are being provisioned, you must record their identity and credential
 
 ### <a name="access"></a>Providing access to the Installer
 
-To install Kubernetes with Kismatic, you will need a user with remote sudo access and an ssh public key added to each node. The same username and keypair must be used for all nodes. This account should only be used by the kismatic installer.
+Kismatic deploys packages on each node, so you will need a user with remote passwordless sudo access and an ssh public key added to each node. The same username and keypair must be used for all nodes. This account should only be used by the kismatic installer.
 
-We suggest a default user **kismaticuser**, with a corresponding private key **kismaticuser.key** added to the directory you're running the installer from. This would be the ideal spot to generate the keypair via:
+We suggest a default user **kismaticuser** via:
+```
+sudo useradd -d /home/kismaticuser -m kismaticuser
+sudo passwd kismaticuser
+```
+
+The user can be given full, passwordless sudo privileges via:
+```
+echo "kismaticuser ALL = (root) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/kismaticuser
+sudo chmod 0440 /etc/sudoers.d/kismaticuser
+```
+
+We also suggest a corresponding private key **kismaticuser.key** added to the directory you're running the installer from. This would be the ideal spot to generate the keypair via:
 
 `ssh-keygen -t rsa -b 4096 -f kismaticuser.key -P ""`
 
