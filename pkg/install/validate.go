@@ -172,12 +172,12 @@ func (s *SSHConnection) validate() (bool, []error) {
 	if err != nil {
 		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
 	} else {
+		// TODO add Timeout when supported by CI
 		sshClientConfig := &ssh.ClientConfig{
 			User: s.sshConfig.User,
 			Auth: []ssh.AuthMethod{
 				auth,
 			},
-			Timeout: time.Second * 5,
 		}
 		for _, node := range s.nodes {
 			if err := verifySSH(&node, s.sshConfig, sshClientConfig); err != nil {
