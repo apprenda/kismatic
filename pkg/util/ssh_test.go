@@ -4,18 +4,18 @@ import "testing"
 
 func TestIsEncrypted(t *testing.T) {
 	for _, data := range testData {
-		if isEncrypted := isEncrypted(data.pemData); isEncrypted != data.ecrypted {
+		if isEncrypted := isEncrypted(data.pemData); isEncrypted != data.encrypted {
 			t.Errorf("Expected: %t, got: %t", data.ecrypted, isEncrypted)
 		}
 	}
 }
 
 var testData = []struct {
-	ecrypted bool
-	pemData  []byte
+	encrypted bool
+	pemData   []byte
 }{
 	{
-		ecrypted: false,
+		encrypted: false,
 		pemData: []byte(`
 -----BEGIN RSA PRIVATE KEY-----
 MIIJKQIBAAKCAgEA5uQfux6Q/4w9UOYN7fkXb/9NIdPComDYldsW241bdK7vY88I
