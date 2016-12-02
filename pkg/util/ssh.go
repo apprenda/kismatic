@@ -1,6 +1,8 @@
 package util
 
 import (
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 
@@ -14,10 +16,23 @@ func GetPublicKeyAuth(file string) (ssh.AuthMethod, error) {
 		return nil, err
 	}
 
+	if isEncrypted(buffer) {
+		return nil, fmt.Errorf("Encrypted SSH key is not permitted")
+	}
+
 	signer, err := ssh.ParsePrivateKey(buffer)
 	if err != nil {
-		return nil, fmt.Errorf("Parse PK error: %v", err)
+		return nil, fmt.Errorf("Parse SHH key error: %v", err)
 	}
 
 	return ssh.PublicKeys(signer), nil
+}
+
+func isEncrypted(buffer []byte) bool {
+	fmt.Println(string(buffer))
+	block, _ := pem.Decode(buffer)
+	if x509.IsEncryptedPEMBlock(block) {
+		return true
+	}
+	return false
 }
