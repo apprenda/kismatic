@@ -41,7 +41,6 @@ func ValidatePlanSSHConnection(p *Plan) (bool, []error) {
 
 	ok, errs := ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Etcd.Nodes}, "Etcd nodes")
 	if ok {
-		v.addError(errs...)
 	}
 
 	ok, errs = ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Master.Nodes}, "Master nodes")
