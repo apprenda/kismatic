@@ -35,6 +35,37 @@ func ValidateNode(node *Node) (bool, []error) {
 	return v.valid()
 }
 
+// ValidatePlanSSHConnection tries to establish SSH connections to all nodes in the cluster
+func ValidatePlanSSHConnection(p *Plan) (bool, []error) {
+	v := newValidator()
+
+	ok, errs := ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Etcd.Nodes}, "Etcd nodes")
+	if ok {
+		v.addError(errs...)
+	}
+
+	ok, errs = ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Master.Nodes}, "Master nodes")
+	if ok {
+		v.addError(errs...)
+	}
+
+	ok, errs = ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Worker.Nodes}, "Worker nodes")
+	if ok {
+		v.addError(errs...)
+	}
+
+	return v.valid()
+}
+
+// ValidateSSHConnection tries to establish SSH connection with the details provieded
+func ValidateSSHConnection(con *SSHConnection, prefix string) (bool, []error) {
+	v := newValidator()
+
+	v.validateWithErrPrefix(prefix, con)
+
+	return v.valid()
+}
+
 type validatable interface {
 	validate() (bool, []error)
 }
@@ -44,8 +75,8 @@ type validator struct {
 }
 
 type SSHConnection struct {
-	sshConfig *SSHConfig
-	nodes     []Node
+	SSHConfig *SSHConfig
+	Nodes     []Node
 }
 
 func newValidator() *validator {
@@ -90,12 +121,6 @@ func (p *Plan) validate() (bool, []error) {
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
 
-	// only verify SSH when everything else is valid
-	if valid, _ := v.valid(); valid {
-		v.validateWithErrPrefix("Etcd nodes", &SSHConnection{&p.Cluster.SSH, p.Etcd.Nodes})
-		v.validateWithErrPrefix("Master nodes", &SSHConnection{&p.Cluster.SSH, p.Master.Nodes})
-		v.validateWithErrPrefix("Worker nodes", &SSHConnection{&p.Cluster.SSH, p.Worker.Nodes})
-	}
 	return v.valid()
 }
 
@@ -170,21 +195,21 @@ func (s *SSHConfig) validate() (bool, []error) {
 func (s *SSHConnection) validate() (bool, []error) {
 	v := newValidator()
 
-	auth, err := util.GetUnencryptedPublicKeyAuth(s.sshConfig.Key)
+	auth, err := util.GetUnencryptedPublicKeyAuth(s.SSHConfig.Key)
 	if err != nil {
 		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
 	} else {
 		sshClientConfig := &ssh.ClientConfig{
-			User: s.sshConfig.User,
+			User: s.SSHConfig.User,
 			Auth: []ssh.AuthMethod{
 				auth,
 			},
 		}
 		var wg sync.WaitGroup
-		wg.Add(len(s.nodes))
-		for _, node := range s.nodes {
+		wg.Add(len(s.Nodes))
+		for _, node := range s.Nodes {
 			go func(node Node) {
-				if err := verifySSH(&node, s.sshConfig, sshClientConfig); err != nil {
+				if err := verifySSH(&node, s.SSHConfig, sshClientConfig); err != nil {
 					v.addError(fmt.Errorf("error SSH into node: %s, %v", node.InternalIP, err))
 				}
 				wg.Done()
