@@ -195,9 +195,9 @@ func (s *SSHConnection) validate() (bool, []error) {
 			},
 		}
 		var wg sync.WaitGroup
-		errQueue := make(chan error, 1)
-		// number of nodes + 1 more for channel reader
-		wg.Add(len(s.Nodes) + 1)
+		errQueue := make(chan error, len(s.Nodes))
+		// number of nodes
+		wg.Add(len(s.Nodes))
 		for _, node := range s.Nodes {
 			go func(node Node) {
 				defer wg.Done()
@@ -210,16 +210,16 @@ func (s *SSHConnection) validate() (bool, []error) {
 				}
 			}(node)
 		}
-		go func() {
-			for err := range errQueue {
-				if err != nil {
-					v.addError(err)
-				}
-				wg.Done()
-			}
-		}()
-
+		// Wait for all nodes to complete, then close channel
 		wg.Wait()
+		close(errQueue)
+
+		// Read any error
+		for err := range errQueue {
+			if err != nil {
+				v.addError(err)
+			}
+		}
 	}
 
 	return v.valid()
