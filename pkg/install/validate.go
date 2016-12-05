@@ -195,15 +195,30 @@ func (s *SSHConnection) validate() (bool, []error) {
 			},
 		}
 		var wg sync.WaitGroup
-		wg.Add(len(s.Nodes))
+		errQueue := make(chan error, 1)
+		// number of nodes + 1 more for channel reader
+		wg.Add(len(s.Nodes) + 1)
 		for _, node := range s.Nodes {
 			go func(node Node) {
-				if err := verifySSH(&node, s.SSHConfig, sshClientConfig); err != nil {
-					v.addError(fmt.Errorf("error SSH into node: %s, %v", node.InternalIP, err))
+				defer wg.Done()
+				sshErr := verifySSH(&node, s.SSHConfig, sshClientConfig)
+				// Need to send something the buffered channel
+				if sshErr != nil {
+					errQueue <- fmt.Errorf("error SSH into node: %s, %v", node.InternalIP, sshErr)
+				} else {
+					errQueue <- nil
 				}
-				wg.Done()
 			}(node)
 		}
+		go func() {
+			for err := range errQueue {
+				if err != nil {
+					v.addError(err)
+				}
+				wg.Done()
+			}
+		}()
+
 		wg.Wait()
 	}
 
