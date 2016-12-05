@@ -185,7 +185,7 @@ func (s *SSHConnection) validate() (bool, []error) {
 		for _, node := range s.nodes {
 			go func(node Node) {
 				if err := verifySSH(&node, s.sshConfig, sshClientConfig); err != nil {
-					v.addError(fmt.Errorf("error SSH into node: %s, %v", node.Host, err))
+					v.addError(fmt.Errorf("error SSH into node: %s, %v", node.InternalIP, err))
 				}
 				wg.Done()
 			}(node)
@@ -200,7 +200,7 @@ func verifySSH(node *Node, sshConfig *SSHConfig, sshClientConfig *ssh.ClientConf
 	server := node.IP + ":" + strconv.Itoa(sshConfig.Port)
 	conn, err := net.DialTimeout("tcp", server, time.Second*5)
 	if err != nil {
-		return fmt.Errorf("cannot ping node")
+		return fmt.Errorf("cannot connect to node: %v", server)
 	}
 
 	// Try to connect with a timeout
