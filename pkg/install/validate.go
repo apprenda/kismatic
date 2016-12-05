@@ -39,19 +39,9 @@ func ValidateNode(node *Node) (bool, []error) {
 func ValidatePlanSSHConnection(p *Plan) (bool, []error) {
 	v := newValidator()
 
-	ok, errs := ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Etcd.Nodes}, "Etcd nodes")
-	if ok {
-	}
-
-	ok, errs = ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Master.Nodes}, "Master nodes")
-	if ok {
-		v.addError(errs...)
-	}
-
-	ok, errs = ValidateSSHConnection(&SSHConnection{&p.Cluster.SSH, p.Worker.Nodes}, "Worker nodes")
-	if ok {
-		v.addError(errs...)
-	}
+	v.validateWithErrPrefix("Etcd nodes", &SSHConnection{&p.Cluster.SSH, p.Etcd.Nodes})
+	v.validateWithErrPrefix("Master nodes", &SSHConnection{&p.Cluster.SSH, p.Master.Nodes})
+	v.validateWithErrPrefix("Worker nodes", &SSHConnection{&p.Cluster.SSH, p.Worker.Nodes})
 
 	return v.valid()
 }
