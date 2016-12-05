@@ -228,7 +228,11 @@ func verifySSH(node *Node, sshConfig *SSHConfig, sshClientConfig *ssh.ClientConf
 	}
 
 	// Try to connect with a timeout
-	_, _, _, err = ssh.NewClientConn(conn, server, sshClientConfig)
+	sshConn, _, _, err := ssh.NewClientConn(conn, server, sshClientConfig)
+	if err == nil {
+		conn.Close()
+		sshConn.Close()
+	}
 	return err
 }
 
