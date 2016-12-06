@@ -211,8 +211,10 @@ func (s *SSHConnection) validate() (bool, []error) {
 			}(node)
 		}
 		// Wait for all nodes to complete, then close channel
-		wg.Wait()
-		close(errQueue)
+		go func() {
+			wg.Wait()
+			close(errQueue)
+		}()
 
 		// Read any error
 		for err := range errQueue {
@@ -229,7 +231,7 @@ func verifySSH(node *Node, sshConfig *SSHConfig, sshClientConfig *ssh.ClientConf
 	server := node.IP + ":" + strconv.Itoa(sshConfig.Port)
 	conn, err := net.DialTimeout("tcp", server, time.Second*5)
 	if err != nil {
-		return fmt.Errorf("cannot connect to node: %v", server)
+		return err
 	}
 
 	// Try to connect with a timeout
