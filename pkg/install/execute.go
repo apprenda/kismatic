@@ -197,6 +197,8 @@ func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan, tlsDirectory string) (
 	// Else just use DockerHub
 	if p.DockerRegistry.SetupInternal || p.DockerRegistry.Address != "" {
 		ev["use_private_docker_registry"] = "true"
+	} else {
+		ev["use_private_docker_registry"] = "false"
 	}
 	ev["setup_internal_docker_registry"] = strconv.FormatBool(p.DockerRegistry.SetupInternal)
 
