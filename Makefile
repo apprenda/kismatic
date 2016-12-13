@@ -39,7 +39,7 @@ tools/glide:
 	rm -r tools/$(GLIDE_GOOS)-$(HOST_GOARCH)
 
 vendor-ansible/out:
-	docker build -t apprenda/vendor-ansible -q vendor-ansible
+	docker build -t apprenda/vendor-ansible vendor-ansible
 	docker run --rm -v $(shell pwd)/vendor-ansible/out:/ansible apprenda/vendor-ansible pip install --install-option="--prefix=/ansible" ansible==2.1.2.0
 
 vendor-cfssl/out:
