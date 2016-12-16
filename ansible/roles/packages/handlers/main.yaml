@@ -49,9 +49,9 @@
     retries: 3
     delay: 3
 
-  - name: install kubernetes worker yum package
+  - name: install kubernetes node yum package
     yum: name=kismatic-kubernetes-node-{{ kismatic_kubernetes_node_yum_version }} state=present
-    when: "'worker' in group_names and 'master' not in group_names"
+    when: "('worker' in group_names or 'ingress' in group_names) and 'master' not in group_names"
     register: result
     until: result|success
     retries: 3
@@ -68,23 +68,23 @@
 
   - name: install docker-engine deb package
     apt: name=kismatic-docker-engine={{ kismatic_docker_engine_apt_version }} state=present
-    when: "'worker' in group_names or 'master' in group_names"
+    when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names"
     register: result
     until: result|success
     retries: 3
     delay: 3
 
-  - name: install kubernetes networking package
+  - name: install kubernetes networking deb package
     apt: name=kismatic-kubernetes-networking={{ kismatic_kubernetes_master_apt_version }} state=present
-    when: "'worker' in group_names or 'master' in group_names"
+    when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names"
     register: result
     until: result|success
     retries: 3
     delay: 3
 
-  - name: install kubernetes worker deb package
+  - name: install kubernetes node deb package
     apt: name=kismatic-kubernetes-node={{ kismatic_kubernetes_node_apt_version }} state=present
-    when: "'worker' in group_names or 'master' in group_names"
+    when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names"
     register: result
     until: result|success
     retries: 3

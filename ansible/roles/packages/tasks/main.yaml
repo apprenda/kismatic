@@ -37,7 +37,7 @@
     notify:
       - install etcd yum package
       - install kubernetes master yum package
-      - install kubernetes worker yum package
+      - install kubernetes node yum package
     when: ansible_os_family == 'RedHat'
 
   - name: install deb packages
@@ -45,7 +45,7 @@
     notify:
       - install etcd deb package
       - install docker-engine deb package
-      - install kubernetes networking package
-      - install kubernetes worker deb package
+      - install kubernetes networking deb package
+      - install kubernetes node deb package
       - install kubernetes master deb package
     when: ansible_os_family == 'Debian'

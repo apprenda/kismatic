@@ -9,6 +9,7 @@ import (
 
 	"github.com/apprenda/kismatic/integration/aws"
 	"github.com/apprenda/kismatic/integration/packet"
+	"github.com/apprenda/kismatic/integration/retry"
 	homedir "github.com/mitchellh/go-homedir"
 )
 
@@ -38,19 +39,21 @@ type infrastructureProvisioner interface {
 type linuxDistro string
 
 type NodeCount struct {
-	Etcd   uint16
-	Master uint16
-	Worker uint16
+	Etcd    uint16
+	Master  uint16
+	Worker  uint16
+	Ingress uint16
 }
 
 func (nc NodeCount) Total() uint16 {
-	return nc.Etcd + nc.Master + nc.Worker
+	return nc.Etcd + nc.Master + nc.Worker + nc.Ingress
 }
 
 type provisionedNodes struct {
 	etcd      []NodeDeets
 	master    []NodeDeets
 	worker    []NodeDeets
+	ingress   []NodeDeets
 	dnsRecord *DNSRecord
 }
 
@@ -59,6 +62,7 @@ func (p provisionedNodes) allNodes() []NodeDeets {
 	n = append(n, p.etcd...)
 	n = append(n, p.master...)
 	n = append(n, p.worker...)
+	n = append(n, p.ingress...)
 	return n
 }
 
@@ -171,6 +175,13 @@ func (p awsProvisioner) ProvisionNodes(nodeCount NodeCount, distro linuxDistro) 
 		}
 		provisioned.worker = append(provisioned.worker, NodeDeets{id: nodeID})
 	}
+	for i = 0; i < nodeCount.Ingress; i++ {
+		nodeID, err := p.client.CreateNode(ami, aws.T2Medium)
+		if err != nil {
+			return provisioned, err
+		}
+		provisioned.ingress = append(provisioned.ingress, NodeDeets{id: nodeID})
+	}
 	// Wait until all instances have their public IPs assigned
 	for i := range provisioned.etcd {
 		etcd := &provisioned.etcd[i]
@@ -187,6 +198,12 @@ func (p awsProvisioner) ProvisionNodes(nodeCount NodeCount, distro linuxDistro) 
 	for i := range provisioned.worker {
 		worker := &provisioned.worker[i]
 		if err := p.updateNodeWithDeets(worker.id, worker); err != nil {
+			return provisioned, err
+		}
+	}
+	for i := range provisioned.ingress {
+		ingress := &provisioned.ingress[i]
+		if err := p.updateNodeWithDeets(ingress.id, ingress); err != nil {
 			return provisioned, err
 		}
 	}
@@ -226,7 +243,7 @@ func (p awsProvisioner) TerminateNodes(runningNodes provisionedNodes) error {
 
 // TerminateNode will attempt to terminate a node and wait for the state to not be available
 func (p awsProvisioner) TerminateNode(node NodeDeets) error {
-	err := aws.RetryWithBackoff(func() error {
+	err := retry.WithBackoff(func() error {
 		if err2 := p.client.DestroyNodes([]string{node.id}); err2 != nil {
 			return fmt.Errorf("Could not terminate node: %v", err2)
 		}
@@ -321,6 +338,13 @@ func (p packetProvisioner) ProvisionNodes(nodeCount NodeCount, distro linuxDistr
 		}
 		nodes.worker = append(nodes.worker, NodeDeets{id: id})
 	}
+	for i := uint16(0); i < nodeCount.Ingress; i++ {
+		id, err := p.createNode(packetDistro, i)
+		if err != nil {
+			return nodes, err
+		}
+		nodes.ingress = append(nodes.ingress, NodeDeets{id: id})
+	}
 	// Wait until all nodes are ready
 	err := p.updateNodeUntilPublicIPAvailable(nodes.etcd)
 	if err != nil {
@@ -331,6 +355,10 @@ func (p packetProvisioner) ProvisionNodes(nodeCount NodeCount, distro linuxDistr
 		return nodes, err
 	}
 	err = p.updateNodeUntilPublicIPAvailable(nodes.worker)
+	if err != nil {
+		return nodes, err
+	}
+	err = p.updateNodeUntilPublicIPAvailable(nodes.ingress)
 	if err != nil {
 		return nodes, err
 	}

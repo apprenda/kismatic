@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: calicoApiConfig
+metadata:
+spec:
+  etcdEndpoints: {{ etcd_networking_cluster_ip_list }}
+  etcdKeyFile: {{ kubernetes_certificates_key_path }}
+  etcdCertFile: {{ kubernetes_certificates_cert_path }}
+  etcdCACertFile: {{ kubernetes_certificates_ca_path }}

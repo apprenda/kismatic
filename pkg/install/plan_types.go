@@ -67,4 +67,5 @@ type Plan struct {
 	Etcd           NodeGroup
 	Master         MasterNodeGroup
 	Worker         NodeGroup
+	Ingress        NodeGroup
 }

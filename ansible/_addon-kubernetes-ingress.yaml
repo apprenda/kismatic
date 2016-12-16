@@ -1,10 +1,10 @@
 ---
-  - hosts: master
+  - hosts: master[0]
     any_errors_fatal: true
-    name: "Smoke Test New Worker"
+    name: "Configure Kubernetes Ingress"
     remote_user: root
     become_method: sudo
     run_once: true
-    
+
     roles:
-      - worker-smoke-test
+      - addon-kubernetes-ingress

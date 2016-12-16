@@ -4,6 +4,7 @@ type PlanAWS struct {
 	Etcd                         []NodeDeets
 	Master                       []NodeDeets
 	Worker                       []NodeDeets
+	Ingress                      []NodeDeets
 	MasterNodeFQDN               string
 	MasterNodeShortName          string
 	SSHUser                      string
@@ -57,6 +58,12 @@ master:
 worker:
   expected_count: {{len .Worker}}
   nodes:{{range .Worker}}
+  - host: {{.Hostname}}
+    ip: {{.PublicIP}}
+    internalip: {{.PrivateIP}}{{end}}
+ingress:
+  expected_count: {{len .Ingress}}
+  nodes:{{range .Ingress}}
   - host: {{.Hostname}}
     ip: {{.PublicIP}}
     internalip: {{.PrivateIP}}{{end}}

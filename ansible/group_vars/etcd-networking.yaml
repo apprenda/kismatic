@@ -8,8 +8,8 @@ etcd_certificates_cert_file: "{{ etcd_install_dir }}/{{ etcd_certificates_cert_f
 etcd_certificates_key_file: "{{ etcd_install_dir }}/{{ etcd_certificates_key_file_name }}"
 # etcd-install
 etcd_install_dir: /etc/etcd_networking
-etcd_install_bin_name: etcd2
-etcdctl_install_bin_name: etcdctl2
+etcd_install_bin_name: etcd_networking
+etcdctl_install_bin_name: etcdctl
 # etcd-install:etcd.service.j2
 etcd_service_name: etcd_networking
 etcd_service_data_dir: /var/lib/etcd_networking

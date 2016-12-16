@@ -18,14 +18,14 @@ import (
 )
 
 const (
-	copyKismaticYumRepo        = `sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
+	copyKismaticYumRepo        = `sudo curl https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
 	installEtcdYum             = `sudo yum -y install kismatic-etcd`
 	installDockerEngineYum     = `sudo yum -y install kismatic-docker-engine`
 	installKubernetesMasterYum = `sudo yum -y install kismatic-kubernetes-master`
 	installKubernetesYum       = `sudo yum -y install kismatic-kubernetes-node`
 
-	copyKismaticKeyDeb         = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add - `
-	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com xenial main"`
+	copyKismaticKeyDeb         = `wget -qO - https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key | sudo apt-key add - `
+	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com xenial main"`
 	updateAptGet               = `sudo apt-get update`
 	installEtcdApt             = `sudo apt-get -y install kismatic-etcd`
 	installDockerApt           = `sudo apt-get -y install kismatic-docker-engine`
@@ -143,7 +143,7 @@ func deployDockerRegistry(node NodeDeets, listeningPort int, sshKey string) (str
 		Organization:       "someOrg",
 		OrganizationalUnit: "someOrgUnit",
 	}
-	key, caCert, err := tls.NewCACert("test-tls/ca-csr.json", "someCommonName", subject)
+	key, caCert, err := tls.NewCACert("test-resources/ca-csr.json", "someCommonName", subject)
 	if err != nil {
 		return "", fmt.Errorf("error generating CA cert for Docker: %v", err)
 	}
@@ -155,7 +155,7 @@ func deployDockerRegistry(node NodeDeets, listeningPort int, sshKey string) (str
 	ca := &tls.CA{
 		Key:        key,
 		Cert:       caCert,
-		ConfigFile: "test-tls/ca-config.json",
+		ConfigFile: "test-resources/ca-config.json",
 		Profile:    "kubernetes",
 	}
 	certHosts := []string{node.Hostname, node.PrivateIP, node.PublicIP}

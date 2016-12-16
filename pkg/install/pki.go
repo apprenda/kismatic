@@ -106,6 +106,9 @@ func (lp *LocalPKI) GenerateClusterCertificates(p *Plan, ca *tls.CA, users []str
 	nodes = append(nodes, p.Etcd.Nodes...)
 	nodes = append(nodes, p.Master.Nodes...)
 	nodes = append(nodes, p.Worker.Nodes...)
+	if p.Ingress.Nodes != nil {
+		nodes = append(nodes, p.Ingress.Nodes...)
+	}
 
 	seenNodes := map[string]bool{}
 	for _, n := range nodes {

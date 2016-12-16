@@ -1,20 +1,23 @@
 #===============================================================================
 # VERSIONS
-kismatic_kubernetes_master_yum_version: 1.4.6_1-1
-kismatic_kubernetes_node_yum_version: 1.4.6_1-1
-kismatic_kubernetes_etcd_yum_version: 1.4.6_1-1
-kismatic_kubernetes_master_apt_version: 1.4.6-1
-kismatic_kubernetes_node_apt_version: 1.4.6-1
-kismatic_kubernetes_etcd_apt_version: 1.4.6-1
+kismatic_kubernetes_master_yum_version: 1.5.0_1-1
+kismatic_kubernetes_node_yum_version: 1.5.0_1-1
+kismatic_kubernetes_etcd_yum_version: 1.5.0_1-1
+kismatic_kubernetes_master_apt_version: 1.5.0-1
+kismatic_kubernetes_node_apt_version: 1.5.0-1
+kismatic_kubernetes_etcd_apt_version: 1.5.0-1
 kismatic_docker_engine_apt_version: 1.11.2-0~xenial
 
-calico_docker_version: v0.22.0
-calico_kube_policy_controller_version: v0.4.0
-kubedns_version: "1.8"
+calico_docker_version: "v1.0.0-rc3"
+calico_kube_policy_controller_version: "v0.4.0"
+kubedns_version: "1.9"
 kube_dnsmasq_version: "1.4"
 exechealthz_version: "1.2"
-kubernetes_dashboard_version: v1.4.2
+kubernetes_dashboard_version: v1.5.0
+defaultbackend_version: "1.0"
+nginx_ingress_controller_version: "0.8.3"
 pause_version: "3.0"
+docker_registry_version: "2.5.1"
 #===============================================================================
 # common variables for all hosts
 temprary_download_dir: /tmp/kismatic
@@ -64,18 +67,18 @@ docker_certificates_key_path: "{{ docker_install_dir }}/{{ docker_certificates_k
 # calico
 # directories
 network_plugin_bin_dir: /opt/cni/bin
+calico_dir: /etc/calico
 # paths
-calico_conf_path: "{{network_plugin_dir}}/10-calico.conf"
-network_environment_path: "/etc/network-environment"
+calico_ippool_path: "{{ calico_dir }}/ipPool.yaml"
+calicoctl_conf_path: "{{ calico_dir }}/calicoctl.cfg"
 #file modes
 calico_executable_mode: 0775
 #networking
 modify_hosts_file: false
-default_cidr: 192.168.0.0/16
-kubernetes_dns_service_ip: 10.3.0.10
+kubernetes_dns_service_ip: 172.17.0.2
 kubernetes_dns_service_addr: https://{{kubernetes_dns_service_ip}}:{{kubernetes_master_secure_port}}
-kubernetes_services_cidr: 10.3.0.0/24
-kubernetes_pods_cidr: 10.2.0.0/16
+kubernetes_services_cidr: 172.17.0.0/16
+kubernetes_pods_cidr: 172.16.0.0/16
 calico_network_type: overlay # Default to the overlay type. Must be 'routed' or 'overlay'
 enable_calico_policy: false
 #===============================================================================
@@ -130,7 +133,7 @@ etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{
 use_private_docker_registry: false
 setup_internal_docker_registry: false
 docker_registry_address: "{{ hostvars[groups['master'][0]].ansible_host }}"
-docker_registry_port: 443
+docker_registry_port: 8443
 
 calico_node_img: calico/node:{{calico_docker_version}}
 
@@ -154,13 +157,16 @@ kubernetes_dashboard_orig_img: gcr.io/google_containers/kubernetes-dashboard-amd
 kubernetes_dashboard_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}"
 kubernetes_dashboard_img: '{% if use_private_docker_registry is defined and use_private_docker_registry|bool == true %}{{ kubernetes_dashboard_priv_img }}{% else %}{{ kubernetes_dashboard_orig_img }}{% endif %}'
 
-pause_img: gcr.io/google_containers/pause-amd64:3.0
+defaultbackend_img: gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}
+nginx_ingress_controller_img: gcr.io/google_containers/nginx-ingress-controller:{{ nginx_ingress_controller_version }}
+
+pause_img: gcr.io/google_containers/pause-amd64:{{ pause_version }}
 # kismatic packages
 allow_package_installation: true
-yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
-yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
-deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
-deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
+yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
+yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
+deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
+deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
 # Uncomment below to use test repo
 # yum_repository_url: https://s3.amazonaws.com/kismatic-rpm-test
 # yum_gpg_key_url: https://s3.amazonaws.com/kismatic-rpm-test/public.key

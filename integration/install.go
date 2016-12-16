@@ -2,14 +2,17 @@ package integration
 
 import (
 	"bufio"
+	"crypto/tls"
 	"fmt"
 	"html/template"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
 
+	"github.com/apprenda/kismatic/integration/retry"
 	homedir "github.com/mitchellh/go-homedir"
 	. "github.com/onsi/ginkgo"
 )
@@ -44,10 +47,11 @@ func installKismaticMini(node NodeDeets, sshKey string) error {
 
 	By("Building a plan to set up an overlay network cluster on this hardware")
 	sshUser := node.SSHUser
-	nodes := PlanAWS{
+	plan := PlanAWS{
 		Etcd:                     []NodeDeets{node},
 		Master:                   []NodeDeets{node},
 		Worker:                   []NodeDeets{node},
+		Ingress:                  []NodeDeets{node},
 		MasterNodeFQDN:           node.Hostname,
 		MasterNodeShortName:      node.Hostname,
 		SSHKeyFile:               sshKey,
@@ -60,7 +64,7 @@ func installKismaticMini(node NodeDeets, sshKey string) error {
 	FailIfError(err, "Error waiting for nodes")
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	err = template.Execute(w, &nodes)
+	err = template.Execute(w, &plan)
 	FailIfError(err, "Error filling in plan template")
 	w.Flush()
 
@@ -95,6 +99,7 @@ func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey 
 		Etcd:                nodes.etcd,
 		Master:              nodes.master,
 		Worker:              nodes.worker,
+		Ingress:             nodes.ingress,
 		MasterNodeFQDN:      masterDNS,
 		MasterNodeShortName: masterDNS,
 		SSHKeyFile:          sshKey,
@@ -136,6 +141,82 @@ func verifyMasterNodeFailure(nodes provisionedNodes, provisioner infrastructureP
 	return nil
 }
 
+func verifyIngressNodes(nodes provisionedNodes, sshKey string) error {
+	By("Adding a service and an ingress resource")
+	addIngressResource(nodes.master[0], sshKey)
+
+	By("Verifying the service is accessible via the ingress point(s)")
+	for _, ingNode := range nodes.ingress {
+		if err := verifyIngressPoint(ingNode); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func verifyIngressNode(node NodeDeets, sshKey string) error {
+	By("Adding a service and an ingress resource")
+	addIngressResource(node, sshKey)
+
+	By("Verifying the service is accessible via the ingress point(s)")
+	return verifyIngressPoint(node)
+}
+
+func addIngressResource(node NodeDeets, sshKey string) {
+	err := copyFileToRemote("test-resources/ingress.yaml", "/tmp/ingress.yaml", node, sshKey, 1*time.Minute)
+	FailIfError(err, "Error copying ingress test file")
+
+	err = runViaSSH([]string{"sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj \"/CN=kismaticintegration.com\""}, []NodeDeets{node}, sshKey, 1*time.Minute)
+	FailIfError(err, "Error creating certificates for HTTPs")
+
+	err = runViaSSH([]string{"sudo kubectl create secret tls kismaticintegration-tls --cert=/tmp/tls.crt --key=/tmp/tls.key"}, []NodeDeets{node}, sshKey, 1*time.Minute)
+	FailIfError(err, "Error creating tls secret")
+
+	err = runViaSSH([]string{"sudo kubectl apply -f /tmp/ingress.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute)
+	FailIfError(err, "Error creating ingress resources")
+}
+
+func verifyIngressPoint(node NodeDeets) error {
+	// HTTP ingress
+
+	url := "http://" + node.PublicIP + "/echo"
+	if err := retry.WithBackoff(func() error { return ingressRequest(url) }, 10); err != nil {
+		return err
+	}
+	// HTTPs ingress
+	url = "https://" + node.PublicIP + "/echo-tls"
+	if err := retry.WithBackoff(func() error { return ingressRequest(url) }, 7); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ingressRequest(url string) error {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := http.Client{
+		Timeout:   1000 * time.Millisecond,
+		Transport: tr,
+	}
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return fmt.Errorf("Could not create request for ingress via %s, %v", url, err)
+	}
+	// Set the host header since this is not a real domain, curl $IP/echo -H 'Host: kismaticintegration.com'
+	req.Host = "kismaticintegration.com"
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("Could not reach ingress via %s, %v", url, err)
+	}
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Ingress status code is not 200, got %d vi %s", resp.StatusCode, url)
+	}
+
+	return nil
+}
+
 func installKismaticWithABadNode() {
 	By("Building a template")
 	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
@@ -151,10 +232,11 @@ func installKismaticWithABadNode() {
 	By("Building a plan to set up an overlay network cluster on this hardware")
 	sshKey, err := GetSSHKeyFile()
 	FailIfError(err, "Error getting SSH Key file")
-	nodes := PlanAWS{
+	plan := PlanAWS{
 		Etcd:                []NodeDeets{fakeNode},
 		Master:              []NodeDeets{fakeNode},
 		Worker:              []NodeDeets{fakeNode},
+		Ingress:             []NodeDeets{fakeNode},
 		MasterNodeFQDN:      "yep.nope",
 		MasterNodeShortName: "yep",
 		SSHUser:             "Billy Rubin",
@@ -165,7 +247,7 @@ func installKismaticWithABadNode() {
 	FailIfError(err, "Error waiting for nodes")
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	err = template.Execute(w, &nodes)
+	err = template.Execute(w, &plan)
 	FailIfError(err, "Error filling in plan template")
 	w.Flush()
 	f.Close()

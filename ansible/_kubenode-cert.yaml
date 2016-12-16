@@ -1,5 +1,5 @@
 ---
-  - hosts: worker:master
+  - hosts: master:worker:ingress
     any_errors_fatal: true
     name: "Deploy Cluster Certificates"
     remote_user: root

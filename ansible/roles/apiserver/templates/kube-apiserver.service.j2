@@ -34,7 +34,7 @@ ExecStart={{ bin_dir }}/kube-apiserver \
   --service-cluster-ip-range=${SERVICES_CIDR} \
   --tls-cert-file=${CERT_FILE} \
   --tls-private-key-file=${KEY_FILE} \
-  --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true \
+  --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true,extensions/v1beta1/daemonsets=true \
   --v=2
 Restart=on-failure
 RestartSec=3

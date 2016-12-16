@@ -15,7 +15,7 @@
   - include: _docker-registry-images.yaml
     when: use_private_docker_registry|bool == true
   - include: _kubenode-cert.yaml
-  # master:worker
+  # master:worker:ingress
   - include: _calico.yaml
   # master
   - include: _apiserver.yaml
@@ -24,10 +24,14 @@
   - include: _kubelet-master.yaml
   # worker
   - include: _kubelet-worker.yaml
-  # master:worker
+  # ingress
+  - include: _kubelet-ingress.yaml
+  # master:worker:ingress
   - include: _proxy.yaml
   # add ons
   - include: _addon-network-policy.yaml
     when: enable_calico_policy|bool == true
   - include: _addon-kubernetes-dns.yaml
+  - include: _addon-kubernetes-ingress.yaml
+    when: confgiure_ingress|bool == true
   - include: _addon-kubernetes-dashboard.yaml

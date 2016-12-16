@@ -214,6 +214,12 @@ func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan, tlsDirectory string) (
 			ev[fmt.Sprintf("force_%s_restart", s)] = strconv.FormatBool(true)
 		}
 	}
+	// Need to pass variable to Ansible to skip cleanly
+	if p.Ingress.Nodes != nil && len(p.Ingress.Nodes) > 0 {
+		ev["confgiure_ingress"] = "true"
+	} else {
+		ev["confgiure_ingress"] = "false"
+	}
 	return &ev, nil
 }
 
@@ -290,7 +296,7 @@ func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
 	return nil
 }
 
-func (ae *ansibleExecutor) RunTask(taskName string, plan *Plan) error {
+func (ae *ansibleExecutor) RunTask(taskName string, p *Plan) error {
 	runDir, err := ae.createRunDirectory("step")
 	if err != nil {
 		return err
@@ -299,7 +305,7 @@ func (ae *ansibleExecutor) RunTask(taskName string, plan *Plan) error {
 	fp := FilePlanner{
 		File: filepath.Join(runDir, "kismatic-cluster.yaml"),
 	}
-	if err = fp.Write(plan); err != nil {
+	if err = fp.Write(p); err != nil {
 		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
 	}
 	ansibleLogFilename := filepath.Join(runDir, "ansible.log")
@@ -308,12 +314,12 @@ func (ae *ansibleExecutor) RunTask(taskName string, plan *Plan) error {
 		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
 	}
 	explainer := &explain.DefaultEventExplainer{}
-	inventory := buildInventoryFromPlan(plan)
+	inventory := buildInventoryFromPlan(p)
 	tlsDir, err := filepath.Abs(ae.certsDir)
 	if err != nil {
 		return fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
 	}
-	ev, err := ae.buildInstallExtraVars(plan, tlsDir)
+	ev, err := ae.buildInstallExtraVars(p, tlsDir)
 	if err != nil {
 		return err
 	}
@@ -417,6 +423,12 @@ func buildInventoryFromPlan(p *Plan) ansible.Inventory {
 	for _, n := range p.Worker.Nodes {
 		workerNodes = append(workerNodes, installNodeToAnsibleNode(&n, &p.Cluster.SSH))
 	}
+	ingressNodes := []ansible.Node{}
+	if p.Ingress.Nodes != nil {
+		for _, n := range p.Ingress.Nodes {
+			ingressNodes = append(ingressNodes, installNodeToAnsibleNode(&n, &p.Cluster.SSH))
+		}
+	}
 	inventory := ansible.Inventory{
 		{
 			Name:  "etcd",
@@ -429,6 +441,10 @@ func buildInventoryFromPlan(p *Plan) ansible.Inventory {
 		{
 			Name:  "worker",
 			Nodes: workerNodes,
+		},
+		{
+			Name:  "ingress",
+			Nodes: ingressNodes,
 		},
 	}
 

@@ -115,7 +115,7 @@ func WritePlanTemplate(p Plan, w PlanReadWriter) error {
 	p.DockerRegistry.SetupInternal = false
 
 	// Set DockerRegistry defaults
-	p.DockerRegistry.Port = 443
+	p.DockerRegistry.Port = 8443
 
 	// Generate entries for all node types
 	n := Node{}

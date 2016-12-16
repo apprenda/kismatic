@@ -123,7 +123,12 @@ func runPreFlightOnWorker(executor install.Executor, plan install.Plan, workerNo
 	// use the original plan, but only run against the new worker
 	preFlightPlan := plan
 	preFlightPlan.Master.Nodes = []install.Node{}
+	preFlightPlan.Master.ExpectedCount = 0
 	preFlightPlan.Etcd.Nodes = []install.Node{}
+	preFlightPlan.Etcd.ExpectedCount = 0
 	preFlightPlan.Worker.Nodes = []install.Node{workerNode}
+	preFlightPlan.Worker.ExpectedCount = 1
+	preFlightPlan.Ingress.Nodes = []install.Node{}
+	preFlightPlan.Ingress.ExpectedCount = 0
 	return executor.RunPreFlightCheck(&preFlightPlan)
 }

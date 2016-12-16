@@ -1,5 +1,5 @@
 ---
-  - hosts: master:worker
+  - hosts: master:worker:ingress
     any_errors_fatal: true
     name: "Install Docker"
     remote_user: root

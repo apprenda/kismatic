@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/apprenda/kismatic/integration/retry"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -139,7 +140,7 @@ func (c Client) CreateNode(ami AMI, instanceType InstanceType) (string, error) {
 			Value: aws.Bool(false),
 		},
 	}
-	err = RetryWithBackoff(func() error {
+	err = retry.WithBackoff(func() error {
 		var err2 error
 		_, err2 = api.ModifyInstanceAttribute(modifyReq)
 		return err2
@@ -166,7 +167,7 @@ func (c Client) CreateNode(ami AMI, instanceType InstanceType) (string, error) {
 			},
 		},
 	}
-	err = RetryWithBackoff(func() error {
+	err = retry.WithBackoff(func() error {
 		var err2 error
 		_, err2 = api.CreateTags(tagReq)
 		return err2
@@ -193,7 +194,7 @@ func (c Client) GetNode(id string) (*Node, error) {
 		InstanceIds: []*string{aws.String(id)},
 	}
 	var resp *ec2.DescribeInstancesOutput
-	err = RetryWithBackoff(func() error {
+	err = retry.WithBackoff(func() error {
 		var err2 error
 		resp, err2 = api.DescribeInstances(req)
 		return err2
@@ -335,7 +336,7 @@ func modifyHostedZone(record *DNSRecord, action string, hostedZoneID string, api
 		Id: aws.String(*changeID),
 	}
 
-	err = RetryWithBackoff(func() error {
+	err = retry.WithBackoff(func() error {
 		changeResp, err2 := api.GetChange(changeReq)
 		if err2 != nil {
 			return err2
@@ -350,24 +351,6 @@ func modifyHostedZone(record *DNSRecord, action string, hostedZoneID string, api
 	}
 
 	return nil
-}
-
-// RetryWithBackoff will retry a function specified number of times
-func RetryWithBackoff(fn func() error, retries uint) error {
-	var attempts uint
-	var err error
-	for {
-		err = fn()
-		if err == nil {
-			break
-		}
-		if attempts == retries {
-			break
-		}
-		time.Sleep((1 << attempts) * time.Second)
-		attempts++
-	}
-	return err
 }
 
 func defaultSSHUserForAMI(ami AMI) string {

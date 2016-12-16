@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const previousKismaticVersion = "v1.0.2"
+const previousKismaticVersion = "v1.0.3"
 
 // Test a specific released version of Kismatic
 var _ = Describe("Installing with previous version of Kismatic", func() {
@@ -32,7 +32,7 @@ var _ = Describe("Installing with previous version of Kismatic", func() {
 	Context("Targeting AWS infrastructure", func() {
 		Context("using a 1/1/1 layout with Ubuntu 16.04 LTS", func() {
 			ItOnAWS("should result in a working cluster", func(provisioner infrastructureProvisioner) {
-				WithInfrastructure(NodeCount{1, 1, 1}, Ubuntu1604LTS, provisioner, func(nodes provisionedNodes, sshKey string) {
+				WithInfrastructure(NodeCount{1, 1, 1, 0}, Ubuntu1604LTS, provisioner, func(nodes provisionedNodes, sshKey string) {
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 				})
@@ -40,7 +40,7 @@ var _ = Describe("Installing with previous version of Kismatic", func() {
 		})
 		Context("using a 1/1/1 layout with CentOS 7", func() {
 			ItOnAWS("should result in a working cluster", func(provisioner infrastructureProvisioner) {
-				WithInfrastructure(NodeCount{1, 1, 1}, Ubuntu1604LTS, provisioner, func(nodes provisionedNodes, sshKey string) {
+				WithInfrastructure(NodeCount{1, 1, 1, 0}, Ubuntu1604LTS, provisioner, func(nodes provisionedNodes, sshKey string) {
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 				})

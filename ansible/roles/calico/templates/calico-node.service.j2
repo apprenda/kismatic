@@ -6,12 +6,11 @@ After=docker.service
 
 [Service]
 User=root
-Environment=INTERNAL_IP={{ internal_ipv4 }}
+Environment=DEFAULT_IPV4={{ internal_ipv4 }}
+Environment=HOSTNAME={{ inventory_hostname }}
 Environment=DOCKER_IMAGE={{ calico_node_img }}
-EnvironmentFile={{ network_environment_path }}
-PermissionsStartOnly=true
-ExecStart={{ bin_dir }}/calicoctl node --ip=${INTERNAL_IP} --node-image=${DOCKER_IMAGE} --no-pull --detach=false
-Restart=always
+ExecStart={{ bin_dir }}/calicoctl node run --name=${HOSTNAME} --ip=${DEFAULT_IPV4} --node-image=${DOCKER_IMAGE} --no-default-ippools --init-system
+Restart=on-failure
 RestartSec=3
 
 [Install]

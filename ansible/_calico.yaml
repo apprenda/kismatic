@@ -1,5 +1,5 @@
 ---
-  - hosts: master:worker
+  - hosts: master:worker:ingress
     any_errors_fatal: true
     name: "Configure Cluster Network"
     remote_user: root
@@ -9,5 +9,4 @@
 
     roles:
       - kubeconfig
-      - network-environment
       - calico

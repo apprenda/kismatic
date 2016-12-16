@@ -1,5 +1,5 @@
 ---
-  - hosts: "{{ hosts | default('master:worker') }}"
+  - hosts: master:worker:ingress
     any_errors_fatal: true
     name: "Install Kubernetes Proxy"
     remote_user: root

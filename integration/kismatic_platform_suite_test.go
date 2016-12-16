@@ -24,7 +24,7 @@ var _ = BeforeSuite(func() {
 	if err != nil {
 		Fail("Failed to extract kismatic")
 	}
-	err = CopyDir("test-tls/", filepath.Join(kisPath, "test-tls"))
+	err = CopyDir("test-resources/", filepath.Join(kisPath, "test-resources"))
 	if err != nil {
 		Fail("Failed to copy test certs")
 	}

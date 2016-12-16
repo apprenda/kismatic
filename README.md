@@ -28,7 +28,7 @@ KET operational tools include:
 ## Dependencies
 | Dependency | Current version |
 | --- | --- |
-| Kubernetes | 1.4.6 |
+| Kubernetes | 1.5.0 |
 | Docker | 1.11.2 |
 | Calico | 1.6 |
 | Etcd (for Kubernetes) | 3.0.13 |

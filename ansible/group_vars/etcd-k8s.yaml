@@ -8,7 +8,7 @@ etcd_certificates_cert_file: "{{ etcd_install_dir }}/{{ etcd_certificates_cert_f
 etcd_certificates_key_file: "{{ etcd_install_dir }}/{{ etcd_certificates_key_file_name }}"
 # etcd-install
 etcd_install_dir: /etc/etcd_k8s
-etcd_install_bin_name: etcd
+etcd_install_bin_name: etcd_k8s
 etcdctl_install_bin_name: etcdctl
 # etcd-install:etcd.service.j2
 etcd_service_name: etcd_k8s

@@ -18,7 +18,7 @@ func ValidateKismaticMini(node NodeDeets, user, sshKey string) PlanAWS {
 
 	log.Printf("Created single node for Kismatic Mini: %s (%s)", node.id, node.PublicIP)
 	By("Building a plan to set up an overlay network cluster on this hardware")
-	nodes := PlanAWS{
+	plan := PlanAWS{
 		Etcd:                     []NodeDeets{node},
 		Master:                   []NodeDeets{node},
 		Worker:                   []NodeDeets{node},
@@ -34,7 +34,7 @@ func ValidateKismaticMini(node NodeDeets, user, sshKey string) PlanAWS {
 	FailIfError(fileErr, "Error waiting for nodes")
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	execErr := template.Execute(w, &nodes)
+	execErr := template.Execute(w, &plan)
 	FailIfError(execErr, "Error filling in plan template")
 	w.Flush()
 
@@ -45,7 +45,7 @@ func ValidateKismaticMini(node NodeDeets, user, sshKey string) PlanAWS {
 	ver.Stderr = os.Stderr
 	err = ver.Run()
 	FailIfError(err, "Error validating plan")
-	return nodes
+	return plan
 }
 
 func ValidateKismaticMiniDenyPkgInstallation(node NodeDeets, sshUser, sshKey string) error {
@@ -55,7 +55,7 @@ func ValidateKismaticMiniDenyPkgInstallation(node NodeDeets, sshUser, sshKey str
 
 	log.Printf("Created single node for Kismatic Mini: %s (%s)", node.id, node.PublicIP)
 	By("Building a plan to set up an overlay network cluster on this hardware")
-	nodes := PlanAWS{
+	plan := PlanAWS{
 		AllowPackageInstallation: false,
 		Etcd:                []NodeDeets{node},
 		Master:              []NodeDeets{node},
@@ -71,7 +71,7 @@ func ValidateKismaticMiniDenyPkgInstallation(node NodeDeets, sshUser, sshKey str
 	FailIfError(fileErr, "Error waiting for nodes")
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	execErr := template.Execute(w, &nodes)
+	execErr := template.Execute(w, &plan)
 	FailIfError(execErr, "Error filling in plan template")
 	w.Flush()
 
@@ -90,7 +90,7 @@ func ValidateKismaticMiniWithBadSSH(node NodeDeets, user, sshKey string) PlanAWS
 
 	log.Printf("Created single node for Kismatic Mini: %s (%s)", node.id, node.PublicIP)
 	By("Building a plan to set up an overlay network cluster on this hardware")
-	nodes := PlanAWS{
+	plan := PlanAWS{
 		Etcd:                     []NodeDeets{node},
 		Master:                   []NodeDeets{node},
 		Worker:                   []NodeDeets{node},
@@ -106,7 +106,7 @@ func ValidateKismaticMiniWithBadSSH(node NodeDeets, user, sshKey string) PlanAWS
 	FailIfError(fileErr, "Error waiting for nodes")
 	defer f.Close()
 	w := bufio.NewWriter(f)
-	execErr := template.Execute(w, &nodes)
+	execErr := template.Execute(w, &plan)
 	FailIfError(execErr, "Error filling in plan template")
 	w.Flush()
 
@@ -117,5 +117,5 @@ func ValidateKismaticMiniWithBadSSH(node NodeDeets, user, sshKey string) PlanAWS
 	ver.Stderr = os.Stderr
 	err = ver.Run()
 	FailIfSuccess(err)
-	return nodes
+	return plan
 }

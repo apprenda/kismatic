@@ -2,50 +2,30 @@
   ## Configure a calico pool for the nodes. We need to configure calico
   ## before starting calico-node on the nodes due to
   ## https://github.com/projectcalico/calico-containers/issues/716
-  # Check if default pool exists
-  - name: check if default pool ({{default_cidr}})  exists
-    command: calicoctl pool show --ipv4
-    register: calico_default_pool_check
-    environment:
-      DEFAULT_IPV4: "{{ internal_ipv4 }}"
-      ETCD_ENDPOINTS: "{{ etcd_networking_cluster_ip_list }}"
-      ETCD_CA_CERT_FILE: "{{ kubernetes_certificates_ca_path }}"
-      ETCD_CERT_FILE: "{{ kubernetes_certificates_cert_path }}"
-      ETCD_KEY_FILE: "{{ kubernetes_certificates_key_path }}"
-    when: "'master' in group_names"
-  - name: remove default CIDR - {{ default_cidr }}
-    command: calicoctl pool remove {{ default_cidr }}
-    environment:
-      DEFAULT_IPV4: "{{ internal_ipv4 }}"
-      ETCD_ENDPOINTS: "{{ etcd_networking_cluster_ip_list }}"
-      ETCD_CA_CERT_FILE: "{{ kubernetes_certificates_ca_path }}"
-      ETCD_CERT_FILE: "{{ kubernetes_certificates_cert_path }}"
-      ETCD_KEY_FILE: "{{ kubernetes_certificates_key_path }}"
-    ignore_errors: yes # TODO better way to handle when this is run more than once
-    # Only run on Master nodes if the default pool exists
-    when: "'master' in group_names and '{{ default_cidr }}' in calico_default_pool_check.stdout"
-    run_once: true
+
   # Two networking modes are supported: 'routed' and 'overlay'. Depending on the mode
   # the pool flags change. Mainly, --ipip is added when 'overlay' is specified.
-  - name: add pods CIDR (Routed mode) - {{ kubernetes_pods_cidr }}
-    command: calicoctl pool add {{ kubernetes_pods_cidr }} --nat-outgoing
-    environment:
-      DEFAULT_IPV4: "{{ internal_ipv4 }}"
-      ETCD_ENDPOINTS: "{{ etcd_networking_cluster_ip_list }}"
-      ETCD_CA_CERT_FILE: "{{ kubernetes_certificates_ca_path }}"
-      ETCD_CERT_FILE: "{{ kubernetes_certificates_cert_path }}"
-      ETCD_KEY_FILE: "{{ kubernetes_certificates_key_path }}"
-    when: "'master' in group_names and calico_network_type == 'routed'"
-    run_once: true
-  - name: add pods CIDR (Overlay mode) - {{ kubernetes_pods_cidr }}
-    command: calicoctl pool add {{ kubernetes_pods_cidr }} --nat-outgoing --ipip
-    environment:
-      DEFAULT_IPV4: "{{ internal_ipv4 }}"
-      ETCD_ENDPOINTS: "{{ etcd_networking_cluster_ip_list }}"
-      ETCD_CA_CERT_FILE: "{{ kubernetes_certificates_ca_path }}"
-      ETCD_CERT_FILE: "{{ kubernetes_certificates_cert_path }}"
-      ETCD_KEY_FILE: "{{ kubernetes_certificates_key_path }}"
-    when: "'master' in group_names and calico_network_type == 'overlay'"
+
+  - name: create /etc/calico directory
+    file:
+      path: "{{ calico_dir }}"
+      state: directory
+  - name: copy calicoctl.cfg to remote
+    template:
+      src: calicoctl.cfg.j2
+      dest: "{{ calicoctl_conf_path }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ network_environment_mode }}"
+  - name: copy ipPool.yaml to remote
+    template:
+      src: ipPool.yaml.j2
+      dest: "{{ calico_ippool_path }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ network_environment_mode }}"
+  - name: add pods CIDR - {{ kubernetes_pods_cidr }}
+    command: calicoctl apply -f {{ calico_ippool_path }}
     run_once: true
 
   ## Start calico-node serivce on the nodes after configuring the calico pool.

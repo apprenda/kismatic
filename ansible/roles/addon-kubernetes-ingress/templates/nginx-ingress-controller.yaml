@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: ingress
+  namespace: kube-system
+spec:
+  template:
+    metadata:
+      labels:
+        name: ingress
+    spec:
+      terminationGracePeriodSeconds: 60
+      hostNetwork: true # required in a CNI networkd
+      nodeSelector:
+        ingress: "true"
+      containers:
+      - image: {{ nginx_ingress_controller_img }}
+        name: ingress
+        imagePullPolicy: Always
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10254
+            scheme: HTTP
+          initialDelaySeconds: 10
+          timeoutSeconds: 1
+        # use downward API
+        env:
+          - name: POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+          - name: POD_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+        ports:
+        - containerPort: 80
+          hostPort: 80
+        - containerPort: 443
+          hostPort: 443
+        args:
+        - /nginx-ingress-controller
+        - --default-backend-service=kube-system/default-http-backend

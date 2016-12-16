@@ -11,7 +11,7 @@ import (
 func getNodeRoles(commaSepRoles string) ([]string, error) {
 	roles := strings.Split(commaSepRoles, ",")
 	for _, r := range roles {
-		if r != "etcd" && r != "master" && r != "worker" {
+		if r != "etcd" && r != "master" && r != "worker" && r != "ingress" {
 			return nil, fmt.Errorf("%s is not a valid node role", r)
 		}
 	}

@@ -6,9 +6,9 @@
     become_method: sudo
     vars_files:
       - group_vars/all.yaml
-      - group_vars/kubelet-worker.yaml
+    vars:
+      - kubernetes_schedulable: true
 
     roles:
-      - network-environment
       - kubeconfig
       - kubelet
