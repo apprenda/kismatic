@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ipPool
+metadata:
+  cidr: "{{ kubernetes_pods_cidr }}"
+spec:
+  ipip:
+    enabled: {% if calico_network_type == 'overlay' %}true{% else %}false{% endif %}
+
+  nat-outgoing: true
+  disabled: false

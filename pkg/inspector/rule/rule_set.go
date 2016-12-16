@@ -87,41 +87,41 @@ const defaultRuleSet = `---
 - kind: PackageAvailable
   when: ["etcd", "ubuntu"]
   packageName: kismatic-etcd
-  packageVersion: 1.4.6-1
+  packageVersion: 1.5.1-1
 - kind: PackageAvailable
   when: ["master","ubuntu"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.4.6-1
+  packageVersion: 1.5.1-1
 - kind: PackageAvailable
   when: ["worker","ubuntu"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.4.6-1
+  packageVersion: 1.5.1-1
 
 - kind: PackageAvailable
   when: ["etcd", "centos"]
   packageName: kismatic-etcd
-  packageVersion: 1.4.6_1-1
+  packageVersion: 1.5.1_1-1
 - kind: PackageAvailable
   when: ["master","centos"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.4.6_1-1
+  packageVersion: 1.5.1_1-1
 - kind: PackageAvailable
   when: ["worker","centos"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.4.6_1-1
+  packageVersion: 1.5.1_1-1
 
 - kind: PackageAvailable
   when: ["etcd", "rhel"]
   packageName: kismatic-etcd
-  packageVersion: 1.4.6_1-1
+  packageVersion: 1.5.1_1-1
 - kind: PackageAvailable
   when: ["master","rhel"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.4.6_1-1
+  packageVersion: 1.5.1_1-1
 - kind: PackageAvailable
   when: ["worker","rhel"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.4.6_1-1
+  packageVersion: 1.5.1_1-1
 `
 
 // DefaultRules returns the list of rules that are built into the inspector

@@ -10,7 +10,7 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 1. Add the Kismatic repo to the machine
 
-`sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
+`sudo curl https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
 
 2. Install the RPMs for the type of node you want to create
 
@@ -26,11 +26,11 @@ By default, Kismatic will install its own repos onto machines and use them to do
 1. Add the Kismatic repo to the machine
    1. Add the Kismatic public key to apt
 
-`wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add -`
+`wget -qO - https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key | sudo apt-key add -`
 
    2. Add the Kismatic repo
 
-`sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com xenial main"`
+`sudo add-apt-repository "deb https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com xenial main"`
 
 2. Refresh the machine's repo cache
 

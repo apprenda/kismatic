@@ -37,5 +37,5 @@
     when: docker_ps_registry|failed
 
   - name: start docker registry container
-    command: docker run -d -p {{ docker_registry_port }}:5000 --restart=always --name registry -v {{docker_install_dir}}:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/{{docker_certificates_cert_file_name}} -e REGISTRY_HTTP_TLS_KEY=/certs/{{docker_certificates_key_file_name}} registry:2.5.1
+    command: docker run -d -p {{ docker_registry_port }}:5000 --restart=always --name registry -v {{docker_install_dir}}:/certs -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/{{docker_certificates_cert_file_name}} -e REGISTRY_HTTP_TLS_KEY=/certs/{{docker_certificates_key_file_name}} registry:{{ docker_registry_version }}
     when: docker_ps_registry|failed

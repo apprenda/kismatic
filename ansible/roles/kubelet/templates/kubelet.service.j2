@@ -5,7 +5,7 @@ After=docker.service
 Requires=docker.service
 
 [Service]
-EnvironmentFile={{ network_environment_path }}
+Environment=INTERNAL_IP={{ internal_ipv4 }}
 Environment=CLUSTER_DNS={{ kubernetes_dns_service_ip }}
 Environment=HOSTNAME={{ inventory_hostname }}
 Environment=KUBECONFIG={{ kubernetes_kubeconfig_path }}
@@ -24,6 +24,7 @@ ExecStart=/usr/bin/kubelet \
   --hostname-override=${HOSTNAME} \
   --require-kubeconfig \
   --kubeconfig=${KUBECONFIG} \
+  --node-ip=${INTERNAL_IP} \
   --pod-infra-container-image=${INFRA_IMG} \
   --register-schedulable=${REGISTER_SCHEDULABLE} \
   --serialize-image-pulls=false \

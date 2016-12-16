@@ -5,6 +5,7 @@
     "etcd_cert_file": "{{ kubernetes_certificates_cert_path }}",
     "etcd_key_file": "{{ kubernetes_certificates_key_path }}",
     "etcd_ca_cert_file": "{{ kubernetes_certificates_ca_path }}",
+    "hostname": "{{ inventory_hostname }}",
     "kubernetes": {
       "kubeconfig": "{{ kubernetes_kubeconfig_path }}"
     },
@@ -14,8 +15,7 @@
     },
 {% endif %}
     "ipam": {
-      "type": "calico-ipam",
-      "subnet": "usePodCidr"
+      "type": "calico-ipam"
     },
     "log_level": "info"
 }

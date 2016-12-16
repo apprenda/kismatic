@@ -9,6 +9,5 @@
       - group_vars/kubelet-master.yaml
 
     roles:
-      - network-environment
       - kubeconfig
       - kubelet

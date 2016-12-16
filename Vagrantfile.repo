@@ -36,8 +36,8 @@ Vagrant.configure(2) do |config|
       echo "aws_access_key_id = ${AWS_ACCESS_KEY_ID}" >> /root/.aws/credentials
       echo "aws_secret_access_key = ${AWS_SECRET_ACCESS_KEY}" >> /root/.aws/credentials
       cat /root/.aws/credentials
-      aws s3 sync s3://kismatic-packages-rpm /usr/share/nginx/html
-      aws s3 sync s3://kismatic-packages-deb /usr/share/nginx/html
+      aws s3 sync s3://kismatic-packages-rpm-test /usr/share/nginx/html
+      aws s3 sync s3://kismatic-packages-deb-test /usr/share/nginx/html
     SHELL
   end
 
