@@ -12,6 +12,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
+	"github.com/apprenda/kismatic/pkg/retry"
 	"github.com/apprenda/kismatic/pkg/util"
 )
 
@@ -203,7 +204,7 @@ func (s *SSHConnection) validate() (bool, []error) {
 		for _, node := range s.Nodes {
 			go func(node Node) {
 				defer wg.Done()
-				sshErr := verifySSH(&node, s.SSHConfig, sshClientConfig)
+				sshErr := retry.WithBackoff(func() error { return verifySSH(&node, s.SSHConfig, sshClientConfig) }, 5)
 				// Need to send something the buffered channel
 				if sshErr != nil {
 					errQueue <- fmt.Errorf("SSH connectivity validation failed for %q: %v", node.IP, sshErr)
