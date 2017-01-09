@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kismatic-reader
+spec:
+  completions: 10
+  parallelism: 10 # Multiple readers at the same time
+  activeDeadlineSeconds: 60 # Wait up to a minute for this job to complete
+  template:
+    metadata:
+      name: kismatic-reader
+    spec:
+      containers:
+      - name: writer
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+          - "if [ \"`ls /mnt/kismatic-writer* | wc -l`\" = \"10\" ]; then exit 0; else exit 1; fi;"
+        volumeMounts:
+          - name: test-volume
+            mountPath: "/mnt"
+      volumes:
+        - name: test-volume
+          persistentVolumeClaim:
+            claimName: kismatic-integration-claim
+      restartPolicy: Never
