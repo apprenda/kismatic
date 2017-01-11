@@ -65,13 +65,12 @@ exit 0
 		err = cmd.Run()
 		FailIfError(err, "Error running storage play")
 
-		By("Setting up a gluster volume on the nodes")
-		// TODO replace with acutal CLI command
-		cmd = exec.Command("./kismatic", "install", "step", "_volume-add.yaml", "-f", f.Name(), "--extra-vars", "volume_mount=/,volume_replica_count=2,volume_name=gv0,volume_quota=1,volume_quota_raw=1073741824")
+		By("Setting up a gluster volume with replication = 2")
+		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "1", "--replica-count", "2", "gv0")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
-		FailIfError(err, "Error running volume-add play")
+		FailIfError(err, "Error running volume add command")
 
 		By("Mounting the volume on one of the nodes, and writing a file")
 		mount := fmt.Sprintf("sudo mount -t glusterfs %s:/gv0 /mnt1", nodes.worker[0].Hostname)
@@ -83,9 +82,8 @@ exit 0
 		err = runViaSSH([]string{"sudo cat /data/gv0/test-file1"}, nodes.worker[0:2], sshKey, 30*time.Second)
 		FailIfError(err, "Error verifying that the test file is in the gluster volume")
 
-		By("Setting up a gluster volume on one node")
-		// TODO replace with acutal CLI command
-		cmd = exec.Command("./kismatic", "install", "step", "_volume-add.yaml", "-f", f.Name(), "--extra-vars", "volume_mount=/,volume_replica_count=1,volume_name=gv1,volume_quota=1,volume_quota_raw=1073741824")
+		By("Setting up a gluster volume with no replication")
+		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "1", "--replica-count", "1", "gv1")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
@@ -97,9 +95,22 @@ exit 0
 		FailIfError(err, "Error mounting gluster volume")
 
 		time.Sleep(3 * time.Second)
-		By("Verifying file is on the one node")
-		err = runViaSSH([]string{"sudo cat /data/gv1/test-file2"}, nodes.worker[0:2], sshKey, 30*time.Second)
-		// file shuld not exist and should error
-		FailIfSuccess(err, "Error verifying that the test file is only in one volume")
+		By("Verifying file was not replicated")
+		err = runViaSSH([]string{"sudo cat /data/gv1/test-file2"}, nodes.worker[0:2], sshKey, 30*time.Second) // expect the command to fail on one of the nodes
+		FailIfSuccess(err, "Error verifying that the test file is only in one node")
 	})
+}
+
+func testVolumeAdd(masterNode NodeDeets, sshKey string) {
+	By("Adding a volume using kismatic")
+	volName := "kismatic-test-volume"
+	cmd := exec.Command("./kismatic", "volume", "add", "-f", "kismatic-testing.yaml", "1", volName)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	FailIfError(err, "Error creating a new volume")
+
+	By("Verifying Kuberntes PV was created")
+	err = runViaSSH([]string{"sudo kubectl get pv " + volName}, []NodeDeets{masterNode}, sshKey, 1*time.Minute)
+	FailIfError(err, "Error verifying if PV gv0 was created")
 }
