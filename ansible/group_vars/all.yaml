@@ -29,8 +29,6 @@ temprary_download_dir: /tmp/kismatic
 init_system_dir: /etc/systemd/system/
 init_system_file_extenstion: service
 bin_dir: /usr/bin
-# Path to local directory that contains the certificates
-tls_directory: ../../../generated-certs
 #===============================================================================
 # service ports
 etcd_k8s_client_port: 2379
@@ -65,7 +63,6 @@ docker_service_path: "{{ init_system_dir }}/{{ docker_service_file }}"
 docker_certificates_ca_file_name: ca.pem
 docker_certificates_cert_file_name: docker.pem
 docker_certificates_key_file_name: docker-key.pem
-docker_certificates_ca_path: "{{ tls_directory }}/ca.pem"
 docker_certificates_cert_path: "{{ docker_install_dir }}/{{ docker_certificates_cert_file_name }}"
 docker_certificates_key_path: "{{ docker_install_dir }}/{{ docker_certificates_key_file_name }}"
 #===============================================================================
@@ -78,14 +75,8 @@ network_environment_path: "/etc/network-environment"
 #file modes
 calico_executable_mode: 0775
 #networking
-modify_hosts_file: false
 default_cidr: 192.168.0.0/16
-kubernetes_dns_service_ip: 10.3.0.10
 kubernetes_dns_service_addr: https://{{kubernetes_dns_service_ip}}:{{kubernetes_master_secure_port}}
-kubernetes_services_cidr: 10.3.0.0/24
-kubernetes_pods_cidr: 10.2.0.0/16
-calico_network_type: overlay # Default to the overlay type. Must be 'routed' or 'overlay'
-enable_calico_policy: false
 #===============================================================================
 # kubernetes
 # directories
@@ -112,10 +103,7 @@ kubernetes_certificates_group: root
 docker_certificates_owner: root
 docker_certificates_group: root
 # kubernetes cluster config
-kubernetes_cluster_name: kubernetes
-kubernetes_admin_password: admin_password
 kubernetes_master_apiserver_count: "{{ groups['master'] | length }}"
-kubernetes_load_balanced_fqdn: "{{ hostvars[groups['master'][0]].internal_ipv4 }}"
 kubernetes_master_ip: https://{{ kubernetes_load_balanced_fqdn }}:{{ kubernetes_master_secure_port }}
 kubernetes_schedulable: "{% if 'worker' in group_names %}true{% else %}false{% endif %}"
 # kubernetes certificate config
@@ -135,12 +123,6 @@ kubernetes_certificates_service_account_key_path: "{{ kubernetes_install_dir }}/
 etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_networking_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 #===============================================================================
-# docker registry
-use_private_docker_registry: false
-setup_internal_docker_registry: false
-docker_registry_address: "{{ hostvars[groups['master'][0]].ansible_host }}"
-docker_registry_port: 8443
-
 calico_node_img: calico/node:{{calico_docker_version}}
 
 calico_kube_policy_controller_orig_img: calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}
@@ -167,12 +149,13 @@ defaultbackend_img: gcr.io/google_containers/defaultbackend:{{ defaultbackend_ve
 nginx_ingress_controller_img: gcr.io/google_containers/nginx-ingress-controller:{{ nginx_ingress_controller_version }}
 
 pause_img: gcr.io/google_containers/pause-amd64:{{ pause_version }}
+
 # kismatic packages
-allow_package_installation: true
 yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
 yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
 deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
 deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
+
 # Uncomment below to use test repo
 # yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
 # yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
@@ -192,6 +175,7 @@ deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/publi
 #pv_logging_nfs_dir: "/kubernetes/logging"
 #pv_logging_storage_size: "10Gi"
 #===============================================================================
+
 # Preflight check variables
 preflight_check_tcp_ports: "{{etcd_k8s_client_port}},{{etcd_networking_client_port}},{{kubernetes_master_secure_port}},{{kubernetes_master_insecure_port}}"
 

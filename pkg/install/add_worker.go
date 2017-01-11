@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apprenda/kismatic/pkg/ansible"
 	"github.com/apprenda/kismatic/pkg/install/explain"
 	"github.com/apprenda/kismatic/pkg/util"
 )
@@ -42,11 +41,7 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 	}
 	// Build the ansible inventory
 	inventory := buildInventoryFromPlan(&updatedPlan)
-	tlsDir, err := filepath.Abs(ae.certsDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
-	}
-	ev, err := ae.buildInstallExtraVars(&updatedPlan, tlsDir)
+	cc, err := ae.buildInstallExtraVars(&updatedPlan)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ansible vars: %v", err)
 	}
@@ -59,11 +54,11 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 	util.PrintHeader(ae.stdout, "Adding Worker Node to Cluster", '=')
 	playbook := "kubernetes-worker.yaml"
 	eventExplainer := &explain.DefaultEventExplainer{}
-	runner, explainer, err := ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLogFile)
+	runner, explainer, err := ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLogFile, runDirectory)
 	if err != nil {
 		return nil, err
 	}
-	eventStream, err := runner.StartPlaybookOnNode(playbook, inventory, *ev, newWorker.Host)
+	eventStream, err := runner.StartPlaybookOnNode(playbook, inventory, *cc, newWorker.Host)
 	if err != nil {
 		return nil, fmt.Errorf("error running ansible playbook: %v", err)
 	}
@@ -77,11 +72,11 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 		util.PrintHeader(ae.stdout, "Updating Hosts Files On All Nodes", '=')
 		playbook := "_hosts.yaml"
 		eventExplainer := &explain.DefaultEventExplainer{}
-		runner, explainer, err := ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLogFile)
+		runner, explainer, err := ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLogFile, runDirectory)
 		if err != nil {
 			return nil, err
 		}
-		eventStream, err := runner.StartPlaybook(playbook, inventory, *ev)
+		eventStream, err := runner.StartPlaybook(playbook, inventory, *cc)
 		if err != nil {
 			return nil, fmt.Errorf("error running playbook to update hosts files on all nodes: %v", err)
 		}
@@ -93,15 +88,15 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 	// Verify that the node registered with API server
 	util.PrintHeader(ae.stdout, "Running New Worker Smoke Test", '=')
 	playbook = "_worker-smoke-test.yaml"
-	ev = &ansible.ExtraVars{
-		"worker_node": newWorker.Host,
-	}
+
+	cc.WorkerNode = newWorker.Host
+
 	eventExplainer = &explain.DefaultEventExplainer{}
-	runner, explainer, err = ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLogFile)
+	runner, explainer, err = ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLogFile, runDirectory)
 	if err != nil {
 		return nil, err
 	}
-	eventStream, err = runner.StartPlaybook(playbook, inventory, *ev)
+	eventStream, err = runner.StartPlaybook(playbook, inventory, *cc)
 	if err != nil {
 		return nil, fmt.Errorf("error running new worker smoke test: %v", err)
 	}

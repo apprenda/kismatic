@@ -6,7 +6,9 @@ import (
 )
 
 // Inventory is a collection of Nodes, keyed by role.
-type Inventory []Role
+type Inventory struct {
+	Roles []Role
+}
 
 // Role is an Ansible role, containing nodes that belong to the role.
 type Role struct {
@@ -35,7 +37,7 @@ type Node struct {
 // ToINI converts the inventory into INI format
 func (i Inventory) ToINI() []byte {
 	w := &bytes.Buffer{}
-	for _, role := range i {
+	for _, role := range i.Roles {
 		fmt.Fprintf(w, "[%s]\n", role.Name)
 		for _, n := range role.Nodes {
 			internalIP := n.PublicIP
@@ -45,5 +47,6 @@ func (i Inventory) ToINI() []byte {
 			fmt.Fprintf(w, "%q ansible_host=%q internal_ipv4=%q ansible_ssh_private_key_file=%q ansible_port=%d ansible_user=%q\n", n.Host, n.PublicIP, internalIP, n.SSHPrivateKey, n.SSHPort, n.SSHUser)
 		}
 	}
+
 	return w.Bytes()
 }

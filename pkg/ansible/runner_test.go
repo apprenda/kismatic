@@ -6,7 +6,7 @@ import (
 )
 
 func TestWaitPlaybook(t *testing.T) {
-	r, err := NewRunner(ioutil.Discard, ioutil.Discard, "")
+	r, err := NewRunner(ioutil.Discard, ioutil.Discard, "", "/tmp")
 	if err != nil {
 		t.Fatalf("Error creating runner: %v", err)
 	}

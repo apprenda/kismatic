@@ -1,5 +1,6 @@
 ---
   # Contains list of playbooks to setup a HA enterprise ready kubernetes cluster
+  - include: _argsdebug.yaml
   - include: _all.yaml
   - include: _hosts.yaml
     when: modify_hosts_file|bool == true

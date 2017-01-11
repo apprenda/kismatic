@@ -1,11 +1,16 @@
 package integration
 
+type NFSVolume struct {
+	Host string
+}
+
 type PlanAWS struct {
 	Etcd                         []NodeDeets
 	Master                       []NodeDeets
 	Worker                       []NodeDeets
 	Ingress                      []NodeDeets
 	Storage                      []NodeDeets
+	NFSVolume                    []NFSVolume
 	MasterNodeFQDN               string
 	MasterNodeShortName          string
 	SSHUser                      string
@@ -75,4 +80,8 @@ storage:
   - host: {{.Hostname}}
     ip: {{.PublicIP}}
     internalip: {{.PrivateIP}}{{end}}
+nfs:
+  nfs_volume:{{range .NFSVolume}}
+  - nfs_host: {{.Host}}
+    mount_path: /{{end}}
 `

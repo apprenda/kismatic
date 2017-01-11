@@ -81,7 +81,7 @@ func NewExecutor(stdout io.Writer, errOut io.Writer, options ExecutorOptions) (E
 		CAConfigFile:            filepath.Join(ansibleDir, "playbooks", "tls", "ca-config.json"),
 		CASigningProfile:        "kubernetes",
 		GeneratedCertsDirectory: certsDir,
-		Log:                     stdout,
+		Log: stdout,
 	}
 	return &ansibleExecutor{
 		options:             options,
@@ -142,22 +142,17 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
 	}
 	inventory := buildInventoryFromPlan(plan)
-	// Need absolute path for ansible. Otherwise ansible looks for it in the wrong place.
-	tlsDir, err := filepath.Abs(ae.certsDir)
-	if err != nil {
-		return fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
-	}
-	ev, err := ae.buildInstallExtraVars(plan, tlsDir)
+	cc, err := ae.buildInstallExtraVars(plan)
 	if err != nil {
 		return err
 	}
-	// Add storage related vars
-	(*ev)["volume_replica_count"] = strconv.Itoa(volume.ReplicateCount)
-	(*ev)["volume_name"] = volume.Name
-	(*ev)["volume_quota"] = strconv.Itoa(volume.SizeGB)
-	(*ev)["volume_quota_raw"] = strconv.Itoa(volume.SizeGB * 1024)
-	(*ev)["volume_mount"] = "/"
 
+	// Add storage related vars
+	cc.VolumeReplicaCount = volume.ReplicateCount
+	cc.VolumeName = volume.Name
+	cc.VolumeQuota = volume.SizeGB
+	cc.VolumeQuotaRaw = volume.SizeGB * 1024
+	cc.VolumeMount = "/"
 
 	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
 	ansibleLogFile, err := os.Create(ansibleLogFilename)
@@ -167,7 +162,7 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	util.PrintHeader(ae.stdout, "Add Persistent Storage Volume", '=')
 	playbook := "volume-add.yaml"
 	eventExplainer := &explain.DefaultEventExplainer{}
-	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *ev, ansibleLogFile); err != nil {
+	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
 		return err
 	}
 	return nil
@@ -193,12 +188,7 @@ func (ae *ansibleExecutor) Install(p *Plan) error {
 	// Build the ansible inventory
 	inventory := buildInventoryFromPlan(p)
 
-	// Need absolute path for ansible. Otherwise ansible looks for it in the wrong place.
-	tlsDir, err := filepath.Abs(ae.certsDir)
-	if err != nil {
-		return fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
-	}
-	ev, err := ae.buildInstallExtraVars(p, tlsDir)
+	cc, err := ae.buildInstallExtraVars(p)
 	if err != nil {
 		return err
 	}
@@ -211,77 +201,78 @@ func (ae *ansibleExecutor) Install(p *Plan) error {
 	util.PrintHeader(ae.stdout, "Installing Cluster", '=')
 	playbook := "kubernetes.yaml"
 	eventExplainer := &explain.DefaultEventExplainer{}
-	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *ev, ansibleLogFile); err != nil {
+	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
 		return err
 	}
 	return nil
 }
 
 // creates the extra vars that are required for the installation playbook.
-func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan, tlsDirectory string) (*ansible.ExtraVars, error) {
+func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan) (*ansible.ClusterCatalog, error) {
+	tlsDir, err := filepath.Abs(ae.certsDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
+	}
+
 	dnsIP, err := getDNSServiceIP(p)
 	if err != nil {
 		return nil, fmt.Errorf("error getting DNS service IP: %v", err)
 	}
-	ev := ansible.ExtraVars{
-		"kubernetes_cluster_name":    p.Cluster.Name,
-		"kubernetes_admin_password":  p.Cluster.AdminPassword,
-		"tls_directory":              tlsDirectory,
-		"calico_network_type":        p.Cluster.Networking.Type,
-		"kubernetes_services_cidr":   p.Cluster.Networking.ServiceCIDRBlock,
-		"kubernetes_pods_cidr":       p.Cluster.Networking.PodCIDRBlock,
-		"kubernetes_dns_service_ip":  dnsIP,
-		"modify_hosts_file":          strconv.FormatBool(p.Cluster.Networking.UpdateHostsFiles),
-		"enable_calico_policy":       strconv.FormatBool(p.Cluster.Networking.PolicyEnabled),
-		"allow_package_installation": strconv.FormatBool(p.Cluster.AllowPackageInstallation),
-		"kuberang_path":              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
+
+	cc := ansible.ClusterCatalog{
+		ClusterName:               p.Cluster.Name,
+		AdminPassword:             p.Cluster.AdminPassword,
+		TLSDirectory:              tlsDir,
+		CalicoNetworkType:         p.Cluster.Networking.Type,
+		ServicesCIDR:              p.Cluster.Networking.ServiceCIDRBlock,
+		PodCIDR:                   p.Cluster.Networking.PodCIDRBlock,
+		DNSServiceIP:              dnsIP,
+		EnableModifyHosts:         p.Cluster.Networking.UpdateHostsFiles,
+		EnableCalicoPolicy:        p.Cluster.Networking.PolicyEnabled,
+		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
+		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
 	}
 
 	// Setup FQDN or default to first master
 	if p.Master.LoadBalancedFQDN != "" {
-		ev["kubernetes_load_balanced_fqdn"] = p.Master.LoadBalancedFQDN
-	}
-
-	// Setup an internal Docker registry or use a provided one
-	// Else just use DockerHub
-	if p.DockerRegistry.SetupInternal || p.DockerRegistry.Address != "" {
-		ev["use_private_docker_registry"] = "true"
+		cc.LoadBalancedFQDN = p.Master.LoadBalancedFQDN
 	} else {
-		ev["use_private_docker_registry"] = "false"
+		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
 	}
-	ev["setup_internal_docker_registry"] = strconv.FormatBool(p.DockerRegistry.SetupInternal)
 
-	// Use user provided details for Docker registry
 	if p.DockerRegistry.Address != "" {
-		ev["docker_certificates_ca_path"] = p.DockerRegistry.CAPath
-		ev["docker_registry_address"] = p.DockerRegistry.Address
-		ev["docker_registry_port"] = strconv.Itoa(p.DockerRegistry.Port)
-	}
+		cc.EnableInternalDockerRegistry = false
+		cc.EnablePrivateDockerRegistry = true
+		cc.DockerCAPath = p.DockerRegistry.CAPath
+		cc.DockerRegistryAddress = p.DockerRegistry.Address
+		cc.DockerRegistryPort = strconv.Itoa(p.DockerRegistry.Port)
+	} else if p.DockerRegistry.SetupInternal {
+		cc.EnableInternalDockerRegistry = true
+		cc.EnablePrivateDockerRegistry = true
+		cc.DockerRegistryAddress = p.Master.Nodes[0].IP
+		cc.DockerCAPath = tlsDir + "/ca.pem"
+		cc.DockerRegistryPort = "8443"
+	} // Else just use DockerHub
+
 	if ae.options.RestartServices {
-		services := []string{"etcd", "apiserver", "controller_manager", "scheduler", "proxy", "kubelet", "calico_node", "docker"}
-		for _, s := range services {
-			ev[fmt.Sprintf("force_%s_restart", s)] = strconv.FormatBool(true)
-		}
+		cc.EnableRestart()
 	}
-	// Need to pass variable to Ansible to skip cleanly
-	ev["configure_ingress"] = "false"
+
 	if p.Ingress.Nodes != nil && len(p.Ingress.Nodes) > 0 {
-		ev["configure_ingress"] = "true"
-	}
-	ev["configure_storage"] = "false"
-	if p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0 {
-		ev["configure_storage"] = "true"
+		cc.EnableConfigureIngress = true
+	} else {
+		cc.EnableConfigureIngress = false
 	}
 
-	// Merge with CLI extra-vars
-	// TODO remove later
-	if ae.options.ExtraVars != nil {
-		for k, v := range ae.options.ExtraVars {
-			ev[k] = v
-		}
+	for _, n := range p.NFS.Volumes {
+		cc.NFSVolumes = append(cc.NFSVolumes, ansible.NFSVolume{
+			Path: n.Path,
+			Host: n.Host,
+		})
 	}
+	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
 
-	return &ev, nil
+	return &cc, nil
 }
 
 func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
@@ -296,9 +287,9 @@ func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
 		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
 	}
 
-	ev := ansible.ExtraVars{
-		"kuberang_path":     filepath.Join("kuberang", "linux", "amd64", "kuberang"),
-		"modify_hosts_file": strconv.FormatBool(p.Cluster.Networking.UpdateHostsFiles),
+	cc, err := ae.buildInstallExtraVars(p)
+	if err != nil {
+		return err
 	}
 	inventory := buildInventoryFromPlan(p)
 
@@ -308,7 +299,7 @@ func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
 	explainer := &explain.PreflightEventExplainer{
 		DefaultExplainer: &explain.DefaultEventExplainer{},
 	}
-	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, ev, ansibleLogFile); err != nil {
+	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
 		return fmt.Errorf("error running smoketest: %v", err)
 	}
 	return nil
@@ -338,20 +329,22 @@ func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
 	inventory := buildInventoryFromPlan(p)
 
 	pwd, _ := os.Getwd()
-	ev := ansible.ExtraVars{
-		// TODO: attempt to clean up these paths somehow...
-		"kismatic_preflight_checker":       filepath.Join("inspector", "linux", "amd64", "kismatic-inspector"),
-		"kismatic_preflight_checker_local": filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector"),
-		"modify_hosts_file":                strconv.FormatBool(p.Cluster.Networking.UpdateHostsFiles),
-		"allow_package_installation":       strconv.FormatBool(p.Cluster.AllowPackageInstallation),
+
+	cc, err := ae.buildInstallExtraVars(p)
+	if err != nil {
+		return err
 	}
+
+	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
+	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
+	cc.EnablePackageInstallation = p.Cluster.AllowPackageInstallation
 
 	// run the pre-flight playbook with pre-flight explainer
 	playbook := "preflight.yaml"
 	explainer := &explain.PreflightEventExplainer{
 		DefaultExplainer: &explain.DefaultEventExplainer{},
 	}
-	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, ev, ansibleLogFile); err != nil {
+	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
 		return fmt.Errorf("error running preflight: %v", err)
 	}
 	return nil
@@ -376,22 +369,16 @@ func (ae *ansibleExecutor) RunTask(taskName string, p *Plan) error {
 	}
 	explainer := &explain.DefaultEventExplainer{}
 	inventory := buildInventoryFromPlan(p)
-	tlsDir, err := filepath.Abs(ae.certsDir)
-	if err != nil {
-		return fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
-	}
-	ev, err := ae.buildInstallExtraVars(p, tlsDir)
+	ev, err := ae.buildInstallExtraVars(p)
 	if err != nil {
 		return err
 	}
 	util.PrintHeader(ae.stdout, "Running Task", '=')
-	if err := ae.runPlaybookWithExplainer(taskName, explainer, inventory, *ev, ansibleLogFile); err != nil {
+	if err := ae.runPlaybookWithExplainer(taskName, explainer, inventory, *ev, ansibleLogFile, runDir); err != nil {
 		return fmt.Errorf("error running task: %v", err)
 	}
 	return nil
 }
-
-
 
 func (ae *ansibleExecutor) createRunDirectory(runName string) (string, error) {
 	start := time.Now()
@@ -423,15 +410,15 @@ func (ae *ansibleExecutor) generateTLSAssets(p *Plan) error {
 	return nil
 }
 
-func (ae *ansibleExecutor) runPlaybookWithExplainer(playbook string, eventExplainer explain.AnsibleEventExplainer, inv ansible.Inventory, ev ansible.ExtraVars, ansibleLog io.Writer) error {
+func (ae *ansibleExecutor) runPlaybookWithExplainer(playbook string, eventExplainer explain.AnsibleEventExplainer, inv ansible.Inventory, cc ansible.ClusterCatalog, ansibleLog io.Writer, runDirectory string) error {
 	// Setup sinks for explainer and ansible stdout
-	runner, explainer, err := ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLog)
+	runner, explainer, err := ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLog, runDirectory)
 	if err != nil {
 		return err
 	}
 
 	// Start running ansible with the given playbook
-	eventStream, err := runner.StartPlaybook(playbook, inv, ev)
+	eventStream, err := runner.StartPlaybook(playbook, inv, cc)
 	if err != nil {
 		return fmt.Errorf("error running ansible playbook: %v", err)
 	}
@@ -446,7 +433,7 @@ func (ae *ansibleExecutor) runPlaybookWithExplainer(playbook string, eventExplai
 	return nil
 }
 
-func (ae *ansibleExecutor) getAnsibleRunnerAndExplainer(explainer explain.AnsibleEventExplainer, ansibleLog io.Writer) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error) {
+func (ae *ansibleExecutor) getAnsibleRunnerAndExplainer(explainer explain.AnsibleEventExplainer, ansibleLog io.Writer, runDirectory string) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error) {
 	if ae.runnerExplainerFactory != nil {
 		return ae.runnerExplainerFactory(explainer, ansibleLog)
 	}
@@ -463,7 +450,7 @@ func (ae *ansibleExecutor) getAnsibleRunnerAndExplainer(explainer explain.Ansibl
 	}
 
 	// Send stdout and stderr to ansibleOut
-	runner, err := ansible.NewRunner(ansibleOut, ansibleOut, ae.ansibleDir)
+	runner, err := ansible.NewRunner(ansibleOut, ansibleOut, ae.ansibleDir, runDirectory)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating ansible runner: %v", err)
 	}
@@ -502,26 +489,29 @@ func buildInventoryFromPlan(p *Plan) ansible.Inventory {
 			storageNodes = append(storageNodes, installNodeToAnsibleNode(&n, &p.Cluster.SSH))
 		}
 	}
+
 	inventory := ansible.Inventory{
-		{
-			Name:  "etcd",
-			Nodes: etcdNodes,
-		},
-		{
-			Name:  "master",
-			Nodes: masterNodes,
-		},
-		{
-			Name:  "worker",
-			Nodes: workerNodes,
-		},
-		{
-			Name:  "ingress",
-			Nodes: ingressNodes,
-		},
-		{
-			Name:  "storage",
-			Nodes: storageNodes,
+		Roles: []ansible.Role{
+			{
+				Name:  "etcd",
+				Nodes: etcdNodes,
+			},
+			{
+				Name:  "master",
+				Nodes: masterNodes,
+			},
+			{
+				Name:  "worker",
+				Nodes: workerNodes,
+			},
+			{
+				Name:  "ingress",
+				Nodes: ingressNodes,
+			},
+			{
+				Name:  "storage",
+				Nodes: storageNodes,
+			},
 		},
 	}
 

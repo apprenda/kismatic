@@ -4,7 +4,7 @@ Documentation=https://github.com/apprenda/kismatic
 
 [Service]
 User=root
-ExecStart={{ bin_dir }}/kismatic-inspector server --node-roles {{ group_names|join(",") }} --port 8888 {{ (allow_package_installation == 'true') | ternary('', '-e') }}
+ExecStart={{ bin_dir }}/kismatic-inspector server --node-roles {{ group_names|join(",") }} --port 8888 {{ (allow_package_installation|bool == true) | ternary('', '-e') }}
 
 [Install]
 WantedBy=multi-user.target

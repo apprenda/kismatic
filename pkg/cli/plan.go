@@ -84,7 +84,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	return nil
 }
 
-func buildPlan(etcdNodes int, masterNodes int, workerNodes int, ingressNodes int) install.Plan {
+func buildPlan(etcdNodes int, masterNodes int, workerNodes int, ingressNodes int) *install.Plan {
 	// Create a plan
 	masterNodeGroup := install.MasterNodeGroup{}
 	masterNodeGroup.ExpectedCount = masterNodes
@@ -104,5 +104,5 @@ func buildPlan(etcdNodes int, masterNodes int, workerNodes int, ingressNodes int
 		}
 	}
 
-	return plan
+	return &plan
 }

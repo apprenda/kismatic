@@ -1,7 +1,6 @@
 package ansible
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -28,14 +27,14 @@ type OutputFormat string
 type Runner interface {
 	// StartPlaybook runs the playbook asynchronously with the given inventory and extra vars.
 	// It returns a read-only channel that must be consumed for the playbook execution to proceed.
-	StartPlaybook(playbookFile string, inventory Inventory, vars ExtraVars) (<-chan Event, error)
+	StartPlaybook(playbookFile string, inventory Inventory, cc ClusterCatalog) (<-chan Event, error)
 	// WaitPlaybook blocks until the execution of the playbook is complete. If an error occurred,
 	// it is returned. Otherwise, returns nil to signal the completion of the playbook.
 	WaitPlaybook() error
 	// StartPlaybookOnNode runs the playbook asynchronously with the given inventory and extra vars
 	// against the specific node.
 	// It returns a read-only channel that must be consumed for the playbook execution to proceed.
-	StartPlaybookOnNode(playbookFile string, inventory Inventory, vars ExtraVars, node string) (<-chan Event, error)
+	StartPlaybookOnNode(playbookFile string, inventory Inventory, cc ClusterCatalog, node string) (<-chan Event, error)
 }
 
 type runner struct {
@@ -46,23 +45,13 @@ type runner struct {
 
 	pythonPath   string
 	ansibleDir   string
+	runDir       string
 	waitPlaybook func() error
 	namedPipe    string
 }
 
-// ExtraVars is a map of variables that are used when executing a playbook
-type ExtraVars map[string]string
-
-func (v ExtraVars) commandLineVars() (string, error) {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return "", fmt.Errorf("error marshaling ansible vars")
-	}
-	return string(b), nil
-}
-
 // NewRunner returns a new runner for running Ansible playbooks.
-func NewRunner(out, errOut io.Writer, ansibleDir string) (Runner, error) {
+func NewRunner(out, errOut io.Writer, ansibleDir string, runDir string) (Runner, error) {
 	// Ansible depends on python 2.7 being installed and on the path as "python".
 	// Validate that it is available
 	if _, err := exec.LookPath("python"); err != nil {
@@ -79,6 +68,7 @@ func NewRunner(out, errOut io.Writer, ansibleDir string) (Runner, error) {
 		errOut:     errOut,
 		pythonPath: ppath,
 		ansibleDir: ansibleDir,
+		runDir:     runDir,
 	}, nil
 }
 
@@ -104,32 +94,46 @@ func (r *runner) WaitPlaybook() error {
 }
 
 // RunPlaybook with the given inventory and extra vars
-func (r *runner) StartPlaybook(playbookFile string, inv Inventory, vars ExtraVars) (<-chan Event, error) {
-	return r.startPlaybook(playbookFile, inv, vars, "") // Don't set the --limit arg
+func (r *runner) StartPlaybook(playbookFile string, inv Inventory, cc ClusterCatalog) (<-chan Event, error) {
+	return r.startPlaybook(playbookFile, inv, cc, "") // Don't set the --limit arg
 }
 
 // StartPlaybookOnNode runs the playbook asynchronously with the given inventory and extra vars
 // against the specific node.
 // It returns a read-only channel that must be consumed for the playbook execution to proceed.
-func (r *runner) StartPlaybookOnNode(playbookFile string, inv Inventory, vars ExtraVars, node string) (<-chan Event, error) {
+func (r *runner) StartPlaybookOnNode(playbookFile string, inv Inventory, cc ClusterCatalog, node string) (<-chan Event, error) {
 	limitArg := node // set the --limit arg to the node we want to target
-	return r.startPlaybook(playbookFile, inv, vars, limitArg)
+	return r.startPlaybook(playbookFile, inv, cc, limitArg)
 }
 
-func (r *runner) startPlaybook(playbookFile string, inv Inventory, vars ExtraVars, limitArg string) (<-chan Event, error) {
+func (r *runner) startPlaybook(playbookFile string, inv Inventory, cc ClusterCatalog, limitArg string) (<-chan Event, error) {
 	playbook := filepath.Join(r.ansibleDir, "playbooks", playbookFile)
 	if _, err := os.Stat(playbook); os.IsNotExist(err) {
 		return nil, fmt.Errorf("playbook %q does not exist", playbook)
 	}
-	extraVars, err := vars.commandLineVars()
+
+	yamlBytes, err := cc.ToYAML()
 	if err != nil {
-		return nil, fmt.Errorf("error building extra vars: %v", err)
+		return nil, fmt.Errorf("error writing cluster catalog data to yaml: %v", err)
 	}
+	clusterCatalogFile := filepath.Join(r.ansibleDir, "clustercatalog.yaml")
+	if err = ioutil.WriteFile(clusterCatalogFile, yamlBytes, 0644); err != nil {
+		return nil, fmt.Errorf("error writing cluster catalog file to %q: %v", clusterCatalogFile, err)
+	}
+
 	inventoryFile := filepath.Join(r.ansibleDir, "inventory.ini")
-	if err = ioutil.WriteFile(inventoryFile, inv.ToINI(), 0644); err != nil {
+	if err := ioutil.WriteFile(inventoryFile, inv.ToINI(), 0644); err != nil {
 		return nil, fmt.Errorf("error writing inventory file to %q: %v", inventoryFile, err)
 	}
-	cmd := exec.Command(filepath.Join(r.ansibleDir, "bin", "ansible-playbook"), "-i", inventoryFile, "-s", playbook, "--extra-vars", extraVars)
+
+	if err := copyFileContents(clusterCatalogFile, filepath.Join(r.runDir, "clustercatalog.yaml")); err != nil {
+		return nil, fmt.Errorf("error copying clustercatalog.yaml to %q: %v", r.runDir, err)
+	}
+	if err := copyFileContents(inventoryFile, filepath.Join(r.runDir, "inventory.ini")); err != nil {
+		return nil, fmt.Errorf("error copying inventory.ini to %q: %v", r.runDir, err)
+	}
+
+	cmd := exec.Command(filepath.Join(r.ansibleDir, "bin", "ansible-playbook"), "-i", inventoryFile, "-s", playbook, "--extra-vars", "@"+clusterCatalogFile)
 	cmd.Stdout = r.out
 	cmd.Stderr = r.errOut
 
@@ -151,7 +155,7 @@ func (r *runner) startPlaybook(playbookFile string, inv Inventory, vars ExtraVar
 	// Create named pipe for getting JSON lines event stream
 	start := time.Now()
 	r.namedPipe = filepath.Join(os.TempDir(), fmt.Sprintf("ansible-pipe-%s", start.Format("2006-01-02-15-04-05.99999")))
-	if err = syscall.Mkfifo(r.namedPipe, 0644); err != nil {
+	if err := syscall.Mkfifo(r.namedPipe, 0644); err != nil {
 		return nil, fmt.Errorf("error creating named pipe %q: %v", r.namedPipe, err)
 	}
 	os.Setenv("ANSIBLE_JSON_LINES_PIPE", r.namedPipe)
@@ -161,7 +165,8 @@ func (r *runner) startPlaybook(playbookFile string, inv Inventory, vars ExtraVar
 	fmt.Fprintf(r.out, "export ANSIBLE_CALLBACK_PLUGINS=%v\n", os.Getenv("ANSIBLE_CALLBACK_PLUGINS"))
 	fmt.Fprintf(r.out, "export ANSIBLE_CALLBACK_WHITELIST=%v\n", os.Getenv("ANSIBLE_CALLBACK_WHITELIST"))
 	fmt.Fprintf(r.out, "export ANSIBLE_CONFIG=%v\n", os.Getenv("ANSIBLE_CONFIG"))
-	fmt.Fprintf(r.out, strings.Join(cmd.Args, " "))
+	fmt.Fprintf(r.out, "export ANSIBLE_JSON_LINES_PIPE=%v\n", os.Getenv("ANSIBLE_JSON_LINES_PIPE"))
+	fmt.Fprintln(r.out, strings.Join(cmd.Args, " "))
 
 	// Starts async execution of ansible, which will block until
 	// we start reading from the named pipe
@@ -188,4 +193,21 @@ func getPythonPath() (string, error) {
 	lib := filepath.Join(wd, "ansible", "lib", "python2.7", "site-packages")
 	lib64 := filepath.Join(wd, "ansible", "lib64", "python2.7", "site-packages")
 	return fmt.Sprintf("%s:%s", lib, lib64), nil
+}
+
+func copyFileContents(src, dst string) (err error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	if _, err = io.Copy(out, in); err != nil {
+		return err
+	}
+	return out.Sync()
 }

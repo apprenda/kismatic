@@ -1,8 +1,5 @@
 package: github.com/apprenda/kismatic/integration
 import:
-- package: github.com/apprenda/kismatic
-  subpackages:
-  - pkg/tls
 - package: github.com/aws/aws-sdk-go
   version: 1.6.2
   subpackages:

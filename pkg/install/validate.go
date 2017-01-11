@@ -14,8 +14,8 @@ import (
 
 	"github.com/apprenda/kismatic/pkg/retry"
 	"github.com/apprenda/kismatic/pkg/util"
-	"strings"
 	"regexp"
+	"strings"
 )
 
 // TODO: There is need to run validation against anything that is validatable.
@@ -120,6 +120,7 @@ func (p *Plan) validate() (bool, []error) {
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
 	v.validateWithErrPrefix("Ingress nodes", &p.Ingress)
+	v.validate(&p.NFS)
 	v.validateWithErrPrefix("Storage nodes", &p.Storage)
 
 	return v.valid()
@@ -351,6 +352,19 @@ func (dr *DockerRegistry) validate() (bool, []error) {
 	}
 	if _, err := os.Stat(dr.CAPath); dr.CAPath != "" && os.IsNotExist(err) {
 		v.addError(fmt.Errorf("Docker Registry CA file was not found at %q", dr.CAPath))
+	}
+	return v.valid()
+}
+
+func (nfs *NFS) validate() (bool, []error) {
+	v := newValidator()
+	uniqueVolumes := make(map[NFSVolume]bool)
+	for _, vol := range nfs.Volumes {
+		if _, ok := uniqueVolumes[vol]; ok {
+			v.addError(fmt.Errorf("Duplicate NFS volume %v", vol))
+		} else {
+			uniqueVolumes[vol] = true
+		}
 	}
 	return v.valid()
 }

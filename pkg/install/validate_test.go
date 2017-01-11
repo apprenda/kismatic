@@ -61,6 +61,14 @@ var validPlan = Plan{
 			},
 		},
 	},
+	NFS: NFS{
+		Volumes: []NFSVolume{
+			{
+				Host: "10.10.2.20",
+				Path: "/",
+			},
+		},
+	},
 }
 
 func assertInvalidPlan(t *testing.T, p Plan) {
@@ -285,84 +293,84 @@ func TestValidatePlanIngressProvidedNotExpected(t *testing.T) {
 }
 
 func TestValidateStorageVolume(t *testing.T) {
-	tests := []struct{
-		sv StorageVolume
+	tests := []struct {
+		sv    StorageVolume
 		valid bool
 	}{
 		{
 			sv: StorageVolume{
-				Name: "foo",
-				SizeGB: 100,
+				Name:              "foo",
+				SizeGB:            100,
 				DistributionCount: 2,
-				ReplicateCount: 2,
+				ReplicateCount:    2,
 			},
 			valid: true,
 		},
 		{
 			sv: StorageVolume{
-				Name: "foo",
-				SizeGB: 100,
+				Name:              "foo",
+				SizeGB:            100,
 				DistributionCount: 0,
-				ReplicateCount: 0,
+				ReplicateCount:    0,
 			},
 			valid: true,
 		},
 		{
 			sv: StorageVolume{
-				Name: "bad name with spaces",
-				SizeGB: 100,
+				Name:              "bad name with spaces",
+				SizeGB:            100,
 				DistributionCount: 2,
-				ReplicateCount: 2,
+				ReplicateCount:    2,
 			},
 			valid: false,
 		},
 		{
 			sv: StorageVolume{
-				Name: "bad:name2",
-				SizeGB: 100,
+				Name:              "bad:name2",
+				SizeGB:            100,
 				DistributionCount: 2,
-				ReplicateCount: 2,
+				ReplicateCount:    2,
 			},
 			valid: false,
 		},
 		{
 			sv: StorageVolume{
-				Name: "goodName",
-				SizeGB: 0,
+				Name:              "goodName",
+				SizeGB:            0,
 				DistributionCount: 2,
-				ReplicateCount: 2,
+				ReplicateCount:    2,
 			},
 			valid: false,
 		},
 		{
 			sv: StorageVolume{
-				Name: "goodName",
-				SizeGB: -1,
+				Name:              "goodName",
+				SizeGB:            -1,
 				DistributionCount: 2,
-				ReplicateCount: 2,
+				ReplicateCount:    2,
 			},
 			valid: false,
 		},
 		{
 			sv: StorageVolume{
-				Name: "goodName",
-				SizeGB: 100,
+				Name:              "goodName",
+				SizeGB:            100,
 				DistributionCount: -1,
-				ReplicateCount: 2,
+				ReplicateCount:    2,
 			},
 			valid: false,
 		},
 		{
 			sv: StorageVolume{
-				Name: "goodName",
-				SizeGB: 100,
+				Name:              "goodName",
+				SizeGB:            100,
 				DistributionCount: 2,
-				ReplicateCount: -1,
+				ReplicateCount:    -1,
 			},
 			valid: false,
 		},
 		{
-			sv: StorageVolume{},
+			sv:    StorageVolume{},
 			valid: false,
 		},
 	}
@@ -374,7 +382,7 @@ func TestValidateStorageVolume(t *testing.T) {
 }
 
 func TestValidateAllowAddress(t *testing.T) {
-	tests := []struct{
+	tests := []struct {
 		address string
 		valid   bool
 	}{
@@ -410,11 +418,21 @@ func TestValidateAllowAddress(t *testing.T) {
 		{"192...", false},
 		{"192.168..", false},
 		{"192.168.205.", false},
-
 	}
 	for _, test := range tests {
 		if validateAllowedAddress(test.address) != test.valid {
 			t.Errorf("expected %v with address %q, but got %v", test.valid, test.address, !test.valid)
 		}
 	}
+}
+
+func TestValidatePlanNFSDupes(t *testing.T) {
+	p := validPlan
+
+	p.NFS.Volumes = append(p.NFS.Volumes, NFSVolume{
+		Host: "10.10.2.20",
+		Path: "/",
+	})
+
+	assertInvalidPlan(t, p)
 }

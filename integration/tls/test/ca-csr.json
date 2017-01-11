@@ -1,0 +1,19 @@
+{
+  "CN": "Kubernetes",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "US",
+      "L": "Troy",
+      "O": "Kubernetes",
+      "OU": "CA",
+      "ST": "New York"
+    }
+  ],
+  "ca": {
+    "expiry": "8760h"
+  }
+}

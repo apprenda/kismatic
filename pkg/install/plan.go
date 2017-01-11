@@ -88,7 +88,7 @@ func (fp *FilePlanner) PlanExists() bool {
 }
 
 // WritePlanTemplate writes an installation plan with pre-filled defaults.
-func WritePlanTemplate(p Plan, w PlanReadWriter) error {
+func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 	// Set sensible defaults
 	p.Cluster.Name = "kubernetes"
 	generatedAdminPass, err := generateAlphaNumericPassword()
@@ -131,11 +131,22 @@ func WritePlanTemplate(p Plan, w PlanReadWriter) error {
 		p.Worker.Nodes = append(p.Worker.Nodes, n)
 	}
 
-	for i := 0; i < p.Ingress.ExpectedCount; i++ {
-		p.Ingress.Nodes = append(p.Ingress.Nodes, n)
+	if p.Ingress.ExpectedCount > 0 {
+		for i := 0; i < p.Ingress.ExpectedCount; i++ {
+			p.Ingress.Nodes = append(p.Ingress.Nodes, n)
+		}
 	}
 
-	if err := w.Write(&p); err != nil {
+	p.NFS = NFS{
+		Volumes: []NFSVolume{
+			NFSVolume{
+				Host: "",
+				Path: "/",
+			},
+		},
+	}
+
+	if err := w.Write(p); err != nil {
 		return fmt.Errorf("error writing installation plan template: %v", err)
 	}
 	return nil
@@ -205,4 +216,7 @@ var commentMap = map[string]string{
 	"address":                  "IP or hostname for your Docker registry. An internal registry will NOT be setup when this field is provided. Must be accessible from all the nodes in the cluster.",
 	"port":                     "Port for your Docker registry.",
 	"CA":                       "Absolute path to the CA that was used when starting your Docker registry. The docker daemons on all nodes in the cluster will be configured with this CA.",
+	"nfs":                      "A set of NFS volumes for use by on-cluster persistent workloads, managed by Kismatic.",
+	"nfs_host":                 "The host name or ip address of an NFS server.",
+	"mount_path":               "The mount path of an NFS share. Must start with /",
 }

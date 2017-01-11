@@ -2,10 +2,8 @@ package install
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
-	"strconv"
 	"testing"
 
 	"github.com/apprenda/kismatic/pkg/ansible"
@@ -58,6 +56,9 @@ func TestAddWorkerCertMissingCAExists(t *testing.T) {
 		certsDir:               mustGetTempDir(t),
 	}
 	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
 		Worker: NodeGroup{
 			Nodes: []Node{},
 		},
@@ -92,6 +93,9 @@ func TestAddWorkerPlanIsUpdated(t *testing.T) {
 		certsDir:               mustGetTempDir(t),
 	}
 	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
 		Worker: NodeGroup{
 			ExpectedCount: 1,
 			Nodes: []Node{
@@ -139,6 +143,9 @@ func TestAddWorkerPlanNotUpdatedAfterFailure(t *testing.T) {
 		certsDir:               mustGetTempDir(t),
 	}
 	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
 		Worker: NodeGroup{
 			ExpectedCount: 1,
 			Nodes: []Node{
@@ -180,6 +187,9 @@ func TestAddWorkerRestartServicesEnabled(t *testing.T) {
 		},
 	}
 	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
 		Worker: NodeGroup{
 			ExpectedCount: 1,
 			Nodes: []Node{
@@ -201,17 +211,21 @@ func TestAddWorkerRestartServicesEnabled(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error")
 	}
-	expectedServicesToRestart := []string{"proxy", "kubelet", "calico_node", "docker"}
-	for _, svc := range expectedServicesToRestart {
-		found := false
-		for k, v := range fakeRunner.incomingVars["kubernetes-worker.yaml"] {
-			if k == fmt.Sprintf("force_%s_restart", svc) && v == strconv.FormatBool(true) {
-				found = true
-			}
-		}
-		if !found {
-			t.Errorf("missing restart flag for service %s", svc)
-		}
+
+	if !fakeRunner.incomingCatalog.ForceProxyRestart {
+		t.Errorf("missing restart flag for service kube-proxy")
+	}
+
+	if !fakeRunner.incomingCatalog.ForceKubeletRestart {
+		t.Errorf("missing restart flag for service kubelet")
+	}
+
+	if !fakeRunner.incomingCatalog.ForceCalicoNodeRestart {
+		t.Errorf("missing restart flag for service calico-node")
+	}
+
+	if !fakeRunner.incomingCatalog.ForceDockerRestart {
+		t.Errorf("missing restart flag for service docker")
 	}
 }
 
@@ -230,6 +244,9 @@ func TestAddWorkerHostsFilesDNSEnabled(t *testing.T) {
 		certsDir: mustGetTempDir(t),
 	}
 	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
 		Worker: NodeGroup{
 			ExpectedCount: 1,
 			Nodes: []Node{
@@ -289,20 +306,17 @@ func (f *fakePKI) GenerateClusterCertificates(p *Plan, ca *tls.CA, users []strin
 type fakeRunner struct {
 	eventChan         chan ansible.Event
 	err               error
-	incomingVars      map[string]ansible.ExtraVars
+	incomingCatalog   ansible.ClusterCatalog
 	allNodesPlaybooks []string
 }
 
-func (f *fakeRunner) StartPlaybook(playbookFile string, inventory ansible.Inventory, vars ansible.ExtraVars) (<-chan ansible.Event, error) {
+func (f *fakeRunner) StartPlaybook(playbookFile string, inventory ansible.Inventory, cc ansible.ClusterCatalog) (<-chan ansible.Event, error) {
 	f.allNodesPlaybooks = append(f.allNodesPlaybooks, playbookFile)
 	return f.eventChan, f.err
 }
 func (f *fakeRunner) WaitPlaybook() error { return f.err }
-func (f *fakeRunner) StartPlaybookOnNode(playbookFile string, inventory ansible.Inventory, vars ansible.ExtraVars, node string) (<-chan ansible.Event, error) {
-	if f.incomingVars == nil {
-		f.incomingVars = map[string]ansible.ExtraVars{}
-	}
-	f.incomingVars[playbookFile] = vars
+func (f *fakeRunner) StartPlaybookOnNode(playbookFile string, inventory ansible.Inventory, cc ansible.ClusterCatalog, node string) (<-chan ansible.Event, error) {
+	f.incomingCatalog = cc
 	return f.eventChan, f.err
 }
 

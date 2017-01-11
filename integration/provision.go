@@ -9,7 +9,8 @@ import (
 
 	"github.com/apprenda/kismatic/integration/aws"
 	"github.com/apprenda/kismatic/integration/packet"
-	"github.com/apprenda/kismatic/pkg/retry"
+	"github.com/apprenda/kismatic/integration/retry"
+
 	homedir "github.com/mitchellh/go-homedir"
 )
 
@@ -34,6 +35,11 @@ type infrastructureProvisioner interface {
 	SSHKey() string
 	ConfigureDNS(masterIPs []string) (*DNSRecord, error)
 	RemoveDNS(dnsRecord *DNSRecord) error
+	CreateNFSServers() ([]nfsServer, error)
+}
+
+type nfsServer struct {
+	IpAddress string
 }
 
 type linuxDistro string
@@ -465,4 +471,18 @@ func waitForSSH(provisionedNodes provisionedNodes, sshKey string) error {
 		BlockUntilSSHOpen(n.PublicIP, n.SSHUser, sshKey)
 	}
 	return nil
+}
+
+func (p packetProvisioner) CreateNFSServers() ([]nfsServer, error) {
+	return []nfsServer{}, fmt.Errorf("Packet NFS not yet supported")
+}
+
+func (a awsProvisioner) CreateNFSServers() ([]nfsServer, error) {
+	server := a.client.BuildEFSDisk("KismaticIntegrationTestPrimary")
+	if server == nil {
+		return nil, fmt.Errorf("Could not provision drives")
+	}
+	return []nfsServer{
+		{IpAddress: server.IpAddress},
+	}, nil
 }

@@ -47,6 +47,15 @@ type NodeGroup struct {
 // An OptionalNodeGroup is a collection of nodes that can be empty
 type OptionalNodeGroup NodeGroup
 
+type NFS struct {
+	Volumes []NFSVolume `yaml:"nfs_volume"`
+}
+
+type NFSVolume struct {
+	Host string `yaml:"nfs_host"`
+	Path string `yaml:"mount_path"`
+}
+
 // MasterNodeGroup is the collection of master nodes
 type MasterNodeGroup struct {
 	ExpectedCount         int    `yaml:"expected_count"`
@@ -72,6 +81,7 @@ type Plan struct {
 	Worker         NodeGroup
 	Ingress        OptionalNodeGroup
 	Storage        OptionalNodeGroup
+	NFS            NFS
 }
 
 // StorageVolume managed by Kismatic

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/retry"
-	"github.com/apprenda/kismatic/pkg/tls"
+	"github.com/apprenda/kismatic/integration/retry"
+	"github.com/apprenda/kismatic/integration/tls"
 	"github.com/cloudflare/cfssl/csr"
 	. "github.com/onsi/ginkgo"
 )

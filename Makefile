@@ -30,6 +30,7 @@ clean:
 	rm -rf vendor-ansible/out
 	rm -rf vendor-cfssl/out
 	rm -rf vendor-provision/out
+	rm -rf integration/vendor
 
 test: vendor
 	go test ./cmd/... ./pkg/... $(TEST_OPTS)
