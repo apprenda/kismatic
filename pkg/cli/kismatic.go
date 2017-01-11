@@ -22,7 +22,7 @@ more documentation is availble at https://github.com/apprenda/kismatic`,
 
 	cmd.AddCommand(NewCmdVersion(version, buildDate, out))
 	cmd.AddCommand(NewCmdInstall(in, out))
-	cmd.AddCommand(NewCmdStorage(out))
+	cmd.AddCommand(NewCmdVolume(out))
 
 	return cmd, nil
 }

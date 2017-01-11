@@ -10,22 +10,22 @@ import (
 	"github.com/apprenda/kismatic/pkg/install"
 )
 
-// NewCmdStorage returns the storage command
-func NewCmdStorage(out io.Writer) *cobra.Command {
+// NewCmdVolume returns the storage command
+func NewCmdVolume(out io.Writer) *cobra.Command {
 	var planFile string
 	cmd := &cobra.Command{
-		Use: "storage",
-		Short: "manage storage on your Kubernetes cluster",
+		Use: "volume",
+		Short: "manage storage volumes on your Kubernetes cluster",
 		RunE:func(cmd *cobra.Command, args []string) error {
 			return cmd.Usage()
 		},
 	}
 	addPlanFileFlag(cmd.PersistentFlags(), &planFile)
-	cmd.AddCommand(NewCmdStorageAddVolume(out, &planFile))
+	cmd.AddCommand(NewCmdVolumeAdd(out, &planFile))
 	return cmd
 }
 
-type addVolumeOptions struct {
+type volumeAddOptions struct {
 	replicaCount int
 	distributionCount int
 	allowAddress []string
@@ -33,20 +33,21 @@ type addVolumeOptions struct {
 	outputFormat string
 }
 
-func NewCmdStorageAddVolume(out io.Writer, planFile *string) *cobra.Command {
-	opts := addVolumeOptions{}
+// NewCmdVolumeAdd returns the command for adding storage volumes
+func NewCmdVolumeAdd(out io.Writer, planFile *string) *cobra.Command {
+	opts := volumeAddOptions{}
 	cmd := &cobra.Command{
-		Use: "add-volume size_in_gigabytes [volume name]",
+		Use: "add size_in_gigabytes [volume name]",
 		Short: "add storage volumes to the Kubernetes cluster",
 		Long: `Add storage volumes to the Kubernetes cluster.
 
 This function requires a target cluster that has storage nodes.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return doStorageAddVolume(out, opts, *planFile, args)
+			return doVolumeAdd(out, opts, *planFile, args)
 		},
 		Example: `# Create a distributed, replicated volume named kismatic with a 10 GB quota and
 		# grant access to any IP address starting with 10.10.
-		kismatic storage new-volume -r 2 -d 2 -a 10.10.*.* 10 kismatic
+		kismatic volume new -r 2 -d 2 -a 10.10.*.* 10 kismatic
 		`,
 	}
 	cmd.Flags().IntVarP(&opts.replicaCount, "replica-count", "r", 2, "The number of times each file will be written.")
@@ -57,12 +58,12 @@ This function requires a target cluster that has storage nodes.`,
 	return cmd
 }
 
-func doStorageAddVolume(out io.Writer, opts addVolumeOptions, planFile string, args []string) error {
+func doVolumeAdd(out io.Writer, opts volumeAddOptions, planFile string, args []string) error {
 	var volumeName string
 	var volumeSizeStrGB string
 	switch len(args) {
 	case 0:
-		return errors.New("the volume size (in gigabytes) must be provided as the first argument to add-volume")
+		return errors.New("the volume size (in gigabytes) must be provided as the first argument to add")
 	case 1:
 		volumeSizeStrGB = args[0]
 		volumeName = "kismatic-" + generateRandomString(5)
@@ -70,7 +71,7 @@ func doStorageAddVolume(out io.Writer, opts addVolumeOptions, planFile string, a
 		volumeSizeStrGB = args[0]
 		volumeName = args[1]
 	default:
-		return fmt.Errorf("%d arguments were provided, but add-volume does not support more than two arguments", len(args))
+		return fmt.Errorf("%d arguments were provided, but add does not support more than two arguments", len(args))
 	}
 	volumeSizeGB, err := strconv.Atoi(volumeSizeStrGB)
 	if err != nil {
