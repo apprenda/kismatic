@@ -248,7 +248,7 @@ func ingressRequest(url string) error {
 func verifyAddingVolume(masterNode NodeDeets, sshKey string) {
 	// TODO replace with actual CLI command
 	By("Creating a Gluster volume and PV")
-	cmd := exec.Command("./kismatic", "install", "step", "volume-add.yaml", "-f", "kismatic-testing.yaml", "--extra-vars", "volume_mount=/,volume_replica_count=1,volume_name=gv0,volume_quota=1,volume_quota_raw=1073741824")
+	cmd := exec.Command("./kismatic", "install", "step", "volume-add.yaml", "-f", "kismatic-testing.yaml", "--extra-vars", "volume_mount=/,volume_replica_count=1,volume_name=gv0,volume_quota=1,volume_quota_raw=1073741824,allow_ips=172.16.*.*")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
