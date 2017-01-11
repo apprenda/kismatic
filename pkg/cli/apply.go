@@ -39,7 +39,6 @@ func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
 			if len(args) != 0 {
 				return fmt.Errorf("Unexpected args: %v", args)
 			}
-
 			planner := &install.FilePlanner{File: installOpts.planFilename}
 			executorOpts := install.ExecutorOptions{
 				GeneratedAssetsDirectory: applyOpts.generatedAssetsDir,
@@ -47,7 +46,6 @@ func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
 				OutputFormat:             applyOpts.outputFormat,
 				Verbose:                  applyOpts.verbose,
 			}
-			// TODO: Do we want to parameterize stderr?
 			executor, err := install.NewExecutor(out, os.Stderr, executorOpts)
 			if err != nil {
 				return err

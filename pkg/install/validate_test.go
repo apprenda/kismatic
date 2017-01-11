@@ -283,3 +283,138 @@ func TestValidatePlanIngressProvidedNotExpected(t *testing.T) {
 	}
 	assertInvalidPlan(t, p)
 }
+
+func TestValidateStorageVolume(t *testing.T) {
+	tests := []struct{
+		sv StorageVolume
+		valid bool
+	}{
+		{
+			sv: StorageVolume{
+				Name: "foo",
+				SizeGB: 100,
+				DistributionCount: 2,
+				ReplicateCount: 2,
+			},
+			valid: true,
+		},
+		{
+			sv: StorageVolume{
+				Name: "foo",
+				SizeGB: 100,
+				DistributionCount: 0,
+				ReplicateCount: 0,
+			},
+			valid: true,
+		},
+		{
+			sv: StorageVolume{
+				Name: "bad name with spaces",
+				SizeGB: 100,
+				DistributionCount: 2,
+				ReplicateCount: 2,
+			},
+			valid: false,
+		},
+		{
+			sv: StorageVolume{
+				Name: "bad:name2",
+				SizeGB: 100,
+				DistributionCount: 2,
+				ReplicateCount: 2,
+			},
+			valid: false,
+		},
+		{
+			sv: StorageVolume{
+				Name: "goodName",
+				SizeGB: 0,
+				DistributionCount: 2,
+				ReplicateCount: 2,
+			},
+			valid: false,
+		},
+		{
+			sv: StorageVolume{
+				Name: "goodName",
+				SizeGB: -1,
+				DistributionCount: 2,
+				ReplicateCount: 2,
+			},
+			valid: false,
+		},
+		{
+			sv: StorageVolume{
+				Name: "goodName",
+				SizeGB: 100,
+				DistributionCount: -1,
+				ReplicateCount: 2,
+			},
+			valid: false,
+		},
+		{
+			sv: StorageVolume{
+				Name: "goodName",
+				SizeGB: 100,
+				DistributionCount: 2,
+				ReplicateCount: -1,
+			},
+			valid: false,
+		},
+		{
+			sv: StorageVolume{},
+			valid: false,
+		},
+	}
+	for _, test := range tests {
+		if valid, _ := test.sv.validate(); valid != test.valid {
+			t.Errorf("expected %v with %+v, but got %v", test.valid, test.sv, !test.valid)
+		}
+	}
+}
+
+func TestValidateAllowAddress(t *testing.T) {
+	tests := []struct{
+		address string
+		valid   bool
+	}{
+		{"192.168.205.10", true},
+		{"192.168.205.*", true},
+		{"192.168.*.*", true},
+		{"192.*.*.*", true},
+		{"*.168.205.10", true},
+		{"*.*.205.10", true},
+		{"*.*.*.10", true},
+		{"*.*.*.*", true},
+		{"-1.-1.-1.-1", false},
+		{"-1.*.*.*", false},
+		{"*.-1.*.*", false},
+		{"*.*.-1.*", false},
+		{"*.*.*.-1", false},
+		{"256.256.256.256", false},
+		{"256.*.*.*", false},
+		{"*.256.*.*", false},
+		{"*.*.256.*", false},
+		{"*.*.*.256", false},
+		{"a.a.a.a", false},
+		{"*.*.*.a", false},
+		{"*.*.a.*", false},
+		{"*.a.*.*", false},
+		{"a.*.*.*", false},
+		{"", false},
+		{"foo", false},
+		{"192", false},
+		{"192.168", false},
+		{"192.168.205", false},
+		{"...", false},
+		{"192...", false},
+		{"192.168..", false},
+		{"192.168.205.", false},
+
+	}
+	for _, test := range tests {
+		if validateAllowedAddress(test.address) != test.valid {
+			t.Errorf("expected %v with address %q, but got %v", test.valid, test.address, !test.valid)
+		}
+	}
+}

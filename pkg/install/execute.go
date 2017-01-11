@@ -29,6 +29,7 @@ type Executor interface {
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunTask(string, *Plan) error
+	AddVolume(*Plan, StorageVolume)
 }
 
 // ExecutorOptions are used to configure the executor
@@ -127,6 +128,10 @@ type ansibleExecutor struct {
 
 	// Hook for testing purposes.. default implementation is used at runtime
 	runnerExplainerFactory func(explain.AnsibleEventExplainer, io.Writer) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error)
+}
+
+func (*ansibleExecutor) AddVolume(*Plan, StorageVolume) {
+	panic("implement me")
 }
 
 // Install the cluster according to the installation plan
@@ -346,6 +351,8 @@ func (ae *ansibleExecutor) RunTask(taskName string, p *Plan) error {
 	}
 	return nil
 }
+
+
 
 func (ae *ansibleExecutor) createRunDirectory(runName string) (string, error) {
 	start := time.Now()

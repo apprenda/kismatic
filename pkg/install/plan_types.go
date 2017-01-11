@@ -73,3 +73,17 @@ type Plan struct {
 	Ingress        OptionalNodeGroup
 	Storage        OptionalNodeGroup
 }
+
+// StorageVolume managed by Kismatic
+type StorageVolume struct {
+	// Name of the storage volume
+	Name string
+	// SizeGB is the size of the volume, in gigabytes
+	SizeGB int
+	// ReplicateCount is the number of replicas
+	ReplicateCount int
+	// DistributionCount is the degree to which data will be distributed across the cluster
+	DistributionCount int
+	// AllowAddresses is a list of address wildcards that have access to the volume
+	AllowAddresses []string
+}
