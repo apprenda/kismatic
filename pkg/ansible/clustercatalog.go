@@ -47,7 +47,7 @@ type ClusterCatalog struct {
 	EnableGluster bool `yaml:"configure_storage"`
 
 	// volume add vars
-	VolumeReplicaCount int    `yaml:"volume_count"`
+	VolumeReplicaCount int    `yaml:"volume_replica_count"`
 	VolumeName         string `yaml:"volume_name"`
 	VolumeQuota        int    `yaml:"volume_quota"`
 	VolumeQuotaRaw     int    `yaml:"volume_quota_raw"`
