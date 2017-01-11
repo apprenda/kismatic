@@ -29,7 +29,7 @@ type Executor interface {
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunTask(string, *Plan) error
-	AddVolume(*Plan, StorageVolume)
+	AddVolume(*Plan, StorageVolume) error
 }
 
 // ExecutorOptions are used to configure the executor
@@ -130,8 +130,47 @@ type ansibleExecutor struct {
 	runnerExplainerFactory func(explain.AnsibleEventExplainer, io.Writer) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error)
 }
 
-func (*ansibleExecutor) AddVolume(*Plan, StorageVolume) {
-	panic("implement me")
+func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
+	runDirectory, err := ae.createRunDirectory("add-volume")
+	if err != nil {
+		return fmt.Errorf("error creating working directory for add-volume: %v", err)
+	}
+	fp := FilePlanner{
+		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
+	}
+	if err = fp.Write(plan); err != nil {
+		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
+	}
+	inventory := buildInventoryFromPlan(plan)
+	// Need absolute path for ansible. Otherwise ansible looks for it in the wrong place.
+	tlsDir, err := filepath.Abs(ae.certsDir)
+	if err != nil {
+		return fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
+	}
+	ev, err := ae.buildInstallExtraVars(plan, tlsDir)
+	if err != nil {
+		return err
+	}
+	// Add storage related vars
+	(*ev)["volume_replica_count"] = strconv.Itoa(volume.ReplicateCount)
+	(*ev)["volume_name"] = volume.Name
+	(*ev)["volume_quota"] = strconv.Itoa(volume.SizeGB)
+	(*ev)["volume_quota_raw"] = strconv.Itoa(volume.SizeGB * 1024)
+	(*ev)["volume_mount"] = "/"
+
+
+	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
+	ansibleLogFile, err := os.Create(ansibleLogFilename)
+	if err != nil {
+		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
+	}
+	util.PrintHeader(ae.stdout, "Add Persistent Storage Volume", '=')
+	playbook := "volume-add.yaml"
+	eventExplainer := &explain.DefaultEventExplainer{}
+	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *ev, ansibleLogFile); err != nil {
+		return err
+	}
+	return nil
 }
 
 // Install the cluster according to the installation plan
