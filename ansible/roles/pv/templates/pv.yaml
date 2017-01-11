@@ -1,0 +1,13 @@
+  apiVersion: v1
+  kind: PersistentVolume
+  metadata:
+    name: {{ volume_name }}
+  spec:
+    capacity:
+      storage: {{ volume_quota }}Gi
+    accessModes:
+      - ReadWriteMany
+    persistentVolumeReclaimPolicy: Recycle
+    nfs:
+      path: /{{ volume_name }}
+      server: {{ storage_cluster_ip }}

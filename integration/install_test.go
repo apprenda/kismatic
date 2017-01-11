@@ -83,6 +83,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 						Expect(err).ToNot(HaveOccurred())
 						err = verifyIngressNodes(nodes, sshKey)
 						Expect(err).ToNot(HaveOccurred())
+						verifyAddingVolume(nodes.master[0], sshKey)
 					})
 				})
 			})
@@ -93,6 +94,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 						Expect(err).ToNot(HaveOccurred())
 						err = verifyIngressNodes(nodes, sshKey)
 						Expect(err).ToNot(HaveOccurred())
+						verifyAddingVolume(nodes.master[0], sshKey)
 					})
 				})
 			})
@@ -103,6 +105,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 						Expect(err).ToNot(HaveOccurred())
 						err = verifyIngressNodes(nodes, sshKey)
 						Expect(err).ToNot(HaveOccurred())
+						verifyAddingVolume(nodes.master[0], sshKey)
 					})
 				})
 			})
@@ -138,6 +141,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 						Expect(err).ToNot(HaveOccurred())
 						err = verifyIngressNode(node, sshKey)
 						Expect(err).ToNot(HaveOccurred())
+						verifyAddingVolume(node, sshKey)
 					})
 				})
 			})
@@ -148,6 +152,7 @@ var _ = Describe("Happy Path Installation Tests", func() {
 						Expect(err).ToNot(HaveOccurred())
 						err = verifyIngressNode(node, sshKey)
 						Expect(err).ToNot(HaveOccurred())
+						verifyAddingVolume(node, sshKey)
 					})
 				})
 			})
@@ -195,8 +200,8 @@ var _ = Describe("Happy Path Installation Tests", func() {
 	})
 
 	Describe("Installing with private Docker registry", func() {
-		Context("Using a 1/1/1/1 CentOS 7 layout", func() {
-			nodeCount := NodeCount{1, 1, 1, 1, 0}
+		Context("Using a 1/1/1 CentOS 7 layout", func() {
+			nodeCount := NodeCount{1, 1, 1, 0, 0}
 			distro := CentOS7
 
 			Context("Using the auto-configured docker registry", func() {
@@ -207,8 +212,6 @@ var _ = Describe("Happy Path Installation Tests", func() {
 							autoConfigureDockerRegistry: true,
 						}
 						err := installKismatic(nodes, installOpts, sshKey)
-						Expect(err).ToNot(HaveOccurred())
-						err = verifyIngressNodes(nodes, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})
@@ -228,8 +231,6 @@ var _ = Describe("Happy Path Installation Tests", func() {
 							dockerRegistryPort:       dockerRegistryPort,
 						}
 						err = installKismatic(nodes, installOpts, sshKey)
-						Expect(err).ToNot(HaveOccurred())
-						err = verifyIngressNodes(nodes, sshKey)
 						Expect(err).ToNot(HaveOccurred())
 					})
 				})

@@ -49,7 +49,7 @@
     ignore_errors: yes  #TODO figure out a better way
 
   - name: gluster volume quota set
-    command: gluster volume quota {{ volume_name }} limit-usage / {{ volume_quota }}
+    command: gluster volume quota {{ volume_name }} limit-usage / {{ volume_quota }}GB
     run_once: true
 
   - name: gluster volume quota enable df reporting

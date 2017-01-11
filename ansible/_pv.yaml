@@ -1,0 +1,10 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "Create Kuberntes PV"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - pv

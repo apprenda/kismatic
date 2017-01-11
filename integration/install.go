@@ -53,6 +53,7 @@ func installKismaticMini(node NodeDeets, sshKey string) error {
 		Master:                   []NodeDeets{node},
 		Worker:                   []NodeDeets{node},
 		Ingress:                  []NodeDeets{node},
+		Storage:                  []NodeDeets{node},
 		MasterNodeFQDN:           node.Hostname,
 		MasterNodeShortName:      node.Hostname,
 		SSHKeyFile:               sshKey,
@@ -242,6 +243,20 @@ func ingressRequest(url string) error {
 	}
 
 	return nil
+}
+
+func verifyAddingVolume(masterNode NodeDeets, sshKey string) {
+	// TODO replace with actual CLI command
+	By("Creating a Gluster volume and PV")
+	cmd := exec.Command("./kismatic", "install", "step", "volume-add.yaml", "-f", "kismatic-testing.yaml", "--extra-vars", "volume_mount=/,volume_replica_count=1,volume_name=gv0,volume_quota=1,volume_quota_raw=1073741824")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	FailIfError(err, "Error creating a new volume")
+
+	By("Verifying Kuberntes PV was created")
+	err = runViaSSH([]string{"sudo kubectl get pv gv0"}, []NodeDeets{masterNode}, sshKey, 1*time.Minute)
+	FailIfError(err, "Error verifying if PV gv0 was created")
 }
 
 func installKismaticWithABadNode() {

@@ -67,7 +67,7 @@ exit 0
 
 		By("Setting up a gluster volume on the nodes")
 		// TODO replace with acutal CLI command
-		cmd = exec.Command("./kismatic", "install", "step", "_volume-add.yaml", "-f", f.Name(), "--extra-vars", "volume_mount=/,volume_replica_count=2,volume_name=gv0,volume_quota=1GB,volume_quota_raw=1073741824")
+		cmd = exec.Command("./kismatic", "install", "step", "_volume-add.yaml", "-f", f.Name(), "--extra-vars", "volume_mount=/,volume_replica_count=2,volume_name=gv0,volume_quota=1,volume_quota_raw=1073741824")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
@@ -85,7 +85,7 @@ exit 0
 
 		By("Setting up a gluster volume on one node")
 		// TODO replace with acutal CLI command
-		cmd = exec.Command("./kismatic", "install", "step", "_volume-add.yaml", "-f", f.Name(), "--extra-vars", "volume_mount=/,volume_replica_count=1,volume_name=gv1,volume_quota=1GB,volume_quota_raw=1073741824")
+		cmd = exec.Command("./kismatic", "install", "step", "_volume-add.yaml", "-f", f.Name(), "--extra-vars", "volume_mount=/,volume_replica_count=1,volume_name=gv1,volume_quota=1,volume_quota_raw=1073741824")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
