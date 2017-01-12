@@ -79,7 +79,7 @@ func doSSH(out io.Writer, planner install.Planner, opts *sshOpts) error {
 		return fmt.Errorf("cannot validate SSH connection to node %q", opts.host)
 	}
 
-	client, err := ssh.OpenConnection(con.Node.IP, con.SSHConfig.Port, con.SSHConfig.User, con.SSHConfig.User)
+	client, err := ssh.OpenConnection(con.Node.IP, con.SSHConfig.Port, con.SSHConfig.User, con.SSHConfig.Key)
 	if err != nil {
 		return fmt.Errorf("error creating SSH client: %v", err)
 	}
