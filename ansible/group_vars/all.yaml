@@ -200,3 +200,4 @@ volume_mount: /
 volume_base_dir: data/
 volume_mode: 777
 volume_replica_count: 2
+volume_distribution_count: 1

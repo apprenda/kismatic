@@ -24,7 +24,7 @@
 
   - name: verify available disk space
     command: /bin/true
-    failed_when: "{{ groups['gluster'] is not defined or groups['gluster']|length < volume_replica_count|int }}"
+    failed_when: "{{ groups['gluster'] is not defined or groups['gluster']|length < volume_replica_count|int * volume_distribution_count|int }}"
     run_once: true
 
   - name: create block directory
@@ -34,7 +34,7 @@
       mode: "{{ volume_mode }}"
 
   - name: gluster volume create
-    command: gluster volume create {{ volume_name }} {% if volume_replica_count|int > 1 %} replica {{ volume_replica_count|int }} {% endif %} {% for host in groups['gluster'][0:volume_replica_count|int] %} {{ hostvars[host]['inventory_hostname'] }}:/data/{{ volume_name }} {% endfor %} force
+    command: gluster volume create {{ volume_name }} {% if volume_replica_count|int > 1 %} replica {{ volume_replica_count|int }} {% endif %} {% for host in groups['gluster'][0:volume_replica_count|int * volume_distribution_count|int] %} {{ hostvars[host]['inventory_hostname'] }}:/data/{{ volume_name }} {% endfor %} force
     run_once: true
     ignore_errors: yes  #TODO figure out a better way
 
