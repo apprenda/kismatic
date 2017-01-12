@@ -14,17 +14,17 @@ var _ = Describe("Storage", func() {
 	Context("Specifying multiple storage nodes in the plan file", func() {
 		Context("targetting CentOS", func() {
 			ItOnAWS("should result in a working storage cluster", func(aws infrastructureProvisioner) {
-				testGlusterCluster(aws, CentOS7)
+				testAddVolumeVerifyGluster(aws, CentOS7)
 			})
 		})
 		Context("targetting Ubuntu", func() {
 			ItOnAWS("should result in a working storage cluster", func(aws infrastructureProvisioner) {
-				testGlusterCluster(aws, Ubuntu1604LTS)
+				testAddVolumeVerifyGluster(aws, Ubuntu1604LTS)
 			})
 		})
 		Context("targetting RHEL", func() {
 			ItOnAWS("should result in a working storage cluster", func(aws infrastructureProvisioner) {
-				testGlusterCluster(aws, RedHat7)
+				testAddVolumeVerifyGluster(aws, RedHat7)
 			})
 		})
 	})

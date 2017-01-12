@@ -112,7 +112,9 @@ func doVolumeAdd(out io.Writer, opts volumeAddOptions, planFile string, args []s
 		}
 		return errors.New("storage volume validation failed")
 	}
-	exec.AddVolume(plan, v)
+	if err := exec.AddVolume(plan, v); err != nil {
+		return fmt.Errorf("error adding new volume: %v", err)
+	}
 
 	fmt.Fprintln(out)
 	fmt.Fprintln(out, "Successfully added volume to the kubernetes cluster.")

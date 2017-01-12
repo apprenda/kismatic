@@ -36,7 +36,6 @@
   - name: gluster volume create
     command: gluster volume create {{ volume_name }} {% if volume_replica_count|int > 1 %} replica {{ volume_replica_count|int }} {% endif %} {% for host in groups['gluster'][0:volume_replica_count|int * volume_distribution_count|int] %} {{ hostvars[host]['inventory_hostname'] }}:/data/{{ volume_name }} {% endfor %} force
     run_once: true
-    ignore_errors: yes  #TODO figure out a better way
 
   - name: gluster volume enable nfs
     command: gluster volume set {{ volume_name }} nfs.disable off
@@ -50,12 +49,10 @@
   - name: gluster volume start
     command: gluster volume start {{ volume_name }}
     run_once: true
-    ignore_errors: yes  #TODO figure out a better way
 
   - name: gluster volume quota enable
     command: gluster volume quota {{ volume_name }} enable
     run_once: true
-    ignore_errors: yes  #TODO figure out a better way
 
   - name: gluster volume quota set
     command: gluster volume quota {{ volume_name }} limit-usage / {{ volume_quota }}GB

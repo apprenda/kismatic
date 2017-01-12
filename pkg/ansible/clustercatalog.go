@@ -47,12 +47,13 @@ type ClusterCatalog struct {
 	EnableGluster bool `yaml:"configure_storage"`
 
 	// volume add vars
-	VolumeReplicaCount int    `yaml:"volume_replica_count"`
-	VolumeName         string `yaml:"volume_name"`
-	VolumeQuota        int    `yaml:"volume_quota"`
-	VolumeQuotaRaw     int    `yaml:"volume_quota_raw"`
-	VolumeMount        string `yaml:"volume_mount"`
-	VolumeAllowedIPs   string `yaml:"volume_allow_ips"`
+	VolumeName              string `yaml:"volume_name"`
+	VolumeReplicaCount      int    `yaml:"volume_replica_count"`
+	VolumeDistributionCount int    `yaml:"volume_distribution_count"`
+	VolumeQuota             int    `yaml:"volume_quota"`
+	VolumeQuotaRaw          int    `yaml:"volume_quota_raw"`
+	VolumeMount             string `yaml:"volume_mount"`
+	VolumeAllowedIPs        string `yaml:"volume_allow_ips"`
 }
 
 type NFSVolume struct {
