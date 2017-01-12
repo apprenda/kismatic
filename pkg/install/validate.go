@@ -378,11 +378,11 @@ func (sv StorageVolume) validate() (bool, []error) {
 	if sv.SizeGB < 1 {
 		v.addError(errors.New("Volume size must be 1GB or larger"))
 	}
-	if sv.DistributionCount < 0 {
-		v.addError(errors.New("Distribution count must be greater than or equal to zero"))
+	if sv.DistributionCount < 1 {
+		v.addError(errors.New("Distribution count must be greater than zero"))
 	}
-	if sv.ReplicateCount < 0 {
-		v.addError(errors.New("Replication count must be greater than or equal to zero"))
+	if sv.ReplicateCount < 1 {
+		v.addError(errors.New("Replication count must be greater than zero"))
 	}
 	for _, a := range sv.AllowAddresses {
 		if ok := validateAllowedAddress(a); !ok {
