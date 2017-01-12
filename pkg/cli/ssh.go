@@ -22,8 +22,12 @@ func NewCmdSSH(out io.Writer) *cobra.Command {
 	opts := &sshOpts{}
 
 	cmd := &cobra.Command{
-		Use:   "ssh HOST [commands]",
-		Short: "ssh into a node in the cluster",
+		Use: "ssh HOST [commands]",
+		Short: `ssh into a node in the cluster.
+
+HOST must be one of the following:
+- A hostname defined in the plan filepath
+- An alias: master, etcd, worker or ingress. This will ssh into the first defined node of that type.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
 				return cmd.Usage()
@@ -75,7 +79,7 @@ func doSSH(out io.Writer, planner install.Planner, opts *sshOpts) error {
 		return fmt.Errorf("cannot validate SSH connection to node %q", opts.host)
 	}
 
-	client, err := ssh.NewClient(*con)
+	client, err := ssh.OpenConnection(con.Node.IP, con.SSHConfig.Port, con.SSHConfig.User, con.SSHConfig.User)
 	if err != nil {
 		return fmt.Errorf("error creating SSH client: %v", err)
 	}

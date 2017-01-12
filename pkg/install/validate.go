@@ -36,28 +36,25 @@ func ValidateNode(node *Node) (bool, []error) {
 func ValidatePlanSSHConnections(p *Plan) (bool, []error) {
 	v := newValidator()
 
-	v.validateWithErrPrefix("Etcd nodes", &SSHConnections{&p.Cluster.SSH, p.Etcd.Nodes})
-	v.validateWithErrPrefix("Master nodes", &SSHConnections{&p.Cluster.SSH, p.Master.Nodes})
-	v.validateWithErrPrefix("Worker nodes", &SSHConnections{&p.Cluster.SSH, p.Worker.Nodes})
-	v.validateWithErrPrefix("Ingress nodes", &SSHConnections{&p.Cluster.SSH, p.Ingress.Nodes})
+	s := sshConnectionSet{p.Cluster.SSH, p.GetUniqueNodeIPs()}
+
+	v.validateWithErrPrefix("Node Connnection", s)
 
 	return v.valid()
 }
 
-// ValidateSSHConnections tries to establish SSH connection with the details provieded for multiple nodes
-func ValidateSSHConnections(con *SSHConnections, prefix string) (bool, []error) {
-	v := newValidator()
-
-	v.validateWithErrPrefix(prefix, con)
-
-	return v.valid()
+type sshConnectionSet struct {
+	SSHConfig SSHConfig
+	IPs       []string
 }
 
 // ValidateSSHConnection tries to establish SSH connection with the details provieded for a single node
 func ValidateSSHConnection(con *SSHConnection, prefix string) (bool, []error) {
 	v := newValidator()
 
-	v.validateWithErrPrefix(prefix, &SSHConnections{con.SSHConfig, []Node{*con.Node}})
+	s := sshConnectionSet{*con.SSHConfig, []string{con.Node.IP}}
+
+	v.validateWithErrPrefix(prefix, s)
 
 	return v.valid()
 }
@@ -86,13 +83,15 @@ func (v *validator) validate(obj validatable) {
 	}
 }
 
-func (v *validator) validateWithErrPrefix(prefix string, obj validatable) {
-	if ok, err := obj.validate(); !ok {
-		newErrs := make([]error, len(err), len(err))
-		for i, err := range err {
-			newErrs[i] = fmt.Errorf("%s: %v", prefix, err)
+func (v *validator) validateWithErrPrefix(prefix string, objs ...validatable) {
+	for _, obj := range objs {
+		if ok, err := obj.validate(); !ok {
+			newErrs := make([]error, len(err), len(err))
+			for i, err := range err {
+				newErrs[i] = fmt.Errorf("%s: %v", prefix, err)
+			}
+			v.addError(newErrs...)
 		}
-		v.addError(newErrs...)
 	}
 }
 
@@ -184,7 +183,7 @@ func (s *SSHConfig) validate() (bool, []error) {
 }
 
 // validate SSH access to the nodes
-func (s *SSHConnections) validate() (bool, []error) {
+func (s sshConnectionSet) validate() (bool, []error) {
 	v := newValidator()
 
 	err := ssh.ValidUnecryptedPrivateKey(s.SSHConfig.Key)
@@ -192,20 +191,20 @@ func (s *SSHConnections) validate() (bool, []error) {
 		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
 	} else {
 		var wg sync.WaitGroup
-		errQueue := make(chan error, len(s.Nodes))
+		errQueue := make(chan error, len(s.IPs))
 		// number of nodes
-		wg.Add(len(s.Nodes))
-		for _, node := range s.Nodes {
-			go func(node Node) {
+		wg.Add(len(s.IPs))
+		for _, ipa := range s.IPs {
+			go func(ip string) {
 				defer wg.Done()
-				sshErr := verifySSH(&SSHConnection{SSHConfig: s.SSHConfig, Node: &node})
+				sshErr := ssh.TestConnection(ip, s.SSHConfig.Port, s.SSHConfig.User, s.SSHConfig.Key)
 				// Need to send something the buffered channel
 				if sshErr != nil {
-					errQueue <- fmt.Errorf("SSH connectivity validation failed for %q: %v", node.IP, sshErr)
+					errQueue <- fmt.Errorf("SSH connectivity validation failed for %q: %v", ip, sshErr)
 				} else {
 					errQueue <- nil
 				}
-			}(node)
+			}(ipa)
 		}
 
 		// Wait for all nodes to complete, then close channel
@@ -223,15 +222,6 @@ func (s *SSHConnections) validate() (bool, []error) {
 	}
 
 	return v.valid()
-}
-
-func verifySSH(con *SSHConnection) error {
-	client, err := ssh.NewClient(*con)
-	if err != nil {
-		return err
-	}
-	// just exit
-	return client.Shell("exit")
 }
 
 func (ng *NodeGroup) validate() (bool, []error) {

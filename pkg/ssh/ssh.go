@@ -6,33 +6,33 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"golang.org/x/crypto/ssh"
-
 	libmachine "github.com/docker/machine/libmachine/ssh"
+	"golang.org/x/crypto/ssh"
 )
 
-// Client is an SSH client wrapper for libmachine
 type Client interface {
 	libmachine.Client
 }
 
-// NewClient returns an SSH client
-func NewClient(details Details) (client Client, err error) {
-	user := details.GetSSHUsername()
-	addr := details.GetSSHAddress()
-	port := details.GetSSHPort()
-	auth := &libmachine.Auth{Keys: []string{details.GetSSHKeyPath()}}
+// Connects to ip:port as user with key and immediately exits.
+func TestConnection(ip string, port int, user, key string) error {
+	client, error := libmachine.NewClient(user, ip, port,
+		&libmachine.Auth{
+			Keys: []string{key},
+		})
+	if error != nil {
+		return error
+	}
 
-	client, err = libmachine.NewClient(user, addr, port, auth)
-	return client, err
+	return client.Shell("exit")
 }
 
-// Details is an interface for the details to allow to SSH into nodes
-type Details interface {
-	GetSSHAddress() string
-	GetSSHPort() int
-	GetSSHKeyPath() string
-	GetSSHUsername() string
+func OpenConnection(ip string, port int, user, key string) (Client, error) {
+	client, error := libmachine.NewClient(user, ip, port,
+		&libmachine.Auth{
+			Keys: []string{key},
+		})
+	return client, error
 }
 
 // ValidUnecryptedPrivateKey parses SSH private key

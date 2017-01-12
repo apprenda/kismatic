@@ -75,18 +75,30 @@ type Plan struct {
 	Ingress        OptionalNodeGroup
 }
 
-type SSHConnections struct {
-	SSHConfig *SSHConfig
-	Nodes     []Node
-}
-
 type SSHConnection struct {
 	SSHConfig *SSHConfig
 	Node      *Node
 }
 
-// GetSSHConnection returns the SSHConnection struct containing the node and SSHConfig details
-func (p *Plan) GetSSHConnection(host string) (*SSHConnection, error) {
+func (p *Plan) GetUniqueNodeIPs() []string {
+	ipMap := make(map[string]bool)
+	nodes := p.getAllNodes()
+	for _, node := range nodes {
+		ipMap[node.IP] = true
+	}
+
+	ips := make([]string, len(ipMap))
+
+	i := 0
+	for k := range ipMap {
+		ips[i] = k
+		i++
+	}
+
+	return ips
+}
+
+func (p *Plan) getAllNodes() []Node {
 	nodes := []Node{}
 	nodes = append(nodes, p.Etcd.Nodes...)
 	nodes = append(nodes, p.Master.Nodes...)
@@ -94,6 +106,13 @@ func (p *Plan) GetSSHConnection(host string) (*SSHConnection, error) {
 	if p.Ingress.Nodes != nil {
 		nodes = append(nodes, p.Ingress.Nodes...)
 	}
+	return nodes
+}
+
+// GetSSHConnection returns the SSHConnection struct containing the node and SSHConfig details
+func (p *Plan) GetSSHConnection(host string) (*SSHConnection, error) {
+	nodes := p.getAllNodes()
+
 	// try to find the node with the provided hostname
 	var foundNode *Node
 	for _, node := range nodes {
@@ -104,24 +123,20 @@ func (p *Plan) GetSSHConnection(host string) (*SSHConnection, error) {
 	}
 
 	if foundNode == nil {
+		switch host {
+		case "master":
+			foundNode = &p.Master.Nodes[0]
+		case "etcd":
+			foundNode = &p.Etcd.Nodes[0]
+		case "worker":
+			foundNode = &p.Worker.Nodes[0]
+		case "ingress":
+			foundNode = &p.Ingress.Nodes[0]
+		}
+	}
+	if foundNode == nil {
 		return nil, fmt.Errorf("node %q not found in the plan", host)
 	}
 
 	return &SSHConnection{&p.Cluster.SSH, foundNode}, nil
-}
-
-func (ssh SSHConnection) GetSSHAddress() string {
-	return ssh.Node.IP
-}
-
-func (ssh SSHConnection) GetSSHPort() int {
-	return ssh.SSHConfig.Port
-}
-
-func (ssh SSHConnection) GetSSHKeyPath() string {
-	return ssh.SSHConfig.Key
-}
-
-func (ssh SSHConnection) GetSSHUsername() string {
-	return ssh.SSHConfig.User
 }

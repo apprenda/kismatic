@@ -75,11 +75,11 @@ func doAddWorker(out io.Writer, planFile string, opts *addWorkerOpts, newWorker 
 		printValidationErrors(out, errs)
 		return errors.New("the plan file failed validation")
 	}
-	workerSSHCon := &install.SSHConnections{
+	workerSSHCon := &install.SSHConnection{
 		SSHConfig: &plan.Cluster.SSH,
-		Nodes:     []install.Node{newWorker},
+		Node:      &newWorker,
 	}
-	if _, errs := install.ValidateSSHConnections(workerSSHCon, "New worker node"); errs != nil {
+	if _, errs := install.ValidateSSHConnection(workerSSHCon, "New worker node"); errs != nil {
 		printValidationErrors(out, errs)
 		return errors.New("could not establish SSH connection to the new node")
 	}
