@@ -186,7 +186,7 @@ func (s *SSHConfig) validate() (bool, []error) {
 func (s sshConnectionSet) validate() (bool, []error) {
 	v := newValidator()
 
-	err := ssh.ValidUnecryptedPrivateKey(s.SSHConfig.Key)
+	err := ssh.ValidUnencryptedPrivateKey(s.SSHConfig.Key)
 	if err != nil {
 		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
 	} else {

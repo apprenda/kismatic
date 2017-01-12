@@ -125,18 +125,26 @@ func (p *Plan) GetSSHConnection(host string) (*SSHConnection, error) {
 	if foundNode == nil {
 		switch host {
 		case "master":
-			foundNode = &p.Master.Nodes[0]
+			foundNode = firstIfItExists(p.Master.Nodes)
 		case "etcd":
-			foundNode = &p.Etcd.Nodes[0]
+			foundNode = firstIfItExists(p.Etcd.Nodes)
 		case "worker":
-			foundNode = &p.Worker.Nodes[0]
+			foundNode = firstIfItExists(p.Worker.Nodes)
 		case "ingress":
-			foundNode = &p.Ingress.Nodes[0]
+			foundNode = firstIfItExists(p.Ingress.Nodes)
 		}
 	}
+
 	if foundNode == nil {
 		return nil, fmt.Errorf("node %q not found in the plan", host)
 	}
 
 	return &SSHConnection{&p.Cluster.SSH, foundNode}, nil
+}
+
+func firstIfItExists(nodes []Node) *Node {
+	if len(nodes) > 0 {
+		return &nodes[0]
+	}
+	return nil
 }

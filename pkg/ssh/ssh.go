@@ -36,7 +36,7 @@ func OpenConnection(ip string, port int, user, key string) (Client, error) {
 }
 
 // ValidUnecryptedPrivateKey parses SSH private key
-func ValidUnecryptedPrivateKey(file string) error {
+func ValidUnencryptedPrivateKey(file string) error {
 	buffer, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func ValidUnecryptedPrivateKey(file string) error {
 func isEncrypted(buffer []byte) (bool, error) {
 	// There is no error, just a nil block
 	block, _ := pem.Decode(buffer)
-	// File cannot be decoded, maybe it's some unecpected format
+	// File cannot be decoded, maybe it's some unexpected format
 	if block == nil {
 		return false, fmt.Errorf("Parse SSH key error")
 	}
