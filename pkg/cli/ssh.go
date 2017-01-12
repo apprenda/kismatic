@@ -22,8 +22,9 @@ func NewCmdSSH(out io.Writer) *cobra.Command {
 	opts := &sshOpts{}
 
 	cmd := &cobra.Command{
-		Use: "ssh HOST [commands]",
-		Short: `ssh into a node in the cluster.
+		Use:   "ssh HOST [commands]",
+		Short: "ssh into a node in the cluster",
+		Long: `ssh into a node in the cluster
 
 HOST must be one of the following:
 - A hostname defined in the plan filepath
