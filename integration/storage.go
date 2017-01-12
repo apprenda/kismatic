@@ -66,38 +66,50 @@ exit 0
 		FailIfError(err, "Error running storage play")
 
 		By("Setting up a gluster volume with replication = 2")
-		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "1", "--replica-count", "2", "gv0")
+		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "--replica-count", "2", "allow-address", nodes.worker[0].PrivateIP, "1", "gv1")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
 		FailIfError(err, "Error running volume add command")
 
 		By("Mounting the volume on one of the nodes, and writing a file")
-		mount := fmt.Sprintf("sudo mount -t glusterfs %s:/gv0 /mnt1", nodes.worker[0].Hostname)
+		mount := fmt.Sprintf("sudo mount -t nfs %s:/gv1 /mnt1", nodes.worker[0].Hostname)
 		err = runViaSSH([]string{"sudo mkdir /mnt1", mount, "sudo touch /mnt1/test-file1"}, nodes.worker[0:1], sshKey, 30*time.Second)
 		FailIfError(err, "Error mounting gluster volume")
 
 		time.Sleep(3 * time.Second)
 		By("Verifying file is on both nodes")
-		err = runViaSSH([]string{"sudo cat /data/gv0/test-file1"}, nodes.worker[0:2], sshKey, 30*time.Second)
+		err = runViaSSH([]string{"sudo cat /data/gv1/test-file1"}, nodes.worker[0:2], sshKey, 30*time.Second)
 		FailIfError(err, "Error verifying that the test file is in the gluster volume")
 
 		By("Setting up a gluster volume with no replication")
-		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "1", "--replica-count", "1", "gv1")
+		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "1", "--replica-count", "1", "gv2", "--allow-address", nodes.worker[0].PrivateIP)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
 		FailIfError(err, "Error running volume-add play")
 
 		By("Mounting the volume on one of the nodes, and writing a file")
-		mount = fmt.Sprintf("sudo mount -t glusterfs %s:/gv1 /mnt2", nodes.worker[0].Hostname)
+		mount = fmt.Sprintf("sudo mount -t nfs %s:/gv2 /mnt2", nodes.worker[0].Hostname)
 		err = runViaSSH([]string{"sudo mkdir /mnt2", mount, "sudo touch /mnt2/test-file2"}, nodes.worker[0:1], sshKey, 30*time.Second)
 		FailIfError(err, "Error mounting gluster volume")
 
 		time.Sleep(3 * time.Second)
 		By("Verifying file was not replicated")
-		err = runViaSSH([]string{"sudo cat /data/gv1/test-file2"}, nodes.worker[0:2], sshKey, 30*time.Second) // expect the command to fail on one of the nodes
+		err = runViaSSH([]string{"sudo cat /data/gv2/test-file2"}, nodes.worker[0:2], sshKey, 30*time.Second) // expect the command to fail on one of the nodes
 		FailIfSuccess(err, "Error verifying that the test file is only in one node")
+
+		By("Creating a volume that allows access to worker[1]")
+		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "--allow-address", nodes.worker[1].PrivateIP, "1", "gv3")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
+		FailIfError(err, "Error running volume-add play")
+
+		By("Attempting to mount the volume on worker[0], which should not have access to the NFS share")
+		mount = fmt.Sprintf("sudo mount -t nfs %s:/gv3 /mnt3", nodes.worker[0].Hostname)
+		err = runViaSSH([]string{"sudo mkdir /mnt3", mount, "sudo touch /mnt3/test-file3"}, nodes.worker[0:1], sshKey, 30*time.Second)
+		FailIfSuccess(err, "Expected mount error")
 	})
 }
 

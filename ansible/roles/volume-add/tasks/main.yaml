@@ -38,6 +38,15 @@
     run_once: true
     ignore_errors: yes  #TODO figure out a better way
 
+  - name: gluster volume enable nfs
+    command: gluster volume set {{ volume_name }} nfs.disable off
+    run_once: true
+
+  - name: gluster volume set IP whitelist of {{ allow_ips }}
+    command: gluster volume set {{ volume_name }} nfs.rpc-auth-allow {{ allow_ips }}
+    run_once: true
+    when: allow_ips is defined
+
   - name: gluster volume start
     command: gluster volume start {{ volume_name }}
     run_once: true
@@ -54,8 +63,4 @@
 
   - name: gluster volume quota enable df reporting
     command: gluster volume set {{ volume_name }} quota-deem-statfs on
-    run_once: true
-
-  - name: gluster volume enable nfs
-    command: gluster volume set {{ volume_name }} nfs.disable off
     run_once: true
