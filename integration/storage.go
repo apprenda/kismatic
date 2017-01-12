@@ -66,7 +66,7 @@ exit 0
 		FailIfError(err, "Error running storage play")
 
 		By("Setting up a gluster volume with replication = 2")
-		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "--replica-count", "2", "allow-address", nodes.worker[0].PrivateIP, "1", "gv1")
+		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "--replica-count", "2", "--allow-address", nodes.worker[0].PrivateIP, "1", "gv1")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
@@ -83,7 +83,7 @@ exit 0
 		FailIfError(err, "Error verifying that the test file is in the gluster volume")
 
 		By("Setting up a gluster volume with no replication")
-		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "1", "--replica-count", "1", "gv2", "--allow-address", nodes.worker[0].PrivateIP)
+		cmd = exec.Command("./kismatic", "volume", "add", "-f", f.Name(), "--replica-count", "1", "--allow-address", nodes.worker[0].PrivateIP, "1", "gv2")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()

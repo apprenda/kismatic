@@ -14,6 +14,7 @@ import (
 	"github.com/apprenda/kismatic/pkg/ansible"
 	"github.com/apprenda/kismatic/pkg/install/explain"
 	"github.com/apprenda/kismatic/pkg/util"
+	"strings"
 )
 
 // The PreFlightExecutor will run pre-flight checks against the
@@ -153,6 +154,7 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	cc.VolumeQuota = volume.SizeGB
 	cc.VolumeQuotaRaw = volume.SizeGB * 1024
 	cc.VolumeMount = "/"
+	cc.VolumeAllowedIPs = strings.Join(volume.AllowAddresses, ",")
 
 	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
 	ansibleLogFile, err := os.Create(ansibleLogFilename)

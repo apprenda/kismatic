@@ -52,6 +52,7 @@ type ClusterCatalog struct {
 	VolumeQuota        int    `yaml:"volume_quota"`
 	VolumeQuotaRaw     int    `yaml:"volume_quota_raw"`
 	VolumeMount        string `yaml:"volume_mount"`
+	VolumeAllowedIPs   string `yaml:"volume_allow_ips"`
 }
 
 type NFSVolume struct {

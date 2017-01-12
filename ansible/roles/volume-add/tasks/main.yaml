@@ -42,10 +42,10 @@
     command: gluster volume set {{ volume_name }} nfs.disable off
     run_once: true
 
-  - name: gluster volume set IP whitelist of {{ allow_ips }}
-    command: gluster volume set {{ volume_name }} nfs.rpc-auth-allow {{ allow_ips }}
+  - name: gluster volume set IP whitelist of {{ volume_allow_ips }}
+    command: gluster volume set {{ volume_name }} nfs.rpc-auth-allow {{ volume_allow_ips }}
     run_once: true
-    when: allow_ips is defined
+    when: volume_allow_ips is defined
 
   - name: gluster volume start
     command: gluster volume start {{ volume_name }}
