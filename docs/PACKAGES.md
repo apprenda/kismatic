@@ -16,10 +16,9 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo yum -y install kismatic-etcd` |
-| Kubernetes Master | `sudo yum -y install kismatic-kubernetes-master` |
-| Kubernetes Worker | `sudo yum -y install kismatic-kubernetes-node` |
-| Kubernetes Master & Worker | `sudo yum -y install kismatic-kubernetes-master && sudo yum -y install kismatic-kubernetes-node` |
+| Etcd | `sudo yum -y install kismatic-etcd-1.5.1_1-1` |
+| Kubernetes Master | `sudo yum -y install kismatic-kubernetes-master-1.5.1_1-1` |
+| Kubernetes Worker | `sudo yum -y install kismatic-kubernetes-node-1.5.1_1-1` |
 
 ## Installing via DEB (Ubuntu Xenial)
 
@@ -40,10 +39,9 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo apt-get -y install kismatic-etcd` |
-| Kubernetes Master | `sudo apt-get -y install kismatic-kubernetes-master` |
-| Kubernetes Worker | `sudo apt-get -y install kismatic-kubernetes-node` |
-| Kubernetes Master & Worker | `sudo apt-get -y install kismatic-kubernetes-master && sudo apt-get -y install kismatic-kubernetes-node` |
+| Etcd | `sudo apt-get -y install kismatic-etcd=1.5.1-1` |
+| Kubernetes Master | `sudo apt-get -y install kismatic-kubernetes-master=1.5.1-1` |
+| Kubernetes Worker | `sudo apt-get -y install kismatic-kubernetes-node=1.5.1-1` |
 
 # <a name="synclocal"></a>Synchronizing a local repo
 

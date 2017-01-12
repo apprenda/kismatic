@@ -6,20 +6,30 @@ import (
 )
 
 type fakePlanner struct {
-	exists     bool
-	plan       *install.Plan
-	err        error
-	readCalled bool
+	exists            bool
+	plan              *install.Plan
+	readWriteErr      error
+	readCalled        bool
+	clusterAddress    string
+	clusterAddressErr error
+	dashboardURL      string
+	dashboardURLErr   error
 }
 
 func (fp *fakePlanner) PlanExists() bool { return fp.exists }
 func (fp *fakePlanner) Read() (*install.Plan, error) {
 	fp.readCalled = true
-	return fp.plan, fp.err
+	return fp.plan, fp.readWriteErr
 }
 func (fp *fakePlanner) Write(p *install.Plan) error {
 	fp.plan = p
-	return fp.err
+	return fp.readWriteErr
+}
+func (fp *fakePlanner) GetClusterAddress(p *install.Plan) (string, error) {
+	return fp.clusterAddress, fp.clusterAddressErr
+}
+func (fp *fakePlanner) GetDashboardURL(p *install.Plan) (string, error) {
+	return fp.dashboardURL, fp.dashboardURLErr
 }
 
 type fakeExecutor struct {

@@ -20,9 +20,6 @@ import (
 func leaveIt() bool {
 	return os.Getenv("LEAVE_ARTIFACTS") != ""
 }
-func bailBeforeAnsible() bool {
-	return os.Getenv("BAIL_BEFORE_ANSIBLE") != ""
-}
 
 func GetSSHKeyFile() (string, error) {
 	dir, err := homedir.Dir()
@@ -163,26 +160,23 @@ func verifyMasterNodeFailure(nodes provisionedNodes, provisioner infrastructureP
 	return nil
 }
 
-func verifyIngressNodes(nodes provisionedNodes, sshKey string) error {
+func verifyIngressNodes(master NodeDeets, ingressNodes []NodeDeets, sshKey string) error {
 	By("Adding a service and an ingress resource")
-	addIngressResource(nodes.master[0], sshKey)
+	addIngressResource(master, sshKey)
+
+	By("Waiting a bit before attempting to verify ingress")
+	time.Sleep(90*time.Second)
 
 	By("Verifying the service is accessible via the ingress point(s)")
-	for _, ingNode := range nodes.ingress {
+	for _, ingNode := range ingressNodes {
 		if err := verifyIngressPoint(ingNode); err != nil {
+			// For debugging purposes...
+			runViaSSH([]string{"sudo kubectl describe -f /tmp/ingress.yaml", "sudo kubectl describe pods"}, []NodeDeets{master}, sshKey, 1*time.Minute)
 			return err
 		}
 	}
 
 	return nil
-}
-
-func verifyIngressNode(node NodeDeets, sshKey string) error {
-	By("Adding a service and an ingress resource")
-	addIngressResource(node, sshKey)
-
-	By("Verifying the service is accessible via the ingress point(s)")
-	return verifyIngressPoint(node)
 }
 
 func addIngressResource(node NodeDeets, sshKey string) {
@@ -199,15 +193,10 @@ func addIngressResource(node NodeDeets, sshKey string) {
 	FailIfError(err, "Error creating ingress resources")
 }
 
-func newTestIngressCert() error {
-	err := exec.Command("openssl", "req", "-x509", "-nodes", "-days", "365", "-newkey", "rsa:2048", "-keyout", "tls.key", "-out", "tls.crt", "-subj", "/CN=kismaticintegration.com").Run()
-	return err
-}
-
 func verifyIngressPoint(node NodeDeets) error {
 	// HTTP ingress
 	url := "http://" + node.PublicIP + "/echo"
-	if err := retry.WithBackoff(func() error { return ingressRequest(url) }, 10); err != nil {
+	if err := retry.WithBackoff(func() error { return ingressRequest(url) }, 7); err != nil {
 		return err
 	}
 	// HTTPS ingress
@@ -319,7 +308,7 @@ func FailIfError(err error, message ...string) {
 	}
 }
 
-func FailIfSuccess(err error, message ...string) {
+func FailIfSuccess(err error) {
 	if err == nil {
 		Fail("Expected failure")
 	}
