@@ -148,6 +148,12 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 		return err
 	}
 
+	// Validate that there are enough storage nodes to satisfy the request
+	nodesRequired := volume.ReplicateCount * volume.DistributionCount
+	if nodesRequired > len(plan.Storage.Nodes) {
+		return fmt.Errorf("the requested volume configuration requires %d storage nodes, but the cluster only has %d.", nodesRequired, len(plan.Storage.Nodes))
+	}
+
 	// Add storage related vars
 	cc.VolumeReplicaCount = volume.ReplicateCount
 	cc.VolumeName = volume.Name
