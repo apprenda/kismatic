@@ -13,12 +13,13 @@ import (
 )
 
 func testAddVolumeVerifyGluster(aws infrastructureProvisioner, distro linuxDistro) {
-	WithInfrastructure(NodeCount{Worker: 4}, distro, aws, func(nodes provisionedNodes, sshKey string) {
+	WithInfrastructure(NodeCount{Worker: 5}, distro, aws, func(nodes provisionedNodes, sshKey string) {
 		planFile, err := os.Create("kismatic-testing.yaml")
 		FailIfError(err, "Error waiting for nodes")
 		defer planFile.Close()
 
-		standupGlusterCluster(planFile, nodes, sshKey, distro)
+		clusterNodes := nodes.worker[0:4]
+		standupGlusterCluster(planFile, clusterNodes, sshKey, distro)
 		storageNode := nodes.worker[0]
 
 		tests := []struct {
@@ -52,12 +53,23 @@ func testAddVolumeVerifyGluster(aws infrastructureProvisioner, distro linuxDistr
 			verifyGlusterVolume(storageNode, sshKey, volumeName, test.replicaCount, test.distributionCount, "")
 		}
 
-		By("Creating a volume that allows access to worker[1]")
-		createVolume(planFile, "foo", 1, 1, nodes.worker[1].PrivateIP)
+		By("Creating a volume which allows access to nodes in the cluster")
+		createVolume(planFile, "foo", 1, 1, "")
 
-		By("Attempting to mount the volume on worker[0], which should not have access to the NFS share")
-		mount := fmt.Sprintf("sudo mount -t nfs %s:/foo /mnt3", nodes.worker[0].Hostname)
-		err = runViaSSH([]string{"sudo mkdir /mnt3", mount, "sudo touch /mnt3/test-file3"}, nodes.worker[0:1], sshKey, 30*time.Second)
+		By("Installing NFS library on out-of-cluster node")
+		unauthNode := nodes.worker[4:5]
+		var cmd string
+		switch distro {
+		case Ubuntu1604LTS:
+			cmd = "sudo apt-get update -y && sudo apt-get install -y nfs-common"
+		case CentOS7, RedHat7:
+			cmd = "sudo yum install -y nfs-utils"
+		}
+		err = runViaSSH([]string{cmd}, unauthNode, sshKey, 2*time.Minute)
+		FailIfError(err, "Failed to install nfs-common on Ubuntu")
+		By("Attempting to mount the volume a node that is not part of the cluster, which should not have access to the NFS share")
+		mount := fmt.Sprintf("sudo mount -t nfs %s:/foo /mnt3", clusterNodes[0].Hostname)
+		err = runViaSSH([]string{"sudo mkdir /mnt3", mount, "sudo touch /mnt3/test-file3"}, unauthNode, sshKey, 30*time.Second)
 		FailIfSuccess(err, "Expected mount error")
 	})
 }
@@ -98,18 +110,18 @@ func createVolume(planFile *os.File, name string, replicationCount int, distribu
 	FailIfError(err, "Error running volume add command")
 }
 
-func standupGlusterCluster(planFile *os.File, nodes provisionedNodes, sshKey string, distro linuxDistro) {
+func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, distro linuxDistro) {
 	By("Setting up a plan file with storage nodes")
 	plan := PlanAWS{
-		Etcd:                     nodes.worker,
-		Master:                   nodes.worker,
-		Worker:                   nodes.worker,
-		Storage:                  nodes.worker,
-		MasterNodeFQDN:           nodes.worker[0].Hostname,
-		MasterNodeShortName:      nodes.worker[0].Hostname,
+		Etcd:                     nodes,
+		Master:                   nodes,
+		Worker:                   nodes,
+		Storage:                  nodes,
+		MasterNodeFQDN:           nodes[0].Hostname,
+		MasterNodeShortName:      nodes[0].Hostname,
 		AllowPackageInstallation: true,
 		SSHKeyFile:               sshKey,
-		SSHUser:                  nodes.worker[0].SSHUser,
+		SSHUser:                  nodes[0].SSHUser,
 	}
 	By("Writing plan file out to disk")
 	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
@@ -136,7 +148,7 @@ func standupGlusterCluster(planFile *os.File, nodes provisionedNodes, sshKey str
 	FailIfError(err, "Error writing kubectl dummy file")
 	err = copyFileToRemote(kubectlDummyFile.Name(), "~/kubectl", plan.Master[0], sshKey, 1*time.Minute)
 	FailIfError(err, "Error copying kubectl dummy")
-	err = runViaSSH([]string{"sudo mv ~/kubectl /usr/bin/kubectl", "sudo chmod +x /usr/bin/kubectl"}, nodes.worker[0:1], sshKey, 1*time.Minute)
+	err = runViaSSH([]string{"sudo mv ~/kubectl /usr/bin/kubectl", "sudo chmod +x /usr/bin/kubectl"}, nodes[0:1], sshKey, 1*time.Minute)
 
 	By("Running the storage play with the plan")
 	cmd := exec.Command("./kismatic", "install", "step", "_storage.yaml", "-f", planFile.Name())
