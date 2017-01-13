@@ -4,11 +4,11 @@ import (
 	"io"
 	"os"
 
+	"fmt"
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
 	"github.com/spf13/cobra"
 	"strings"
-	"fmt"
 )
 
 type stepCmd struct {

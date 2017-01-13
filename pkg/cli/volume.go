@@ -1,22 +1,22 @@
 package cli
 
 import (
+	"errors"
+	"fmt"
+	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/spf13/cobra"
 	"io"
-	"fmt"
 	"math/rand"
-	"errors"
 	"strconv"
-	"github.com/apprenda/kismatic/pkg/install"
 )
 
 // NewCmdVolume returns the storage command
 func NewCmdVolume(out io.Writer) *cobra.Command {
 	var planFile string
 	cmd := &cobra.Command{
-		Use: "volume",
+		Use:   "volume",
 		Short: "manage storage volumes on your Kubernetes cluster",
-		RunE:func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Usage()
 		},
 	}
@@ -26,18 +26,18 @@ func NewCmdVolume(out io.Writer) *cobra.Command {
 }
 
 type volumeAddOptions struct {
-	replicaCount int
+	replicaCount      int
 	distributionCount int
-	allowAddress []string
-	verbose bool
-	outputFormat string
+	allowAddress      []string
+	verbose           bool
+	outputFormat      string
 }
 
 // NewCmdVolumeAdd returns the command for adding storage volumes
 func NewCmdVolumeAdd(out io.Writer, planFile *string) *cobra.Command {
 	opts := volumeAddOptions{}
 	cmd := &cobra.Command{
-		Use: "add size_in_gigabytes [volume name]",
+		Use:   "add size_in_gigabytes [volume name]",
 		Short: "add storage volumes to the Kubernetes cluster",
 		Long: `Add storage volumes to the Kubernetes cluster.
 
@@ -84,7 +84,7 @@ func doVolumeAdd(out io.Writer, opts volumeAddOptions, planFile string, args []s
 	}
 	execOpts := install.ExecutorOptions{
 		OutputFormat: opts.outputFormat,
-		Verbose: opts.verbose,
+		Verbose:      opts.verbose,
 		// Need to refactor executor code... this will do for now as we don't need the generated assets dir in this command
 		GeneratedAssetsDirectory: "generated",
 	}
@@ -97,9 +97,9 @@ func doVolumeAdd(out io.Writer, opts volumeAddOptions, planFile string, args []s
 		return err
 	}
 	v := install.StorageVolume{
-		Name: volumeName,
-		SizeGB: volumeSizeGB,
-		ReplicateCount: opts.replicaCount,
+		Name:              volumeName,
+		SizeGB:            volumeSizeGB,
+		ReplicateCount:    opts.replicaCount,
 		DistributionCount: opts.distributionCount,
 	}
 	if opts.allowAddress != nil {
