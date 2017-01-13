@@ -50,9 +50,6 @@ type ExecutorOptions struct {
 	Verbose bool
 	// RunsDirectory is where information about installation runs is kept
 	RunsDirectory string
-	// ExtraVars temporary field, an arbitrary map of Ansible variables
-	// TODO remove when volume-add cli is added
-	ExtraVars map[string]string
 }
 
 // NewExecutor returns an executor for performing installations according to the installation plan.
