@@ -4,27 +4,21 @@
     register: out
     failed_when: "'{{ volume_name }}' in out.stdout"
 
-  - name: test for available disk space
-    assert:
-      that:
-        - "{{ item.size_available > volume_quota_raw|float }}"
-    with_items: "{{ ansible_mounts }}"
-    when: item.mount == volume_mount
-    ignore_errors: yes
-    register: disk_free
+  - name: get storage nodes with enough disk space
+    set_fact:
+      node_with_space: true
+      free_disk_space_bytes: "{{ item.size_available }}"
+    when: "{{ item.mount == volume_mount and item.size_available > volume_quota_raw|float }}"
+    with_items: ansible_mounts
 
-  - set_fact:
-      gluster: true
-    when: "{{ disk_free|success }}"
-
-    # build a new node list to add gluster volumes on, only add the number of nodes needed
-  - name: create new gluster node list
+  - name: create group of nodes that have enough disk space
     group_by:
-      key: gluster
+      key: node_with_space
 
-  - name: verify available disk space
+  # Due to 1-node -> 1-disk mapping, we need, at least, replica_count * distribution_count storage nodes
+  - name: verify we have enough storage nodes for the requested volume
     command: /bin/true
-    failed_when: "{{ groups['gluster'] is not defined or groups['gluster']|length < volume_replica_count|int * volume_distribution_count|int }}"
+    failed_when: "{{ groups['node_with_space'] is not defined or groups['node_with_space']|length < volume_replica_count|int * volume_distribution_count|int }}"
     run_once: true
 
   - name: create block directory
@@ -34,7 +28,21 @@
       mode: "{{ volume_mode }}"
 
   - name: gluster volume create
-    command: gluster volume create {{ volume_name }} {% if volume_replica_count|int > 1 %} replica {{ volume_replica_count|int }} {% endif %} {% for host in groups['gluster'][0:volume_replica_count|int * volume_distribution_count|int] %} {{ hostvars[host]['inventory_hostname'] }}:/data/{{ volume_name }} {% endfor %} force
+    # Hack to sort hosts by free disk space
+    # sort filter is ascending by default. we want descending to get nodes with most free disk space.
+    command: >
+      gluster volume create {{ volume_name }}
+      {% if volume_replica_count|int > 1 %} replica {{ volume_replica_count|int }} {% endif %}
+      {% set nodes = [] %}
+      {% for host in groups['node_with_space'] %}
+      {% if nodes.insert(0, {'inventory_hostname': host, 'free': hostvars[host]['free_disk_space_bytes']}) %}{% endif %}
+      {% endfor %}
+      {% for host in nodes|sort(attribute='free', reverse=True) %}
+      {% if loop.index0 < volume_replica_count|int * volume_distribution_count|int %}
+      {{ host.inventory_hostname }}:/data/{{ volume_name }}
+      {% endif %}
+      {% endfor %}
+      force
     run_once: true
 
   - name: gluster volume enable nfs
