@@ -105,6 +105,24 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 	if err = runner.WaitPlaybook(); err != nil {
 		return nil, fmt.Errorf("error running new worker smoke test: %v", err)
 	}
+	// Allow access to new worker to any storage volumes defined
+	if len(originalPlan.Storage.Nodes) > 0 {
+		util.PrintHeader(ae.stdout, "Updating Allowed IPs On Storage Volumes", '=')
+		playbook = "_volume-update-allowed.yaml"
+		eventExplainer = &explain.DefaultEventExplainer{}
+		runner, explainer, err = ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLogFile, runDirectory)
+		if err != nil {
+			return nil, err
+		}
+		eventStream, err = runner.StartPlaybook(playbook, inventory, *cc)
+		if err != nil {
+			return nil, fmt.Errorf("error adding new worker to volume allow list: %v", err)
+		}
+		go explainer.Explain(eventStream)
+		if err = runner.WaitPlaybook(); err != nil {
+			return nil, fmt.Errorf("error adding new worker to volume allow list: %v", err)
+		}
+	}
 	return &updatedPlan, nil
 }
 
