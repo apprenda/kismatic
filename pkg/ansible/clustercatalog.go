@@ -42,7 +42,7 @@ type ClusterCatalog struct {
 
 	WorkerNode string `yaml:"worker_node"`
 
-	NFSVolumes []NFSVolume
+	NFSVolumes []NFSVolume `yaml:"nfs_volumes"`
 
 	EnableGluster bool `yaml:"configure_storage"`
 

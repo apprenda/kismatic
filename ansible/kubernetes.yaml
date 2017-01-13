@@ -34,4 +34,4 @@
     when: configure_ingress|bool == true
   - include: _addon-kubernetes-dashboard.yaml
   - include: _addon-nfs-volumes.yaml
-    when: nfsvolumes|length > 0
+    when: nfs_volumes|length > 0

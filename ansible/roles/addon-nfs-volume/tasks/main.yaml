@@ -1,4 +1,4 @@
 ---
   - name: Install all NFS shares as PersistentVolumes
     include: "new-share.yaml"
-    with_indexed_items: nfsvolumes
+    with_indexed_items: nfs_volumes

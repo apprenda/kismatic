@@ -7,7 +7,7 @@
     set_fact:
       storage_cluster_ip: "{{ out.stdout }}"
 
-  - name: copy pv.yaml to remote
+  - name: copy PV.yaml to remote
     template:
         src: pv.yaml
         dest: /tmp/pv.yaml
