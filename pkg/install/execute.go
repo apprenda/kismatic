@@ -371,9 +371,21 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	cc.VolumeQuotaBytes = volume.SizeGB * (1 << (10*3))
 	cc.VolumeMount = "/"
 
-	// Allow pods to access volumes
+	// Allow nodes and pods to access volumes
+	allowedNodes := plan.Master.Nodes
+	allowedNodes = append(allowedNodes, plan.Worker.Nodes...)
+	allowedNodes = append(allowedNodes, plan.Ingress.Nodes...)
+	allowedNodes = append(allowedNodes, plan.Storage.Nodes...)
+
 	allowed := volume.AllowAddresses
 	allowed = append(allowed, plan.Cluster.Networking.PodCIDRBlock)
+	for _, n := range allowedNodes {
+		ip := n.IP
+		if n.InternalIP != "" {
+			ip = n.InternalIP
+		}
+		allowed = append(allowed, ip)
+	}
 	cc.VolumeAllowedIPs = strings.Join(allowed, ",")
 
 	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
