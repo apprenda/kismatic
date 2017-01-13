@@ -130,5 +130,7 @@ func runPreFlightOnWorker(executor install.Executor, plan install.Plan, workerNo
 	preFlightPlan.Worker.ExpectedCount = 1
 	preFlightPlan.Ingress.Nodes = []install.Node{}
 	preFlightPlan.Ingress.ExpectedCount = 0
+	preFlightPlan.Storage.Nodes = []install.Node{}
+	preFlightPlan.Storage.ExpectedCount = 0
 	return executor.RunPreFlightCheck(&preFlightPlan)
 }
