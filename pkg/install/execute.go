@@ -368,7 +368,7 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	cc.VolumeReplicaCount = volume.ReplicateCount
 	cc.VolumeDistributionCount = volume.DistributionCount
 	cc.VolumeQuotaGB = volume.SizeGB
-	cc.VolumeQuotaBytes = volume.SizeGB * 1024
+	cc.VolumeQuotaBytes = volume.SizeGB * (1 << (10*3))
 	cc.VolumeMount = "/"
 
 	// Allow pods to access volumes
