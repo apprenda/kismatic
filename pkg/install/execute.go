@@ -161,7 +161,11 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	cc.VolumeQuota = volume.SizeGB
 	cc.VolumeQuotaRaw = volume.SizeGB * 1024
 	cc.VolumeMount = "/"
-	cc.VolumeAllowedIPs = strings.Join(volume.AllowAddresses, ",")
+
+	// Allow pods to access volumes
+	allowed := volume.AllowAddresses
+	allowed = append(allowed, plan.Cluster.Networking.PodCIDRBlock)
+	cc.VolumeAllowedIPs = strings.Join(allowed, ",")
 
 	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
 	ansibleLogFile, err := os.Create(ansibleLogFilename)

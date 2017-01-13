@@ -24,37 +24,32 @@ func testAddVolumeVerifyGluster(aws infrastructureProvisioner, distro linuxDistr
 		tests := []struct {
 			replicaCount      int
 			distributionCount int
-			allowedIps        string
 		}{
 			{
 				replicaCount:  1,
 				distributionCount: 1,
-				allowedIps:        storageNode.PrivateIP,
 			},
 			{
 				replicaCount:  2,
 				distributionCount: 1,
-				allowedIps:        storageNode.PrivateIP,
 			},
 			{
 				replicaCount:  1,
 				distributionCount: 2,
-				allowedIps:        storageNode.PrivateIP,
 			},
 			{
 				replicaCount:  2,
 				distributionCount: 2,
-				allowedIps:        storageNode.PrivateIP,
 			},
 		}
 
 		for _, test := range tests {
 			By(fmt.Sprintf("Setting up a volume with Replica = %d, Distributed = %d", test.replicaCount, test.distributionCount))
 			volumeName := fmt.Sprintf("gv-r%d-d%d", test.replicaCount, test.distributionCount)
-			createVolume(planFile, volumeName, test.replicaCount, test.distributionCount, test.allowedIps)
+			createVolume(planFile, volumeName, test.replicaCount, test.distributionCount, "")
 
 			By("Verifying gluster volume properties")
-			verifyGlusterVolume(storageNode, sshKey, volumeName, test.replicaCount, test.distributionCount, test.allowedIps)
+			verifyGlusterVolume(storageNode, sshKey, volumeName, test.replicaCount, test.distributionCount, "")
 		}
 
 		By("Creating a volume that allows access to worker[1]")
@@ -68,9 +63,11 @@ func testAddVolumeVerifyGluster(aws infrastructureProvisioner, distro linuxDistr
 }
 func verifyGlusterVolume(storageNode NodeDeets, sshKey string, name string, replicationCount int, distributionCount int, allowedIpList string) {
 	// verify allowed IP List
-	commands := []string{
-		fmt.Sprintf(`sudo gluster volume info %s | grep "nfs.rpc-auth-allow: %s"`, name, allowedIpList),
+	commands := []string{}
+	if allowedIpList != "" {
+		commands = append(commands, fmt.Sprintf(`sudo gluster volume info %s | grep "nfs.rpc-auth-allow: %s"`, name, allowedIpList))
 	}
+	// verify replication and distribution
 	if replicationCount > 1 {
 		cmd := fmt.Sprintf(`sudo gluster volume info %s | grep "Number of Bricks: %d x %d"`, name, distributionCount, replicationCount)
 		commands = append(commands, cmd)
@@ -91,7 +88,10 @@ func createVolume(planFile *os.File, name string, replicationCount int, distribu
 		"-f", planFile.Name(),
 		"--replica-count", strconv.Itoa(replicationCount),
 		"--distribution-count", strconv.Itoa(distributionCount),
-		"--allow-address", allowAddress, "1", name)
+		 "1", name)
+	if allowAddress != "" {
+		cmd.Args = append(cmd.Args, "--allow-address", allowAddress)
+	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
