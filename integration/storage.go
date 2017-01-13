@@ -26,19 +26,19 @@ func testAddVolumeVerifyGluster(aws infrastructureProvisioner, distro linuxDistr
 			distributionCount int
 		}{
 			{
-				replicaCount:  1,
+				replicaCount:      1,
 				distributionCount: 1,
 			},
 			{
-				replicaCount:  2,
+				replicaCount:      2,
 				distributionCount: 1,
 			},
 			{
-				replicaCount:  1,
+				replicaCount:      1,
 				distributionCount: 2,
 			},
 			{
-				replicaCount:  2,
+				replicaCount:      2,
 				distributionCount: 2,
 			},
 		}
@@ -88,7 +88,7 @@ func createVolume(planFile *os.File, name string, replicationCount int, distribu
 		"-f", planFile.Name(),
 		"--replica-count", strconv.Itoa(replicationCount),
 		"--distribution-count", strconv.Itoa(distributionCount),
-		 "1", name)
+		"1", name)
 	if allowAddress != "" {
 		cmd.Args = append(cmd.Args, "--allow-address", allowAddress)
 	}
@@ -149,7 +149,7 @@ func standupGlusterCluster(planFile *os.File, nodes provisionedNodes, sshKey str
 func testVolumeAdd(masterNode NodeDeets, sshKey string) {
 	By("Adding a volume using kismatic")
 	volName := "kismatic-test-volume"
-	cmd := exec.Command("./kismatic", "volume", "add", "-f", "kismatic-testing.yaml", "1", volName)
+	cmd := exec.Command("./kismatic", "volume", "add", "-f", "kismatic-testing.yaml", "--replica-count", "1", "1", volName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
