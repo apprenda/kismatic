@@ -137,6 +137,12 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 		}
 	}
 
+	if p.Storage.ExpectedCount > 0 {
+		for i := 0; i < p.Storage.ExpectedCount; i++ {
+			p.Storage.Nodes = append(p.Storage.Nodes, n)
+		}
+	}
+
 	p.NFS = NFS{
 		Volumes: []NFSVolume{
 			NFSVolume{

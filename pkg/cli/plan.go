@@ -74,7 +74,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	fmt.Fprintf(out, "- %d storage nodes\n", storageNodes)
 	fmt.Fprintln(out)
 
-	plan := buildPlan(etcdNodes, masterNodes, workerNodes, ingressNodes)
+	plan := buildPlan(etcdNodes, masterNodes, workerNodes, ingressNodes, storageNodes)
 	// Write out the plan
 	if err = install.WritePlanTemplate(plan, planner); err != nil {
 		return fmt.Errorf("error planning installation: %v", err)
@@ -84,7 +84,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	return nil
 }
 
-func buildPlan(etcdNodes int, masterNodes int, workerNodes int, ingressNodes int) *install.Plan {
+func buildPlan(etcdNodes, masterNodes, workerNodes, ingressNodes, storageNodes int) *install.Plan {
 	// Create a plan
 	masterNodeGroup := install.MasterNodeGroup{}
 	masterNodeGroup.ExpectedCount = masterNodes
@@ -101,6 +101,12 @@ func buildPlan(etcdNodes int, masterNodes int, workerNodes int, ingressNodes int
 	if ingressNodes > 0 {
 		plan.Ingress = install.OptionalNodeGroup{
 			ExpectedCount: ingressNodes,
+		}
+	}
+
+	if storageNodes > 0 {
+		plan.Storage = install.OptionalNodeGroup{
+			ExpectedCount: storageNodes,
 		}
 	}
 
