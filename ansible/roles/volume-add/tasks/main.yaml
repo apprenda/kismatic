@@ -1,5 +1,5 @@
 ---
-  - name: verify volume doesn't already exist
+  - name: verify volume name is unique
     command: gluster volume list
     register: out
     failed_when: "'{{ volume_name }}' in out.stdout"
@@ -8,7 +8,7 @@
     set_fact:
       node_with_space: true
       free_disk_space_bytes: "{{ item.size_available }}"
-    when: "{{ item.mount == volume_mount and item.size_available > volume_quota_raw|float }}"
+    when: "{{ item.mount == volume_mount and item.size_available > volume_quota_bytes|float }}"
     with_items: ansible_mounts
 
   - name: create group of nodes that have enough disk space
@@ -21,13 +21,13 @@
     failed_when: "{{ groups['node_with_space'] is not defined or groups['node_with_space']|length < volume_replica_count|int * volume_distribution_count|int }}"
     run_once: true
 
-  - name: create block directory
+  - name: create brick directory
     file:
       path: "{{ volume_mount }}{{ volume_base_dir }}{{ volume_name }}"
       state: directory
       mode: "{{ volume_mode }}"
 
-  - name: gluster volume create
+  - name: create gluster volume
     # Hack to sort hosts by free disk space
     # sort filter is ascending by default. we want descending to get nodes with most free disk space.
     command: >
@@ -45,27 +45,27 @@
       force
     run_once: true
 
-  - name: gluster volume enable nfs
+  - name: enable NFS on the gluster volume
     command: gluster volume set {{ volume_name }} nfs.disable off
     run_once: true
 
-  - name: gluster volume set IP whitelist of {{ volume_allow_ips }}
+  - name: set allowed IP address whitelist on gluster volume
     command: gluster volume set {{ volume_name }} nfs.rpc-auth-allow {{ volume_allow_ips }}
     run_once: true
     when: volume_allow_ips is defined
 
-  - name: gluster volume start
+  - name: start gluster volume
     command: gluster volume start {{ volume_name }}
     run_once: true
 
-  - name: gluster volume quota enable
+  - name: set quota on the gluster volume
     command: gluster volume quota {{ volume_name }} enable
     run_once: true
 
   - name: gluster volume quota set
-    command: gluster volume quota {{ volume_name }} limit-usage / {{ volume_quota }}GB
+    command: gluster volume quota {{ volume_name }} limit-usage / {{ volume_quota_gb }}GB
     run_once: true
 
-  - name: gluster volume quota enable df reporting
+  - name: enable quota statistics on the gluster volume
     command: gluster volume set {{ volume_name }} quota-deem-statfs on
     run_once: true

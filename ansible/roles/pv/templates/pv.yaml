@@ -4,7 +4,7 @@
     name: {{ volume_name }}
   spec:
     capacity:
-      storage: {{ volume_quota }}Gi
+      storage: {{ volume_quota_gb }}Gi
     accessModes:
       - ReadWriteMany
     persistentVolumeReclaimPolicy: Recycle
