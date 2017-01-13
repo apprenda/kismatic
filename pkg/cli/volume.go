@@ -96,6 +96,18 @@ func doVolumeAdd(out io.Writer, opts volumeAddOptions, planFile string, args []s
 	if err != nil {
 		return err
 	}
+
+	// Run validation
+	vopts := &validateOpts{
+		outputFormat: opts.outputFormat,
+		verbose: opts.verbose,
+		planFile: planFile,
+		skipPreFlight: true,
+	}
+	if err := doValidate(out, planner, vopts); err != nil {
+		return err
+	}
+
 	v := install.StorageVolume{
 		Name:              volumeName,
 		SizeGB:            volumeSizeGB,

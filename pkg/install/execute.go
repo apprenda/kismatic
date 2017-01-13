@@ -128,56 +128,6 @@ type ansibleExecutor struct {
 	runnerExplainerFactory func(explain.AnsibleEventExplainer, io.Writer) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error)
 }
 
-func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
-	runDirectory, err := ae.createRunDirectory("add-volume")
-	if err != nil {
-		return fmt.Errorf("error creating working directory for add-volume: %v", err)
-	}
-	fp := FilePlanner{
-		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
-	}
-	if err = fp.Write(plan); err != nil {
-		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
-	}
-	inventory := buildInventoryFromPlan(plan)
-	cc, err := ae.buildInstallExtraVars(plan)
-	if err != nil {
-		return err
-	}
-
-	// Validate that there are enough storage nodes to satisfy the request
-	nodesRequired := volume.ReplicateCount * volume.DistributionCount
-	if nodesRequired > len(plan.Storage.Nodes) {
-		return fmt.Errorf("the requested volume configuration requires %d storage nodes, but the cluster only has %d.", nodesRequired, len(plan.Storage.Nodes))
-	}
-
-	// Add storage related vars
-	cc.VolumeName = volume.Name
-	cc.VolumeReplicaCount = volume.ReplicateCount
-	cc.VolumeDistributionCount = volume.DistributionCount
-	cc.VolumeQuotaGB = volume.SizeGB
-	cc.VolumeQuotaBytes = volume.SizeGB * 1024
-	cc.VolumeMount = "/"
-
-	// Allow pods to access volumes
-	allowed := volume.AllowAddresses
-	allowed = append(allowed, plan.Cluster.Networking.PodCIDRBlock)
-	cc.VolumeAllowedIPs = strings.Join(allowed, ",")
-
-	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
-	ansibleLogFile, err := os.Create(ansibleLogFilename)
-	if err != nil {
-		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
-	}
-	util.PrintHeader(ae.stdout, "Add Persistent Storage Volume", '=')
-	playbook := "volume-add.yaml"
-	eventExplainer := &explain.DefaultEventExplainer{}
-	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
-		return err
-	}
-	return nil
-}
-
 // Install the cluster according to the installation plan
 func (ae *ansibleExecutor) Install(p *Plan) error {
 	runDirectory, err := ae.createRunDirectory("install")
@@ -386,6 +336,56 @@ func (ae *ansibleExecutor) RunTask(taskName string, p *Plan) error {
 	util.PrintHeader(ae.stdout, "Running Task", '=')
 	if err := ae.runPlaybookWithExplainer(taskName, explainer, inventory, *ev, ansibleLogFile, runDir); err != nil {
 		return fmt.Errorf("error running task: %v", err)
+	}
+	return nil
+}
+
+func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
+	runDirectory, err := ae.createRunDirectory("add-volume")
+	if err != nil {
+		return fmt.Errorf("error creating working directory for add-volume: %v", err)
+	}
+	fp := FilePlanner{
+		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
+	}
+	if err = fp.Write(plan); err != nil {
+		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
+	}
+	inventory := buildInventoryFromPlan(plan)
+	cc, err := ae.buildInstallExtraVars(plan)
+	if err != nil {
+		return err
+	}
+
+	// Validate that there are enough storage nodes to satisfy the request
+	nodesRequired := volume.ReplicateCount * volume.DistributionCount
+	if nodesRequired > len(plan.Storage.Nodes) {
+		return fmt.Errorf("the requested volume configuration requires %d storage nodes, but the cluster only has %d.", nodesRequired, len(plan.Storage.Nodes))
+	}
+
+	// Add storage related vars
+	cc.VolumeName = volume.Name
+	cc.VolumeReplicaCount = volume.ReplicateCount
+	cc.VolumeDistributionCount = volume.DistributionCount
+	cc.VolumeQuotaGB = volume.SizeGB
+	cc.VolumeQuotaBytes = volume.SizeGB * 1024
+	cc.VolumeMount = "/"
+
+	// Allow pods to access volumes
+	allowed := volume.AllowAddresses
+	allowed = append(allowed, plan.Cluster.Networking.PodCIDRBlock)
+	cc.VolumeAllowedIPs = strings.Join(allowed, ",")
+
+	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
+	ansibleLogFile, err := os.Create(ansibleLogFilename)
+	if err != nil {
+		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
+	}
+	util.PrintHeader(ae.stdout, "Add Persistent Storage Volume", '=')
+	playbook := "volume-add.yaml"
+	eventExplainer := &explain.DefaultEventExplainer{}
+	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
+		return err
 	}
 	return nil
 }
