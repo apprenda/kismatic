@@ -310,10 +310,28 @@ func TestValidateStorageVolume(t *testing.T) {
 			sv: StorageVolume{
 				Name:              "foo",
 				SizeGB:            100,
-				DistributionCount: 0,
-				ReplicateCount:    0,
+				DistributionCount: 1,
+				ReplicateCount:    1,
 			},
 			valid: true,
+		},
+		{
+			sv: StorageVolume{
+				Name:              "foo",
+				SizeGB:            100,
+				DistributionCount: 0,
+				ReplicateCount:    1,
+			},
+			valid: false,
+		},
+		{
+			sv: StorageVolume{
+				Name:              "foo",
+				SizeGB:            100,
+				DistributionCount: 1,
+				ReplicateCount:    0,
+			},
+			valid: false,
 		},
 		{
 			sv: StorageVolume{

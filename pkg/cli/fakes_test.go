@@ -48,6 +48,10 @@ func (fe *fakeExecutor) RunTask(string, *install.Plan) error {
 	return nil
 }
 
+func (fe *fakeExecutor) AddVolume(*install.Plan, install.StorageVolume) error {
+	return nil
+}
+
 type fakePKI struct {
 	called              bool
 	generateCACalled    bool
