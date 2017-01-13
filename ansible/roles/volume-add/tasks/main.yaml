@@ -4,21 +4,28 @@
     register: out
     failed_when: "'{{ volume_name }}' in out.stdout"
 
+  - name: set initial storage availability fact
+    set_fact:
+      storage_node_space: unavailable
+
   - name: get storage nodes with enough disk space
     set_fact:
-      node_with_space: true
+      storage_node_space: available
       free_disk_space_bytes: "{{ item.size_available }}"
     when: "{{ item.mount == volume_mount and item.size_available > volume_quota_bytes|float }}"
     with_items: ansible_mounts
 
+  # Groups the nodes into "available_storage_nodes" and "unavailable_storage_nodes"
   - name: create group of nodes that have enough disk space
     group_by:
-      key: node_with_space
+      key: "{{storage_node_space}}_storage_nodes"
 
   # Due to 1-node -> 1-disk mapping, we need, at least, replica_count * distribution_count storage nodes
   - name: verify we have enough storage nodes for the requested volume
-    command: /bin/true
-    failed_when: "{{ groups['node_with_space'] is not defined or groups['node_with_space']|length < volume_replica_count|int * volume_distribution_count|int }}"
+    assert:
+      that:
+        - "groups['available_storage_nodes'] is defined"
+        - "groups['available_storage_nodes']|length >= volume_replica_count * volume_distribution_count"
     run_once: true
 
   - name: create brick directory
@@ -34,7 +41,7 @@
       gluster volume create {{ volume_name }}
       {% if volume_replica_count|int > 1 %} replica {{ volume_replica_count|int }} {% endif %}
       {% set nodes = [] %}
-      {% for host in groups['node_with_space'] %}
+      {% for host in groups['available_storage_nodes'] %}
       {% if nodes.insert(0, {'inventory_hostname': host, 'free': hostvars[host]['free_disk_space_bytes']}) %}{% endif %}
       {% endfor %}
       {% for host in nodes|sort(attribute='free', reverse=True) %}
