@@ -4,7 +4,7 @@ metadata:
   name: kismatic-integration-claim
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: 100M
