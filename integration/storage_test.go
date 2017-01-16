@@ -51,7 +51,9 @@ var _ = Describe("Storage", func() {
 				}
 
 				By("Creating a storage volume")
-				// TODO: Create the storage volume using kismatic
+				plan, err := os.Open("kismatic-testing.yaml")
+				FailIfError(err, "Failed to open plan file")
+				createVolume(plan, "kis-int-test", 2, 1, "")
 
 				By("Claiming the storage volume on the cluster")
 				err = kubeCreate("pvc.yaml")
@@ -76,7 +78,6 @@ var _ = Describe("Storage", func() {
 				jobStatusCmd = "sudo kubectl get jobs kismatic-reader -o jsonpath={.status.conditions[0].status}"
 				runViaSSH([]string{jobStatusCmd, fmt.Sprintf("if [ \"`%s`\" = \"True\" ]; then exit 0; else exit 1; fi", jobStatusCmd)}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
 				FailIfError(err, "Reader workload failed")
-
 			})
 		})
 	})
