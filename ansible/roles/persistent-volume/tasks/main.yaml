@@ -3,14 +3,14 @@
     command: kubectl get svc kismatic-storage -o=jsonpath='{.spec.clusterIP}'
     register: out
 
-  - name: set storage clsuter IP
+  - name: set storage cluster IP
     set_fact:
       storage_cluster_ip: "{{ out.stdout }}"
 
-  - name: copy PV.yaml to remote
+  - name: copy pv.yaml to remote
     template:
         src: pv.yaml
         dest: /tmp/pv.yaml
 
-  - name: create pv {{ volume_name }}
+  - name: create persistent volume {{ volume_name }}
     command: kubectl apply -f /tmp/pv.yaml
