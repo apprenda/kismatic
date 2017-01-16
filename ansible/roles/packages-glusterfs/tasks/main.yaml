@@ -21,3 +21,7 @@
     package:
       name: "glusterfs-server{{glusterfs_server_version}}"
       state: present
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
