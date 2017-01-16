@@ -1,10 +1,4 @@
 ---
-  # Install packages
-  - name: add EPEL repository
-    yum:
-      name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-      state: present
-    when: ansible_os_family == 'RedHat'
   - name: add Gluster yum repository
     yum_repository:
       name: gluster
