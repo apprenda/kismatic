@@ -129,14 +129,14 @@ func doVolumeAdd(out io.Writer, opts volumeAddOptions, planFile string, args []s
 	}
 
 	fmt.Fprintln(out)
-	fmt.Fprintln(out, "Successfully added volume to the kubernetes cluster.")
+	fmt.Fprintln(out, "Successfully added the persistent volume to the kubernetes cluster.")
 	fmt.Fprintln(out)
 	fmt.Fprintf(out, "Use \"kubectl describe pv %s\" to view volume details.\n", v.Name)
 	return nil
 }
 
 func generateRandomString(n int) string {
-	// removed 1, l, o, 0 and l to prevent confusion
+	// removed 1, l, o, 0 to prevent confusion
 	chars := []rune("abcdefghijkmnpqrstuvwxyz23456789")
 	res := make([]rune, n)
 	for i := range res {
