@@ -15,7 +15,7 @@ import (
 func testAddVolumeVerifyGluster(aws infrastructureProvisioner, distro linuxDistro) {
 	WithInfrastructure(NodeCount{Worker: 5}, distro, aws, func(nodes provisionedNodes, sshKey string) {
 		planFile, err := os.Create("kismatic-testing.yaml")
-		FailIfError(err, "Error waiting for nodes")
+		FailIfError(err, "error creating file for kismatic plan")
 		defer planFile.Close()
 
 		clusterNodes := nodes.worker[0:4]
