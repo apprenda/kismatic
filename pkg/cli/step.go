@@ -21,7 +21,6 @@ type stepCmd struct {
 	restartServices    bool
 	verbose            bool
 	outputFormat       string
-	extraVars          []string
 }
 
 // NewCmdStep returns the step command
