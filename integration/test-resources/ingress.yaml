@@ -22,7 +22,7 @@ spec:
         app: echoserver
     spec:
       containers:
-      - image: gcr.io/google_containers/echoserver:1.0
+      - image: nginx
         imagePullPolicy: Always
         name: echoserver
         ports:
@@ -52,7 +52,7 @@ spec:
         app: echoserver-tls
     spec:
       containers:
-      - image: gcr.io/google_containers/echoserver:1.0
+      - image: nginx
         imagePullPolicy: Always
         name: echoserver-tls
         ports:
