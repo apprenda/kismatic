@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - image: nginx
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: echoserver
         ports:
         - containerPort: 80
@@ -53,7 +53,7 @@ spec:
     spec:
       containers:
       - image: nginx
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: echoserver-tls
         ports:
         - containerPort: 80
