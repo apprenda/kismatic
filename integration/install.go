@@ -166,9 +166,6 @@ func verifyIngressNodes(master NodeDeets, ingressNodes []NodeDeets, sshKey strin
 	By("Adding a service and an ingress resource")
 	addIngressResource(master, sshKey)
 
-	By("Waiting a bit before attempting to verify ingress")
-	time.Sleep(90*time.Second)
-
 	By("Verifying the service is accessible via the ingress point(s)")
 	for _, ingNode := range ingressNodes {
 		if err := verifyIngressPoint(ingNode); err != nil {
