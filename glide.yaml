@@ -15,7 +15,3 @@ import:
   subpackages:
   - ssh
 - package: github.com/pkg/browser
-- package: github.com/docker/machine
-  version: ^0.9.0-rc2
-  subpackages:
-  - libmachine

@@ -1,5 +1,5 @@
-hash: 3a80cbf40f1d29b16b740701e1d685eebc0bacb6014e01ddac1afd1825331c5e
-updated: 2017-01-19T15:43:40.804767589-05:00
+hash: 5d8cd28f14a6d894f9d35ae4f4aa7e273f6e0853a51d12d3af92e49e5450109d
+updated: 2017-01-21T18:36:59.551943781-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: ddfd17ec06eee10c24c5c474633273fd034afdda
@@ -16,7 +16,6 @@ imports:
   - aws/credentials/stscreds
   - aws/defaults
   - aws/ec2metadata
-  - aws/endpoints
   - aws/request
   - aws/session
   - aws/signer/v4
@@ -64,22 +63,41 @@ imports:
   version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
   subpackages:
   - md2man
-- name: github.com/docker/docker
-  version: a8a31eff10544860d2188dddabdee4d727545796
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  repo: https://github.com/davecgh/go-spew
   subpackages:
-  - pkg/term
-- name: github.com/docker/machine
-  version: 7b195916ea1cd4dc7622a957915b048e9ca7b422
+  - spew
+- name: github.com/docker/distribution
+  version: 7a0972304e201e2a5336a69d00e112c27823f554
   subpackages:
-  - libmachine
-  - libmachine/log
-  - libmachine/mcnutils
-  - libmachine/ssh
-  - version
+  - digestset
+  - reference
+- name: github.com/emicklei/go-restful
+  version: d916db217751a3fef55337f799c31fde4b8efcf1
+  subpackages:
+  - log
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+- name: github.com/ghodss/yaml
+  version: 04f313413ffd65ce25f2541bfd2b2ceec5c0908c
 - name: github.com/go-ini/ini
   version: 03e0e7d51a13a91c765d8d0161246bc14a38001a
+- name: github.com/go-openapi/jsonpointer
+  version: 779f45308c19820f1a69e9a4cd965f496e0da10f
+- name: github.com/go-openapi/jsonreference
+  version: 36d33bfe519efae5632669801b180bf1a245da3b
+- name: github.com/go-openapi/spec
+  version: 593aa4cf7a6f59a451c8f0d8af08a57328e6da54
+- name: github.com/go-openapi/swag
+  version: 96d7b9ebd181a1735a1c9ac87914f2b32fbf56c9
+- name: github.com/gogo/protobuf
+  version: 265e960d45b331a5055057ef0f29088cf1eb91ce
+  subpackages:
+  - proto
+  - sortkeys
+- name: github.com/golang/glog
+  version: 23def4e6c14b4da8ac2ed8007337bc5eb5007998
 - name: github.com/google/certificate-transparency
   version: 6e5648d13b43cdde25cc8274b87675230ffefbd6
   repo: https://github.com/google/certificate-transparency
@@ -89,10 +107,18 @@ imports:
   - go/client
   - go/x509
   - go/x509/pkix
+- name: github.com/google/gofuzz
+  version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
   version: 3433f3ea46d9f8019119e7dd41274e112a2359a9
+- name: github.com/mailru/easyjson
+  version: f8f747403254404897c1c4f07b948108b00c644b
+  subpackages:
+  - buffer
+  - jlexer
+  - jwriter
 - name: github.com/mattn/go-colorable
   version: d228849504861217f796da67fae4f6e347643f15
 - name: github.com/mattn/go-isatty
@@ -139,10 +165,16 @@ imports:
   - matchers/support/goraph/node
   - matchers/support/goraph/util
   - types
+- name: github.com/opencontainers/go-digest
+  version: 21dfd564fd89c944783d00d069f33e3e7123c448
 - name: github.com/packethost/packngo
   version: 91a3a4f65e3cd6ee66d919b4e7103ae038ce66ff
 - name: github.com/pkg/browser
   version: 9302be274faad99162b9d48ec97b24306872ebb0
+- name: github.com/PuerkitoBio/purell
+  version: 0bcb03f4b4d0a9428594752bd2a3b9aa0a9d4bd4
+- name: github.com/PuerkitoBio/urlesc
+  version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/russross/blackfriday
   version: 5f33e7b7878355cd2b7e6b8eefc48a5472c69f70
 - name: github.com/shurcooL/sanitized_anchor_name
@@ -153,7 +185,11 @@ imports:
   - cobra
   - doc
 - name: github.com/spf13/pflag
-  version: 51268031d79952516489a9f8aa34e9709b98d946
+  version: a232f6d9f87afaaa08bafaff5da685f974b83313
+- name: github.com/ugorji/go
+  version: d23841a297e5489e787e72fceffabf9d2994b52a
+  subpackages:
+  - codec
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
@@ -161,12 +197,72 @@ imports:
   - pkcs12
   - pkcs12/internal/rc2
   - ssh
-  - ssh/terminal
+- name: golang.org/x/net
+  version: f2499483f923065a842d38eb4c7f1927e6fc6e6d
+  subpackages:
+  - http2
+  - http2/hpack
+  - idna
+  - lex/httplex
 - name: golang.org/x/sys
   version: d9157a9621b69ad1d8d77a1933590c416593f24f
   subpackages:
   - unix
-  - windows/registry
+- name: golang.org/x/text
+  version: 11dbc599981ccdf4fb18802a28392a8bcf7a9395
+  subpackages:
+  - transform
+  - unicode/norm
+  - width
+- name: gopkg.in/inf.v0
+  version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+- name: k8s.io/apimachinery
+  version: 2dbdb51f18568f4e1382983b298763ca52d73882
+  subpackages:
+  - pkg/api/meta
+  - pkg/apimachinery
+  - pkg/apimachinery/registered
+  - pkg/apis/meta/v1
+  - pkg/apis/meta/v1/unstructured
+  - pkg/conversion
+  - pkg/conversion/queryparams
+  - pkg/fields
+  - pkg/labels
+  - pkg/openapi
+  - pkg/runtime
+  - pkg/runtime/schema
+  - pkg/runtime/serializer
+  - pkg/runtime/serializer/json
+  - pkg/runtime/serializer/protobuf
+  - pkg/runtime/serializer/recognizer
+  - pkg/runtime/serializer/versioning
+  - pkg/selection
+  - pkg/types
+  - pkg/util/errors
+  - pkg/util/framer
+  - pkg/util/json
+  - pkg/util/net
+  - pkg/util/rand
+  - pkg/util/runtime
+  - pkg/util/sets
+  - pkg/util/validation
+  - pkg/util/validation/field
+  - pkg/util/wait
+  - pkg/util/yaml
+  - pkg/watch
+  - third_party/forked/golang/reflect
+- name: k8s.io/kubernetes
+  version: 8d5227bb2e05e01031ace81fa6611a13f598278e
+  subpackages:
+  - pkg/api
+  - pkg/api/resource
+  - pkg/api/v1
+  - pkg/apis/autoscaling
+  - pkg/apis/extensions
+  - pkg/util
+  - pkg/util/intstr
+  - pkg/util/labels
+  - pkg/util/parsers
 testImports: []
