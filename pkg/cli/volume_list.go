@@ -18,7 +18,7 @@ type volumeListOptions struct {
 }
 
 // NewCmdVolumeList returns the command for listgin storage volumes
-func NewCmdVolumeList(out io.Writer, planFile string) *cobra.Command {
+func NewCmdVolumeList(out io.Writer, planFile *string) *cobra.Command {
 	opts := volumeListOptions{}
 	cmd := &cobra.Command{
 		Use:   "list",
@@ -27,7 +27,7 @@ func NewCmdVolumeList(out io.Writer, planFile string) *cobra.Command {
 
 This function requires a target cluster that has storage nodes.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return doVolumeList(out, opts, planFile, args)
+			return doVolumeList(out, opts, *planFile, args)
 		},
 	}
 

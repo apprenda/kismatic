@@ -21,7 +21,7 @@ type volumeAddOptions struct {
 }
 
 // NewCmdVolumeAdd returns the command for adding storage volumes
-func NewCmdVolumeAdd(out io.Writer, planFile string) *cobra.Command {
+func NewCmdVolumeAdd(out io.Writer, planFile *string) *cobra.Command {
 	opts := volumeAddOptions{}
 
 	cmd := &cobra.Command{
@@ -31,7 +31,7 @@ func NewCmdVolumeAdd(out io.Writer, planFile string) *cobra.Command {
 
 This function requires a target cluster that has storage nodes.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return doVolumeAdd(out, opts, planFile, args)
+			return doVolumeAdd(out, opts, *planFile, args)
 		},
 		Example: `  Create a distributed, replicated volume,
   named "storage01" with a 10 GB quota,

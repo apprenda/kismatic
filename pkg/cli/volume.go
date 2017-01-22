@@ -17,7 +17,7 @@ func NewCmdVolume(out io.Writer) *cobra.Command {
 		},
 	}
 	addPlanFileFlag(cmd.PersistentFlags(), &planFile)
-	cmd.AddCommand(NewCmdVolumeAdd(out, planFile))
-	cmd.AddCommand(NewCmdVolumeList(out, planFile))
+	cmd.AddCommand(NewCmdVolumeAdd(out, &planFile))
+	cmd.AddCommand(NewCmdVolumeList(out, &planFile))
 	return cmd
 }
