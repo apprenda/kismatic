@@ -51,6 +51,7 @@ func Print(out io.Writer, resp *ListResponse, format string) error {
 				fmt.Fprintf(w, "    Containers:\t\t\n")
 				for _, container := range pod.Containers {
 					fmt.Fprintf(w, "      %s\t\t\n", container.Name)
+					fmt.Fprintf(w, "        MountName:\t%s\t\n", container.MountName)
 					fmt.Fprintf(w, "        MountPath:\t%s\t\n", container.MountPath)
 				}
 			}

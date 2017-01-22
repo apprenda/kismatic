@@ -113,7 +113,7 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 					for _, container := range pod.Spec.Containers {
 						for _, volumeMount := range container.VolumeMounts {
 							if volumeMount.Name == v.Name {
-								containers = append(containers, volume.Container{Name: container.Name, MountPath: volumeMount.MountPath})
+								containers = append(containers, volume.Container{Name: container.Name, MountName: volumeMount.Name, MountPath: volumeMount.MountPath})
 							}
 						}
 					}

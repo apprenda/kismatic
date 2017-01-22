@@ -41,8 +41,8 @@ type Pod struct {
 
 // Container
 type Container struct {
-	Name string `json:"name"`
-	//MountName string `json:"mountName"`
+	Name      string `json:"name"`
+	MountName string `json:"mountName"`
 	MountPath string `json:"mountPath"`
 }
 
