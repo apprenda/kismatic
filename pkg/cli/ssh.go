@@ -42,6 +42,10 @@ HOST must be one of the following:
 			opts.host = args[0]
 
 			planner := &install.FilePlanner{File: opts.planFilename}
+			// Check if plan file exists
+			if !planner.PlanExists() {
+				return fmt.Errorf("plan file not found at %q", opts.planFilename)
+			}
 
 			err := doSSH(out, planner, opts)
 			// 130 = terminated by Control-C, so not an actual error
@@ -59,10 +63,6 @@ HOST must be one of the following:
 }
 
 func doSSH(out io.Writer, planner install.Planner, opts *sshOpts) error {
-	// Check if plan file exists
-	if !planner.PlanExists() {
-		return fmt.Errorf("plan does not exist")
-	}
 	plan, err := planner.Read()
 	if err != nil {
 		return fmt.Errorf("error reading plan file: %v", err)

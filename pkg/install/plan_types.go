@@ -1,6 +1,10 @@
 package install
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/apprenda/kismatic/pkg/ssh"
+)
 
 // NetworkConfig describes the cluster's networking configuration
 type NetworkConfig struct {
@@ -170,6 +174,20 @@ func (p *Plan) GetSSHConnection(host string) (*SSHConnection, error) {
 	}
 
 	return &SSHConnection{&p.Cluster.SSH, foundNode}, nil
+}
+
+// GetSSHClient is a convience method that calls GetSSHConnection and returns an SSH client with the result
+func (p *Plan) GetSSHClient(host string) (ssh.Client, error) {
+	con, err := p.GetSSHConnection(host)
+	if err != nil {
+		return nil, err
+	}
+	client, err := ssh.NewClient(con.Node.IP, con.SSHConfig.Port, con.SSHConfig.User, con.SSHConfig.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error creating SSH client for host %s: %v", host, err)
+	}
+
+	return client, nil
 }
 
 func firstIfItExists(nodes []Node) *Node {
