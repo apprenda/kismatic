@@ -105,24 +105,34 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 	// iterate through all the pods
 	// since the api doesnt have a pv -> pod data, need to search through all the pods
 	// this will get PV -> PVC - > pod(s) -> container(s)
-	for _, pod := range pods.Items {
-		if len(pod.Spec.Volumes) > 0 {
-			for _, v := range pod.Spec.Volumes {
-				if v.PersistentVolumeClaim != nil {
-					var containers []volume.Container
-					for _, container := range pod.Spec.Containers {
-						for _, volumeMount := range container.VolumeMounts {
-							if volumeMount.Name == v.Name {
-								containers = append(containers, volume.Container{Name: container.Name, MountName: volumeMount.Name, MountPath: volumeMount.MountPath})
+	if pods != nil { // possible for no pods to have claimed a PV
+		for _, pod := range pods.Items {
+			if len(pod.Spec.Volumes) > 0 {
+				for _, v := range pod.Spec.Volumes {
+					if v.PersistentVolumeClaim != nil {
+						var containers []volume.Container
+						for _, container := range pod.Spec.Containers {
+							for _, volumeMount := range container.VolumeMounts {
+								if volumeMount.Name == v.Name {
+									containers = append(containers, volume.Container{Name: container.Name, MountName: volumeMount.Name, MountPath: volumeMount.MountPath})
+								}
 							}
 						}
+						// append container to pods map
+						key := strings.Join([]string{pod.GetNamespace(), v.PersistentVolumeClaim.ClaimName}, ":")
+						pod := volume.Pod{Namespace: pod.GetNamespace(), Name: pod.GetName(), Containers: containers}
+						podsMap[key] = append(podsMap[key], pod)
 					}
-					// append container to pods map
-					key := strings.Join([]string{pod.GetNamespace(), v.PersistentVolumeClaim.ClaimName}, ":")
-					pod := volume.Pod{Namespace: pod.GetNamespace(), Name: pod.GetName(), Containers: containers}
-					podsMap[key] = append(podsMap[key], pod)
 				}
 			}
+		}
+	}
+
+	// iterate through PVs once and build a map
+	pvsMap := make(map[string]*v1.PersistentVolume)
+	if pvs != nil {
+		for _, pv := range pvs.Items {
+			pvsMap[pv.GetName()] = &pv
 		}
 	}
 
@@ -130,19 +140,26 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 	var resp = volume.ListResponse{}
 	// loop through all the gluster volumes
 	for _, gv := range glusterVolumeInfo.VolumeInfo.Volumes.Volume {
-		// get gluster volume quota
-		glusterVolumeQuota, err := glusterGetter.GetQuota(gv.Name)
-		if err != nil {
-			return nil, err
-		}
-
 		var v = volume.Volume{}
 		v.Name = gv.Name
 		//gv.DistCount doesn't actually return the correct number when ReplicaCount > 1
 		v.DistributionCount = gv.BrickCount / gv.ReplicaCount
 		v.ReplicaCount = gv.ReplicaCount
-		v.Capacity = volume.HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.HardLimit)
-		v.Available = volume.HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.AvailSpace)
+
+		// get gluster volume quota
+		glusterVolumeQuota, err := glusterGetter.GetQuota(gv.Name)
+		if err != nil {
+			return nil, err
+		}
+		v.Capacity = "Unknown"
+		v.Available = "Unknown"
+		if glusterVolumeQuota != nil && glusterVolumeQuota.VolumeQuota != nil && glusterVolumeQuota.VolumeQuota.Limit != nil {
+			v.Capacity = volume.HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.HardLimit)
+		}
+		if glusterVolumeQuota != nil && glusterVolumeQuota.VolumeQuota != nil && glusterVolumeQuota.VolumeQuota.Limit != nil {
+			v.Available = volume.HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.AvailSpace)
+		}
+
 		if gv.BrickCount > 0 {
 			v.Bricks = make([]volume.Brick, gv.BrickCount)
 			for n, gbrick := range gv.Bricks.Brick {
@@ -151,30 +168,31 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 			}
 		}
 
-		var foundPVInfo *v1.PersistentVolume
-		for _, pv := range pvs.Items {
-			if pv.GetName() == gv.Name {
-				foundPVInfo = &pv
-				break
-			}
-		}
-		if foundPVInfo == nil {
-			return nil, fmt.Errorf("could not find persistent volume details for %s", gv.Name)
-		}
-
-		v.Status = string(foundPVInfo.Status.Phase)
-		if foundPVInfo.Spec.ClaimRef != nil {
-			// populate claim info
-			v.Claim = &volume.Claim{Namespace: foundPVInfo.Spec.ClaimRef.Namespace, Name: foundPVInfo.Spec.ClaimRef.Name}
-			// populate pod info
-			key := strings.Join([]string{foundPVInfo.Spec.ClaimRef.Namespace, foundPVInfo.Spec.ClaimRef.Name}, ":")
-			if podsMap[key] != nil {
-				v.Pods = podsMap[key]
+		// it is possible that all PVs were delete in kubernetes
+		// set status of gluster volume to "Unknown"
+		var foundPVInfo, ok = pvsMap[gv.Name]
+		// this PV does not exist, maybe it was deleted?
+		// set status of gluster volume to "Unknown"
+		if !ok || foundPVInfo == nil {
+			v.Status = "Unknown"
+		} else {
+			v.Status = string(foundPVInfo.Status.Phase)
+			if foundPVInfo.Spec.ClaimRef != nil {
+				// populate claim info
+				v.Claim = &volume.Claim{Namespace: foundPVInfo.Spec.ClaimRef.Namespace, Name: foundPVInfo.Spec.ClaimRef.Name}
+				// populate pod info
+				key := strings.Join([]string{foundPVInfo.Spec.ClaimRef.Namespace, foundPVInfo.Spec.ClaimRef.Name}, ":")
+				if pod, ok := podsMap[key]; ok && pod != nil {
+					v.Pods = pod
+				}
 			}
 		}
 
 		resp.Volumes = append(resp.Volumes, v)
 	}
-
+	// return nil if there are no volumes
+	if len(resp.Volumes) == 0 {
+		return nil, nil
+	}
 	return &resp, nil
 }
