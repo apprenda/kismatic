@@ -77,7 +77,7 @@ func doVolumeList(out io.Writer, opts volumeListOptions, planFile string, args [
 		return nil
 	}
 
-	return Print(out, resp, opts.outputFormat)
+	return print(out, resp, opts.outputFormat)
 }
 
 func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter, podGetter data.PodGetter) (*ListResponse, error) {
@@ -219,7 +219,7 @@ func HumanFormat(bytes float64) string {
 }
 
 // Print prints the volume list response
-func Print(out io.Writer, resp *ListResponse, format string) error {
+func print(out io.Writer, resp *ListResponse, format string) error {
 	if format == "simple" {
 		separator := ""
 		w := tabwriter.NewWriter(out, 0, 0, 3, ' ', 0)
