@@ -9,15 +9,16 @@ type ListResponse struct {
 
 // Volume
 type Volume struct {
-	Name              string  `json:"name"`
-	Capacity          string  `json:"capacity"`
-	Available         string  `json:"available"`
-	ReplicaCount      uint    `json:"replicaCount"`
-	DistributionCount uint    `json:"distributionCount"`
-	Bricks            []Brick `json:"bricks"`
-	Status            string  `json:"status"`
-	Claim             *Claim  `json:"claim,omitempty"`
-	Pods              []Pod   `json:"pods,omitempty"`
+	Name              string            `json:"name"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Capacity          string            `json:"capacity"`
+	Available         string            `json:"available"`
+	ReplicaCount      uint              `json:"replicaCount"`
+	DistributionCount uint              `json:"distributionCount"`
+	Bricks            []Brick           `json:"bricks"`
+	Status            string            `json:"status"`
+	Claim             *Claim            `json:"claim,omitempty"`
+	Pods              []Pod             `json:"pods,omitempty"`
 }
 
 // Brick

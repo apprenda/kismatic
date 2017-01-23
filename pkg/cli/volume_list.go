@@ -176,6 +176,7 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 		if !ok || foundPVInfo == nil {
 			v.Status = "Unknown"
 		} else {
+			v.Labels = foundPVInfo.Labels
 			v.Status = string(foundPVInfo.Status.Phase)
 			if foundPVInfo.Spec.ClaimRef != nil {
 				// populate claim info

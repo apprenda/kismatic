@@ -38,6 +38,12 @@ func Print(out io.Writer, resp *ListResponse, format string) error {
 		for _, v := range resp.Volumes {
 			fmt.Fprint(w, separator)
 			fmt.Fprintf(w, "Name:\t%s\t\n", v.Name)
+			if len(v.Labels) > 0 {
+				fmt.Fprintf(w, "Labels:\t\t\n")
+				for k, v := range v.Labels {
+					fmt.Fprintf(w, "  %s:\t%s\t\n", k, v)
+				}
+			}
 			fmt.Fprintf(w, "Capacity:\t%s\t\n", v.Capacity)
 			fmt.Fprintf(w, "Available:\t%s\t\n", v.Available)
 			fmt.Fprintf(w, "Replica:\t%d\t\n", v.ReplicaCount)
