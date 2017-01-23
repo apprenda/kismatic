@@ -1,13 +1,14 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/apprenda/kismatic/pkg/data"
 	"github.com/apprenda/kismatic/pkg/install"
-	"github.com/apprenda/kismatic/pkg/volume"
 	"github.com/spf13/cobra"
 	"k8s.io/kubernetes/pkg/api/v1"
 )
@@ -77,10 +78,10 @@ func doVolumeList(out io.Writer, opts volumeListOptions, planFile string, args [
 		return nil
 	}
 
-	return volume.Print(out, resp, opts.outputFormat)
+	return Print(out, resp, opts.outputFormat)
 }
 
-func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter, podGetter data.PodGetter) (*volume.ListResponse, error) {
+func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter, podGetter data.PodGetter) (*ListResponse, error) {
 	// get gluster volume data
 	glusterVolumeInfo, err := glusterGetter.GetVolumes()
 	if err != nil {
@@ -101,7 +102,7 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 	}
 
 	// build a map of pods that have PersistentVolumeClaim
-	podsMap := make(map[string][]volume.Pod)
+	podsMap := make(map[string][]Pod)
 	// iterate through all the pods
 	// since the api doesnt have a pv -> pod data, need to search through all the pods
 	// this will get PV -> PVC - > pod(s) -> container(s)
@@ -110,17 +111,17 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 			if len(pod.Spec.Volumes) > 0 {
 				for _, v := range pod.Spec.Volumes {
 					if v.PersistentVolumeClaim != nil {
-						var containers []volume.Container
+						var containers []Container
 						for _, container := range pod.Spec.Containers {
 							for _, volumeMount := range container.VolumeMounts {
 								if volumeMount.Name == v.Name {
-									containers = append(containers, volume.Container{Name: container.Name, MountName: volumeMount.Name, MountPath: volumeMount.MountPath})
+									containers = append(containers, Container{Name: container.Name, MountName: volumeMount.Name, MountPath: volumeMount.MountPath})
 								}
 							}
 						}
 						// append container to pods map
 						key := strings.Join([]string{pod.GetNamespace(), v.PersistentVolumeClaim.ClaimName}, ":")
-						pod := volume.Pod{Namespace: pod.GetNamespace(), Name: pod.GetName(), Containers: containers}
+						pod := Pod{Namespace: pod.GetNamespace(), Name: pod.GetName(), Containers: containers}
 						podsMap[key] = append(podsMap[key], pod)
 					}
 				}
@@ -137,50 +138,47 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 	}
 
 	// build response object
-	var resp = volume.ListResponse{}
+	resp := ListResponse{}
 	// loop through all the gluster volumes
 	for _, gv := range glusterVolumeInfo.VolumeInfo.Volumes.Volume {
-		var v = volume.Volume{}
-		v.Name = gv.Name
-		//gv.DistCount doesn't actually return the correct number when ReplicaCount > 1
-		v.DistributionCount = gv.BrickCount / gv.ReplicaCount
-		v.ReplicaCount = gv.ReplicaCount
+		v := Volume{
+			Name:              gv.Name,
+			DistributionCount: gv.BrickCount / gv.ReplicaCount, //gv.DistCount doesn't actually return the correct number when ReplicaCount > 1
+			ReplicaCount:      gv.ReplicaCount,
+			Capacity:          "Unknown",
+			Available:         "Unknown",
+			Status:            "Unknown",
+		}
 
+		if gv.BrickCount > 0 {
+			v.Bricks = make([]Brick, gv.BrickCount)
+			for n, gbrick := range gv.Bricks.Brick {
+				brickArr := strings.Split(gbrick.Text, ":")
+				v.Bricks[n] = Brick{Host: brickArr[0], Path: brickArr[1]}
+			}
+		}
 		// get gluster volume quota
 		glusterVolumeQuota, err := glusterGetter.GetQuota(gv.Name)
 		if err != nil {
 			return nil, err
 		}
-		v.Capacity = "Unknown"
-		v.Available = "Unknown"
 		if glusterVolumeQuota != nil && glusterVolumeQuota.VolumeQuota != nil && glusterVolumeQuota.VolumeQuota.Limit != nil {
-			v.Capacity = volume.HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.HardLimit)
+			v.Capacity = HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.HardLimit)
 		}
 		if glusterVolumeQuota != nil && glusterVolumeQuota.VolumeQuota != nil && glusterVolumeQuota.VolumeQuota.Limit != nil {
-			v.Available = volume.HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.AvailSpace)
+			v.Available = HumanFormat(glusterVolumeQuota.VolumeQuota.Limit.AvailSpace)
 		}
-
-		if gv.BrickCount > 0 {
-			v.Bricks = make([]volume.Brick, gv.BrickCount)
-			for n, gbrick := range gv.Bricks.Brick {
-				brickArr := strings.Split(gbrick.Text, ":")
-				v.Bricks[n] = volume.Brick{Host: brickArr[0], Path: brickArr[1]}
-			}
-		}
-
 		// it is possible that all PVs were delete in kubernetes
 		// set status of gluster volume to "Unknown"
-		var foundPVInfo, ok = pvsMap[gv.Name]
+		foundPVInfo, ok := pvsMap[gv.Name]
 		// this PV does not exist, maybe it was deleted?
 		// set status of gluster volume to "Unknown"
-		if !ok || foundPVInfo == nil {
-			v.Status = "Unknown"
-		} else {
+		if ok && foundPVInfo != nil {
 			v.Labels = foundPVInfo.Labels
 			v.Status = string(foundPVInfo.Status.Phase)
 			if foundPVInfo.Spec.ClaimRef != nil {
 				// populate claim info
-				v.Claim = &volume.Claim{Namespace: foundPVInfo.Spec.ClaimRef.Namespace, Name: foundPVInfo.Spec.ClaimRef.Name}
+				v.Claim = &Claim{Namespace: foundPVInfo.Spec.ClaimRef.Namespace, Name: foundPVInfo.Spec.ClaimRef.Name}
 				// populate pod info
 				key := strings.Join([]string{foundPVInfo.Spec.ClaimRef.Namespace, foundPVInfo.Spec.ClaimRef.Name}, ":")
 				if pod, ok := podsMap[key]; ok && pod != nil {
@@ -196,4 +194,73 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 		return nil, nil
 	}
 	return &resp, nil
+}
+
+const (
+	_          = iota // ignore first value by assigning to blank identifier
+	KB float64 = 1 << (10 * iota)
+	MB
+	GB
+	TB
+)
+
+// HumanFormat converts bytes to human readable KB,MB,GB,TB formats
+func HumanFormat(bytes float64) string {
+	switch {
+	case bytes >= TB:
+		return fmt.Sprintf("%.2fTB", bytes/TB)
+	case bytes >= GB:
+		return fmt.Sprintf("%.2fGB", bytes/GB)
+	case bytes >= MB:
+		return fmt.Sprintf("%.2fMB", bytes/MB)
+	case bytes >= KB:
+		return fmt.Sprintf("%.2fKB", bytes/KB)
+	}
+	return fmt.Sprintf("%.2fB", bytes)
+}
+
+// Print prints the volume list response
+func Print(out io.Writer, resp *ListResponse, format string) error {
+	if format == "simple" {
+		separator := ""
+		w := tabwriter.NewWriter(out, 0, 0, 3, ' ', 0)
+		for _, v := range resp.Volumes {
+			fmt.Fprint(w, separator)
+			fmt.Fprintf(w, "Name:\t%s\t\n", v.Name)
+			if len(v.Labels) > 0 {
+				fmt.Fprintf(w, "Labels:\t\t\n")
+				for k, v := range v.Labels {
+					fmt.Fprintf(w, "  %s:\t%s\t\n", k, v)
+				}
+			}
+			fmt.Fprintf(w, "Capacity:\t%s\t\n", v.Capacity)
+			fmt.Fprintf(w, "Available:\t%s\t\n", v.Available)
+			fmt.Fprintf(w, "Replica:\t%d\t\n", v.ReplicaCount)
+			fmt.Fprintf(w, "Distribution:\t%d\t\n", v.DistributionCount)
+			fmt.Fprintf(w, "Bricks:\t%s\t\n", VolumeBrickToString(v.Bricks))
+			fmt.Fprintf(w, "Status:\t%s\t\n", v.Status)
+			fmt.Fprintf(w, "Claim:\t%s\t\n", v.Claim.Readable())
+			fmt.Fprintf(w, "Pods:\t\t\n")
+			for _, pod := range v.Pods {
+				fmt.Fprintf(w, "  %s\t\n", pod.Readable())
+				fmt.Fprintf(w, "    Containers:\t\t\n")
+				for _, container := range pod.Containers {
+					fmt.Fprintf(w, "      %s\t\t\n", container.Name)
+					fmt.Fprintf(w, "        MountName:\t%s\t\n", container.MountName)
+					fmt.Fprintf(w, "        MountPath:\t%s\t\n", container.MountPath)
+				}
+			}
+			separator = "\n\n"
+		}
+		w.Flush()
+	} else if format == "json" {
+		// pretty prtin JSON
+		prettyResp, err := json.MarshalIndent(resp, "", "    ")
+		if err != nil {
+			return fmt.Errorf("marshal error: %v", err)
+		}
+		fmt.Println(string(prettyResp))
+	}
+
+	return nil
 }
