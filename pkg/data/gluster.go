@@ -38,17 +38,14 @@ func (g GlusterCLIGetter) GetVolumes() (*GlusterVolumeInfoCliOutput, error) {
 
 // GetQuota returns gluster volume quota data using gluster command on the first sotrage node
 func (g GlusterCLIGetter) GetQuota(volume string) (*GlusterVolumeQuotaCliOutput, error) {
-	glusterVolumeQuotaRaw, err2 := g.SSHClient.Output(fmt.Sprintf("sudo gluster volume quota %s list --xml", volume))
-	if err2 != nil {
-		return nil, fmt.Errorf("error getting volume quota data for %s: %v", volume, err2)
+	glusterVolumeQuotaRaw, err := g.SSHClient.Output(fmt.Sprintf("sudo gluster volume quota %s list --xml", volume))
+	if err != nil {
+		return nil, fmt.Errorf("error getting volume quota data for %s: %v", volume, err)
 	}
 	var glusterVolumeQuota GlusterVolumeQuotaCliOutput
-	err2 = xml.Unmarshal([]byte(glusterVolumeQuotaRaw), &glusterVolumeQuota)
-	if err2 != nil {
-		fmt.Printf("error unmarshalling volume quota data: %v", err2)
-	}
-	if &glusterVolumeQuota == nil || glusterVolumeQuota.VolumeQuota == nil || glusterVolumeQuota.VolumeQuota.Limit == nil {
-		return nil, fmt.Errorf("error getting volume quota data for %s", volume)
+	err = xml.Unmarshal([]byte(glusterVolumeQuotaRaw), &glusterVolumeQuota)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling volume quota data: %v", err)
 	}
 
 	return &glusterVolumeQuota, nil

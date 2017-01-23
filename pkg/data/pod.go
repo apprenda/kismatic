@@ -29,6 +29,10 @@ func (g PlanPodGetter) Get() (*v1.PodList, error) {
 		return nil, fmt.Errorf("error getting pod data: %v", err)
 	}
 	podsRaw = strings.TrimSpace(podsRaw)
+	// an empty JSON response from kubectl contains this string
+	if strings.Contains(podsRaw, "No resources found") {
+		return nil, nil
+	}
 	var pods v1.PodList
 	err = json.Unmarshal([]byte(podsRaw), &pods)
 	if err != nil {

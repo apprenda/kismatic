@@ -24,6 +24,10 @@ func (g PlanPVGetter) Get() (*v1.PersistentVolumeList, error) {
 		return nil, fmt.Errorf("error getting persistent volume data: %v", err)
 	}
 	pvRaw = strings.TrimSpace(pvRaw)
+	// an empty JSON response from kubectl contains this string
+	if strings.Contains(pvRaw, "No resources found") {
+		return nil, nil
+	}
 	var pvs v1.PersistentVolumeList
 	err = json.Unmarshal([]byte(pvRaw), &pvs)
 	if err != nil {
