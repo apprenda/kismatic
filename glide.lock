@@ -1,8 +1,8 @@
-hash: b07960f17c53d7a8d3a328a10b54e3abb4b73081880cbd507878c1c47ab1a1a3
-updated: 2017-01-21T21:55:39.739977592-05:00
+hash: 5d8cd28f14a6d894f9d35ae4f4aa7e273f6e0853a51d12d3af92e49e5450109d
+updated: 2017-01-23T17:37:46.222959873-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 63ce630574a5ec05ecd8e8de5cea16332a5a684d
+  version: c924893c38ecc04b18d7aab8a7aa561cb8b4c4cc
   subpackages:
   - aws
   - aws/awserr
@@ -12,15 +12,11 @@ imports:
   - aws/corehandlers
   - aws/credentials
   - aws/credentials/ec2rolecreds
-  - aws/credentials/endpointcreds
-  - aws/credentials/stscreds
   - aws/defaults
   - aws/ec2metadata
-  - aws/endpoints
   - aws/request
   - aws/session
-  - aws/signer/v4
-  - private/protocol
+  - private/endpoints
   - private/protocol/ec2query
   - private/protocol/json/jsonutil
   - private/protocol/jsonrpc
@@ -30,12 +26,12 @@ imports:
   - private/protocol/restjson
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
+  - private/signer/v4
   - private/waiter
   - service/ec2
   - service/efs
   - service/route53
   - service/s3
-  - service/sts
 - name: github.com/cloudflare/cfssl
   version: db0d0650b6496bfe8061ec56a92edd32d8e75c30
   subpackages:
@@ -63,25 +59,13 @@ imports:
   version: a65d4d2de4d5f7c74868dfa9b202a3c8be315aaa
   subpackages:
   - md2man
-- name: github.com/davecgh/go-spew
-  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
-  repo: https://github.com/davecgh/go-spew
-  subpackages:
-  - spew
-- name: github.com/docker/distribution
-  version: cd27f179f2c10c5d300e6d09025b538c475b0d51
-  subpackages:
-  - digest
-  - reference
 - name: github.com/emicklei/go-restful
-  version: 09691a3b6378b740595c1002f40c34dd5f218a22
+  version: 89ef8af493ab468a45a42bb0d89a06fccdd2fb22
   subpackages:
   - log
   - swagger
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
-- name: github.com/ghodss/yaml
-  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - name: github.com/go-ini/ini
   version: 03e0e7d51a13a91c765d8d0161246bc14a38001a
 - name: github.com/go-openapi/jsonpointer
@@ -132,7 +116,7 @@ imports:
   - go/x509
   - go/x509/pkix
 - name: github.com/google/gofuzz
-  version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+  version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
@@ -189,8 +173,6 @@ imports:
   - types
 - name: github.com/packethost/packngo
   version: 91a3a4f65e3cd6ee66d919b4e7103ae038ce66ff
-- name: github.com/pborman/uuid
-  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/pkg/browser
   version: 9302be274faad99162b9d48ec97b24306872ebb0
 - name: github.com/PuerkitoBio/purell
@@ -208,11 +190,6 @@ imports:
   - doc
 - name: github.com/spf13/pflag
   version: a232f6d9f87afaaa08bafaff5da685f974b83313
-- name: github.com/ugorji/go
-  version: ded73eae5db7e7a0ef6f55aace87a2873c5d2b74
-  subpackages:
-  - codec
-  - codec/codecgen
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
@@ -243,12 +220,7 @@ imports:
   version: 2910a502d2bf9e43193af9d68ca516529614eed3
   subpackages:
   - cases
-  - encoding
-  - encoding/internal
-  - encoding/internal/identifier
-  - encoding/unicode
   - internal/tag
-  - internal/utf8internal
   - language
   - runes
   - secure/bidirule
@@ -257,75 +229,17 @@ imports:
   - unicode/bidi
   - unicode/norm
   - width
-- name: gopkg.in/inf.v0
-  version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
-- name: k8s.io/apimachinery
-  version: 2dbdb51f18568f4e1382983b298763ca52d73882
-  subpackages:
-  - pkg/api/meta
-  - pkg/apis/meta/v1
-  - pkg/apis/meta/v1/unstructured
-  - pkg/conversion
-  - pkg/conversion/queryparams
-  - pkg/fields
-  - pkg/labels
-  - pkg/openapi
-  - pkg/runtime
-  - pkg/runtime/schema
-  - pkg/selection
-  - pkg/types
-  - pkg/util/errors
-  - pkg/util/json
-  - pkg/util/net
-  - pkg/util/rand
-  - pkg/util/runtime
-  - pkg/util/sets
-  - pkg/util/validation
-  - pkg/util/validation/field
-  - pkg/util/wait
-  - pkg/watch
-  - third_party/forked/golang/reflect
 - name: k8s.io/kubernetes
   version: 42fe4ab0270e44c750d77c682e2fcab394aeb392
   subpackages:
-  - pkg/api
-  - pkg/api/meta
-  - pkg/api/meta/metatypes
-  - pkg/api/resource
   - pkg/api/unversioned
-  - pkg/api/v1
-  - pkg/apis/autoscaling
-  - pkg/apis/batch
-  - pkg/apis/extensions
-  - pkg/auth/user
   - pkg/conversion
-  - pkg/conversion/queryparams
-  - pkg/fields
   - pkg/genericapiserver/openapi/common
   - pkg/labels
-  - pkg/runtime
-  - pkg/runtime/serializer
-  - pkg/runtime/serializer/json
-  - pkg/runtime/serializer/protobuf
-  - pkg/runtime/serializer/recognizer
-  - pkg/runtime/serializer/versioning
   - pkg/selection
-  - pkg/types
-  - pkg/util
-  - pkg/util/errors
-  - pkg/util/framer
-  - pkg/util/intstr
-  - pkg/util/json
-  - pkg/util/labels
-  - pkg/util/parsers
-  - pkg/util/rand
-  - pkg/util/runtime
   - pkg/util/sets
-  - pkg/util/uuid
   - pkg/util/validation
-  - pkg/util/validation/field
-  - pkg/util/yaml
   - third_party/forked/golang/reflect
 testImports: []

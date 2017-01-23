@@ -10,7 +10,6 @@ import (
 	"github.com/apprenda/kismatic/pkg/data"
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/spf13/cobra"
-	"k8s.io/kubernetes/pkg/api/v1"
 )
 
 type volumeListOptions struct {
@@ -120,9 +119,9 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 							}
 						}
 						// append container to pods map
-						key := strings.Join([]string{pod.GetNamespace(), v.PersistentVolumeClaim.ClaimName}, ":")
-						pod := Pod{Namespace: pod.GetNamespace(), Name: pod.GetName(), Containers: containers}
-						podsMap[key] = append(podsMap[key], pod)
+						key := strings.Join([]string{pod.Namespace, v.PersistentVolumeClaim.ClaimName}, ":")
+						p := Pod{Namespace: pod.Namespace, Name: pod.Name, Containers: containers}
+						podsMap[key] = append(podsMap[key], p)
 					}
 				}
 			}
@@ -130,10 +129,10 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 	}
 
 	// iterate through PVs once and build a map
-	pvsMap := make(map[string]*v1.PersistentVolume)
+	pvsMap := make(map[string]*data.PersistentVolume)
 	if pvs != nil {
 		for _, pv := range pvs.Items {
-			pvsMap[pv.GetName()] = &pv
+			pvsMap[pv.Name] = &pv
 		}
 	}
 

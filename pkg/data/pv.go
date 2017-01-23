@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
-	"k8s.io/kubernetes/pkg/api/v1"
 )
 
 type PVGetter interface {
-	Get() (*v1.PersistentVolumeList, error)
+	Get() (*PersistentVolumeList, error)
 }
 
 type PlanPVGetter struct {
@@ -18,7 +17,7 @@ type PlanPVGetter struct {
 }
 
 // Get returns PersistentVolume data
-func (g PlanPVGetter) Get() (*v1.PersistentVolumeList, error) {
+func (g PlanPVGetter) Get() (*PersistentVolumeList, error) {
 	pvRaw, err := g.SSHClient.Output("sudo kubectl get pv -o json")
 	if err != nil {
 		return nil, fmt.Errorf("error getting persistent volume data: %v", err)
@@ -28,7 +27,7 @@ func (g PlanPVGetter) Get() (*v1.PersistentVolumeList, error) {
 	if strings.Contains(pvRaw, "No resources found") {
 		return nil, nil
 	}
-	var pvs v1.PersistentVolumeList
+	var pvs PersistentVolumeList
 	err = json.Unmarshal([]byte(pvRaw), &pvs)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling persistent volume data: %v", err)

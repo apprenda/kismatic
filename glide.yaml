@@ -15,7 +15,3 @@ import:
   subpackages:
   - ssh
 - package: github.com/pkg/browser
-- package: k8s.io/kubernetes
-  version: ~1.6.0-alpha.0
-  subpackages:
-  - pkg/api/v1

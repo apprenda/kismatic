@@ -6,11 +6,10 @@ import (
 	"strings"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
-	"k8s.io/kubernetes/pkg/api/v1"
 )
 
 type PodGetter interface {
-	Get() (*v1.PodList, error)
+	Get() (*PodList, error)
 }
 
 type PlanPodGetter struct {
@@ -19,7 +18,7 @@ type PlanPodGetter struct {
 }
 
 // Get returns Pods data
-func (g PlanPodGetter) Get() (*v1.PodList, error) {
+func (g PlanPodGetter) Get() (*PodList, error) {
 	ns := fmt.Sprintf("--namespace=%s", g.Namespace)
 	if g.Namespace == "all" || g.Namespace == "" {
 		ns = "--all-namespaces=true"
@@ -33,7 +32,7 @@ func (g PlanPodGetter) Get() (*v1.PodList, error) {
 	if strings.Contains(podsRaw, "No resources found") {
 		return nil, nil
 	}
-	var pods v1.PodList
+	var pods PodList
 	err = json.Unmarshal([]byte(podsRaw), &pods)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling pod data: %v", err)

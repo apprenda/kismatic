@@ -8,8 +8,6 @@ import (
 	"testing"
 
 	"github.com/apprenda/kismatic/pkg/data"
-
-	"k8s.io/kubernetes/pkg/api/v1"
 )
 
 type fakePodGetter struct {
@@ -31,14 +29,14 @@ type fakeGlusterGetter struct {
 	shouldError       bool
 }
 
-func (g fakePodGetter) Get() (*v1.PodList, error) {
+func (g fakePodGetter) Get() (*data.PodList, error) {
 	if g.isNil {
 		return nil, nil
 	}
 	if g.shouldError {
 		return nil, fmt.Errorf("error")
 	}
-	var pods v1.PodList
+	var pods data.PodList
 	if strings.Contains(string(g.podList), "No resources found") {
 		return nil, nil
 	}
@@ -50,7 +48,7 @@ func (g fakePodGetter) Get() (*v1.PodList, error) {
 	return &pods, nil
 }
 
-func (g fakePVGetter) Get() (*v1.PersistentVolumeList, error) {
+func (g fakePVGetter) Get() (*data.PersistentVolumeList, error) {
 	if g.isNil {
 		return nil, nil
 	}
@@ -60,7 +58,7 @@ func (g fakePVGetter) Get() (*v1.PersistentVolumeList, error) {
 	if strings.Contains(string(g.pvList), "No resources found") {
 		return nil, nil
 	}
-	var pvs v1.PersistentVolumeList
+	var pvs data.PersistentVolumeList
 	err := json.Unmarshal(g.pvList, &pvs)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling persistent volume data: %v", err)
