@@ -23,7 +23,7 @@ func (g PlanPodGetter) Get() (*PodList, error) {
 	if g.Namespace == "all" || g.Namespace == "" {
 		ns = "--all-namespaces=true"
 	}
-	podsRaw, err := g.SSHClient.Output(fmt.Sprintf("sudo kubectl get pods %s -o json", ns))
+	podsRaw, err := g.SSHClient.Output(true, fmt.Sprintf("sudo kubectl get pods %s -o json", ns))
 	if err != nil {
 		return nil, fmt.Errorf("error getting pod data: %v", err)
 	}

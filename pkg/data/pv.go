@@ -18,7 +18,7 @@ type PlanPVGetter struct {
 
 // Get returns PersistentVolume data
 func (g PlanPVGetter) Get() (*PersistentVolumeList, error) {
-	pvRaw, err := g.SSHClient.Output("sudo kubectl get pv -o json")
+	pvRaw, err := g.SSHClient.Output(true, "sudo kubectl get pv -o json")
 	if err != nil {
 		return nil, fmt.Errorf("error getting persistent volume data: %v", err)
 	}

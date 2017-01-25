@@ -22,13 +22,11 @@ var baseSSHArgs = []string{
 	"-o", "ConnectTimeout=10", // timeout after 10 seconds
 	"-o", "ControlMaster=no", // disable ssh multiplexing
 	"-o", "ControlPath=none",
-	"-t",
-	"-t",
 }
 
 type Client interface {
-	Output(command string) (string, error)
-	Shell(args ...string) error
+	Output(pty bool, args ...string) (string, error)
+	Shell(pty bool, args ...string) error
 }
 
 type ExternalClient struct {
@@ -44,7 +42,7 @@ func TestConnection(ip string, port int, user, key string) error {
 		return err
 	}
 
-	return client.Shell("exit")
+	return client.Shell(false, "exit")
 }
 
 // NewClient verifies ssh is available in the PATH and returns an SSH client
@@ -78,26 +76,31 @@ func newExternalClient(sshBinaryPath string, user string, host string, port int,
 }
 
 // Output runs the ssh command and returns the output
-func (client *ExternalClient) Output(command string) (string, error) {
-	args := append(client.BaseArgs, command)
-	cmd := getSSHCmd(client.BinaryPath, args...)
+func (client *ExternalClient) Output(pty bool, args ...string) (string, error) {
+	args = append(client.BaseArgs, args...)
+	cmd := getSSHCmd(client.BinaryPath, pty, args...)
+	// for pseudo-tty and sudo to work correctly Stdin must be set to os.Stdin
+	if pty {
+		cmd.Stdin = os.Stdin
+	}
 	output, err := cmd.CombinedOutput()
 	return string(output), err
 }
 
 // Shell runs the ssh command, binding Stdin, Stdout and Stderr
-func (client *ExternalClient) Shell(args ...string) error {
+func (client *ExternalClient) Shell(pty bool, args ...string) error {
 	args = append(client.BaseArgs, args...)
-	cmd := getSSHCmd(client.BinaryPath, args...)
-
+	cmd := getSSHCmd(client.BinaryPath, pty, args...)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
-func getSSHCmd(binaryPath string, args ...string) *exec.Cmd {
+func getSSHCmd(binaryPath string, pty bool, args ...string) *exec.Cmd {
+	if pty {
+		args = append([]string{"-t"}, args...)
+	}
 	return exec.Command(binaryPath, args...)
 }
 
