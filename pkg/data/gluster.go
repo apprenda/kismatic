@@ -8,17 +8,17 @@ import (
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
 
-type GlusterInfoGetter interface {
-	GetVolumes() (*GlusterVolumeInfoCliOutput, error)
+type GlusterClient interface {
+	ListVolumes() (*GlusterVolumeInfoCliOutput, error)
 	GetQuota(volume string) (*GlusterVolumeQuotaCliOutput, error)
 }
 
-type GlusterCLIGetter struct {
+type RemoteGlusterCLI struct {
 	SSHClient ssh.Client
 }
 
-// GetVolumes returns gluster volume data using gluster command on the first sotrage node
-func (g GlusterCLIGetter) GetVolumes() (*GlusterVolumeInfoCliOutput, error) {
+// ListVolumes returns gluster volume data using gluster command on the first sotrage node
+func (g RemoteGlusterCLI) ListVolumes() (*GlusterVolumeInfoCliOutput, error) {
 	glusterVolumeInfoRaw, err := g.SSHClient.Output(true, "sudo gluster volume info all --xml")
 	if err != nil {
 		return nil, fmt.Errorf("error getting volume info data: %v", err)
@@ -44,7 +44,7 @@ func UnmarshalVolumeData(raw string) (*GlusterVolumeInfoCliOutput, error) {
 }
 
 // GetQuota returns gluster volume quota data using gluster command on the first sotrage node
-func (g GlusterCLIGetter) GetQuota(volume string) (*GlusterVolumeQuotaCliOutput, error) {
+func (g RemoteGlusterCLI) GetQuota(volume string) (*GlusterVolumeQuotaCliOutput, error) {
 	glusterVolumeQuotaRaw, err := g.SSHClient.Output(true, fmt.Sprintf("sudo gluster volume quota %s list --xml", volume))
 	if err != nil {
 		return nil, fmt.Errorf("error getting volume quota data for %s: %v", volume, err)

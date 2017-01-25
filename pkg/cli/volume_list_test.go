@@ -9,16 +9,13 @@ import (
 	"github.com/apprenda/kismatic/pkg/data"
 )
 
-type fakePodGetter struct {
-	podList     []byte
-	isNil       bool
-	shouldError bool
-}
-
-type fakePVGetter struct {
-	pvList      []byte
-	isNil       bool
-	shouldError bool
+type fakeKubernetesGetter struct {
+	podList         []byte
+	podsIsNil       bool
+	podsShouldError bool
+	pvList          []byte
+	pvsInNil        bool
+	pvsShouldError  bool
 }
 
 type fakeGlusterGetter struct {
@@ -28,29 +25,29 @@ type fakeGlusterGetter struct {
 	shouldError       bool
 }
 
-func (g fakePodGetter) Get() (*data.PodList, error) {
-	if g.isNil {
+func (g fakeKubernetesGetter) ListPods() (*data.PodList, error) {
+	if g.podsIsNil {
 		return nil, nil
 	}
-	if g.shouldError {
+	if g.podsShouldError {
 		return nil, fmt.Errorf("error")
 	}
 
 	return data.UnmarshalPods(string(g.podList))
 }
 
-func (g fakePVGetter) Get() (*data.PersistentVolumeList, error) {
-	if g.isNil {
+func (g fakeKubernetesGetter) ListPersistentVolumes() (*data.PersistentVolumeList, error) {
+	if g.pvsInNil {
 		return nil, nil
 	}
-	if g.shouldError {
+	if g.pvsShouldError {
 		return nil, fmt.Errorf("error")
 	}
 
 	return data.UnmarshalPVs(string(g.pvList))
 }
 
-func (g fakeGlusterGetter) GetVolumes() (*data.GlusterVolumeInfoCliOutput, error) {
+func (g fakeGlusterGetter) ListVolumes() (*data.GlusterVolumeInfoCliOutput, error) {
 	if g.isNil {
 		return nil, nil
 	}
@@ -73,8 +70,7 @@ func (g fakeGlusterGetter) GetQuota(volume string) (*data.GlusterVolumeQuotaCliO
 
 type volumeListTester struct {
 	index              int
-	podGetter          fakePodGetter
-	pvGetter           fakePVGetter
+	kubernetesGetter   fakeKubernetesGetter
 	glusterGetter      fakeGlusterGetter
 	glusterQuotas      map[string][]byte
 	volumesCount       int
@@ -100,16 +96,16 @@ func TestBuildResponse(t *testing.T) {
 			shouldError:   true,
 		},
 		volumeListTester{
-			index:       3,
-			podGetter:   fakePodGetter{shouldError: true},
-			shouldBeNil: true,
-			shouldError: true,
+			index:            3,
+			kubernetesGetter: fakeKubernetesGetter{podsShouldError: true},
+			shouldBeNil:      true,
+			shouldError:      true,
 		},
 		volumeListTester{
-			index:       4,
-			pvGetter:    fakePVGetter{shouldError: true},
-			shouldBeNil: true,
-			shouldError: true,
+			index:            4,
+			kubernetesGetter: fakeKubernetesGetter{pvsShouldError: true},
+			shouldBeNil:      true,
+			shouldError:      true,
 		},
 		volumeListTester{
 			index: 5,
@@ -124,7 +120,8 @@ func TestBuildResponse(t *testing.T) {
 		    </volumes>
 		  </volInfo>
 		</cliOutput>`)},
-			pvGetter: fakePVGetter{pvList: []byte(`No resources found.
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`No resources found.
 		{
 		    "apiVersion": "v1",
 		    "items": [],
@@ -132,16 +129,16 @@ func TestBuildResponse(t *testing.T) {
 		    "metadata": {},
 		    "resourceVersion": "",
 		    "selfLink": ""
-		}`)},
-			podGetter: fakePodGetter{podList: []byte(`No resources found.
-		{
-		    "apiVersion": "v1",
-		    "items": [],
-		    "kind": "List",
-		    "metadata": {},
-		    "resourceVersion": "",
-		    "selfLink": ""
-		}`)},
+		}`),
+				podList: []byte(`No resources found.
+	{
+			"apiVersion": "v1",
+			"items": [],
+			"kind": "List",
+			"metadata": {},
+			"resourceVersion": "",
+			"selfLink": ""
+	}`)},
 			shouldBeNil: true,
 			shouldError: false,
 		},
@@ -150,24 +147,25 @@ func TestBuildResponse(t *testing.T) {
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 		<cliOutput>
 		</cliOutput>`)},
-			pvGetter: fakePVGetter{pvList: []byte(`No resources found.
-		{
-				"apiVersion": "v1",
-				"items": [],
-				"kind": "List",
-				"metadata": {},
-				"resourceVersion": "",
-				"selfLink": ""
-		}`)},
-			podGetter: fakePodGetter{podList: []byte(`No resources found.
-		{
-				"apiVersion": "v1",
-				"items": [],
-				"kind": "List",
-				"metadata": {},
-				"resourceVersion": "",
-				"selfLink": ""
-		}`)},
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`No resources found.
+	{
+			"apiVersion": "v1",
+			"items": [],
+			"kind": "List",
+			"metadata": {},
+			"resourceVersion": "",
+			"selfLink": ""
+	}`),
+				podList: []byte(`No resources found.
+{
+		"apiVersion": "v1",
+		"items": [],
+		"kind": "List",
+		"metadata": {},
+		"resourceVersion": "",
+		"selfLink": ""
+}`)},
 			shouldBeNil: true,
 			shouldError: true,
 		},
@@ -255,24 +253,25 @@ func TestBuildResponse(t *testing.T) {
   </volQuota>
 </cliOutput>`)},
 			},
-			pvGetter: fakePVGetter{pvList: []byte(`No resources found.
-{
-    "apiVersion": "v1",
-    "items": [],
-    "kind": "List",
-    "metadata": {},
-    "resourceVersion": "",
-    "selfLink": ""
-}`)},
-			podGetter: fakePodGetter{podList: []byte(`No resources found.
-{
-    "apiVersion": "v1",
-    "items": [],
-    "kind": "List",
-    "metadata": {},
-    "resourceVersion": "",
-    "selfLink": ""
-}`)},
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`No resources found.
+		{
+		    "apiVersion": "v1",
+		    "items": [],
+		    "kind": "List",
+		    "metadata": {},
+		    "resourceVersion": "",
+		    "selfLink": ""
+		}`),
+				podList: []byte(`No resources found.
+	{
+			"apiVersion": "v1",
+			"items": [],
+			"kind": "List",
+			"metadata": {},
+			"resourceVersion": "",
+			"selfLink": ""
+	}`)},
 			shouldBeNil:  false,
 			shouldError:  false,
 			volumesCount: 1,
@@ -350,24 +349,25 @@ func TestBuildResponse(t *testing.T) {
   <cliOp>volQuota</cliOp>
 </cliOutput>`)},
 			},
-			pvGetter: fakePVGetter{pvList: []byte(`No resources found.
-{
-    "apiVersion": "v1",
-    "items": [],
-    "kind": "List",
-    "metadata": {},
-    "resourceVersion": "",
-    "selfLink": ""
-}`)},
-			podGetter: fakePodGetter{podList: []byte(`No resources found.
-{
-    "apiVersion": "v1",
-    "items": [],
-    "kind": "List",
-    "metadata": {},
-    "resourceVersion": "",
-    "selfLink": ""
-}`)},
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`No resources found.
+		{
+		    "apiVersion": "v1",
+		    "items": [],
+		    "kind": "List",
+		    "metadata": {},
+		    "resourceVersion": "",
+		    "selfLink": ""
+		}`),
+				podList: []byte(`No resources found.
+	{
+			"apiVersion": "v1",
+			"items": [],
+			"kind": "List",
+			"metadata": {},
+			"resourceVersion": "",
+			"selfLink": ""
+	}`)},
 			shouldBeNil:  false,
 			shouldError:  false,
 			volumesCount: 1,
@@ -511,7 +511,8 @@ func TestBuildResponse(t *testing.T) {
   </volQuota>
 </cliOutput>`)},
 			},
-			pvGetter: fakePVGetter{pvList: []byte(`{
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`{
     "apiVersion": "v1",
     "items": [
         {
@@ -551,15 +552,15 @@ func TestBuildResponse(t *testing.T) {
     "metadata": {},
     "resourceVersion": "",
     "selfLink": ""
-}`)},
-			podGetter: fakePodGetter{podList: []byte(`No resources found.
+}`),
+				podList: []byte(`No resources found.
 {
-    "apiVersion": "v1",
-    "items": [],
-    "kind": "List",
-    "metadata": {},
-    "resourceVersion": "",
-    "selfLink": ""
+"apiVersion": "v1",
+"items": [],
+"kind": "List",
+"metadata": {},
+"resourceVersion": "",
+"selfLink": ""
 }`)},
 			shouldBeNil:  false,
 			shouldError:  false,
@@ -704,7 +705,8 @@ func TestBuildResponse(t *testing.T) {
   </volQuota>
 </cliOutput>`)},
 			},
-			pvGetter: fakePVGetter{pvList: []byte(`{
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`{
     "apiVersion": "v1",
     "items": [
         {
@@ -753,15 +755,15 @@ func TestBuildResponse(t *testing.T) {
     "metadata": {},
     "resourceVersion": "",
     "selfLink": ""
-}`)},
-			podGetter: fakePodGetter{podList: []byte(`No resources found.
+}`),
+				podList: []byte(`No resources found.
 {
-    "apiVersion": "v1",
-    "items": [],
-    "kind": "List",
-    "metadata": {},
-    "resourceVersion": "",
-    "selfLink": ""
+"apiVersion": "v1",
+"items": [],
+"kind": "List",
+"metadata": {},
+"resourceVersion": "",
+"selfLink": ""
 }`)},
 			shouldBeNil:      false,
 			shouldError:      false,
@@ -907,7 +909,8 @@ func TestBuildResponse(t *testing.T) {
   </volQuota>
 </cliOutput>`)},
 			},
-			pvGetter: fakePVGetter{pvList: []byte(`{
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`{
     "apiVersion": "v1",
     "items": [
         {
@@ -956,239 +959,239 @@ func TestBuildResponse(t *testing.T) {
     "metadata": {},
     "resourceVersion": "",
     "selfLink": ""
-}`)},
-			podGetter: fakePodGetter{podList: []byte(`{
-    "apiVersion": "v1",
-    "items": [
-        {
-            "apiVersion": "v1",
-            "kind": "Pod",
-            "metadata": {
-                "annotations": {
-                    "kubectl.kubernetes.io/last-applied-configuration": "{\"kind\":\"Pod\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"mypod\",\"creationTimestamp\":null},\"spec\":{\"volumes\":[{\"name\":\"mypd\",\"persistentVolumeClaim\":{\"claimName\":\"kismatic-integration-claim\"}}],\"containers\":[{\"name\":\"myfrontend\",\"image\":\"nginx\",\"resources\":{},\"volumeMounts\":[{\"name\":\"mypd\",\"mountPath\":\"/var/www/html\"}]}]},\"status\":{}}"
-                },
-                "creationTimestamp": "2017-01-23T17:49:32Z",
-                "name": "mypod",
-                "namespace": "default",
-                "resourceVersion": "21288",
-                "selfLink": "/api/v1/namespaces/default/pods/mypod",
-                "uid": "4b9ffa36-e194-11e6-a892-129f29c68938"
-            },
-            "spec": {
-                "containers": [
-                    {
-                        "image": "nginx",
-                        "imagePullPolicy": "Always",
-                        "name": "myfrontend",
-                        "resources": {},
-                        "terminationMessagePath": "/dev/termination-log",
-                        "volumeMounts": [
-                            {
-                                "mountPath": "/var/www/html",
-                                "name": "mypd"
-                            },
-                            {
-                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
-                                "name": "default-token-03rfm",
-                                "readOnly": true
-                            }
-                        ]
-                    }
-                ],
-                "dnsPolicy": "ClusterFirst",
-                "nodeName": "ip-10-0-3-230",
-                "restartPolicy": "Always",
-                "securityContext": {},
-                "serviceAccount": "default",
-                "serviceAccountName": "default",
-                "terminationGracePeriodSeconds": 30,
-                "volumes": [
-                    {
-                        "name": "mypd",
-                        "persistentVolumeClaim": {
-                            "claimName": "kismatic-integration-claim"
-                        }
-                    },
-                    {
-                        "name": "default-token-03rfm",
-                        "secret": {
-                            "defaultMode": 420,
-                            "secretName": "default-token-03rfm"
-                        }
-                    }
-                ]
-            },
-            "status": {
-                "conditions": [
-                    {
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2017-01-23T17:49:32Z",
-                        "status": "True",
-                        "type": "Initialized"
-                    },
-                    {
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2017-01-23T17:49:57Z",
-                        "status": "True",
-                        "type": "Ready"
-                    },
-                    {
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2017-01-23T17:49:32Z",
-                        "status": "True",
-                        "type": "PodScheduled"
-                    }
-                ],
-                "containerStatuses": [
-                    {
-                        "containerID": "docker://62f01ca6580f6b5f9fecd841e2450e3f71dec07c3a6b867d95627baa3dd6a475",
-                        "image": "nginx",
-                        "imageID": "docker://sha256:a39777a1a4a6ec8a91c978ded905cca10e6b105ba650040e16c50b3e157272c3",
-                        "lastState": {},
-                        "name": "myfrontend",
-                        "ready": true,
-                        "restartCount": 0,
-                        "state": {
-                            "running": {
-                                "startedAt": "2017-01-23T17:49:56Z"
-                            }
-                        }
-                    }
-                ],
-                "hostIP": "10.0.3.230",
-                "phase": "Running",
-                "podIP": "172.16.255.135",
-                "startTime": "2017-01-23T17:49:32Z"
-            }
-        },
-        {
-            "apiVersion": "v1",
-            "kind": "Pod",
-            "metadata": {
-                "annotations": {
-                    "kubernetes.io/created-by": "{\"kind\":\"SerializedReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"ReplicaSet\",\"namespace\":\"kube-system\",\"name\":\"kubernetes-dashboard-1280404318\",\"uid\":\"18b60843-e178-11e6-a892-129f29c68938\",\"apiVersion\":\"extensions\",\"resourceVersion\":\"371\"}}\n"
-                },
-                "creationTimestamp": "2017-01-23T14:27:40Z",
-                "generateName": "kubernetes-dashboard-1280404318-",
-                "labels": {
-                    "app": "kubernetes-dashboard",
-                    "pod-template-hash": "1280404318"
-                },
-                "name": "kubernetes-dashboard-1280404318-n5mqh",
-                "namespace": "kube-system",
-                "ownerReferences": [
-                    {
-                        "apiVersion": "extensions/v1beta1",
-                        "controller": true,
-                        "kind": "ReplicaSet",
-                        "name": "kubernetes-dashboard-1280404318",
-                        "uid": "18b60843-e178-11e6-a892-129f29c68938"
-                    }
-                ],
-                "resourceVersion": "466",
-                "selfLink": "/api/v1/namespaces/kube-system/pods/kubernetes-dashboard-1280404318-n5mqh",
-                "uid": "18b70e5a-e178-11e6-a892-129f29c68938"
-            },
-            "spec": {
-                "containers": [
-                    {
-                        "image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
-                        "imagePullPolicy": "IfNotPresent",
-                        "livenessProbe": {
-                            "failureThreshold": 3,
-                            "httpGet": {
-                                "path": "/",
-                                "port": 9090,
-                                "scheme": "HTTP"
-                            },
-                            "initialDelaySeconds": 30,
-                            "periodSeconds": 10,
-                            "successThreshold": 1,
-                            "timeoutSeconds": 30
-                        },
-                        "name": "kubernetes-dashboard",
-                        "ports": [
-                            {
-                                "containerPort": 9090,
-                                "protocol": "TCP"
-                            }
-                        ],
-                        "resources": {},
-                        "terminationMessagePath": "/dev/termination-log",
-                        "volumeMounts": [
-                            {
-                                "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
-                                "name": "default-token-gn2nc",
-                                "readOnly": true
-                            }
-                        ]
-                    }
-                ],
-                "dnsPolicy": "ClusterFirst",
-                "nodeName": "ip-10-0-3-230",
-                "restartPolicy": "Always",
-                "securityContext": {},
-                "serviceAccount": "default",
-                "serviceAccountName": "default",
-                "terminationGracePeriodSeconds": 30,
-                "volumes": [
-                    {
-                        "name": "default-token-gn2nc",
-                        "secret": {
-                            "defaultMode": 420,
-                            "secretName": "default-token-gn2nc"
-                        }
-                    }
-                ]
-            },
-            "status": {
-                "conditions": [
-                    {
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2017-01-23T14:27:40Z",
-                        "status": "True",
-                        "type": "Initialized"
-                    },
-                    {
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2017-01-23T14:28:03Z",
-                        "status": "True",
-                        "type": "Ready"
-                    },
-                    {
-                        "lastProbeTime": null,
-                        "lastTransitionTime": "2017-01-23T14:27:40Z",
-                        "status": "True",
-                        "type": "PodScheduled"
-                    }
-                ],
-                "containerStatuses": [
-                    {
-                        "containerID": "docker://78cd2bfd9ea6750c1cfeddef0cfd53466586e71d583c0928985e6001e01a0141",
-                        "image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
-                        "imageID": "docker://sha256:e5133bac8024ac6c916f16df8790259b5504a800766bee87dcf90ec7d634a418",
-                        "lastState": {},
-                        "name": "kubernetes-dashboard",
-                        "ready": true,
-                        "restartCount": 0,
-                        "state": {
-                            "running": {
-                                "startedAt": "2017-01-23T14:28:02Z"
-                            }
-                        }
-                    }
-                ],
-                "hostIP": "10.0.3.230",
-                "phase": "Running",
-                "podIP": "172.16.255.130",
-                "startTime": "2017-01-23T14:27:40Z"
-            }
-        }
-    ],
-    "kind": "List",
-    "metadata": {},
-    "resourceVersion": "",
-    "selfLink": ""
+}`),
+				podList: []byte(`{
+"apiVersion": "v1",
+"items": [
+	{
+			"apiVersion": "v1",
+			"kind": "Pod",
+			"metadata": {
+					"annotations": {
+							"kubectl.kubernetes.io/last-applied-configuration": "{\"kind\":\"Pod\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"mypod\",\"creationTimestamp\":null},\"spec\":{\"volumes\":[{\"name\":\"mypd\",\"persistentVolumeClaim\":{\"claimName\":\"kismatic-integration-claim\"}}],\"containers\":[{\"name\":\"myfrontend\",\"image\":\"nginx\",\"resources\":{},\"volumeMounts\":[{\"name\":\"mypd\",\"mountPath\":\"/var/www/html\"}]}]},\"status\":{}}"
+					},
+					"creationTimestamp": "2017-01-23T17:49:32Z",
+					"name": "mypod",
+					"namespace": "default",
+					"resourceVersion": "21288",
+					"selfLink": "/api/v1/namespaces/default/pods/mypod",
+					"uid": "4b9ffa36-e194-11e6-a892-129f29c68938"
+			},
+			"spec": {
+					"containers": [
+							{
+									"image": "nginx",
+									"imagePullPolicy": "Always",
+									"name": "myfrontend",
+									"resources": {},
+									"terminationMessagePath": "/dev/termination-log",
+									"volumeMounts": [
+											{
+													"mountPath": "/var/www/html",
+													"name": "mypd"
+											},
+											{
+													"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+													"name": "default-token-03rfm",
+													"readOnly": true
+											}
+									]
+							}
+					],
+					"dnsPolicy": "ClusterFirst",
+					"nodeName": "ip-10-0-3-230",
+					"restartPolicy": "Always",
+					"securityContext": {},
+					"serviceAccount": "default",
+					"serviceAccountName": "default",
+					"terminationGracePeriodSeconds": 30,
+					"volumes": [
+							{
+									"name": "mypd",
+									"persistentVolumeClaim": {
+											"claimName": "kismatic-integration-claim"
+									}
+							},
+							{
+									"name": "default-token-03rfm",
+									"secret": {
+											"defaultMode": 420,
+											"secretName": "default-token-03rfm"
+									}
+							}
+					]
+			},
+			"status": {
+					"conditions": [
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T17:49:32Z",
+									"status": "True",
+									"type": "Initialized"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T17:49:57Z",
+									"status": "True",
+									"type": "Ready"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T17:49:32Z",
+									"status": "True",
+									"type": "PodScheduled"
+							}
+					],
+					"containerStatuses": [
+							{
+									"containerID": "docker://62f01ca6580f6b5f9fecd841e2450e3f71dec07c3a6b867d95627baa3dd6a475",
+									"image": "nginx",
+									"imageID": "docker://sha256:a39777a1a4a6ec8a91c978ded905cca10e6b105ba650040e16c50b3e157272c3",
+									"lastState": {},
+									"name": "myfrontend",
+									"ready": true,
+									"restartCount": 0,
+									"state": {
+											"running": {
+													"startedAt": "2017-01-23T17:49:56Z"
+											}
+									}
+							}
+					],
+					"hostIP": "10.0.3.230",
+					"phase": "Running",
+					"podIP": "172.16.255.135",
+					"startTime": "2017-01-23T17:49:32Z"
+			}
+	},
+	{
+			"apiVersion": "v1",
+			"kind": "Pod",
+			"metadata": {
+					"annotations": {
+							"kubernetes.io/created-by": "{\"kind\":\"SerializedReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"ReplicaSet\",\"namespace\":\"kube-system\",\"name\":\"kubernetes-dashboard-1280404318\",\"uid\":\"18b60843-e178-11e6-a892-129f29c68938\",\"apiVersion\":\"extensions\",\"resourceVersion\":\"371\"}}\n"
+					},
+					"creationTimestamp": "2017-01-23T14:27:40Z",
+					"generateName": "kubernetes-dashboard-1280404318-",
+					"labels": {
+							"app": "kubernetes-dashboard",
+							"pod-template-hash": "1280404318"
+					},
+					"name": "kubernetes-dashboard-1280404318-n5mqh",
+					"namespace": "kube-system",
+					"ownerReferences": [
+							{
+									"apiVersion": "extensions/v1beta1",
+									"controller": true,
+									"kind": "ReplicaSet",
+									"name": "kubernetes-dashboard-1280404318",
+									"uid": "18b60843-e178-11e6-a892-129f29c68938"
+							}
+					],
+					"resourceVersion": "466",
+					"selfLink": "/api/v1/namespaces/kube-system/pods/kubernetes-dashboard-1280404318-n5mqh",
+					"uid": "18b70e5a-e178-11e6-a892-129f29c68938"
+			},
+			"spec": {
+					"containers": [
+							{
+									"image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
+									"imagePullPolicy": "IfNotPresent",
+									"livenessProbe": {
+											"failureThreshold": 3,
+											"httpGet": {
+													"path": "/",
+													"port": 9090,
+													"scheme": "HTTP"
+											},
+											"initialDelaySeconds": 30,
+											"periodSeconds": 10,
+											"successThreshold": 1,
+											"timeoutSeconds": 30
+									},
+									"name": "kubernetes-dashboard",
+									"ports": [
+											{
+													"containerPort": 9090,
+													"protocol": "TCP"
+											}
+									],
+									"resources": {},
+									"terminationMessagePath": "/dev/termination-log",
+									"volumeMounts": [
+											{
+													"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+													"name": "default-token-gn2nc",
+													"readOnly": true
+											}
+									]
+							}
+					],
+					"dnsPolicy": "ClusterFirst",
+					"nodeName": "ip-10-0-3-230",
+					"restartPolicy": "Always",
+					"securityContext": {},
+					"serviceAccount": "default",
+					"serviceAccountName": "default",
+					"terminationGracePeriodSeconds": 30,
+					"volumes": [
+							{
+									"name": "default-token-gn2nc",
+									"secret": {
+											"defaultMode": 420,
+											"secretName": "default-token-gn2nc"
+									}
+							}
+					]
+			},
+			"status": {
+					"conditions": [
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T14:27:40Z",
+									"status": "True",
+									"type": "Initialized"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T14:28:03Z",
+									"status": "True",
+									"type": "Ready"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T14:27:40Z",
+									"status": "True",
+									"type": "PodScheduled"
+							}
+					],
+					"containerStatuses": [
+							{
+									"containerID": "docker://78cd2bfd9ea6750c1cfeddef0cfd53466586e71d583c0928985e6001e01a0141",
+									"image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
+									"imageID": "docker://sha256:e5133bac8024ac6c916f16df8790259b5504a800766bee87dcf90ec7d634a418",
+									"lastState": {},
+									"name": "kubernetes-dashboard",
+									"ready": true,
+									"restartCount": 0,
+									"state": {
+											"running": {
+													"startedAt": "2017-01-23T14:28:02Z"
+											}
+									}
+							}
+					],
+					"hostIP": "10.0.3.230",
+					"phase": "Running",
+					"podIP": "172.16.255.130",
+					"startTime": "2017-01-23T14:27:40Z"
+			}
+	}
+],
+"kind": "List",
+"metadata": {},
+"resourceVersion": "",
+"selfLink": ""
 }`)},
 			shouldBeNil:        false,
 			shouldError:        false,
@@ -1335,7 +1338,8 @@ func TestBuildResponse(t *testing.T) {
 	</volQuota>
 </cliOutput>`)},
 			},
-			pvGetter: fakePVGetter{pvList: []byte(`{
+			kubernetesGetter: fakeKubernetesGetter{
+				pvList: []byte(`{
 		"apiVersion": "v1",
 		"items": [
 				{
@@ -1388,239 +1392,238 @@ func TestBuildResponse(t *testing.T) {
 		"metadata": {},
 		"resourceVersion": "",
 		"selfLink": ""
-}`)},
-			podGetter: fakePodGetter{podList: []byte(`{
-		"apiVersion": "v1",
-		"items": [
-				{
-						"apiVersion": "v1",
-						"kind": "Pod",
-						"metadata": {
-								"annotations": {
-										"kubectl.kubernetes.io/last-applied-configuration": "{\"kind\":\"Pod\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"mypod\",\"creationTimestamp\":null},\"spec\":{\"volumes\":[{\"name\":\"mypd\",\"persistentVolumeClaim\":{\"claimName\":\"kismatic-integration-claim\"}}],\"containers\":[{\"name\":\"myfrontend\",\"image\":\"nginx\",\"resources\":{},\"volumeMounts\":[{\"name\":\"mypd\",\"mountPath\":\"/var/www/html\"}]}]},\"status\":{}}"
-								},
-								"creationTimestamp": "2017-01-23T17:49:32Z",
-								"name": "mypod",
-								"namespace": "default",
-								"resourceVersion": "21288",
-								"selfLink": "/api/v1/namespaces/default/pods/mypod",
-								"uid": "4b9ffa36-e194-11e6-a892-129f29c68938"
-						},
-						"spec": {
-								"containers": [
-										{
-												"image": "nginx",
-												"imagePullPolicy": "Always",
-												"name": "myfrontend",
-												"resources": {},
-												"terminationMessagePath": "/dev/termination-log",
-												"volumeMounts": [
-														{
-																"mountPath": "/var/www/html",
-																"name": "mypd"
-														},
-														{
-																"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
-																"name": "default-token-03rfm",
-																"readOnly": true
-														}
-												]
-										}
-								],
-								"dnsPolicy": "ClusterFirst",
-								"nodeName": "ip-10-0-3-230",
-								"restartPolicy": "Always",
-								"securityContext": {},
-								"serviceAccount": "default",
-								"serviceAccountName": "default",
-								"terminationGracePeriodSeconds": 30,
-								"volumes": [
-										{
-												"name": "mypd",
-												"persistentVolumeClaim": {
-														"claimName": "kismatic-integration-claim"
-												}
-										},
-										{
-												"name": "default-token-03rfm",
-												"secret": {
-														"defaultMode": 420,
-														"secretName": "default-token-03rfm"
-												}
-										}
-								]
-						},
-						"status": {
-								"conditions": [
-										{
-												"lastProbeTime": null,
-												"lastTransitionTime": "2017-01-23T17:49:32Z",
-												"status": "True",
-												"type": "Initialized"
-										},
-										{
-												"lastProbeTime": null,
-												"lastTransitionTime": "2017-01-23T17:49:57Z",
-												"status": "True",
-												"type": "Ready"
-										},
-										{
-												"lastProbeTime": null,
-												"lastTransitionTime": "2017-01-23T17:49:32Z",
-												"status": "True",
-												"type": "PodScheduled"
-										}
-								],
-								"containerStatuses": [
-										{
-												"containerID": "docker://62f01ca6580f6b5f9fecd841e2450e3f71dec07c3a6b867d95627baa3dd6a475",
-												"image": "nginx",
-												"imageID": "docker://sha256:a39777a1a4a6ec8a91c978ded905cca10e6b105ba650040e16c50b3e157272c3",
-												"lastState": {},
-												"name": "myfrontend",
-												"ready": true,
-												"restartCount": 0,
-												"state": {
-														"running": {
-																"startedAt": "2017-01-23T17:49:56Z"
-														}
-												}
-										}
-								],
-								"hostIP": "10.0.3.230",
-								"phase": "Running",
-								"podIP": "172.16.255.135",
-								"startTime": "2017-01-23T17:49:32Z"
-						}
-				},
-				{
-						"apiVersion": "v1",
-						"kind": "Pod",
-						"metadata": {
-								"annotations": {
-										"kubernetes.io/created-by": "{\"kind\":\"SerializedReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"ReplicaSet\",\"namespace\":\"kube-system\",\"name\":\"kubernetes-dashboard-1280404318\",\"uid\":\"18b60843-e178-11e6-a892-129f29c68938\",\"apiVersion\":\"extensions\",\"resourceVersion\":\"371\"}}\n"
-								},
-								"creationTimestamp": "2017-01-23T14:27:40Z",
-								"generateName": "kubernetes-dashboard-1280404318-",
-								"labels": {
-										"app": "kubernetes-dashboard",
-										"pod-template-hash": "1280404318"
-								},
-								"name": "kubernetes-dashboard-1280404318-n5mqh",
-								"namespace": "kube-system",
-								"ownerReferences": [
-										{
-												"apiVersion": "extensions/v1beta1",
-												"controller": true,
-												"kind": "ReplicaSet",
-												"name": "kubernetes-dashboard-1280404318",
-												"uid": "18b60843-e178-11e6-a892-129f29c68938"
-										}
-								],
-								"resourceVersion": "466",
-								"selfLink": "/api/v1/namespaces/kube-system/pods/kubernetes-dashboard-1280404318-n5mqh",
-								"uid": "18b70e5a-e178-11e6-a892-129f29c68938"
-						},
-						"spec": {
-								"containers": [
-										{
-												"image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
-												"imagePullPolicy": "IfNotPresent",
-												"livenessProbe": {
-														"failureThreshold": 3,
-														"httpGet": {
-																"path": "/",
-																"port": 9090,
-																"scheme": "HTTP"
-														},
-														"initialDelaySeconds": 30,
-														"periodSeconds": 10,
-														"successThreshold": 1,
-														"timeoutSeconds": 30
-												},
-												"name": "kubernetes-dashboard",
-												"ports": [
-														{
-																"containerPort": 9090,
-																"protocol": "TCP"
-														}
-												],
-												"resources": {},
-												"terminationMessagePath": "/dev/termination-log",
-												"volumeMounts": [
-														{
-																"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
-																"name": "default-token-gn2nc",
-																"readOnly": true
-														}
-												]
-										}
-								],
-								"dnsPolicy": "ClusterFirst",
-								"nodeName": "ip-10-0-3-230",
-								"restartPolicy": "Always",
-								"securityContext": {},
-								"serviceAccount": "default",
-								"serviceAccountName": "default",
-								"terminationGracePeriodSeconds": 30,
-								"volumes": [
-										{
-												"name": "default-token-gn2nc",
-												"secret": {
-														"defaultMode": 420,
-														"secretName": "default-token-gn2nc"
-												}
-										}
-								]
-						},
-						"status": {
-								"conditions": [
-										{
-												"lastProbeTime": null,
-												"lastTransitionTime": "2017-01-23T14:27:40Z",
-												"status": "True",
-												"type": "Initialized"
-										},
-										{
-												"lastProbeTime": null,
-												"lastTransitionTime": "2017-01-23T14:28:03Z",
-												"status": "True",
-												"type": "Ready"
-										},
-										{
-												"lastProbeTime": null,
-												"lastTransitionTime": "2017-01-23T14:27:40Z",
-												"status": "True",
-												"type": "PodScheduled"
-										}
-								],
-								"containerStatuses": [
-										{
-												"containerID": "docker://78cd2bfd9ea6750c1cfeddef0cfd53466586e71d583c0928985e6001e01a0141",
-												"image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
-												"imageID": "docker://sha256:e5133bac8024ac6c916f16df8790259b5504a800766bee87dcf90ec7d634a418",
-												"lastState": {},
-												"name": "kubernetes-dashboard",
-												"ready": true,
-												"restartCount": 0,
-												"state": {
-														"running": {
-																"startedAt": "2017-01-23T14:28:02Z"
-														}
-												}
-										}
-								],
-								"hostIP": "10.0.3.230",
-								"phase": "Running",
-								"podIP": "172.16.255.130",
-								"startTime": "2017-01-23T14:27:40Z"
-						}
-				}
-		],
-		"kind": "List",
-		"metadata": {},
-		"resourceVersion": "",
-		"selfLink": ""
+}`), podList: []byte(`{
+"apiVersion": "v1",
+"items": [
+	{
+			"apiVersion": "v1",
+			"kind": "Pod",
+			"metadata": {
+					"annotations": {
+							"kubectl.kubernetes.io/last-applied-configuration": "{\"kind\":\"Pod\",\"apiVersion\":\"v1\",\"metadata\":{\"name\":\"mypod\",\"creationTimestamp\":null},\"spec\":{\"volumes\":[{\"name\":\"mypd\",\"persistentVolumeClaim\":{\"claimName\":\"kismatic-integration-claim\"}}],\"containers\":[{\"name\":\"myfrontend\",\"image\":\"nginx\",\"resources\":{},\"volumeMounts\":[{\"name\":\"mypd\",\"mountPath\":\"/var/www/html\"}]}]},\"status\":{}}"
+					},
+					"creationTimestamp": "2017-01-23T17:49:32Z",
+					"name": "mypod",
+					"namespace": "default",
+					"resourceVersion": "21288",
+					"selfLink": "/api/v1/namespaces/default/pods/mypod",
+					"uid": "4b9ffa36-e194-11e6-a892-129f29c68938"
+			},
+			"spec": {
+					"containers": [
+							{
+									"image": "nginx",
+									"imagePullPolicy": "Always",
+									"name": "myfrontend",
+									"resources": {},
+									"terminationMessagePath": "/dev/termination-log",
+									"volumeMounts": [
+											{
+													"mountPath": "/var/www/html",
+													"name": "mypd"
+											},
+											{
+													"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+													"name": "default-token-03rfm",
+													"readOnly": true
+											}
+									]
+							}
+					],
+					"dnsPolicy": "ClusterFirst",
+					"nodeName": "ip-10-0-3-230",
+					"restartPolicy": "Always",
+					"securityContext": {},
+					"serviceAccount": "default",
+					"serviceAccountName": "default",
+					"terminationGracePeriodSeconds": 30,
+					"volumes": [
+							{
+									"name": "mypd",
+									"persistentVolumeClaim": {
+											"claimName": "kismatic-integration-claim"
+									}
+							},
+							{
+									"name": "default-token-03rfm",
+									"secret": {
+											"defaultMode": 420,
+											"secretName": "default-token-03rfm"
+									}
+							}
+					]
+			},
+			"status": {
+					"conditions": [
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T17:49:32Z",
+									"status": "True",
+									"type": "Initialized"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T17:49:57Z",
+									"status": "True",
+									"type": "Ready"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T17:49:32Z",
+									"status": "True",
+									"type": "PodScheduled"
+							}
+					],
+					"containerStatuses": [
+							{
+									"containerID": "docker://62f01ca6580f6b5f9fecd841e2450e3f71dec07c3a6b867d95627baa3dd6a475",
+									"image": "nginx",
+									"imageID": "docker://sha256:a39777a1a4a6ec8a91c978ded905cca10e6b105ba650040e16c50b3e157272c3",
+									"lastState": {},
+									"name": "myfrontend",
+									"ready": true,
+									"restartCount": 0,
+									"state": {
+											"running": {
+													"startedAt": "2017-01-23T17:49:56Z"
+											}
+									}
+							}
+					],
+					"hostIP": "10.0.3.230",
+					"phase": "Running",
+					"podIP": "172.16.255.135",
+					"startTime": "2017-01-23T17:49:32Z"
+			}
+	},
+	{
+			"apiVersion": "v1",
+			"kind": "Pod",
+			"metadata": {
+					"annotations": {
+							"kubernetes.io/created-by": "{\"kind\":\"SerializedReference\",\"apiVersion\":\"v1\",\"reference\":{\"kind\":\"ReplicaSet\",\"namespace\":\"kube-system\",\"name\":\"kubernetes-dashboard-1280404318\",\"uid\":\"18b60843-e178-11e6-a892-129f29c68938\",\"apiVersion\":\"extensions\",\"resourceVersion\":\"371\"}}\n"
+					},
+					"creationTimestamp": "2017-01-23T14:27:40Z",
+					"generateName": "kubernetes-dashboard-1280404318-",
+					"labels": {
+							"app": "kubernetes-dashboard",
+							"pod-template-hash": "1280404318"
+					},
+					"name": "kubernetes-dashboard-1280404318-n5mqh",
+					"namespace": "kube-system",
+					"ownerReferences": [
+							{
+									"apiVersion": "extensions/v1beta1",
+									"controller": true,
+									"kind": "ReplicaSet",
+									"name": "kubernetes-dashboard-1280404318",
+									"uid": "18b60843-e178-11e6-a892-129f29c68938"
+							}
+					],
+					"resourceVersion": "466",
+					"selfLink": "/api/v1/namespaces/kube-system/pods/kubernetes-dashboard-1280404318-n5mqh",
+					"uid": "18b70e5a-e178-11e6-a892-129f29c68938"
+			},
+			"spec": {
+					"containers": [
+							{
+									"image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
+									"imagePullPolicy": "IfNotPresent",
+									"livenessProbe": {
+											"failureThreshold": 3,
+											"httpGet": {
+													"path": "/",
+													"port": 9090,
+													"scheme": "HTTP"
+											},
+											"initialDelaySeconds": 30,
+											"periodSeconds": 10,
+											"successThreshold": 1,
+											"timeoutSeconds": 30
+									},
+									"name": "kubernetes-dashboard",
+									"ports": [
+											{
+													"containerPort": 9090,
+													"protocol": "TCP"
+											}
+									],
+									"resources": {},
+									"terminationMessagePath": "/dev/termination-log",
+									"volumeMounts": [
+											{
+													"mountPath": "/var/run/secrets/kubernetes.io/serviceaccount",
+													"name": "default-token-gn2nc",
+													"readOnly": true
+											}
+									]
+							}
+					],
+					"dnsPolicy": "ClusterFirst",
+					"nodeName": "ip-10-0-3-230",
+					"restartPolicy": "Always",
+					"securityContext": {},
+					"serviceAccount": "default",
+					"serviceAccountName": "default",
+					"terminationGracePeriodSeconds": 30,
+					"volumes": [
+							{
+									"name": "default-token-gn2nc",
+									"secret": {
+											"defaultMode": 420,
+											"secretName": "default-token-gn2nc"
+									}
+							}
+					]
+			},
+			"status": {
+					"conditions": [
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T14:27:40Z",
+									"status": "True",
+									"type": "Initialized"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T14:28:03Z",
+									"status": "True",
+									"type": "Ready"
+							},
+							{
+									"lastProbeTime": null,
+									"lastTransitionTime": "2017-01-23T14:27:40Z",
+									"status": "True",
+									"type": "PodScheduled"
+							}
+					],
+					"containerStatuses": [
+							{
+									"containerID": "docker://78cd2bfd9ea6750c1cfeddef0cfd53466586e71d583c0928985e6001e01a0141",
+									"image": "gcr.io/google_containers/kubernetes-dashboard-amd64:v1.5.0",
+									"imageID": "docker://sha256:e5133bac8024ac6c916f16df8790259b5504a800766bee87dcf90ec7d634a418",
+									"lastState": {},
+									"name": "kubernetes-dashboard",
+									"ready": true,
+									"restartCount": 0,
+									"state": {
+											"running": {
+													"startedAt": "2017-01-23T14:28:02Z"
+											}
+									}
+							}
+					],
+					"hostIP": "10.0.3.230",
+					"phase": "Running",
+					"podIP": "172.16.255.130",
+					"startTime": "2017-01-23T14:27:40Z"
+			}
+	}
+],
+"kind": "List",
+"metadata": {},
+"resourceVersion": "",
+"selfLink": ""
 }`)},
 			expectedResponse: []byte(`{
     "items": [
@@ -1697,23 +1700,22 @@ func TestBuildResponse(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Logf("============================ %d ============================", test.index)
-		resp, err := buildResponse(test.glusterGetter, test.pvGetter, test.podGetter)
+		resp, err := buildResponse(test.glusterGetter, test.kubernetesGetter)
 		if err != nil && !test.shouldError {
-			t.Errorf("unexpected error: %v", err)
+			t.Errorf("index %d: unexpected error: %v", test.index, err)
 		}
 		if err == nil && test.shouldError {
-			t.Errorf("expected an error but got nil")
+			t.Errorf("index %d: expected an error but got nil", test.index)
 		}
 		if resp == nil && !test.shouldBeNil {
-			t.Errorf("did not expect response to be nil, error: %v", err)
+			t.Errorf("index %d: did not expect response to be nil, error: %v", test.index, err)
 		}
 		if resp != nil && test.shouldBeNil {
-			t.Errorf("expected response to be nil")
+			t.Errorf("index %d: expected response to be nil", test.index)
 		}
 		if !test.shouldError && !test.shouldBeNil && resp != nil {
 			if len(resp.Volumes) != test.volumesCount {
-				t.Errorf("expected to get %d volumes, instead got %d", test.volumesCount, len(resp.Volumes))
+				t.Errorf("index %d: expected to get %d volumes, instead got %d", test.index, test.volumesCount, len(resp.Volumes))
 			}
 			var bound, claimed int
 			for _, v := range resp.Volumes {
@@ -1725,16 +1727,16 @@ func TestBuildResponse(t *testing.T) {
 				}
 			}
 			if bound != test.boundVolumeCount {
-				t.Errorf("expected to get %d bound volumes, instead got %d", test.boundVolumeCount, bound)
+				t.Errorf("index %d: expected to get %d bound volumes, instead got %d", test.index, test.boundVolumeCount, bound)
 			}
 			if claimed != test.claimedVolumeCount {
-				t.Errorf("expected to get %d claimed volumes, instead got %d", test.claimedVolumeCount, claimed)
+				t.Errorf("index %d: expected to get %d claimed volumes, instead got %d", test.index, test.claimedVolumeCount, claimed)
 			}
 			if test.shouldEqual {
 				prettyResp, _ := json.MarshalIndent(resp, "", "    ")
 
 				if !reflect.DeepEqual(prettyResp, test.expectedResponse) {
-					t.Errorf("expected response to equal \n%v\ninstead got\n%v", string(test.expectedResponse), string(prettyResp))
+					t.Errorf("index %d: expected response to equal \n%v\ninstead got\n%v", test.index, string(test.expectedResponse), string(prettyResp))
 				}
 			}
 		}

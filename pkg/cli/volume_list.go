@@ -58,17 +58,16 @@ func doVolumeList(out io.Writer, opts volumeListOptions, planFile string, args [
 	if err != nil {
 		return err
 	}
-	glusterGetter := data.GlusterCLIGetter{SSHClient: clientStorage}
+	glusterClient := data.RemoteGlusterCLI{SSHClient: clientStorage}
 
 	// find master node
 	clientMaster, err := plan.GetSSHClient("master")
 	if err != nil {
 		return err
 	}
-	pvGetter := data.PlanPVGetter{SSHClient: clientMaster}
-	podGetter := data.PlanPodGetter{SSHClient: clientMaster}
+	kubernetesClient := data.RemoteKubectl{SSHClient: clientMaster}
 
-	resp, err := buildResponse(glusterGetter, pvGetter, podGetter)
+	resp, err := buildResponse(glusterClient, kubernetesClient)
 	if err != nil {
 		return err
 	}
@@ -80,9 +79,9 @@ func doVolumeList(out io.Writer, opts volumeListOptions, planFile string, args [
 	return print(out, resp, opts.outputFormat)
 }
 
-func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter, podGetter data.PodGetter) (*ListResponse, error) {
+func buildResponse(glusterClient data.GlusterClient, kubernetesClient data.KubernetesClient) (*ListResponse, error) {
 	// get gluster volume data
-	glusterVolumeInfo, err := glusterGetter.GetVolumes()
+	glusterVolumeInfo, err := glusterClient.ListVolumes()
 	if err != nil {
 		return nil, err
 	}
@@ -90,12 +89,12 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 		return nil, nil
 	}
 	// get persistent volumes data
-	pvs, err := pvGetter.Get()
+	pvs, err := kubernetesClient.ListPersistentVolumes()
 	if err != nil {
 		return nil, err
 	}
 	// get pods data
-	pods, err := podGetter.Get()
+	pods, err := kubernetesClient.ListPods()
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +154,7 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 			}
 		}
 		// get gluster volume quota
-		glusterVolumeQuota, err := glusterGetter.GetQuota(gv.Name)
+		glusterVolumeQuota, err := glusterClient.GetQuota(gv.Name)
 		if err != nil {
 			return nil, err
 		}
