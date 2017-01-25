@@ -2,10 +2,8 @@ package cli
 
 import (
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/apprenda/kismatic/pkg/data"
@@ -37,16 +35,8 @@ func (g fakePodGetter) Get() (*data.PodList, error) {
 	if g.shouldError {
 		return nil, fmt.Errorf("error")
 	}
-	var pods data.PodList
-	if strings.Contains(string(g.podList), "No resources found") {
-		return nil, nil
-	}
-	err := json.Unmarshal(g.podList, &pods)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling pod data: %v", err)
-	}
 
-	return &pods, nil
+	return data.UnmarshalPods(string(g.podList))
 }
 
 func (g fakePVGetter) Get() (*data.PersistentVolumeList, error) {
@@ -56,16 +46,8 @@ func (g fakePVGetter) Get() (*data.PersistentVolumeList, error) {
 	if g.shouldError {
 		return nil, fmt.Errorf("error")
 	}
-	if strings.Contains(string(g.pvList), "No resources found") {
-		return nil, nil
-	}
-	var pvs data.PersistentVolumeList
-	err := json.Unmarshal(g.pvList, &pvs)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling persistent volume data: %v", err)
-	}
 
-	return &pvs, nil
+	return data.UnmarshalPVs(string(g.pvList))
 }
 
 func (g fakeGlusterGetter) GetVolumes() (*data.GlusterVolumeInfoCliOutput, error) {
@@ -75,13 +57,8 @@ func (g fakeGlusterGetter) GetVolumes() (*data.GlusterVolumeInfoCliOutput, error
 	if g.shouldError {
 		return nil, fmt.Errorf("error")
 	}
-	var glusterVolumeInfo data.GlusterVolumeInfoCliOutput
-	err := xml.Unmarshal(g.glusterVolumeList, &glusterVolumeInfo)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling volume info data: %v", err)
-	}
 
-	return &glusterVolumeInfo, nil
+	return data.UnmarshalVolumeData(string(g.glusterVolumeList))
 }
 func (g fakeGlusterGetter) GetQuota(volume string) (*data.GlusterVolumeQuotaCliOutput, error) {
 	if g.isNil {
@@ -90,15 +67,12 @@ func (g fakeGlusterGetter) GetQuota(volume string) (*data.GlusterVolumeQuotaCliO
 	if g.shouldError {
 		return nil, fmt.Errorf("error")
 	}
-	var glusterVolumeQuota data.GlusterVolumeQuotaCliOutput
-	err := xml.Unmarshal(g.glusterQuotas[volume], &glusterVolumeQuota)
-	if err != nil {
-		return nil, nil
-	}
-	return &glusterVolumeQuota, nil
+
+	return data.UnmarshalVolumeQuota(string(g.glusterQuotas[volume]))
 }
 
 type volumeListTester struct {
+	index              int
 	podGetter          fakePodGetter
 	pvGetter           fakePVGetter
 	glusterGetter      fakeGlusterGetter
@@ -115,25 +89,30 @@ type volumeListTester struct {
 func TestBuildResponse(t *testing.T) {
 	tests := []volumeListTester{
 		volumeListTester{
+			index:         1,
 			glusterGetter: fakeGlusterGetter{isNil: true},
 			shouldBeNil:   true,
 		},
 		volumeListTester{
+			index:         2,
 			glusterGetter: fakeGlusterGetter{shouldError: true},
 			shouldBeNil:   true,
 			shouldError:   true,
 		},
 		volumeListTester{
+			index:       3,
 			podGetter:   fakePodGetter{shouldError: true},
 			shouldBeNil: true,
 			shouldError: true,
 		},
 		volumeListTester{
+			index:       4,
 			pvGetter:    fakePVGetter{shouldError: true},
 			shouldBeNil: true,
 			shouldError: true,
 		},
 		volumeListTester{
+			index: 5,
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 		<cliOutput>
 		  <opRet>0</opRet>
@@ -167,6 +146,33 @@ func TestBuildResponse(t *testing.T) {
 			shouldError: false,
 		},
 		volumeListTester{
+			index: 6,
+			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+		<cliOutput>
+		</cliOutput>`)},
+			pvGetter: fakePVGetter{pvList: []byte(`No resources found.
+		{
+				"apiVersion": "v1",
+				"items": [],
+				"kind": "List",
+				"metadata": {},
+				"resourceVersion": "",
+				"selfLink": ""
+		}`)},
+			podGetter: fakePodGetter{podList: []byte(`No resources found.
+		{
+				"apiVersion": "v1",
+				"items": [],
+				"kind": "List",
+				"metadata": {},
+				"resourceVersion": "",
+				"selfLink": ""
+		}`)},
+			shouldBeNil: true,
+			shouldError: true,
+		},
+		volumeListTester{
+			index: 7,
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cliOutput>
   <opRet>0</opRet>
@@ -272,6 +278,7 @@ func TestBuildResponse(t *testing.T) {
 			volumesCount: 1,
 		},
 		volumeListTester{
+			index: 8,
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cliOutput>
   <opRet>0</opRet>
@@ -366,6 +373,7 @@ func TestBuildResponse(t *testing.T) {
 			volumesCount: 1,
 		},
 		volumeListTester{
+			index: 9,
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cliOutput>
   <opRet>0</opRet>
@@ -558,6 +566,7 @@ func TestBuildResponse(t *testing.T) {
 			volumesCount: 2,
 		},
 		volumeListTester{
+			index: 10,
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cliOutput>
   <opRet>0</opRet>
@@ -760,6 +769,7 @@ func TestBuildResponse(t *testing.T) {
 			volumesCount:     2,
 		},
 		volumeListTester{
+			index: 11,
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cliOutput>
   <opRet>0</opRet>
@@ -1187,6 +1197,7 @@ func TestBuildResponse(t *testing.T) {
 			volumesCount:       2,
 		},
 		volumeListTester{
+			index: 12,
 			glusterGetter: fakeGlusterGetter{glusterVolumeList: []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cliOutput>
 	<opRet>0</opRet>
@@ -1686,22 +1697,23 @@ func TestBuildResponse(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		t.Logf("============================ %d ============================", test.index)
 		resp, err := buildResponse(test.glusterGetter, test.pvGetter, test.podGetter)
 		if err != nil && !test.shouldError {
-			t.Errorf("unexpected error: %v, for %v", err, test)
+			t.Errorf("unexpected error: %v", err)
 		}
 		if err == nil && test.shouldError {
-			t.Errorf("expected an error but got nil for %v", test)
+			t.Errorf("expected an error but got nil")
 		}
 		if resp == nil && !test.shouldBeNil {
 			t.Errorf("did not expect response to be nil, error: %v", err)
 		}
 		if resp != nil && test.shouldBeNil {
-			t.Errorf("expected response to be nil but got %v", resp)
+			t.Errorf("expected response to be nil")
 		}
 		if !test.shouldError && !test.shouldBeNil && resp != nil {
 			if len(resp.Volumes) != test.volumesCount {
-				t.Errorf("expected to get %d volumes, instead got %d, %v", test.volumesCount, len(resp.Volumes), resp)
+				t.Errorf("expected to get %d volumes, instead got %d", test.volumesCount, len(resp.Volumes))
 			}
 			var bound, claimed int
 			for _, v := range resp.Volumes {
@@ -1713,10 +1725,10 @@ func TestBuildResponse(t *testing.T) {
 				}
 			}
 			if bound != test.boundVolumeCount {
-				t.Errorf("expected to get %d bound volumes, instead got %d, %v", test.boundVolumeCount, bound, resp)
+				t.Errorf("expected to get %d bound volumes, instead got %d", test.boundVolumeCount, bound)
 			}
 			if claimed != test.claimedVolumeCount {
-				t.Errorf("expected to get %d claimed volumes, instead got %d, %v", test.claimedVolumeCount, claimed, resp)
+				t.Errorf("expected to get %d claimed volumes, instead got %d", test.claimedVolumeCount, claimed)
 			}
 			if test.shouldEqual {
 				prettyResp, _ := json.MarshalIndent(resp, "", "    ")

@@ -23,13 +23,20 @@ func (g GlusterCLIGetter) GetVolumes() (*GlusterVolumeInfoCliOutput, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting volume info data: %v", err)
 	}
-	glusterVolumeInfoRaw = strings.TrimSpace(glusterVolumeInfoRaw)
+
+	return UnmarshalVolumeData(glusterVolumeInfoRaw)
+}
+
+func UnmarshalVolumeData(raw string) (*GlusterVolumeInfoCliOutput, error) {
 	var glusterVolumeInfo GlusterVolumeInfoCliOutput
-	err = xml.Unmarshal([]byte(glusterVolumeInfoRaw), &glusterVolumeInfo)
+	err := xml.Unmarshal([]byte(strings.TrimSpace(raw)), &glusterVolumeInfo)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling volume info data: %v", err)
 	}
-	if &glusterVolumeInfo == nil || glusterVolumeInfo.VolumeInfo == nil || glusterVolumeInfo.VolumeInfo.Volumes == nil || glusterVolumeInfo.VolumeInfo.Volumes.Volume == nil || len(glusterVolumeInfo.VolumeInfo.Volumes.Volume) == 0 {
+	if &glusterVolumeInfo == nil || glusterVolumeInfo.VolumeInfo == nil {
+		return nil, fmt.Errorf("error getting volume info data")
+	}
+	if glusterVolumeInfo.VolumeInfo.Volumes == nil || glusterVolumeInfo.VolumeInfo.Volumes.Volume == nil || len(glusterVolumeInfo.VolumeInfo.Volumes.Volume) == 0 {
 		return nil, nil
 	}
 
@@ -42,8 +49,16 @@ func (g GlusterCLIGetter) GetQuota(volume string) (*GlusterVolumeQuotaCliOutput,
 	if err != nil {
 		return nil, fmt.Errorf("error getting volume quota data for %s: %v", volume, err)
 	}
+
+	return UnmarshalVolumeQuota(glusterVolumeQuotaRaw)
+}
+
+func UnmarshalVolumeQuota(raw string) (*GlusterVolumeQuotaCliOutput, error) {
+	if raw == "" {
+		return nil, nil
+	}
 	var glusterVolumeQuota GlusterVolumeQuotaCliOutput
-	err = xml.Unmarshal([]byte(glusterVolumeQuotaRaw), &glusterVolumeQuota)
+	err := xml.Unmarshal([]byte(strings.TrimSpace(raw)), &glusterVolumeQuota)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling volume quota data: %v", err)
 	}
