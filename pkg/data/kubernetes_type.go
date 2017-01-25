@@ -1,7 +1,5 @@
 package data
 
-import "k8s.io/kubernetes/pkg/api/unversioned"
-
 type PodList struct {
 	Items []Pod `json:"items" protobuf:"bytes,2,rep,name=items"`
 }
@@ -126,11 +124,11 @@ type VolumeMount struct {
 
 // PersistentVolumeList is a list of PersistentVolume items.
 type PersistentVolumeList struct {
-	unversioned.TypeMeta `json:",inline"`
+	TypeMeta `json:",inline"`
 	// Standard list metadata.
 	// More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#types-kinds
 	// +optional
-	unversioned.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
+	ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 	// List of persistent volumes.
 	// More info: http://kubernetes.io/docs/user-guide/persistent-volumes
 	Items []PersistentVolume `json:"items" protobuf:"bytes,2,rep,name=items"`
@@ -140,7 +138,7 @@ type PersistentVolumeList struct {
 // It is analogous to a node.
 // More info: http://kubernetes.io/docs/user-guide/persistent-volumes
 type PersistentVolume struct {
-	unversioned.TypeMeta `json:",inline"`
+	TypeMeta `json:",inline"`
 	// Standard object's metadata.
 	// More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata
 	// +optional
@@ -158,6 +156,45 @@ type PersistentVolume struct {
 	// More info: http://kubernetes.io/docs/user-guide/persistent-volumes#persistent-volumes
 	// +optional
 	Status PersistentVolumeStatus `json:"status,omitempty" protobuf:"bytes,3,opt,name=status"`
+}
+
+// TypeMeta describes an individual object in an API response or request
+// with strings representing the type of the object and its API schema version.
+// Structures that are versioned or persisted should inline TypeMeta.
+type TypeMeta struct {
+	// Kind is a string value representing the REST resource this object represents.
+	// Servers may infer this from the endpoint the client submits requests to.
+	// Cannot be updated.
+	// In CamelCase.
+	// More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#types-kinds
+	// +optional
+	Kind string `json:"kind,omitempty" protobuf:"bytes,1,opt,name=kind"`
+
+	// APIVersion defines the versioned schema of this representation of an object.
+	// Servers should convert recognized schemas to the latest internal value, and
+	// may reject unrecognized values.
+	// More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#resources
+	// +optional
+	APIVersion string `json:"apiVersion,omitempty" protobuf:"bytes,2,opt,name=apiVersion"`
+}
+
+// ListMeta describes metadata that synthetic resources must have, including lists and
+// various status objects. A resource may have only one of {ObjectMeta, ListMeta}.
+type ListMeta struct {
+	// SelfLink is a URL representing this object.
+	// Populated by the system.
+	// Read-only.
+	// +optional
+	SelfLink string `json:"selfLink,omitempty" protobuf:"bytes,1,opt,name=selfLink"`
+
+	// String that identifies the server's internal version of this object that
+	// can be used by clients to determine when objects have changed.
+	// Value must be treated as opaque by clients and passed unmodified back to the server.
+	// Populated by the system.
+	// Read-only.
+	// More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#concurrency-control-and-consistency
+	// +optional
+	ResourceVersion string `json:"resourceVersion,omitempty" protobuf:"bytes,2,opt,name=resourceVersion"`
 }
 
 // PersistentVolumeSpec is the specification of a persistent volume.
