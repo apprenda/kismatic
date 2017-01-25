@@ -73,7 +73,7 @@ func doVolumeList(out io.Writer, opts volumeListOptions, planFile string, args [
 		return err
 	}
 	if resp == nil {
-		fmt.Fprintln(out, "No resources found.")
+		fmt.Fprintln(out, "No volumes were found on the cluster. You may use `kismatic volume add` to create new volumes.")
 		return nil
 	}
 
@@ -105,34 +105,32 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 	// iterate through all the pods
 	// since the api doesnt have a pv -> pod data, need to search through all the pods
 	// this will get PV -> PVC - > pod(s) -> container(s)
-	if pods != nil { // possible for no pods to have claimed a PV
+	if pods != nil { // no pods running
 		for _, pod := range pods.Items {
-			if len(pod.Spec.Volumes) > 0 {
-				for _, v := range pod.Spec.Volumes {
-					if v.PersistentVolumeClaim != nil {
-						var containers []Container
-						for _, container := range pod.Spec.Containers {
-							for _, volumeMount := range container.VolumeMounts {
-								if volumeMount.Name == v.Name {
-									containers = append(containers, Container{Name: container.Name, MountName: volumeMount.Name, MountPath: volumeMount.MountPath})
-								}
+			for _, v := range pod.Spec.Volumes {
+				if v.PersistentVolumeClaim != nil {
+					var containers []Container
+					for _, container := range pod.Spec.Containers {
+						for _, volumeMount := range container.VolumeMounts {
+							if volumeMount.Name == v.Name {
+								containers = append(containers, Container{Name: container.Name, MountName: volumeMount.Name, MountPath: volumeMount.MountPath})
 							}
 						}
-						// append container to pods map
-						key := strings.Join([]string{pod.Namespace, v.PersistentVolumeClaim.ClaimName}, ":")
-						p := Pod{Namespace: pod.Namespace, Name: pod.Name, Containers: containers}
-						podsMap[key] = append(podsMap[key], p)
 					}
+					// pods that have the same PVC are in one list
+					key := strings.Join([]string{pod.Namespace, v.PersistentVolumeClaim.ClaimName}, ":")
+					p := Pod{Namespace: pod.Namespace, Name: pod.Name, Containers: containers}
+					podsMap[key] = append(podsMap[key], p)
 				}
 			}
 		}
 	}
 
 	// iterate through PVs once and build a map
-	pvsMap := make(map[string]*data.PersistentVolume)
+	pvsMap := make(map[string]data.PersistentVolume)
 	if pvs != nil {
 		for _, pv := range pvs.Items {
-			pvsMap[pv.Name] = &pv
+			pvsMap[pv.Name] = pv
 		}
 	}
 
@@ -172,7 +170,7 @@ func buildResponse(glusterGetter data.GlusterInfoGetter, pvGetter data.PVGetter,
 		foundPVInfo, ok := pvsMap[gv.Name]
 		// this PV does not exist, maybe it was deleted?
 		// set status of gluster volume to "Unknown"
-		if ok && foundPVInfo != nil {
+		if ok {
 			v.Labels = foundPVInfo.Labels
 			v.Status = string(foundPVInfo.Status.Phase)
 			if foundPVInfo.Spec.ClaimRef != nil {
