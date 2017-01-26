@@ -14,7 +14,6 @@ import (
 
 type volumeListOptions struct {
 	outputFormat string
-	namespace    string
 }
 
 // NewCmdVolumeList returns the command for listgin storage volumes
@@ -31,7 +30,6 @@ This function requires a target cluster that has storage nodes.`,
 		},
 	}
 
-	//cmd.Flags().StringVarP(&opts.namespace, "namespace", "ns", "all", `limit output to a single namespace`)
 	cmd.Flags().StringVarP(&opts.outputFormat, "output", "o", "simple", `output format (options "simple"|"json")`)
 	return cmd
 }
