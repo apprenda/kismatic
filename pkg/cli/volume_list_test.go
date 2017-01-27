@@ -1,9 +1,8 @@
 package cli
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/apprenda/kismatic/pkg/data"
@@ -69,17 +68,17 @@ func (g fakeGlusterGetter) GetQuota(volume string) (*data.GlusterVolumeQuotaCliO
 }
 
 type volumeListTester struct {
-	index              int
-	kubernetesGetter   fakeKubernetesGetter
-	glusterGetter      fakeGlusterGetter
-	glusterQuotas      map[string][]byte
-	volumesCount       int
-	boundVolumeCount   int
-	claimedVolumeCount int
-	shouldEqual        bool
-	expectedResponse   []byte
-	shouldBeNil        bool
-	shouldError        bool
+	index                int
+	kubernetesGetter     fakeKubernetesGetter
+	glusterGetter        fakeGlusterGetter
+	glusterQuotas        map[string][]byte
+	volumesCount         int
+	boundVolumeCount     int
+	claimedVolumeCount   int
+	shouldEqual          bool
+	expectedJSONResponse []byte
+	shouldBeNil          bool
+	shouldError          bool
 }
 
 func TestBuildResponse(t *testing.T) {
@@ -1319,7 +1318,7 @@ func TestBuildResponse(t *testing.T) {
 		</volumes>
 	</volInfo>
 </cliOutput>`),
-				glusterQuotas: map[string][]byte{"storage1": []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+				glusterQuotas: map[string][]byte{"storage2": []byte(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <cliOutput>
 	<opRet>0</opRet>
 	<opErrno>0</opErrno>
@@ -1355,8 +1354,7 @@ func TestBuildResponse(t *testing.T) {
 								"name": "storage2",
 								"namespace": "",
 								"labels": {
-										"kismatic-volume-replica": "1",
-										"kismatic-volume-distribution": "1"
+                    "custom-label": "foo"
 								},
 								"resourceVersion": "20543",
 								"selfLink": "/api/v1/persistentvolumesstorage2",
@@ -1625,70 +1623,70 @@ func TestBuildResponse(t *testing.T) {
 "resourceVersion": "",
 "selfLink": ""
 }`)},
-			expectedResponse: []byte(`{
-    "items": [
-        {
-            "name": "storage1",
-            "capacity": "1.00GB",
-            "available": "1.00GB",
-            "replicaCount": 1,
-            "distributionCount": 1,
-            "bricks": [
-                {
-                    "host": "ip-10-0-3-199",
-                    "path": "/data/storage1"
-                }
-            ],
-            "status": "Unknown"
-        },
-        {
-            "name": "storage2",
-            "labels": {
-                "kismatic-volume-distribution": "1",
-                "kismatic-volume-replica": "1"
-            },
-            "capacity": "Unknown",
-            "available": "Unknown",
-            "replicaCount": 2,
-            "distributionCount": 2,
-            "bricks": [
-                {
-                    "host": "ip-10-0-3-65",
-                    "path": "/data/storage2"
-                },
-                {
-                    "host": "ip-10-0-3-75",
-                    "path": "/data/storage2"
-                },
-                {
-                    "host": "ip-10-0-3-118",
-                    "path": "/data/storage2"
-                },
-                {
-                    "host": "ip-10-0-3-199",
-                    "path": "/data/storage2"
-                }
-            ],
-            "status": "Bound",
-            "claim": {
-                "name": "kismatic-integration-claim",
-                "namespace": "default"
-            },
-            "pods": [
-                {
-                    "name": "mypod",
-                    "namespace": "default",
-                    "containers": [
-                        {
-                            "name": "myfrontend",
-                            "mountName": "mypd",
-                            "mountPath": "/var/www/html"
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
+			expectedJSONResponse: []byte(`{
+	"items": [
+	    {
+	        "name": "storage1",
+	        "capacity": "Unknown",
+	        "available": "Unknown",
+	        "replicaCount": 1,
+	        "distributionCount": 1,
+	        "bricks": [
+	            {
+	                "host": "ip-10-0-3-199",
+	                "path": "/data/storage1"
+	            }
+	        ],
+	        "status": "Unknown"
+	    },
+	    {
+	        "name": "storage2",
+	        "storageClass": "kismatic",
+	        "labels": {
+	            "custom-label": "foo"
+	        },
+	        "capacity": "1.00GB",
+	        "available": "1.00GB",
+	        "replicaCount": 2,
+	        "distributionCount": 2,
+	        "bricks": [
+	            {
+	                "host": "ip-10-0-3-65",
+	                "path": "/data/storage2"
+	            },
+	            {
+	                "host": "ip-10-0-3-75",
+	                "path": "/data/storage2"
+	            },
+	            {
+	                "host": "ip-10-0-3-118",
+	                "path": "/data/storage2"
+	            },
+	            {
+	                "host": "ip-10-0-3-199",
+	                "path": "/data/storage2"
+	            }
+	        ],
+	        "status": "Bound",
+	        "claim": {
+	            "name": "kismatic-integration-claim",
+	            "namespace": "default"
+	        },
+	        "pods": [
+	            {
+	                "name": "mypod",
+	                "namespace": "default",
+	                "containers": [
+	                    {
+	                        "name": "myfrontend",
+	                        "mountName": "mypd",
+	                      	"mountPath": "/var/www/html"
+	                    }
+	                ]
+	            }
+	        ]
+	    }
+  ]
 }`),
 			shouldBeNil:        false,
 			shouldError:        false,
@@ -1733,10 +1731,11 @@ func TestBuildResponse(t *testing.T) {
 				t.Errorf("index %d: expected to get %d claimed volumes, instead got %d", test.index, test.claimedVolumeCount, claimed)
 			}
 			if test.shouldEqual {
-				prettyResp, _ := json.MarshalIndent(resp, "", "    ")
-
-				if !reflect.DeepEqual(prettyResp, test.expectedResponse) {
-					t.Errorf("index %d: expected response to equal \n%v\ninstead got\n%v", test.index, string(test.expectedResponse), string(prettyResp))
+				// json
+				out := &bytes.Buffer{}
+				print(out, resp, "json")
+				if bytes.Equal(out.Bytes(), test.expectedJSONResponse) {
+					t.Errorf("index %d: expected JSON response to equal \n%v\n===============instead got===============\n%v", test.index, string(test.expectedJSONResponse), string(out.Bytes()))
 				}
 			}
 		}

@@ -10,6 +10,7 @@ type ListResponse struct {
 // Volume
 type Volume struct {
 	Name              string            `json:"name"`
+	StorageClass      string            `json:"storageClass,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Capacity          string            `json:"capacity"`
 	Available         string            `json:"available"`

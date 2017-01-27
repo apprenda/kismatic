@@ -168,6 +168,9 @@ func buildResponse(glusterClient data.GlusterClient, kubernetesClient data.Kuber
 		// this PV does not exist, maybe it was deleted?
 		// set status of gluster volume to "Unknown"
 		if ok {
+			if class, ok := foundPVInfo.ObjectMeta.Annotations["volume.beta.kubernetes.io/storage-class"]; ok {
+				v.StorageClass = class
+			}
 			v.Labels = foundPVInfo.Labels
 			v.Status = string(foundPVInfo.Status.Phase)
 			if foundPVInfo.Spec.ClaimRef != nil {
@@ -221,6 +224,7 @@ func print(out io.Writer, resp *ListResponse, format string) error {
 		for _, v := range resp.Volumes {
 			fmt.Fprint(w, separator)
 			fmt.Fprintf(w, "Name:\t%s\t\n", v.Name)
+			fmt.Fprintf(w, "StorageClass:\t%s\t\n", v.StorageClass)
 			if len(v.Labels) > 0 {
 				fmt.Fprintf(w, "Labels:\t\t\n")
 				for k, v := range v.Labels {
@@ -253,7 +257,7 @@ func print(out io.Writer, resp *ListResponse, format string) error {
 		if err != nil {
 			return fmt.Errorf("marshal error: %v", err)
 		}
-		fmt.Println(string(prettyResp))
+		fmt.Fprintln(out, string(prettyResp))
 	}
 
 	return nil
