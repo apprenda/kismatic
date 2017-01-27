@@ -1,8 +1,8 @@
 hash: 5d8cd28f14a6d894f9d35ae4f4aa7e273f6e0853a51d12d3af92e49e5450109d
-updated: 2017-01-27T08:33:59.243447981-05:00
+updated: 2017-01-27T08:48:49.889775149-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: c924893c38ecc04b18d7aab8a7aa561cb8b4c4cc
+  version: 1355b456f6ba4a8453249e0dc7743f16ccac362d
   subpackages:
   - aws
   - aws/awserr
@@ -12,11 +12,15 @@ imports:
   - aws/corehandlers
   - aws/credentials
   - aws/credentials/ec2rolecreds
+  - aws/credentials/endpointcreds
+  - aws/credentials/stscreds
   - aws/defaults
   - aws/ec2metadata
+  - aws/endpoints
   - aws/request
   - aws/session
-  - private/endpoints
+  - aws/signer/v4
+  - private/protocol
   - private/protocol/ec2query
   - private/protocol/json/jsonutil
   - private/protocol/jsonrpc
@@ -26,12 +30,12 @@ imports:
   - private/protocol/restjson
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
-  - private/signer/v4
   - private/waiter
   - service/ec2
   - service/efs
   - service/route53
   - service/s3
+  - service/sts
 - name: github.com/cloudflare/cfssl
   version: db0d0650b6496bfe8061ec56a92edd32d8e75c30
   subpackages:

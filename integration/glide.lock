@@ -1,9 +1,13 @@
 hash: 3571c3de47e367a5cd9e8fcc70ad6e342a2c6c6edb2212927f2112e858f04d0f
-updated: 2017-01-27T08:34:52.171351778-05:00
+updated: 2017-01-27T08:49:41.231448598-05:00
 imports:
 - name: github.com/apprenda/kismatic
   version: 9ba0fa11895cb243cefcb78663c9e48ca3c8b5f3
   subpackages:
+  - integration/aws
+  - integration/packet
+  - integration/retry
+  - integration/tls
   - pkg/retry
 - name: github.com/aws/aws-sdk-go
   version: 1355b456f6ba4a8453249e0dc7743f16ccac362d
