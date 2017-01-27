@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -147,16 +148,17 @@ func (r *runner) startPlaybook(playbookFile string, inv Inventory, cc ClusterCat
 	// stdout, it's going to a log file.
 	cmd.Args = append(cmd.Args, "-vvvv")
 
+	// Create named pipe
+	np, err := createTempNamedPipe()
+	if err != nil {
+		return nil, err
+	}
+	r.namedPipe = np
+
 	os.Setenv("PYTHONPATH", r.pythonPath)
 	os.Setenv("ANSIBLE_CALLBACK_PLUGINS", filepath.Join(r.ansibleDir, "playbooks", "callback"))
 	os.Setenv("ANSIBLE_CALLBACK_WHITELIST", "json_lines")
 	os.Setenv("ANSIBLE_CONFIG", filepath.Join(r.ansibleDir, "playbooks", "ansible.cfg"))
-	// Create named pipe for getting JSON lines event stream
-	start := time.Now()
-	r.namedPipe = filepath.Join(os.TempDir(), fmt.Sprintf("ansible-pipe-%s", start.Format("2006-01-02-15-04-05.99999")))
-	if err := syscall.Mkfifo(r.namedPipe, 0644); err != nil {
-		return nil, fmt.Errorf("error creating named pipe %q: %v", r.namedPipe, err)
-	}
 	os.Setenv("ANSIBLE_JSON_LINES_PIPE", r.namedPipe)
 
 	// Print Ansible command
@@ -182,6 +184,17 @@ func (r *runner) startPlaybook(playbookFile string, inv Inventory, cc ClusterCat
 	}
 	eventStream := EventStream(eventStreamFile)
 	return eventStream, nil
+}
+
+// create a named pipe for getting json events out of ansible.
+// add random int to file name to avoid collision.
+func createTempNamedPipe() (string, error) {
+	start := time.Now()
+	np := filepath.Join(os.TempDir(), fmt.Sprintf("ansible-pipe-%d-%s", rand.Int(), start.Format("2006-01-02-15-04-05.99999")))
+	if err := syscall.Mkfifo(np, 0644); err != nil {
+		return "", fmt.Errorf("error creating named pipe %q: %v", np, err)
+	}
+	return np, nil
 }
 
 func getPythonPath() (string, error) {

@@ -102,53 +102,65 @@ const defaultRuleSet = `---
 - kind: PackageAvailable
   when: ["etcd", "ubuntu"]
   packageName: kismatic-etcd
-  packageVersion: 1.5.1-3
+  packageVersion: 1.5.2-1
 - kind: PackageAvailable
   when: ["master","ubuntu"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.1-3
+  packageVersion: 1.5.2-1
 - kind: PackageAvailable
   when: ["worker","ubuntu"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.1-3
+  packageVersion: 1.5.2-1
 - kind: PackageAvailable
   when: ["ingress","ubuntu"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.1-3
+  packageVersion: 1.5.2-1
+- kind: PackageAvailable
+  when: ["storage","ubuntu"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.2-1
 
 - kind: PackageAvailable
   when: ["etcd", "centos"]
   packageName: kismatic-etcd
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
 - kind: PackageAvailable
   when: ["master","centos"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
 - kind: PackageAvailable
   when: ["worker","centos"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
 - kind: PackageAvailable
   when: ["ingress","centos"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
+- kind: PackageAvailable
+  when: ["storage","centos"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.2_1-1
 
 - kind: PackageAvailable
   when: ["etcd", "rhel"]
   packageName: kismatic-etcd
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
 - kind: PackageAvailable
   when: ["master","rhel"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
 - kind: PackageAvailable
   when: ["worker","rhel"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
 - kind: PackageAvailable
   when: ["ingress","rhel"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.1_3-1
+  packageVersion: 1.5.2_1-1
+- kind: PackageAvailable
+  when: ["storage","rhel"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.2_1-1
 
 # Gluster packages
 - kind: PackageAvailable

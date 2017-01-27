@@ -36,6 +36,14 @@ type ClusterPlan struct {
 		ExpectedCount int `yaml:"expected_count"`
 		Nodes         []NodePlan
 	}
+	Ingress struct {
+		ExpectedCount int `yaml:"expected_count"`
+		Nodes         []NodePlan
+	}
+	Storage struct {
+		ExpectedCount int `yaml:"expected_count"`
+		Nodes         []NodePlan
+	}
 }
 
 type NodePlan struct {

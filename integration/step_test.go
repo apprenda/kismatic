@@ -12,9 +12,10 @@ var _ = Describe("install step commands", func() {
 	BeforeEach(func() {
 		os.Chdir(kisPath)
 	})
-	Context("Running the api server play against an existing cluster", func() {
-		ItOnAWS("should return successfully", func(provisioner infrastructureProvisioner) {
-			WithMiniInfrastructure(CentOS7, provisioner, func(node NodeDeets, sshKey string) {
+
+	Describe("Running the api server play against an existing cluster", func() {
+		ItOnAWS("should return successfully [slow]", func(aws infrastructureProvisioner) {
+			WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
 				err := installKismaticMini(node, sshKey)
 				Expect(err).ToNot(HaveOccurred())
 
@@ -23,20 +24,6 @@ var _ = Describe("install step commands", func() {
 				c.Stderr = os.Stderr
 				err = c.Run()
 				Expect(err).ToNot(HaveOccurred())
-			})
-		})
-		Context("Running the smoketest play against an existing cluster", func() {
-			ItOnAWS("should return successfully", func(provisioner infrastructureProvisioner) {
-				WithMiniInfrastructure(CentOS7, provisioner, func(node NodeDeets, sshKey string) {
-					err := installKismaticMini(node, sshKey)
-					Expect(err).ToNot(HaveOccurred())
-
-					c := exec.Command("./kismatic", "install", "step", "_smoketest.yaml", "-f", "kismatic-testing.yaml")
-					c.Stdout = os.Stdout
-					c.Stderr = os.Stderr
-					err = c.Run()
-					Expect(err).ToNot(HaveOccurred())
-				})
 			})
 		})
 	})

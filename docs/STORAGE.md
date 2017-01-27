@@ -58,7 +58,7 @@ There are currently three storage options with Kismatic:
  This will setup a 2 node GlusterFS cluster and expose it as a kubernetes service with the name of `kismatic-storage`
 2. Create a new GlusterFS volume and expose it in kubernetes as a PersistentVolume use:
    ```
-   kismatic volume add 10 storage01 -r 2 -d 1 -a 10.10.*.*
+   kismatic volume add 10 storage01 -r 2 -d 1 -c="durable" -a 10.10.*.*
    ```
 
   * `10` represents the volume size in GB, in this example a GlusterFS volume with a `10GB` quota and a kubernetes PersistentVolume with a capacity of `10Gi` will be created
@@ -66,6 +66,7 @@ There are currently three storage options with Kismatic:
   * `-r (replica-count)` the number of duplicates to make of each file stored when writing data
   * `-d (distribution-count)` the degree to which files will be distributed across the cluster. A count of 1 means that all files will exist at every replica. A count of 2 means that each set of replicas will have half of all files.
   * **NOTE**: the GlusterFS cluster must have at least `replica-count * distribution-count` storage nodes available for a volume to be created. In this example the storage cluster must have 2 or more nodes with at least 10GB free disk space on each of the machines
+  * `-c (storage-class)` the name of the StorageClass that will be added when creating the PersistentVolume. Use this name when creating your PersistentVolumeClaims.
   * `-a allow-address` is comma separated list of off-cluster IP ranges that are permitted to mount and access the GlusterFS network volumes. Include any addresses you use for data management. Nodes in the Kubernetes cluster and the pods CIDR range will always have access.
   * **NOTE**: IP address is the only credential used to authorize a storage connection. All nodes and pods will be able to access these shares.
 3. Create a new PersistentVolumeClaim
@@ -75,7 +76,7 @@ There are currently three storage options with Kismatic:
    metadata:
      name: my-app-frontend-claim
      annotations:
-       volume.beta.kubernetes.io/storage-class: "kismatic"
+       volume.beta.kubernetes.io/storage-class: "durable"
    spec:
      accessModes:
        - ReadWriteMany
@@ -84,7 +85,7 @@ There are currently three storage options with Kismatic:
          storage: 10Gi
    ```
 
- Use the `volume.beta.kubernetes.io/storage-class: "kismatic"` annotation for the PersistentVolumeClaim to bind to the newly created PersistentVolume
+ Use the `volume.beta.kubernetes.io/storage-class: "durable"` annotation for the PersistentVolumeClaim to bind to the newly created PersistentVolume
 
 4. Use the claim as a pod volume
    ```

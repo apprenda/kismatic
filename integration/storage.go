@@ -100,6 +100,7 @@ func createVolume(planFile *os.File, name string, replicationCount int, distribu
 		"-f", planFile.Name(),
 		"--replica-count", strconv.Itoa(replicationCount),
 		"--distribution-count", strconv.Itoa(distributionCount),
+		"-c", "kismatic-test",
 		"1", name)
 	if allowAddress != "" {
 		cmd.Args = append(cmd.Args, "--allow-address", allowAddress)

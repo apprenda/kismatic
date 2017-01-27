@@ -50,6 +50,7 @@ type ClusterCatalog struct {
 	VolumeName              string `yaml:"volume_name"`
 	VolumeReplicaCount      int    `yaml:"volume_replica_count"`
 	VolumeDistributionCount int    `yaml:"volume_distribution_count"`
+	VolumeStorageClass      string `yaml:"volume_storage_class"`
 	VolumeQuotaGB           int    `yaml:"volume_quota_gb"`
 	VolumeQuotaBytes        int    `yaml:"volume_quota_bytes"`
 	VolumeMount             string `yaml:"volume_mount"`

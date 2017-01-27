@@ -100,6 +100,8 @@ type StorageVolume struct {
 	ReplicateCount int
 	// DistributionCount is the degree to which data will be distributed across the cluster
 	DistributionCount int
+	// StorageClass is the annotation that will be used when creating the persistent-volume in kubernetes
+	StorageClass string
 	// AllowAddresses is a list of address wildcards that have access to the volume
 	AllowAddresses []string
 }

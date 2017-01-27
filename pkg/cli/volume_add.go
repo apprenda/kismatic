@@ -14,6 +14,7 @@ import (
 type volumeAddOptions struct {
 	replicaCount       int
 	distributionCount  int
+	storageClass       string
 	allowAddress       []string
 	verbose            bool
 	outputFormat       string
@@ -23,7 +24,6 @@ type volumeAddOptions struct {
 // NewCmdVolumeAdd returns the command for adding storage volumes
 func NewCmdVolumeAdd(out io.Writer, planFile *string) *cobra.Command {
 	opts := volumeAddOptions{}
-
 	cmd := &cobra.Command{
 		Use:   "add size_in_gigabytes [volume name]",
 		Short: "add storage volumes to the Kubernetes cluster",
@@ -34,14 +34,14 @@ This function requires a target cluster that has storage nodes.`,
 			return doVolumeAdd(out, opts, *planFile, args)
 		},
 		Example: `  Create a distributed, replicated volume,
-  named "storage01" with a 10 GB quota,
+  named "storage01", a kubernetes StorageClass of "durable", with a 10 GB quota,
   grant access to any IP address starting with 10.10.
-  kismatic volume add 10 storage01 -r 2 -d 2 -a 10.10.*.*
+  kismatic volume add 10 storage01 -r 2 -d 2 -c="durable" -a 10.10.*.*
 		`,
 	}
-
 	cmd.Flags().IntVarP(&opts.replicaCount, "replica-count", "r", 2, "The number of times each file will be written.")
 	cmd.Flags().IntVarP(&opts.distributionCount, "distribution-count", "d", 1, "This is the degree to which data will be distributed across the cluster. By default, it won't be -- each replica will receive 100% of the data. Distribution makes listing or backing up the cluster more complicated by spreading data around the cluster but makes reads and writes more performant.")
+	cmd.Flags().StringVarP(&opts.storageClass, "storage-class", "c", "kismatic", "The StorageClass to present for claims in Kubernetes. Classes should identify properties of volumes in business terms, such as 'durable' or 'fast-reads'")
 	cmd.Flags().StringSliceVarP(&opts.allowAddress, "allow-address", "a", nil, "Comma delimited list of address wildcards permitted access to the volume in addition to Kubernetes nodes.")
 	cmd.Flags().BoolVar(&opts.verbose, "verbose", false, "enable verbose logging")
 	cmd.Flags().StringVarP(&opts.outputFormat, "output", "o", "simple", `output format (options "simple"|"raw")`)
@@ -107,6 +107,7 @@ func doVolumeAdd(out io.Writer, opts volumeAddOptions, planFile string, args []s
 		SizeGB:            volumeSizeGB,
 		ReplicateCount:    opts.replicaCount,
 		DistributionCount: opts.distributionCount,
+		StorageClass:      opts.storageClass,
 	}
 	if opts.allowAddress != nil {
 		v.AllowAddresses = opts.allowAddress

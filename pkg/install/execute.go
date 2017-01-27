@@ -371,6 +371,7 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	cc.VolumeName = volume.Name
 	cc.VolumeReplicaCount = volume.ReplicateCount
 	cc.VolumeDistributionCount = volume.DistributionCount
+	cc.VolumeStorageClass = volume.StorageClass
 	cc.VolumeQuotaGB = volume.SizeGB
 	cc.VolumeQuotaBytes = volume.SizeGB * (1 << (10 * 3))
 	cc.VolumeMount = "/"
