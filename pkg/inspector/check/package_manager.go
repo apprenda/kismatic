@@ -35,6 +35,22 @@ func IsPackageReadyToContinue(m PackageManager, q PackageQuery) (bool, error) {
 	return true, nil
 }
 
+func IsPackageAvailable(m PackageManager, q PackageQuery) (bool, error) {
+	installed, _ := m.IsInstalled(q)
+
+	if installed {
+		return true, nil
+	}
+
+	available, _ := m.IsAvailable(q)
+
+	if available {
+		return true, nil
+	}
+
+	return false, fmt.Errorf("%v is not installed and isn't available in known package repositories", q)
+}
+
 // NewPackageManager returns a package manager for the given distribution
 func NewPackageManager(distro Distro, enforcePackages bool) (PackageManager, error) {
 	run := func(name string, arg ...string) ([]byte, error) {

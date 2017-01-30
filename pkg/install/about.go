@@ -35,7 +35,7 @@ type ListableNode struct {
 
 var AboutKismatic KismaticInfo
 
-// Takes a version in form "v{short version}-{changeset number}-{changeset ID}-{dirtyflag}"
+// Takes a version in form "v{short version}-{changeset number}-{changeset ID}[-{dirtyflag}]"
 func SetVersion(polyVersion string) {
 	re := regexp.MustCompile("v([^-]+)-([^-]+)-([^-]+)-?([^-]+)")
 	matches := re.FindStringSubmatch(polyVersion)

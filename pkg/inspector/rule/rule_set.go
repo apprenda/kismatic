@@ -7,6 +7,10 @@ import (
 
 // DefaultRuleSet is the list of rules that are built into the inspector
 const defaultRuleSet = `---
+- kind: FreeSpace
+  path: /
+  minimumBytes: 1000000000
+
 # Python 2.5+ is installed on all nodes
 # This is required by ansible
 - kind: Python2Version
@@ -214,6 +218,89 @@ const defaultRuleSet = `---
   timeout: 5s
 `
 
+const upgradeRuleSet = `---
+- kind: FreeSpace
+  path: /
+  minimumBytes: 1000000000
+
+- kind: PackageAvailableUpgrade
+  when: ["etcd", "ubuntu"]
+  packageName: kismatic-etcd
+  packageVersion: 1.5.1-3
+- kind: PackageAvailableUpgrade
+  when: ["master","ubuntu"]
+  packageName: kismatic-kubernetes-master
+  packageVersion: 1.5.1-3
+- kind: PackageAvailableUpgrade
+  when: ["worker","ubuntu"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1-3
+- kind: PackageAvailableUpgrade
+  when: ["ingress","ubuntu"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1-3
+- kind: PackageAvailableUpgrade
+  when: ["storage","ubuntu"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1-3
+
+- kind: PackageAvailableUpgrade
+  when: ["etcd", "centos"]
+  packageName: kismatic-etcd
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["master","centos"]
+  packageName: kismatic-kubernetes-master
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["worker","centos"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["ingress","centos"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["storage","centos"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1_3-1
+
+- kind: PackageAvailableUpgrade
+  when: ["etcd", "rhel"]
+  packageName: kismatic-etcd
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["master","rhel"]
+  packageName: kismatic-kubernetes-master
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["worker","rhel"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["ingress","rhel"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1_3-1
+- kind: PackageAvailableUpgrade
+  when: ["storage","rhel"]
+  packageName: kismatic-kubernetes-node
+  packageVersion: 1.5.1_3-1
+
+# Gluster packages
+- kind: PackageAvailableUpgrade
+  when: ["storage", "centos"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.7-1.el7
+- kind: PackageAvailableUpgrade
+  when: ["storage", "rhel"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.7-1.el7
+- kind: PackageAvailableUpgrade
+  when: ["storage", "ubuntu"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.7-ubuntu1~xenial1
+`
+
 // DefaultRules returns the list of rules that are built into the inspector
 func DefaultRules() []Rule {
 	rules, err := UnmarshalRulesYAML([]byte(defaultRuleSet))
@@ -232,4 +319,14 @@ func DumpDefaultRules(writer io.Writer) error {
 		return err
 	}
 	return nil
+}
+
+func UpgradeRules() []Rule {
+	rules, err := UnmarshalRulesYAML([]byte(upgradeRuleSet))
+	if err != nil {
+		// The upgrade rules should not contain errors
+		// If they do, panic so that we catch them during tests
+		panic(err)
+	}
+	return rules
 }
