@@ -27,6 +27,7 @@ func GetSSHKeyFile() (string, error) {
 
 type installOptions struct {
 	allowPackageInstallation    bool
+	disconnectedInstallation    bool
 	autoConfigureDockerRegistry bool
 	dockerRegistryIP            string
 	dockerRegistryPort          int

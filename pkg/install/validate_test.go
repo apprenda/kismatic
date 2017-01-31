@@ -602,3 +602,62 @@ func TestValidateNodeGroupDuplicateInternalIPs(t *testing.T) {
 		t.Errorf("validation passed with duplicate hostname")
 	}
 }
+
+func TestDisconnectedInstallationPrereq(t *testing.T) {
+	p := &validPlan
+
+	p.Cluster.DisconnectedInstallation = true
+	valid, _ := disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()}.validate()
+	if valid {
+		t.Errorf("expected invalid, but got valid")
+	}
+
+	p.DockerRegistry.SetupInternal = true
+	valid, errs := disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()}.validate()
+	if !valid {
+		t.Errorf("expected valid, but got invalid")
+		fmt.Println(errs)
+	}
+
+	p.DockerRegistry.SetupInternal = false
+	p.DockerRegistry.Address = "10.0.0.1"
+	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()}.validate()
+	if !valid {
+		t.Errorf("expected valid, but got invalid")
+		fmt.Println(errs)
+	}
+
+	p.DockerRegistry.SetupInternal = true
+	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()}.validate()
+	if !valid {
+		t.Errorf("expected valid, but got invalid")
+		fmt.Println(errs)
+	}
+
+	p.Cluster.DisconnectedInstallation = false
+	p.DockerRegistry.SetupInternal = true
+	p.DockerRegistry.Address = ""
+	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()}.validate()
+	if !valid {
+		t.Errorf("expected valid, but got invalid")
+		fmt.Println(errs)
+	}
+
+	p.Cluster.DisconnectedInstallation = false
+	p.DockerRegistry.Address = "10.0.0.1"
+	p.DockerRegistry.SetupInternal = false
+	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()}.validate()
+	if !valid {
+		t.Errorf("expected valid, but got invalid")
+		fmt.Println(errs)
+	}
+
+	p.Cluster.DisconnectedInstallation = false
+	p.DockerRegistry.Address = ""
+	p.DockerRegistry.SetupInternal = false
+	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()}.validate()
+	if !valid {
+		t.Errorf("expected valid, but got invalid")
+		fmt.Println(errs)
+	}
+}

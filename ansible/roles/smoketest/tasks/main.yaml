@@ -5,4 +5,4 @@
       dest: "{{ bin_dir }}/kuberang"
       mode: 0744
   - name: run smoke test checks using Kuberang
-    command: "{{ bin_dir }}/kuberang"
+    command: "{{ bin_dir }}/kuberang --registry-url={% if load_private_images|bool == true %}{{ docker_registry_full_url }}{% else %}{% endif %}"

@@ -26,7 +26,7 @@ var _ = Describe("disconnected install feature", func() {
 						worker:  theNode,
 						ingress: theNode,
 					}
-					InstallKismaticPackages(nodes, CentOS7, sshKey)
+					InstallKismaticPackages(nodes, CentOS7, sshKey, true)
 
 					By("Verifying connectivity to google.com")
 					err := runViaSSH([]string{"curl --head www.google.com"}, theNode, sshKey, 1*time.Minute)
@@ -54,6 +54,7 @@ var _ = Describe("disconnected install feature", func() {
 					By("Running kismatic install apply")
 					installOpts := installOptions{
 						allowPackageInstallation:    false,
+						disconnectedInstallation:    true,
 						modifyHostsFiles:            true,
 						autoConfigureDockerRegistry: true,
 					}

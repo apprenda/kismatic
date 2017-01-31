@@ -17,6 +17,7 @@ type ClusterCatalog struct {
 	EnableModifyHosts         bool   `yaml:"modify_hosts_file"`
 	EnableCalicoPolicy        bool   `yaml:"enable_calico_policy"`
 	EnablePackageInstallation bool   `yaml:"allow_package_installation"`
+	DisconnectedInstallation         bool   `yaml:"disconnected_installation"`
 	KuberangPath              string `yaml:"kuberang_path"`
 	LoadBalancedFQDN          string `yaml:"kubernetes_load_balanced_fqdn"`
 

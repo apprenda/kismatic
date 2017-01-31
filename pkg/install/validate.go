@@ -130,6 +130,8 @@ func (p *Plan) validate() (bool, []error) {
 
 	v.validate(&p.Cluster)
 	v.validate(&p.DockerRegistry)
+	// on a disconnected_installation a registry must be provided
+	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()})
 	v.validateWithErrPrefix("Etcd nodes", &p.Etcd)
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
@@ -424,4 +426,17 @@ func validateAllowedAddress(address string) bool {
 		}
 	}
 	return true
+}
+
+type disconnectedInstallation struct {
+	cluster          Cluster
+	registryProvided bool
+}
+
+func (l disconnectedInstallation) validate() (bool, []error) {
+	v := newValidator()
+	if l.cluster.DisconnectedInstallation && !l.registryProvided {
+		v.addError(fmt.Errorf("A docker registry is required when disconnected_installation is true"))
+	}
+	return v.valid()
 }

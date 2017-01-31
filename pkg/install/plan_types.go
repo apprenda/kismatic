@@ -32,6 +32,7 @@ type Cluster struct {
 	Name                     string
 	AdminPassword            string `yaml:"admin_password"`
 	AllowPackageInstallation bool   `yaml:"allow_package_installation"`
+	DisconnectedInstallation bool   `yaml:"disconnected_installation"`
 	Networking               NetworkConfig
 	Certificates             CertsConfig
 	SSH                      SSHConfig
@@ -190,6 +191,11 @@ func (p *Plan) GetSSHClient(host string) (ssh.Client, error) {
 	}
 
 	return client, nil
+}
+
+// DockerRegistryProvided returns true if a local registry will be available after install
+func (p *Plan) DockerRegistryProvided() bool {
+	return p.DockerRegistry.SetupInternal || p.DockerRegistry.Address != ""
 }
 
 func firstIfItExists(nodes []Node) *Node {

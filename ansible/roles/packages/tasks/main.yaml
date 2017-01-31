@@ -65,6 +65,16 @@
       - install kubernetes node yum package
     when: ansible_os_family == 'RedHat'
 
+  - meta: flush_handlers  #Run handlers
+
+  - name: install kismatic offline yum package
+    yum: name=kismatic-offline-{{ kismatic_yum_version }} state=present
+    when: "ansible_os_family == 'RedHat' and disconnected_installation|bool == true and inventory_hostname == groups['master'][0]"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3
+
   - name: install deb packages
     command: /bin/true
     notify:
@@ -74,3 +84,13 @@
       - install kubernetes node deb package
       - install kubernetes master deb package
     when: ansible_os_family == 'Debian'
+
+  - meta: flush_handlers  #Run handlers
+
+  - name: install kismatic offline deb package
+    apt: name=kismatic-offline={{ kismatic_apt_version }} state=present
+    when: "ansible_os_family == 'Debian' and disconnected_installation|bool == true and inventory_hostname == groups['master'][0]"
+    register: result
+    until: result|success
+    retries: 3
+    delay: 3

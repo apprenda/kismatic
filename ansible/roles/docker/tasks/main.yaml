@@ -21,15 +21,3 @@
   # verify that Docker installed succesfully and is running
   - name: verify docker is installed
     command: docker ps
-
-  # these images are included in the kismatic node package and get loaded on all k8s nodes
-  # this is an optimization to avoid a large # of nodes pulling images from a registry at the same time
-  - name: load local docker images
-    command: docker load -i /opt/images/{{ item }}.tar
-    with_items:
-      - calico
-      - defaultbackend
-      - nginx-ingress-controller
-      - nginx
-      - busybox
-      - pause

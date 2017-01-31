@@ -20,18 +20,20 @@ import (
 
 const (
 	copyKismaticYumRepo        = `sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
-	installEtcdYum             = `sudo yum -y install kismatic-etcd-1.5.2_2-1`
+	installEtcdYum             = `sudo yum -y install kismatic-etcd-1.5.2_3-1`
 	installDockerEngineYum     = `sudo yum -y install kismatic-docker-engine-1.11.2-1.el7.centos`
-	installKubernetesMasterYum = `sudo yum -y install kismatic-kubernetes-master-1.5.2_2-1`
-	installKubernetesYum       = `sudo yum -y install kismatic-kubernetes-node-1.5.2_2-1`
+	installKubernetesMasterYum = `sudo yum -y install kismatic-kubernetes-master-1.5.2_3-1`
+	installKubernetesYum       = `sudo yum -y install kismatic-kubernetes-node-1.5.2_3-1`
+	installKismaticOfflineYum  = `sudo yum -y install kismatic-offline-1.5.2_3-1`
 
 	copyKismaticKeyDeb         = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add - `
 	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com xenial main"`
 	updateAptGet               = `sudo apt-get update`
-	installEtcdApt             = `sudo apt-get -y install kismatic-etcd=1.5.2-2`
+	installEtcdApt             = `sudo apt-get -y install kismatic-etcd=1.5.2-3`
 	installDockerApt           = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial`
-	installKubernetesMasterApt = `sudo apt-get -y install kismatic-kubernetes-networking=1.5.2-2 kismatic-kubernetes-node=1.5.2-2 kismatic-kubernetes-master=1.5.2-2`
-	installKubernetesApt       = `sudo apt-get -y install kismatic-kubernetes-networking=1.5.2-2 kismatic-kubernetes-node=1.5.2-2`
+	installKubernetesMasterApt = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial kismatic-kubernetes-networking=1.5.2-3 kismatic-kubernetes-node=1.5.2-3 kismatic-kubernetes-master=1.5.2-3`
+	installKubernetesApt       = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial kismatic-kubernetes-networking=1.5.2-3 kismatic-kubernetes-node=1.5.2-3`
+	installKismaticOfflineApt  = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial kismatic-offline=1.5.2-3`
 )
 
 type nodePrep struct {
@@ -40,6 +42,7 @@ type nodePrep struct {
 	CommandsToInstallDocker    []string
 	CommandsToInstallK8sMaster []string
 	CommandsToInstallK8s       []string
+	CommandsToInstallOffline   []string
 }
 
 var ubuntu1604Prep = nodePrep{
@@ -48,6 +51,7 @@ var ubuntu1604Prep = nodePrep{
 	CommandsToInstallDocker:    []string{installDockerApt},
 	CommandsToInstallK8sMaster: []string{installKubernetesMasterApt},
 	CommandsToInstallK8s:       []string{installKubernetesApt},
+	CommandsToInstallOffline:   []string{installKismaticOfflineYum},
 }
 
 var rhel7FamilyPrep = nodePrep{
@@ -56,6 +60,7 @@ var rhel7FamilyPrep = nodePrep{
 	CommandsToInstallDocker:    []string{installDockerEngineYum},
 	CommandsToInstallK8sMaster: []string{installKubernetesMasterYum},
 	CommandsToInstallK8s:       []string{installKubernetesYum},
+	CommandsToInstallOffline:   []string{installKismaticOfflineYum},
 }
 
 func ExtractKismaticToTemp() (string, error) {
@@ -95,7 +100,7 @@ func DownloadKismaticRelease(version string) (string, error) {
 	return tmpDir, nil
 }
 
-func InstallKismaticPackages(nodes provisionedNodes, distro linuxDistro, sshKey string) {
+func InstallKismaticPackages(nodes provisionedNodes, distro linuxDistro, sshKey string, disconnected bool) {
 	prep := getPrepForDistro(distro)
 	By("Configuring package repository")
 	err := retry.WithBackoff(func() error {
@@ -127,6 +132,14 @@ func InstallKismaticPackages(nodes provisionedNodes, distro linuxDistro, sshKey 
 		return runViaSSH(prep.CommandsToInstallK8s, nodes.worker, sshKey, 10*time.Minute)
 	}, 3)
 	FailIfError(err, "failed to install the worker over SSH")
+
+	if disconnected {
+		By("Installing Offline:")
+		err = retry.WithBackoff(func() error {
+			return runViaSSH(prep.CommandsToInstallOffline, []NodeDeets{nodes.master[0]}, sshKey, 10*time.Minute)
+		}, 3)
+		FailIfError(err, "failed to install the worker over SSH")
+	}
 }
 
 func getPrepForDistro(distro linuxDistro) nodePrep {

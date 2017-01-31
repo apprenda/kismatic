@@ -1,11 +1,7 @@
 #===============================================================================
 # VERSIONS
-kismatic_kubernetes_master_yum_version: 1.5.2_2-1
-kismatic_kubernetes_node_yum_version: 1.5.2_2-1
-kismatic_kubernetes_etcd_yum_version: 1.5.2_2-1
-kismatic_kubernetes_master_apt_version: 1.5.2-2
-kismatic_kubernetes_node_apt_version: 1.5.2-2
-kismatic_kubernetes_etcd_apt_version: 1.5.2-2
+kismatic_yum_version: 1.5.2_3-1
+kismatic_apt_version: 1.5.2-3
 kismatic_docker_engine_apt_version: 1.11.2-0~xenial
 
 calico_docker_version: "v1.0.0"
@@ -18,6 +14,8 @@ kubernetes_dashboard_version: "v1.5.1"
 defaultbackend_version: "1.0"
 nginx_ingress_controller_version: "0.8.3"
 docker_registry_version: "2.5.1"
+nginx_version: "stable-alpine"
+busybox_version: "latest"
 pause_version: "3.0"
 apprenda_tcp_healthz_version: "v1.0.0"
 glusterfs_server_version_rhel: "3.8.7-1.el7"
@@ -58,7 +56,7 @@ etcd_service_cluster_string: "{% for host in groups['etcd'] %}{{ host }}=https:/
 #===============================================================================
 # docker-install
 docker_install_dir: /etc/docker
-docker_self_signed_cert_dir: "{{ docker_install_dir }}/certs.d/{{ docker_registry_address }}:{{ docker_registry_port }}"
+docker_self_signed_cert_dir: "{{ docker_install_dir }}/certs.d/{{ docker_registry_full_url }}"
 docker_service_file: "docker.{{ init_system_file_extenstion }}"
 docker_service_path: "{{ init_system_dir }}/{{ docker_service_file }}"
 docker_certificates_ca_file_name: ca.pem
@@ -122,33 +120,53 @@ kubernetes_certificates_service_account_key_path: "{{ kubernetes_install_dir }}/
 #etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}{% if hostvars[host]['inventory_hostname'] is defined %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endif %}{% endfor %}"
 etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_networking_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
+
 #===============================================================================
-# these images are included in the kismatic node package and get loaded on all k8s nodes
-# they will not be in the registry and loaded directly on each node in the cluster
-calico_node_img: calico/node:{{calico_docker_version}}
-defaultbackend_img: gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}
-nginx_ingress_controller_img: gcr.io/google_containers/nginx-ingress-controller:{{ nginx_ingress_controller_version }}
-pause_img: gcr.io/google_containers/pause-amd64:{{ pause_version }}
+docker_registry_full_url: "{{ docker_registry_address }}:{{ docker_registry_port }}"
+load_private_images: "{{ use_private_docker_registry is defined and use_private_docker_registry|bool == true and disconnected_installation is defined and disconnected_installation|bool == true }}"
+calico_node_orig_img: calico/node:{{calico_docker_version}}
+calico_node_priv_img: "{{ docker_registry_full_url }}/calico/node:{{calico_docker_version}}"
+calico_node_img: '{% if load_private_images|bool == true %}{{ calico_node_priv_img }}{% else %}{{ calico_node_orig_img }}{% endif %}'
+
+defaultbackend_orig_img: gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}
+defaultbackend_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}"
+defaultbackend_img: '{% if load_private_images|bool == true %}{{ defaultbackend_priv_img }}{% else %}{{ defaultbackend_orig_img }}{% endif %}'
+
+nginx_ingress_controller_orig_img: gcr.io/google_containers/nginx-ingress-controller:{{ nginx_ingress_controller_version }}
+nginx_ingress_controller_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/nginx-ingress-controller:{{ nginx_ingress_controller_version }}"
+nginx_ingress_controller_img: '{% if load_private_images|bool == true %}{{ nginx_ingress_controller_priv_img }}{% else %}{{ nginx_ingress_controller_orig_img }}{% endif %}'
+
+nginx_orig_img: nginx:{{ nginx_version }}
+nginx_priv_img: "{{ docker_registry_full_url }}/nginx:{{ nginx_version }}"
+nginx_img: '{% if load_private_images|bool == true %}{{ nginx_priv_img }}{% else %}{{ nginx_orig_img }}{% endif %}'
+
+busybox_orig_img: busybox:{{ busybox_version }}
+busybox_priv_img: "{{ docker_registry_full_url }}/busybox:{{ busybox_version }}"
+busybox_img: '{% if load_private_images|bool == true %}{{ busybox_priv_img }}{% else %}{{ busybox_orig_img }}{% endif %}'
+
+pause_orig_img: gcr.io/google_containers/pause-amd64:{{ pause_version }}
+pause_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/pause-amd64:{{ pause_version }}"
+pause_img: '{% if load_private_images|bool == true %}{{ pause_priv_img }}{% else %}{{ pause_orig_img }}{% endif %}'
 
 calico_kube_policy_controller_orig_img: calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}
-calico_kube_policy_controller_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}"
-calico_kube_policy_controller_img: '{% if use_private_docker_registry is defined and use_private_docker_registry|bool == true %}{{ calico_kube_policy_controller_priv_img }}{% else %}{{ calico_kube_policy_controller_orig_img }}{% endif %}'
+calico_kube_policy_controller_priv_img: "{{ docker_registry_full_url }}/calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}"
+calico_kube_policy_controller_img: '{% if load_private_images|bool == true %}{{ calico_kube_policy_controller_priv_img }}{% else %}{{ calico_kube_policy_controller_orig_img }}{% endif %}'
 
 kubedns_orig_img: gcr.io/google_containers/kubedns-amd64:{{ kubedns_version }}
-kubedns_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/kubedns-amd64:{{ kubedns_version }}"
-kubedns_img: '{% if use_private_docker_registry is defined and use_private_docker_registry|bool == true %}{{ kubedns_priv_img }}{% else %}{{ kubedns_orig_img }}{% endif %}'
+kubedns_priv_img: "{{ docker_registry_full_url }}/kubedns-amd64:{{ kubedns_version }}"
+kubedns_img: '{% if load_private_images|bool == true %}{{ kubedns_priv_img }}{% else %}{{ kubedns_orig_img }}{% endif %}'
 
 kube_dnsmasq_orig_img: gcr.io/google_containers/kube-dnsmasq-amd64:{{ kube_dnsmasq_version }}
-kube_dnsmasq_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/kube-dnsmasq-amd64:{{ kube_dnsmasq_version }}"
-kube_dnsmasq_img: '{% if use_private_docker_registry is defined and use_private_docker_registry|bool == true %}{{ kube_dnsmasq_priv_img }}{% else %}{{ kube_dnsmasq_orig_img }}{% endif %}'
+kube_dnsmasq_priv_img: "{{ docker_registry_full_url }}/kube-dnsmasq-amd64:{{ kube_dnsmasq_version }}"
+kube_dnsmasq_img: '{% if load_private_images|bool == true %}{{ kube_dnsmasq_priv_img }}{% else %}{{ kube_dnsmasq_orig_img }}{% endif %}'
 
 exechealthz_orig_img: gcr.io/google_containers/exechealthz-amd64:{{ exechealthz_version }}
-exechealthz_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/exechealthz-amd64:{{ exechealthz_version }}"
-exechealthz_img: '{% if use_private_docker_registry is defined and use_private_docker_registry|bool == true %}{{ exechealthz_priv_img }}{% else %}{{ exechealthz_orig_img }}{% endif %}'
+exechealthz_priv_img: "{{ docker_registry_full_url }}/exechealthz-amd64:{{ exechealthz_version }}"
+exechealthz_img: '{% if load_private_images|bool == true %}{{ exechealthz_priv_img }}{% else %}{{ exechealthz_orig_img }}{% endif %}'
 
 kubernetes_dashboard_orig_img: gcr.io/google_containers/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}
-kubernetes_dashboard_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}"
-kubernetes_dashboard_img: '{% if use_private_docker_registry is defined and use_private_docker_registry|bool == true %}{{ kubernetes_dashboard_priv_img }}{% else %}{{ kubernetes_dashboard_orig_img }}{% endif %}'
+kubernetes_dashboard_priv_img: "{{ docker_registry_full_url }}/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}"
+kubernetes_dashboard_img: '{% if load_private_images|bool == true %}{{ kubernetes_dashboard_priv_img }}{% else %}{{ kubernetes_dashboard_orig_img }}{% endif %}'
 
 apprenda_tcp_healthz_orig_img: apprenda/tcp-healthz-amd64:{{ apprenda_tcp_healthz_version }}
 apprenda_tcp_healthz_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/tcp-healthz-amd64:{{ apprenda_tcp_healthz_version }}"
