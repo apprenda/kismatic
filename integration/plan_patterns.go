@@ -17,6 +17,7 @@ type PlanAWS struct {
 	SSHKeyFile                   string
 	HomeDirectory                string
 	AllowPackageInstallation     bool
+	DisconnectedInstallation     bool
 	AutoConfiguredDockerRegistry bool
 	DockerRegistryIP             string
 	DockerRegistryPort           int
@@ -28,6 +29,7 @@ const planAWSOverlay = `cluster:
   name: kubernetes
   admin_password: abbazabba
   allow_package_installation: {{.AllowPackageInstallation}}
+	disconnected_installation: {{.DisconnectedInstallation}}
   networking:
     type: overlay
     pod_cidr_block: 172.16.0.0/16
