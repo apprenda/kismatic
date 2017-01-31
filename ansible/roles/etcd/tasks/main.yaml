@@ -10,7 +10,7 @@
     notify:
       - reload services
       - enable etcd
-      - restart etcd service
+      - start etcd service
 
   # force_etcd_restart=true to force restart
   - name: force restart etcd

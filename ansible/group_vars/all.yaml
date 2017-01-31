@@ -1,7 +1,9 @@
 #===============================================================================
 # VERSIONS
+kubernetes_version: v1.5.2
 kismatic_yum_version: 1.5.2_3-1
 kismatic_apt_version: 1.5.2-3
+kismatic_docker_engine_yum_version: 1.11.2_1-1
 kismatic_docker_engine_apt_version: 1.11.2-0~xenial
 
 calico_docker_version: "v1.0.0"
@@ -81,11 +83,11 @@ kubernetes_dns_service_addr: https://{{kubernetes_dns_service_ip}}:{{kubernetes_
 kubernetes_install_dir: /etc/kubernetes
 kubernetes_service_dir: "{{ init_system_dir }}"
 network_plugin_dir: /etc/cni/net.d
-kubernetes_lib_dir: /var/lib/kubernetes
+kubernetes_auth_dir: /etc/kubernetes/auth
 kubelet_lib_dir: /var/lib/kubelet
 # paths
-kubernetes_basic_auth_path: "{{kubernetes_lib_dir}}/basicauth.csv"
-kubernetes_authorization_policy_path: "{{kubernetes_lib_dir}}/authorization-policy.json"
+kubernetes_basic_auth_path: "{{kubernetes_auth_dir}}/basicauth.csv"
+kubernetes_authorization_policy_path: "{{kubernetes_auth_dir}}/authorization-policy.json"
 kubernetes_kubeconfig_path: "{{kubelet_lib_dir}}/kubeconfig"
 # file modes
 kubernetes_executable_mode: 0775

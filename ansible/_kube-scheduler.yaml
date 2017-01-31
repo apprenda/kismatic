@@ -1,10 +1,11 @@
 ---
-  - hosts: master:worker:ingress:storage
+  - hosts: master
     any_errors_fatal: true
-    name: "Install Kubernetes Kubelet"
+    name: "Install Kubernetes Scheduler"
     remote_user: root
     become_method: sudo
     vars_files:
       - group_vars/all.yaml
+
     roles:
-      - kubelet
+      - kube-scheduler

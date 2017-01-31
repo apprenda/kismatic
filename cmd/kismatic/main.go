@@ -16,7 +16,7 @@ var buildDate string
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	cmd, err := cli.NewKismaticCommand(version, buildDate, os.Stdin, os.Stdout)
-	if err != nil {
+		if err != nil {
 		util.PrintColor(os.Stderr, util.Red, "Error initializing command: %v\n", err)
 		os.Exit(1)
 	}
