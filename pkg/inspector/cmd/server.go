@@ -20,29 +20,34 @@ func NewCmdServer(out io.Writer) *cobra.Command {
 	var port int
 	var nodeRoles string
 	var enforcePackages bool
+	var disconnectedInstallation bool
 	cmd := &cobra.Command{
 		Use:     "server",
 		Short:   "Stand up the inspector server for running checks remotely",
 		Example: serverExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runServer(out, cmd.Parent().Name(), port, nodeRoles, enforcePackages)
+			return runServer(out, cmd.Parent().Name(), port, nodeRoles, enforcePackages, disconnectedInstallation)
 		},
 	}
 	cmd.Flags().IntVar(&port, "port", 9090, "the port number for standing up the Inspector server")
 	cmd.Flags().StringVar(&nodeRoles, "node-roles", "", "comma-separated list of the node's roles. Valid roles are 'etcd', 'master', 'worker'")
 	cmd.Flags().BoolVarP(&enforcePackages, "enforcePackages", "e", false, "when provided the installer will test that all Kismatic packages have been installed")
+	cmd.Flags().BoolVar(&disconnectedInstallation, "disconnected-installation", false, "when true will check for the required packages needed during a disconnected install")
 	return cmd
 }
 
-func runServer(out io.Writer, commandName string, port int, nodeRoles string, enforcePackages bool) error {
+func runServer(out io.Writer, commandName string, port int, nodeRoles string, enforcePackages bool, disconnectedInstallation bool) error {
 	if nodeRoles == "" {
 		return fmt.Errorf("--node-roles is required")
 	}
-	roles, err := getNodeRoles(nodeRoles)
+	nodeFacts, err := getNodeRoles(nodeRoles)
 	if err != nil {
 		return err
 	}
-	s, err := inspector.NewServer(roles, port, enforcePackages)
+	if disconnectedInstallation {
+		nodeFacts = append(nodeFacts, "disconnected")
+	}
+	s, err := inspector.NewServer(nodeFacts, port, enforcePackages)
 	if err != nil {
 		return fmt.Errorf("error starting up inspector server: %v", err)
 	}

@@ -108,7 +108,7 @@ const defaultRuleSet = `---
   packageName: kismatic-kubernetes-master
   packageVersion: 1.5.2-3
 - kind: PackageAvailable
-  when: ["master","ubuntu"]
+  when: ["master","ubuntu", "disconnected"]
   packageName: kismatic-offline
   packageVersion: 1.5.2-3
 - kind: PackageAvailable
@@ -133,7 +133,7 @@ const defaultRuleSet = `---
   packageName: kismatic-kubernetes-master
   packageVersion: 1.5.2_3-1
 - kind: PackageAvailable
-  when: ["master","centos"]
+  when: ["master","centos", "disconnected"]
   packageName: kismatic-offline
   packageVersion: 1.5.2_3-1
 - kind: PackageAvailable
@@ -158,7 +158,7 @@ const defaultRuleSet = `---
   packageName: kismatic-kubernetes-master
   packageVersion: 1.5.2_3-1
 - kind: PackageAvailable
-  when: ["master","rhel"]
+  when: ["master","rhel", "disconnected"]
   packageName: kismatic-offline
   packageVersion: 1.5.2_3-1
 - kind: PackageAvailable
