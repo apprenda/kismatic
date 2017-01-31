@@ -32,6 +32,7 @@ type Executor interface {
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunTask(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
+	UpgradeNodes(Plan, []ListableNode) error
 }
 
 // ExecutorOptions are used to configure the executor
@@ -409,6 +410,102 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	return nil
 }
 
+func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode) error {
+	runDirectory, err := ae.createRunDirectory("upgrade")
+	if err != nil {
+		return fmt.Errorf("error creating working directory for upgrade: %v", err)
+	}
+	fp := FilePlanner{
+		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
+	}
+	if err = fp.Write(&plan); err != nil {
+		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
+	}
+	// build an inventory with the nodes that should be upgraded
+	etcdNodes := []ansible.Node{}
+	masterNodes := []ansible.Node{}
+	workerNodes := []ansible.Node{}
+	ingressNodes := []ansible.Node{}
+	storageNodes := []ansible.Node{}
+	for _, n := range nodesToUpgrade {
+		nodeIP := n.IP
+		for _, r := range n.Roles {
+			switch r {
+			case "etcd":
+				node, err := findNodeWithIP(plan.Etcd.Nodes, nodeIP)
+				if err != nil {
+					return err
+				}
+				etcdNodes = append(etcdNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
+			case "master":
+				node, err := findNodeWithIP(plan.Master.Nodes, nodeIP)
+				if err != nil {
+					return err
+				}
+				masterNodes = append(masterNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
+			case "worker":
+				node, err := findNodeWithIP(plan.Worker.Nodes, nodeIP)
+				if err != nil {
+					return err
+				}
+				workerNodes = append(workerNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
+			case "ingress":
+				node, err := findNodeWithIP(plan.Ingress.Nodes, nodeIP)
+				if err != nil {
+					return err
+				}
+				ingressNodes = append(ingressNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
+			case "storage":
+				node, err := findNodeWithIP(plan.Storage.Nodes, nodeIP)
+				if err != nil {
+					return err
+				}
+				storageNodes = append(storageNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
+			}
+		}
+	}
+	inventory := ansible.Inventory{
+		Roles: []ansible.Role{
+			{
+				Name:  "etcd",
+				Nodes: etcdNodes,
+			},
+			{
+				Name:  "master",
+				Nodes: masterNodes,
+			},
+			{
+				Name:  "worker",
+				Nodes: workerNodes,
+			},
+			{
+				Name:  "ingress",
+				Nodes: ingressNodes,
+			},
+			{
+				Name:  "storage",
+				Nodes: storageNodes,
+			},
+		},
+	}
+	cc, err := ae.buildInstallExtraVars(&plan)
+	if err != nil {
+		return err
+	}
+	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
+	ansibleLogFile, err := os.Create(ansibleLogFilename)
+	if err != nil {
+		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
+	}
+	util.PrintHeader(ae.stdout, "Upgrade Cluster Nodes", '=')
+	playbook := "upgrade.yaml"
+	eventExplainer := &explain.DefaultEventExplainer{}
+	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (ae *ansibleExecutor) createRunDirectory(runName string) (string, error) {
 	start := time.Now()
 	runDirectory := filepath.Join(ae.options.RunsDirectory, runName, start.Format("2006-01-02-15-04-05"))
@@ -569,4 +666,13 @@ func timestampWriter(out io.Writer) io.Writer {
 		}
 	}(pr)
 	return pw
+}
+
+func findNodeWithIP(nodes []Node, ip string) (*Node, error) {
+	for _, n := range nodes {
+		if n.IP == ip {
+			return &n, nil
+		}
+	}
+	return nil, fmt.Errorf("Node with IP %q not found", ip)
 }
