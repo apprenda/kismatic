@@ -170,7 +170,7 @@ kubernetes_dashboard_img: '{% if load_private_images|bool == true %}{{ kubernete
 
 apprenda_tcp_healthz_orig_img: apprenda/tcp-healthz-amd64:{{ apprenda_tcp_healthz_version }}
 apprenda_tcp_healthz_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/tcp-healthz-amd64:{{ apprenda_tcp_healthz_version }}"
-apprenda_tcp_healthz_img: "{% if use_private_docker_registry is defined and use_private_docker_registry|bool == true %}{{ apprenda_tcp_healthz_priv_img }}{% else %}{{ apprenda_tcp_healthz_orig_img }}{% endif %}"
+apprenda_tcp_healthz_img: "{% if load_private_images|bool == true %}{{ apprenda_tcp_healthz_priv_img }}{% else %}{{ apprenda_tcp_healthz_orig_img }}{% endif %}"
 
 # kismatic packages
 yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
