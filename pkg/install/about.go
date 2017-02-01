@@ -10,7 +10,7 @@ import (
 )
 
 type KismaticInfo struct {
-	ShortVersion string
+	ShortVersion Version
 	BuildNumber  string
 }
 
@@ -40,26 +40,18 @@ func SetVersion(polyVersion string) {
 	re := regexp.MustCompile("v([^-]+)-([^-]+)-([^-]+)-?([^-]+)")
 	matches := re.FindStringSubmatch(polyVersion)
 	if len(matches) > 2 {
-		AboutKismatic = KismaticInfo{matches[1], matches[2]}
+		ver := parseVersion(matches[1])
+		AboutKismatic = KismaticInfo{ver, matches[2]}
 	} else {
 		fmt.Printf("Could not parse %v", polyVersion)
 	}
 
 }
 
-// Takes a version in form "major.minor.patch[-build]"
-// If version fails to convert or is otherwise older than the current version, returns true
-func IsOlderVersion(comparedVersion string) bool {
-	re := regexp.MustCompile("([^-]+)-([^-]+)")
-	matches := re.FindStringSubmatch(comparedVersion)
-
-	if len(matches) > 1 {
-		this := parseVersion(AboutKismatic.ShortVersion)
-		that := parseVersion(matches[1])
-		return this.isNewerThan(that)
-	}
-
-	return true
+// Returns true if the provided version is older than the current Kismatic version
+func IsOlderVersion(that Version) bool {
+	this := AboutKismatic.ShortVersion
+	return this.isNewerThan(that)
 }
 
 // Returns true if that is older than this; this > that

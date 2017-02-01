@@ -29,7 +29,6 @@ func NewCmdUpgrade(out io.Writer) *cobra.Command {
 
 type upgradeOpts struct {
 	generatedAssetsDir string
-	restartServices    bool
 	verbose            bool
 	outputFormat       string
 }
@@ -45,7 +44,6 @@ func NewCmdUpgradeOffline(out io.Writer, planFile *string) *cobra.Command {
 		},
 	}
 	cmd.Flags().StringVar(&opts.generatedAssetsDir, "generated-assets-dir", "generated", "path to the directory where assets generated during the installation process will be stored")
-	cmd.Flags().BoolVar(&opts.restartServices, "restart-services", false, "force restart cluster services (Use with care)")
 	cmd.Flags().BoolVar(&opts.verbose, "verbose", false, "enable verbose logging from the installation")
 	cmd.Flags().StringVarP(&opts.outputFormat, "output", "o", "simple", "installation output format (options \"simple\"|\"raw\")")
 	return &cmd
@@ -55,7 +53,7 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 	planner := install.FilePlanner{File: planFile}
 	executorOpts := install.ExecutorOptions{
 		GeneratedAssetsDirectory: opts.generatedAssetsDir,
-		RestartServices:          opts.restartServices,
+		RestartServices:          true,
 		OutputFormat:             opts.outputFormat,
 		Verbose:                  opts.verbose,
 	}
@@ -63,6 +61,8 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 	if err != nil {
 		return err
 	}
+	util.PrintHeader(out, "Computing upgrade plan", '=')
+
 	// Read plan file
 	if !planner.PlanExists() {
 		util.PrettyPrintErr(out, "Reading plan file")
@@ -74,6 +74,7 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 		util.PrettyPrintErr(out, "Reading plan file")
 		return fmt.Errorf("error reading plan file %q: %v", planFile, err)
 	}
+
 	// Validate SSH connectivity to nodes
 	if ok, errs := install.ValidatePlanSSHConnections(plan); !ok {
 		util.PrettyPrintErr(out, "Validate SSH connectivity to nodes")
@@ -81,24 +82,39 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 		return fmt.Errorf("SSH connectivity validation errors found")
 	}
 	util.PrettyPrintOk(out, "Validate SSH connectivity to nodes")
+
 	// Figure out which nodes to upgrade
 	cv, err := install.ListVersions(plan)
 	if err != nil {
 		return fmt.Errorf("error listing cluster versions: %v", err)
 	}
 	var toUpgrade []install.ListableNode
+	var toSkip []install.ListableNode
 	for _, n := range cv.Nodes {
-		if install.IsOlderVersion(n.Version.String()) {
+		if install.IsOlderVersion(n.Version) {
 			toUpgrade = append(toUpgrade, n)
 		} else {
-			fmt.Fprintf(out, "Node %s is at target version %s. Skipping", n.IP, n.Version)
+			toSkip = append(toSkip, n)
 		}
 	}
+
+	// Print the nodes that will be skipped
+	if len(toSkip) > 0 {
+		util.PrintHeader(out, "Skipping nodes", '=')
+		for _, n := range toSkip {
+			util.PrettyPrintOk(out, "- %q is at the target version %q", n.IP, n.Version)
+		}
+		fmt.Fprintln(out)
+	}
+
+	// Print message if there's no work to do
 	if len(toUpgrade) == 0 {
 		fmt.Fprintln(out, "All nodes are at the target version. Nothing to do.")
 		return nil
 	}
+
 	// Run the upgrade on the nodes that need it
+	util.PrintHeader(out, "Upgrading nodes", '=')
 	if err := executor.UpgradeNodes(*plan, toUpgrade); err != nil {
 		return fmt.Errorf("Upgrade failed: %v", err)
 	}

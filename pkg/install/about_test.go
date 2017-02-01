@@ -101,3 +101,10 @@ func TestIsOlderMajorMinorPatchOlder(t *testing.T) {
 		t.Errorf("%v is newer than %v", ver, testVer)
 	}
 }
+
+func TestIsOlderVersion(t *testing.T) {
+	SetVersion("1.2.0")
+	if IsOlderVersion(AboutKismatic.ShortVersion) {
+		t.Error("IsOlder returned true for the same version")
+	}
+}
