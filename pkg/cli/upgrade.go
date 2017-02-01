@@ -114,7 +114,6 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 	}
 
 	// Run the upgrade on the nodes that need it
-	util.PrintHeader(out, "Upgrading nodes", '=')
 	if err := executor.UpgradeNodes(*plan, toUpgrade); err != nil {
 		return fmt.Errorf("Upgrade failed: %v", err)
 	}

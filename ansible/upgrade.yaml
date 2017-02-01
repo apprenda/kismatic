@@ -2,11 +2,67 @@
     # TODO: Is this OK???
   - include: _packages.yaml
     when: allow_package_installation|bool == true
-  - include: _apiserver.yaml
-  - include: _scheduler.yaml
-  - include: _controller-manager.yaml
-  - include: _kubelet.yaml
-  - include: _proxy.yaml
+
+  - name: "Upgrade Kubernetes API server"
+    hosts: master
+    serial: 1
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - authorization-policy
+      - apiserver
+
+  - name: "Upgrade Kubernetes Scheduler"
+    hosts: master
+    serial: 1
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - kubeconfig
+      - scheduler
+
+  - name: "Upgrade Kubernetes Controller Manager"
+    hosts: master
+    serial: 1
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - kubeconfig
+      - controller-manager
+
+  - name: "Upgrade Kubelet"
+    hosts: master:worker:ingress:storage
+    serial: 1
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - kubeconfig
+      - kubelet
+
+  - name: "Upgrade Kubernetes Proxy"
+    hosts: master:worker:ingress:storage
+    serial: 1
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - kubeconfig
+      - proxy
+
   - include: _update-version.yaml
 
 
