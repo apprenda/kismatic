@@ -50,11 +50,19 @@ func (fe *fakeExecutor) RunPreFlightCheck(p *install.Plan) error {
 	return nil
 }
 
+func (fe *fakeExecutor) RunUpgradePreFlightCheck(p *install.Plan) error {
+	return nil
+}
+
+func (fe *fakeExecutor) UpgradeNodes(install.Plan, []install.ListableNode) error {
+	return nil
+}
+
 func (fe *fakeExecutor) RunSmokeTest(p *install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) RunTask(string, *install.Plan) error {
+func (fe *fakeExecutor) RunPlay(string, *install.Plan) error {
 	return nil
 }
 
