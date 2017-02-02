@@ -113,6 +113,12 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 		return nil
 	}
 
+	// Run upgrade preflight on the nodes that are to be UpgradeNodes
+	util.PrintHeader(out, "Validating nodes", '=')
+	if err := executor.RunUpgradePreFlightCheck(plan); err != nil {
+		return fmt.Errorf("Upgrade preflight check failed: %v", err)
+	}
+
 	// Run the upgrade on the nodes that need it
 	if err := executor.UpgradeNodes(*plan, toUpgrade); err != nil {
 		return fmt.Errorf("Upgrade failed: %v", err)

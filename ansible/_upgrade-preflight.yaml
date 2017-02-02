@@ -1,0 +1,10 @@
+---
+  - hosts: all
+    any_errors_fatal: true
+    name: Run Upgrade Pre-Flight Checks
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - upgrade-preflight

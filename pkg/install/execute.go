@@ -22,6 +22,7 @@ import (
 // environment defined in the plan file
 type PreFlightExecutor interface {
 	RunPreFlightCheck(*Plan) error
+	RunUpgradePreFlightCheck(*Plan) error
 }
 
 // The Executor will carry out the installation plan
@@ -313,6 +314,46 @@ func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
 	}
 	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
 		return fmt.Errorf("error running preflight: %v", err)
+	}
+	return nil
+}
+
+func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan) error {
+	runDirectory, err := ae.createRunDirectory("upgrade-preflight")
+	if err != nil {
+		return fmt.Errorf("error creating working directory for upgrade-preflight: %v", err)
+	}
+	// Save the plan file that was used for this execution
+	fp := FilePlanner{
+		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
+	}
+	if err = fp.Write(p); err != nil {
+		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
+	}
+	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
+	ansibleLogFile, err := os.Create(ansibleLogFilename)
+	if err != nil {
+		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
+	}
+	// Build inventory and save it in runs directory
+	inventory := buildInventoryFromPlan(p)
+	pwd, _ := os.Getwd()
+	cc, err := ae.buildInstallExtraVars(p)
+	if err != nil {
+		return err
+	}
+
+	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
+	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
+	cc.EnablePackageInstallation = p.Cluster.AllowPackageInstallation
+
+	// run the pre-flight playbook with pre-flight explainer
+	playbook := "upgrade-preflight.yaml"
+	explainer := &explain.PreflightEventExplainer{
+		DefaultExplainer: &explain.DefaultEventExplainer{},
+	}
+	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
+		return fmt.Errorf("error running upgrade preflight: %v", err)
 	}
 	return nil
 }
