@@ -54,7 +54,7 @@ func (fe *fakeExecutor) RunUpgradePreFlightCheck(p *install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) UpgradeNodes(install.Plan, []install.ListableNode) error {
+func (fe *fakeExecutor) OfflineUpgrade(install.Plan, []install.ListableNode) error {
 	return nil
 }
 

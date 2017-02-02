@@ -33,7 +33,7 @@ type Executor interface {
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunPlay(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
-	UpgradeNodes(Plan, []ListableNode) error
+	OfflineUpgrade(Plan, []ListableNode) error
 }
 
 // ExecutorOptions are used to configure the executor
@@ -362,7 +362,7 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	return ae.execute(t)
 }
 
-func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode) error {
+func (ae *ansibleExecutor) OfflineUpgrade(plan Plan, nodesToUpgrade []ListableNode) error {
 	// build an inventory with the nodes that should be upgraded
 	etcdNodes := []ansible.Node{}
 	masterNodes := []ansible.Node{}
@@ -442,7 +442,7 @@ func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode
 		plan:           plan,
 		explainer:      &explain.DefaultEventExplainer{},
 	}
-	util.PrintHeader(ae.stdout, "Upgrade Cluster Nodes", '=')
+	util.PrintHeader(ae.stdout, "Execute Offline Cluster Upgrade", '=')
 	return ae.execute(t)
 }
 

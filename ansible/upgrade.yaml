@@ -3,6 +3,18 @@
   - include: _packages.yaml
     when: allow_package_installation|bool == true
 
+  - name: "Upgrade Kubernetes etcd cluster"
+    hosts: etcd
+    serial: 1
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/etcd-k8s.yaml
+    roles:
+      - etcd
+
   - name: "Upgrade Kubernetes API server"
     hosts: master
     serial: 1
@@ -39,6 +51,29 @@
       - kubeconfig
       - controller-manager
 
+  - name: "Upgrade Docker"
+    hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - role: docker
+      - role: docker-registry-cert
+        when: use_private_docker_registry is defined and use_private_docker_registry|bool == true
+
+  - name: "Upgrade Cluster Network"
+    hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - kubeconfig
+      - calico
+
   - name: "Upgrade Kubelet"
     hosts: master:worker:ingress:storage
     serial: 1
@@ -64,7 +99,35 @@
       - proxy
 
   - include: _update-version.yaml
+  
+# ---------- CLUSTER LEVEL WORK ----------- #
 
+  - name: Upgrade cluster DNS
+    hosts: master[0]
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    run_once: true
+    roles:
+      - addon-kubernetes-dns
+
+  - name: Upgrade Ingress controller
+    hosts: master[0]
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    run_once: true
+    roles:
+      - addon-kubernetes-ingress
+
+  - name: Upgrade Kubernetes Dashboard
+    hosts: master[0]
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    run_once: true
+    roles:
+      - addon-kubernetes-dashboard
 
   #
   # # Contains list of playbooks to setup a HA enterprise ready kubernetes cluster
