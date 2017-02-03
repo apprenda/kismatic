@@ -1,5 +1,14 @@
 ---
   # YUM
+  - name: ping Kubernetes yum repository
+    uri: url="https://packages.cloud.google.com/yum/doc/yum-key.gpg"
+    when: ansible_os_family == 'RedHat' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+    ignore_errors: yes
+    register: kubernetes_result
+    until: "kubernetes_result.status is defined and kubernetes_result.status == 200"
+    retries: 3
+    delay: 1
+    changed_when: "kubernetes_result.status is defined and kubernetes_result.status == 200"
   - name: add Kubernetes yum repository
     yum_repository:
       name: Kubernetes
@@ -7,29 +16,43 @@
       baseurl: "http://yum.kubernetes.io/repos/kubernetes-el7-x86_64"
       gpgkey: "https://packages.cloud.google.com/yum/doc/yum-key.gpg,https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg"
       gpgcheck: yes
-    when: ansible_os_family == 'RedHat' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+    when: ansible_os_family == 'RedHat' and kubernetes_result.status is defined and kubernetes_result.status == 200 and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+  - name: clean Kubernetes yum cache
+    command: 'yum --enablerepo=Kubernetes clean metadata'
+    when: ansible_os_family == 'RedHat' and kubernetes_result.status is defined and kubernetes_result.status == 200  and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+
+  - name: ping Kismatic yum repository
+    uri: url="{{ yum_gpg_key_url }}"
+    when: ansible_os_family == 'RedHat'
+    ignore_errors: yes
+    register: kismatic_result
+    until: "kismatic_result.status is defined and kismatic_result.status == 200"
+    retries: 3
+    delay: 1
+    changed_when: "kismatic_result.status is defined and kismatic_result.status == 200"
   - name: add Kismatic yum repository
     yum_repository:
-      name: kismatic
+      name: Kismatic
       description: Kismatic Packages
       baseurl: "{{ yum_repository_url }}"
       gpgkey: "{{ yum_gpg_key_url }}"
       gpgcheck: yes
-    when: ansible_os_family == 'RedHat' and 'etcd' in group_names
+    when: ansible_os_family == 'RedHat' and kismatic_result.status is defined and kismatic_result.status == 200
+  - name: clean Kismatic yum cache
+    command: 'yum --enablerepo=Kismatic clean metadata'
+    when: ansible_os_family == 'RedHat' and kismatic_result.status is defined and kismatic_result.status == 200
 
-  # install YUM packages
-  - name: install etcd yum package
-    command: 'yum install -y kismatic-etcd-{{ kismatic_yum_version }}'
-    when: ansible_os_family == 'RedHat' and 'etcd' in group_names
-  - name: install Kubernetes packages
-    command: 'yum install -y docker kubelet kubectl kubernetes-cni'
-    when: ansible_os_family == 'RedHat' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
-  - name: enable docker
-    command: 'systemctl enable docker'
-    when: ansible_os_family == 'RedHat' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
-  - name: start docker
-    command: 'systemctl start docker'
-    when: ansible_os_family == 'RedHat' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+  - name: install yum packages
+    command: /bin/true
+    notify:
+      - install etcd yum package
+      - install docker yum package
+      - install kubelet yum package
+      - install kubectl yum package
+    when: ansible_os_family == 'RedHat'
+
+  - meta: flush_handlers  #Run handlers
+
   - name: install Kismatic offline yum package
     command: 'yum install -y kismatic-offline-{{ kismatic_yum_version }}'
     when: "ansible_os_family == 'RedHat' and disconnected_installation|bool == true and inventory_hostname == groups['master'][0]"
@@ -39,53 +62,68 @@
     delay: 3
 
   # DEB
+  - name: ping Kubernetes deb repository
+    uri: url="{{ deb_gpg_key_url }}"
+    when: ansible_os_family == 'Debian' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+    ignore_errors: yes
+    register: kubernetes_result
+    until: "kubernetes_result.status is defined and kubernetes_result.status == 200"
+    retries: 3
+    delay: 1
+    changed_when: "kismatic_result.status is defined and kismatic_result.status == 200"
+
+  - name: ping Kismatic deb repository
+    uri: url="{{ deb_gpg_key_url }}"
+    when: ansible_os_family == 'Debian'
+    ignore_errors: yes
+    register: kismatic_result
+    until: "kismatic_result.status is defined and kismatic_result.status == 200"
+    retries: 3
+    delay: 1
+    changed_when: "kismatic_result.status is defined and kismatic_result.status == 200"
+
   - name: install apt-transport-https package
     apt:
       name: apt-transport-https
       state: latest
       update_cache: yes
-    when: ansible_os_family == 'Debian'
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
   - name: add Kubernetes deb key
     apt_key:
       url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
       validate_certs: no
-    when: ansible_os_family == 'Debian' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+    when: ansible_os_family == 'Debian' and kubernetes_result.status is defined and kubernetes_result.status == 200 and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
   - name: add Kubernetes deb repository
     apt_repository:
       repo: 'deb http://apt.kubernetes.io/ kubernetes-xenial main'
       validate_certs: no
-    when: ansible_os_family == 'Debian' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
+    when: ansible_os_family == 'Debian' and kubernetes_result.status is defined and kubernetes_result.status == 200 and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
   - name: add Kismatic deb key
     apt_key:
       url: "{{ deb_gpg_key_url }}"
       validate_certs: no
-    when: ansible_os_family == 'Debian' and 'etcd' in group_names
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200 and 'etcd' in group_names
   - name: add Kismatic deb repository
     apt_repository:
       repo: 'deb {{ deb_repository_url }} xenial main'
       validate_certs: no
-    when: ansible_os_family == 'Debian' and 'etcd' in group_names
-
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200 and 'etcd' in group_names
   - name: apt-get update
     apt:
       update_cache: yes
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
+
+  - name: install deb packages
+    command: /bin/true
+    notify:
+      - install etcd deb package
+      - install docker deb package
+      - install kubelet deb package
+      - install kubectl deb package
     when: ansible_os_family == 'Debian'
 
-    # install DEB packages
-  - name: install etcd deb packages
-    command: 'apt-get install -y kismatic-etcd={{ kismatic_apt_version }}'
-    when: ansible_os_family == 'Debian' and 'etcd' in group_names
-    register: result
-    until: result|success
-    retries: 3
-    delay: 1
-  - name: install Kubernetes packages
-    command: 'apt-get install -y docker.io kubelet kubectl kubernetes-cni'
-    when: ansible_os_family == 'Debian' and ('worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names)
-    register: result
-    until: result|success
-    retries: 3
-    delay: 1
+  - meta: flush_handlers  #Run handlers
+
   - name: install Kismatic offline deb package
     command: 'apt-get install -y kismatic-offline={{ kismatic_apt_version }}'
     when: "ansible_os_family == 'Debian' and disconnected_installation|bool == true and inventory_hostname == groups['master'][0]"
@@ -94,7 +132,13 @@
     retries: 3
     delay: 1
 
-  # verify that Docker installed succesfully and is running
+  # start and verify that Docker installed succesfully and is running
+  - name: start docker service
+    service:
+      name: docker
+      state: started
+      enabled: yes
+    when: "'worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names"
   - name: verify docker is installed
     command: docker ps
     when: "'worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names"
