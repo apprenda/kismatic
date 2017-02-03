@@ -17,7 +17,7 @@
     delay: 3
 
   - name: install kubelet yum package
-    yum: name=kubelet state=present
+    yum: name=kismatic-kubelet state=present
     when: "'worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names"
     register: result
     until: result|success
@@ -25,7 +25,7 @@
     delay: 3
 
   - name: install kubectl yum package
-    yum: name=kubectl state=present
+    yum: name=kismatic-kubectl state=present
     when: "'master' in group_names"
     register: result
     until: result|success
@@ -50,7 +50,7 @@
     delay: 3
 
   - name: install kubelet deb package
-    apt: name=kubelet state=present
+    apt: name=kismatic-kubelet state=present
     when: "'worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names"
     register: result
     until: result|success
@@ -58,7 +58,7 @@
     delay: 3
 
   - name: install kubectl deb package
-    apt: name=kubectl state=present
+    apt: name=kismatic-kubectl state=present
     when: "'master' in group_names"
     register: result
     until: result|success
