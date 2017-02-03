@@ -3,7 +3,7 @@
   - include: _packages.yaml
     when: allow_package_installation|bool == true
 
-  - name: "Upgrade Kubernetes etcd cluster"
+  - name: Upgrade Kubernetes etcd cluster
     hosts: etcd
     serial: 1
     any_errors_fatal: true
@@ -15,7 +15,20 @@
     roles:
       - etcd
 
-  - name: "Upgrade Kubernetes API server"
+  - name: Upgrade Networking etcd cluster
+    hosts: etcd
+    serial: 1
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/etcd-networking.yaml
+    roles:
+      - etcd-cert
+      - etcd
+
+  - name: Upgrade Kubernetes API server
     hosts: master
     serial: 1
     any_errors_fatal: true
@@ -27,7 +40,7 @@
       - authorization-policy
       - apiserver
 
-  - name: "Upgrade Kubernetes Scheduler"
+  - name: Upgrade Kubernetes Scheduler
     hosts: master
     serial: 1
     any_errors_fatal: true
@@ -39,7 +52,7 @@
       - kubeconfig
       - scheduler
 
-  - name: "Upgrade Kubernetes Controller Manager"
+  - name: Upgrade Kubernetes Controller Manager
     hosts: master
     serial: 1
     any_errors_fatal: true
@@ -51,7 +64,25 @@
       - kubeconfig
       - controller-manager
 
-  - name: "Upgrade Docker"
+  - name: Upgrade Internal Docker Registry
+    hosts: master[0]
+    remote_user: root
+    become_method: sudo
+    roles:
+      - role: docker-registry-container
+        when: setup_internal_docker_registry|bool == true
+
+
+  - name: Load Docker Images Into Private Registry
+    hosts: master[0]
+    remote_user: root
+    become_method: sudo
+    roles:
+      - role: docker-registry-images
+        when: use_private_docker_registry|bool == true and disconnected_installation|bool == true
+
+
+  - name: Upgrade Docker
     hosts: master:worker:ingress:storage
     any_errors_fatal: true
     remote_user: root
@@ -63,7 +94,7 @@
       - role: docker-registry-cert
         when: use_private_docker_registry is defined and use_private_docker_registry|bool == true
 
-  - name: "Upgrade Cluster Network"
+  - name: Upgrade Cluster Network
     hosts: master:worker:ingress:storage
     any_errors_fatal: true
     remote_user: root
@@ -74,7 +105,7 @@
       - kubeconfig
       - calico
 
-  - name: "Upgrade Kubelet"
+  - name: Upgrade Kubelet
     hosts: master:worker:ingress:storage
     serial: 1
     any_errors_fatal: true
@@ -86,7 +117,7 @@
       - kubeconfig
       - kubelet
 
-  - name: "Upgrade Kubernetes Proxy"
+  - name: Upgrade Kubernetes Proxy
     hosts: master:worker:ingress:storage
     serial: 1
     any_errors_fatal: true
@@ -99,10 +130,10 @@
       - proxy
 
   - include: _update-version.yaml
-  
+
 # ---------- CLUSTER LEVEL WORK ----------- #
 
-  - name: Upgrade cluster DNS
+  - name: Upgrade Cluster DNS
     hosts: master[0]
     any_errors_fatal: true
     remote_user: root
