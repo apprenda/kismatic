@@ -16,9 +16,9 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo yum -y install etcd-3.1.0-1` |
-| Kubernetes Master | `sudo yum -y install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1 kubectl-1.5.2_4-1` |
-| Kubernetes Worker | `sudo yum -y install docker kubelet-1.5.2_4-1` |
+| Etcd | `sudo yum -y --disablerepo="*" --enablerepo=kismatic install etcd-3.1.0-1` |
+| Kubernetes Master | `sudo yum -y --disablerepo="*" --enablerepo=kismatic install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1 kubectl-1.5.2_4-1` |
+| Kubernetes Worker | `sudo yum -y --disablerepo="*" --enablerepo=kismatic install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1` |
 
 ## Installing via DEB (Ubuntu Xenial)
 
@@ -42,9 +42,9 @@ EOF
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo apt-get -y install etcd=3.1.0` |
-| Kubernetes Master | `sudo apt-get -y install docker=1.11.2-0~xenial kubelet=1.5.2-4 kubectl=1.5.2-4` |
-| Kubernetes Worker | `sudo apt-get -y install docker=1.11.2-0~xenial kubelet=1.5.2-4` |
+| Etcd | `sudo apt-get -y -t=kismatic-xenial  install etcd=3.1.0` |
+| Kubernetes Master | `sudo apt-get -y -t=kismatic-xenial install docker=1.11.2-0~xenial kubelet=1.5.2-4 kubectl=1.5.2-4` |
+| Kubernetes Worker | `sudo apt-get -y -t=kismatic-xenial  install docker=1.11.2-0~xenial kubelet=1.5.2-4` |
 
 # <a name="synclocal"></a>Synchronizing a local repo
 
