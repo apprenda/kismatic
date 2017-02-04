@@ -105,7 +105,11 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["master","ubuntu"]
-  packageName: kismatic-kubernetes-master
+  packageName: kismatic-kubelet
+  packageVersion: 1.5.2-4
+- kind: PackageAvailable
+  when: ["master","ubuntu"]
+  packageName: kismatic-kubectl
   packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["master","ubuntu", "disconnected"]
@@ -113,15 +117,15 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["worker","ubuntu"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["ingress","ubuntu"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["storage","ubuntu"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2-4
 
 - kind: PackageAvailable
@@ -130,7 +134,11 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","centos"]
-  packageName: kismatic-kubernetes-master
+  packageName: kismatic-kubelet
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailable
+  when: ["master","centos"]
+  packageName: kismatic-kubectl
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","centos", "disconnected"]
@@ -138,15 +146,15 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["worker","centos"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["ingress","centos"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["storage","centos"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2_4-1
 
 - kind: PackageAvailable
@@ -155,7 +163,11 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","rhel"]
-  packageName: kismatic-kubernetes-master
+  packageName: kismatic-kubelet
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailable
+  when: ["master","rhel"]
+  packageName: kismatic-kubectl
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","rhel", "disconnected"]
@@ -163,15 +175,15 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["worker","rhel"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["ingress","rhel"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["storage","rhel"]
-  packageName: kismatic-kubernetes-node
+  packageName: kismatic-kubelet
   packageVersion: 1.5.2_4-1
 
 # Gluster packages
