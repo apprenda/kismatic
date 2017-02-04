@@ -1,6 +1,9 @@
 apiVersion: v1
 kind: Pod
 metadata:
+  labels:
+    tier: control-plane
+    component: kube-controller-manager
   name: kube-controller-manager
   namespace: kube-system
 spec:

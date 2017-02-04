@@ -60,6 +60,8 @@ metadata:
   name: calico-node
   namespace: kube-system
   labels:
+    tier: control-plane
+    component: calico-node
     k8s-app: calico-node
 spec:
   selector:

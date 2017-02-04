@@ -14,13 +14,14 @@
   - include: _docker-registry-container.yaml
     when: setup_internal_docker_registry|bool == true
   - include: _docker-registry-images.yaml
-    when: load_private_images|bool == true # only load images if offline
+    when: use_private_docker_registry|bool == true and disconnected_installation|bool == true # only load images if offline
   # kubernetes
   - include: _kubelet.yaml
   - include: _kube-apiserver.yaml
   - include: _kube-scheduler.yaml
   - include: _kube-controller-manager.yaml
   - include: _kube-proxy.yaml
+  - include: _validate-controlplane.yaml
   - include: _calico.yaml
   - include: _storage.yaml
     when: configure_storage|bool == true

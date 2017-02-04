@@ -20,8 +20,6 @@
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
 
-  # TODO check/wait for k8s controlplane to be up
-  #kubectl get pods kube-apiserver-ip-10-0-3-58 --namespace kube-system -o jsonpath='{.status.phase}'
   - name: run calico containers
     command: kubectl apply -f /etc/calico/calico.yaml
     run_once: true
@@ -29,3 +27,16 @@
     until: result|success
     retries: 10
     delay: 6
+
+  - name: get desired number of calico pods
+    command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
+    register: desiredPods
+    run_once: true
+
+  - name: wait until all calico pods are ready
+    command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
+    register: readyPods
+    until: desiredPods.stdout|int == readyPods.stdout|int
+    retries: 10
+    delay: 6
+    run_once: true
