@@ -90,14 +90,3 @@
     until: result|success
     retries: 3
     delay: 3
-
-  # start and verify that Docker installed succesfully and is running
-  - name: start docker service
-    service:
-      name: docker
-      state: started
-      enabled: yes
-    when: "'worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names"
-  - name: verify docker is installed
-    command: docker ps
-    when: "'worker' in group_names or 'ingress' in group_names or 'storage' in group_names or 'master' in group_names"

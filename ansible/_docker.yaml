@@ -1,0 +1,11 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: "Run Docker"
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - docker

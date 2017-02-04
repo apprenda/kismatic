@@ -1,0 +1,19 @@
+---
+  # start and verify that Docker installed succesfully and is running
+  - name: start docker service
+    service:
+      name: docker
+      state: started
+      enabled: yes
+    when: force_docker_restart is not defined or force_docker_restart|bool == false # only run if not going to restart right after
+
+  # force_docker_restart=true to force restart
+  - name: force restart docker
+    service:
+      name: docker
+      state: restarted
+      enabled: yes
+    when: force_docker_restart is defined and force_docker_restart|bool == true
+
+  - name: verify docker is running
+    command: docker ps

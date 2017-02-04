@@ -15,6 +15,6 @@
     failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
   - name: verify DNS pods are ready
     fail:
-      msg: "Timed out waiting for  DNS pods to be in the ready state."
+      msg: "Timed out waiting for DNS pods to be in the ready state."
     when: readyReplicas.stdout|int < 1
   - debug: var=out.stdout_lines

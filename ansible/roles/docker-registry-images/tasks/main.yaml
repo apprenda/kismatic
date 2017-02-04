@@ -4,13 +4,13 @@
   - name: load docker images
     command: docker load -i /opt/images/{{ item }}.tar
     with_items:
-     - kube-proxy.tar
-     - kube-controller-manager.tar
-     - kube-scheduler.tar
-     - kube-apiserver.tar
+     - kube-proxy
+     - kube-controller-manager
+     - kube-scheduler
+     - kube-apiserver
      - calico
-     - calico-ctl.tar
-     - calico-cni.tar
+     - calico-ctl
+     - calico-cni
      - kube-policy-controller
      - kubedns
      - kube-dnsmasq
