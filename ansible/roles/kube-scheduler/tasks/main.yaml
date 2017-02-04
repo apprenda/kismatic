@@ -1,6 +1,6 @@
 ---
   - name: download kube-scheduler image
-    command: docker pull gcr.io/google-containers/kube-scheduler-amd64:{{ kubernetes_version }}
+    command: docker pull {{ kube_scheduler_img }}
 
   - name: copy kube-scheduler.yaml manifest
     template:

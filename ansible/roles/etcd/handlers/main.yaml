@@ -1,8 +1,6 @@
 ---
   - name: reload services
     command: systemctl daemon-reload
-  - name: enable etcd
-    command: systemctl enable {{ etcd_service_file }}
   - name: start etcd service
     service:
       name: "{{ etcd_service_name }}"

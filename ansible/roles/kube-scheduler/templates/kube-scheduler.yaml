@@ -7,7 +7,8 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-scheduler
-    image: gcr.io/google-containers/kube-scheduler-amd64:{{ kubernetes_version }}
+    image: {{ kube_scheduler_img }}
+    imagePullPolicy: IfNotPresent
     command:
       - kube-scheduler
       - --kubeconfig={{ kubernetes_kubeconfig_path }}

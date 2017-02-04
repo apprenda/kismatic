@@ -2,8 +2,3 @@
 # common tasks for all hosts
 - name: Install python 2.7
   script: python27.sh
-
-- name: create a temporary download directory
-  file:
-    path: "{{ temprary_download_dir }}"
-    state: directory

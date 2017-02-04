@@ -7,7 +7,8 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-proxy
-    image: gcr.io/google-containers/kube-proxy-amd64:{{ kubernetes_version }}
+    image: {{ kube_proxy_img }}
+    imagePullPolicy: IfNotPresent
     command:
       - kube-proxy
       - --hostname-override={{ inventory_hostname }}

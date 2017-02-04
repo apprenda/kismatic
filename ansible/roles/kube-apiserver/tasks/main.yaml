@@ -1,6 +1,6 @@
 ---
   - name: download kube-apiserver image
-    command: docker pull gcr.io/google-containers/kube-apiserver-amd64:{{ kubernetes_version }}
+    command: docker pull {{ kube_apiserver_img }}
 
   - name: copy kube-apiserver.yaml manifest
     template:
@@ -20,14 +20,13 @@
   # - name: copy debug kube-apiserver.service to remote
   #   template:
   #     src: kube-apiserver.service.debug
-  #     dest: "{{ kubernetes_service_dir }}/kube-apiserver.service"
+  #     dest: "{{ init_system_dir }}/kube-apiserver.service"
   #     owner: "{{ kubernetes_owner }}"
   #     group: "{{ kubernetes_group }}"
   #     mode: "{{ kubernetes_service_mode }}"
   #   notify:
   #     - reload services
-  #     - enable kube-apiserver
-  #     - restart kube-apiserver service
+  #     - start kube-apiserver service
   #     - verify kube-apiserver is running
 
   # # force_apiserver_restart=true to force restart

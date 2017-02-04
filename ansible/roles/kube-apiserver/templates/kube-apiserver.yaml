@@ -7,7 +7,8 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-apiserver
-    image: gcr.io/google-containers/kube-apiserver-amd64:{{ kubernetes_version }}
+    image: {{ kube_apiserver_img }}
+    imagePullPolicy: IfNotPresent
     command:
       - kube-apiserver
       - --insecure-bind-address=127.0.0.1

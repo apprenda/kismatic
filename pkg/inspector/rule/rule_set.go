@@ -102,77 +102,77 @@ const defaultRuleSet = `---
 - kind: PackageAvailable
   when: ["etcd", "ubuntu"]
   packageName: kismatic-etcd
-  packageVersion: 1.5.2-3
+  packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["master","ubuntu"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.2-3
+  packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["master","ubuntu", "disconnected"]
   packageName: kismatic-offline
-  packageVersion: 1.5.2-3
+  packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["worker","ubuntu"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2-3
+  packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["ingress","ubuntu"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2-3
+  packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["storage","ubuntu"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2-3
+  packageVersion: 1.5.2-4
 
 - kind: PackageAvailable
   when: ["etcd", "centos"]
   packageName: kismatic-etcd
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","centos"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","centos", "disconnected"]
   packageName: kismatic-offline
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["worker","centos"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["ingress","centos"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["storage","centos"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 
 - kind: PackageAvailable
   when: ["etcd", "rhel"]
   packageName: kismatic-etcd
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","rhel"]
   packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","rhel", "disconnected"]
   packageName: kismatic-offline
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["worker","rhel"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["ingress","rhel"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["storage","rhel"]
   packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageVersion: 1.5.2_4-1
 
 # Gluster packages
 - kind: PackageAvailable

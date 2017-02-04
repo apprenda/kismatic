@@ -5,7 +5,7 @@
   - include: _certs.yaml
   - include: _packages.yaml
     when: allow_package_installation|bool == true
-  - include: _calico.yaml
   - include: _kubelet.yaml
   - include: _kube-proxy.yaml
+  - include: _calico.yaml
   - include: _worker-smoke-test.yaml

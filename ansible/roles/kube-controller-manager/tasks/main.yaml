@@ -1,6 +1,6 @@
 ---
   - name: download kube-controller-manager image
-    command: docker pull gcr.io/google-containers/kube-controller-manager-amd64:{{ kubernetes_version }}
+    command: docker pull {{ kube_controller_manager_img }}
 
   - name: copy kube-controller-manager.yaml manifest
     template:

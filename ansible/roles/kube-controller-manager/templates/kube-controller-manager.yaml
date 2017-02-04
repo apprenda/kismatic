@@ -7,7 +7,8 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-controller-manager
-    image: gcr.io/google-containers/kube-controller-manager-amd64:{{ kubernetes_version }}
+    image: {{ kube_controller_manager_img }}
+    imagePullPolicy: IfNotPresent
     command:
       - kube-controller-manager
       - --allocate-node-cidrs=true

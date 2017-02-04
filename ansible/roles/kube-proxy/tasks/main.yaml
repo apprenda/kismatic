@@ -1,6 +1,6 @@
 ---
   - name: download kube-proxy image
-    command: docker pull gcr.io/google-containers/kube-proxy-amd64:{{ kubernetes_version }}
+    command: docker pull {{ kube_proxy_img }}
 
   - name: copy kube-proxy.yaml manifest
     template:

@@ -11,14 +11,14 @@
     changed_when: "kismatic_result.status is defined and kismatic_result.status == 200"
   - name: add Kismatic yum repository
     yum_repository:
-      name: Kismatic
+      name: kismatic
       description: Kismatic Packages
       baseurl: "{{ yum_repository_url }}"
       gpgkey: "{{ yum_gpg_key_url }}"
       gpgcheck: yes
     when: ansible_os_family == 'RedHat' and kismatic_result.status is defined and kismatic_result.status == 200
-  - name: clean Kismatic yum cache
-    command: 'yum --enablerepo=Kismatic clean metadata'
+  - name: clean kismatic yum cache
+    command: 'yum --enablerepo=kismatic clean metadata'
     when: ansible_os_family == 'RedHat' and kismatic_result.status is defined and kismatic_result.status == 200
 
   - name: install yum packages
@@ -32,8 +32,8 @@
 
   - meta: flush_handlers  #Run handlers
 
-  - name: install Kismatic offline yum package
-    command: 'yum install -y kismatic-offline-{{ kismatic_yum_version }}'
+  - name: install kismatic offline yum package
+    yum: name=kismatic-offline-{{ kismatic_yum_version }} state=present
     when: "ansible_os_family == 'RedHat' and disconnected_installation|bool == true and inventory_hostname == groups['master'][0]"
     register: result
     until: result|success
@@ -61,12 +61,12 @@
     apt_key:
       url: "{{ deb_gpg_key_url }}"
       validate_certs: no
-    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200 and 'etcd' in group_names
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
   - name: add Kismatic deb repository
     apt_repository:
       repo: 'deb {{ deb_repository_url }} xenial main'
       validate_certs: no
-    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200 and 'etcd' in group_names
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
   - name: apt-get update
     apt:
       update_cache: yes
@@ -83,13 +83,13 @@
 
   - meta: flush_handlers  #Run handlers
 
-  - name: install Kismatic offline deb package
-    command: 'apt-get install -y kismatic-offline={{ kismatic_apt_version }}'
+  - name: install kismatic offline deb package
+    apt: name=kismatic-offline={{ kismatic_apt_version }} state=present
     when: "ansible_os_family == 'Debian' and disconnected_installation|bool == true and inventory_hostname == groups['master'][0]"
     register: result
     until: result|success
     retries: 3
-    delay: 1
+    delay: 3
 
   # start and verify that Docker installed succesfully and is running
   - name: start docker service

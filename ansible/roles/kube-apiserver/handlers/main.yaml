@@ -1,8 +1,11 @@
 ---
   - name: reload services
     command: systemctl daemon-reload
-  - name: enable kube-apiserver
-    command: systemctl enable kube-apiserver.service
+  - name: start kube-apiserver service
+    service:
+      name: kube-apiserver.service
+      state: started
+      enabled: yes
   - name: restart kube-apiserver service
     service:
       name: kube-apiserver.service
