@@ -25,7 +25,7 @@
     command: /bin/true
     notify:
       - install etcd yum package
-      - install docker yum package
+      - install docker-engine yum package
       - install kubelet yum package
       - install kubectl yum package
     when: ansible_os_family == 'RedHat'
@@ -64,7 +64,7 @@
     when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
   - name: add Kismatic deb repository
     apt_repository:
-      repo: 'deb {{ deb_repository_url }} xenial main'
+      repo: 'deb {{ deb_repository_url }} kismatic-xenial main'
       validate_certs: no
     when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
   - name: apt-get update
@@ -76,7 +76,7 @@
     command: /bin/true
     notify:
       - install etcd deb package
-      - install docker deb package
+      - install docker-engine deb package
       - install kubelet deb package
       - install kubectl deb package
     when: ansible_os_family == 'Debian'

@@ -3,6 +3,10 @@
 kubernetes_version: v1.5.2
 kismatic_yum_version: 1.5.2_4-1
 kismatic_apt_version: 1.5.2-4
+etcd_yum_version: 3.1.0-1
+etcd_apt_version: 3.1.0
+docker_engine_yum_version: 1.11.2-1.el7.centos
+docker_engine_apt_version: 1.11.2-0~xenial
 
 calico_docker_version: "v1.0.2"
 calico_ctl_version: "v1.0.2"
@@ -192,7 +196,7 @@ apprenda_tcp_healthz_priv_img: "{{ docker_registry_address }}:{{ docker_registry
 apprenda_tcp_healthz_img: "{% if load_private_images|bool == true %}{{ apprenda_tcp_healthz_priv_img }}{% else %}{{ apprenda_tcp_healthz_orig_img }}{% endif %}"
 
 # kismatic packages
-# yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
+# yum_repository_url: https://packages-rpm.s3-accelerate.amazonaws.com
 # yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
 # deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
 # deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key

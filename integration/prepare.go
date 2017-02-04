@@ -20,19 +20,19 @@ import (
 
 const (
 	copyKismaticYumRepo       = `sudo curl https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
-	installEtcdYum            = `sudo yum -y install kismatic-etcd-1.5.2_4-1`
-	installDockerYum          = `sudo yum -y install docker`
-	installKubeletYum         = `sudo yum -y install kismatic-kubelet-1.5.2_4-1`
-	installKubectlYum         = `sudo yum -y install kismatic-kubectl-1.5.2_4-1`
+	installEtcdYum            = `sudo yum -y install etcd-3.1.0-1`
+	installDockerYum          = `sudo yum -y install docker-egine-1.11.2_0-1`
+	installKubeletYum         = `sudo yum -y install kubelet-1.5.2_4-1`
+	installKubectlYum         = `sudo yum -y install kubectl-1.5.2_4-1`
 	installKismaticOfflineYum = `sudo yum -y install kismatic-offline-1.5.2_4-1`
 
 	copyKismaticKeyDeb        = `wget -qO - https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key | sudo apt-key add - `
-	copyKismaticRepoDeb       = `sudo add-apt-repository "deb https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com xenial main"`
+	copyKismaticRepoDeb       = `sudo add-apt-repository "deb https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com kismatic-xenial main"`
 	updateAptGet              = `sudo apt-get update`
-	installEtcdApt            = `sudo apt-get -y install kismatic-etcd=1.5.2-4`
-	installDockerApt          = `sudo apt-get -y install docker.io`
-	installKubeletApt         = `sudo apt-get -y install kismatic-kubelet=1.5.2-4`
-	installKubectlApt         = `sudo apt-get -y install kismatic-kubernetes-networking=1.5.2-4`
+	installEtcdApt            = `sudo apt-get -y install etcd=3.1.0`
+	installDockerApt          = `sudo apt-get -y install docker-engine=1.11.2-0~xenial`
+	installKubeletApt         = `sudo apt-get -y install kubelet=1.5.2-4`
+	installKubectlApt         = `sudo apt-get -y install kubectl=1.5.2-4`
 	installKismaticOfflineApt = `sudo apt-get -y install kismatic-offline=1.5.2-4`
 )
 
