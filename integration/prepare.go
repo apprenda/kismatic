@@ -21,7 +21,7 @@ import (
 const (
 	copyKismaticYumRepo       = `sudo curl https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
 	installEtcdYum            = `sudo yum -y install etcd-3.1.0-1`
-	installDockerYum          = `sudo yum -y install docker-egine-1.11.2_0-1`
+	installDockerYum          = `sudo yum -y install docker-egine-1.11.2-1.el7.centos`
 	installKubeletYum         = `sudo yum -y install kubelet-1.5.2_4-1`
 	installKubectlYum         = `sudo yum -y install kubectl-1.5.2_4-1`
 	installKismaticOfflineYum = `sudo yum -y install kismatic-offline-1.5.2_4-1`
