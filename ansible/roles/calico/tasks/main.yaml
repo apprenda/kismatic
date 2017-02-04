@@ -11,9 +11,6 @@
       owner: "{{ kubernetes_owner }}"
       group: "{{ kubernetes_group }}"
       mode: "{{ network_environment_mode }}"
-      
-  - name: download calico
-    command: docker pull quay.io/calico/node:v1.0.1
 
   - name: copy calico.yaml manifest
     template:
