@@ -21,7 +21,7 @@ import (
 const (
 	copyKismaticYumRepo       = `sudo curl https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
 	installEtcdYum            = `sudo yum -y install etcd-3.1.0-1`
-	installDockerYum          = `sudo yum -y install docker-egine-1.11.2-1.el7.centos`
+	installDockerYum          = `sudo yum -y install docker-engine-1.11.2-1.el7.centos`
 	installKubeletYum         = `sudo yum -y install kubelet-1.5.2_4-1`
 	installKubectlYum         = `sudo yum -y install kubectl-1.5.2_4-1`
 	installKismaticOfflineYum = `sudo yum -y install kismatic-offline-1.5.2_4-1`
@@ -51,15 +51,15 @@ var ubuntu1604Prep = nodePrep{
 	CommandsToInstallDocker:    []string{installDockerApt},
 	CommandsToInstallK8sMaster: []string{installDockerApt, installKubeletApt, installKubectlApt},
 	CommandsToInstallK8s:       []string{installDockerApt, installKubeletApt},
-	CommandsToInstallOffline:   []string{installKismaticOfflineYum},
+	CommandsToInstallOffline:   []string{installKismaticOfflineApt},
 }
 
 var rhel7FamilyPrep = nodePrep{
 	CommandsToPrepRepo:         []string{copyKismaticYumRepo},
 	CommandsToInstallEtcd:      []string{installEtcdYum},
 	CommandsToInstallDocker:    []string{installDockerYum},
-	CommandsToInstallK8sMaster: []string{installDockerYum, installKubeletApt, installKubectlApt},
-	CommandsToInstallK8s:       []string{installDockerYum, installKubeletApt},
+	CommandsToInstallK8sMaster: []string{installDockerYum, installKubeletYum, installKubectlYum},
+	CommandsToInstallK8s:       []string{installDockerYum, installKubeletYum},
 	CommandsToInstallOffline:   []string{installKismaticOfflineYum},
 }
 
