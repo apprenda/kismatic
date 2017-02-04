@@ -16,9 +16,9 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo yum -y --disablerepo="*" --enablerepo=kismatic install etcd-3.1.0-1` |
-| Kubernetes Master | `sudo yum -y --disablerepo="*" --enablerepo=kismatic install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1 kubectl-1.5.2_4-1` |
-| Kubernetes Worker | `sudo yum -y --disablerepo="*" --enablerepo=kismatic install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1` |
+| Etcd | `sudo yum -y install etcd-3.1.0-1` |
+| Kubernetes Master | `sudo yum -y install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1 kubectl-1.5.2_4-1` |
+| Kubernetes Worker | `sudo yum -y install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1` |
 
 ## Installing via DEB (Ubuntu Xenial)
 
