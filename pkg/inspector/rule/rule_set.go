@@ -113,7 +113,7 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["master","ubuntu"]
-  packageName: docker
+  packageName: docker-engine
   packageVersion: 1.11.2-0~xenial
 - kind: PackageAvailable
   when: ["master","ubuntu", "disconnected"]
@@ -121,7 +121,7 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2-4
 - kind: PackageAvailable
   when: ["worker","ubuntu"]
-  packageName: docker
+  packageName: docker-engine
   packageVersion: 1.11.2-0~xenial
 - kind: PackageAvailable
   when: ["worker","ubuntu"]
@@ -150,7 +150,7 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","centos"]
-  packageName: docker
+  packageName: docker-engine
   packageVersion: 1.11.2-1.el7.centos
 - kind: PackageAvailable
   when: ["master","centos", "disconnected"]
@@ -158,7 +158,7 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["worker","centos"]
-  packageName: docker
+  packageName: docker-engine
   packageVersion: 1.11.2-1.el7.centos
 - kind: PackageAvailable
   when: ["worker","centos"]
@@ -187,7 +187,7 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["master","rhel"]
-  packageName: docker
+  packageName: docker-engine
   packageVersion: 1.11.2-1.el7.centos
 - kind: PackageAvailable
   when: ["master","rhel", "disconnected"]
@@ -195,7 +195,7 @@ const defaultRuleSet = `---
   packageVersion: 1.5.2_4-1
 - kind: PackageAvailable
   when: ["worker","centos"]
-  packageName: docker
+  packageName: docker-engine
   packageVersion: 1.11.2-1.el7.centos
 - kind: PackageAvailable
   when: ["worker","rhel"]
