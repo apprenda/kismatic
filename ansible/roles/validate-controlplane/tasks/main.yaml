@@ -3,7 +3,7 @@
     command: kubectl get pods --namespace kube-system -l component=kube-apiserver -o jsonpath='{.items[*].metadata.name}'
     register: apiserverpods
     until: apiserverpods|success
-    retries: 10
+    retries: 20 # it might take some time for the API server to be up
     delay: 6
   - name: validate all kube-apiserver pods are running
     command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
