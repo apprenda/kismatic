@@ -1,11 +1,4 @@
 ---
-  - name: download networking images
-    command: docker pull {{ item }}
-    with_items:
-      - "{{ calico_node_img }}"
-      - "{{ calico_cni_img }}"
-      - "{{ calico_ctl_img }}"
-
   # kubelet
   - name: copy kubelet.service to remote
     template:

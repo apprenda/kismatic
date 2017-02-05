@@ -21,11 +21,11 @@
   - include: _kube-scheduler.yaml
   - include: _kube-controller-manager.yaml
   - include: _kube-proxy.yaml
-  - include: _validate-controlplane.yaml
   - include: _calico.yaml
+  - include: _validate-controlplane.yaml
+  # add ons
   - include: _storage.yaml
     when: configure_storage|bool == true
-  # add ons
   - include: _addon-network-policy.yaml
     when: enable_calico_policy|bool == true
   - include: _addon-kubernetes-dns.yaml

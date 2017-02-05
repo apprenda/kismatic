@@ -1,4 +1,19 @@
 ---
+  - name: download networking images
+    command: docker pull {{ item }}
+    with_items:
+      - "{{ calico_node_img }}"
+      - "{{ calico_cni_img }}"
+      - "{{ calico_ctl_img }}"
+
+  - name: wait until kube-apiserver is up
+    command: kubectl get pods --namespace kube-system -l component=kube-apiserver
+    register: out
+    until: out|success
+    retries: 10
+    delay: 6
+    when: "inventory_hostname == groups['master'][0]"
+
   - name: create /etc/calico directory
     file:
       path: "{{ calico_dir }}"
@@ -19,6 +34,7 @@
       owner: "{{ kubernetes_owner }}"
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
+    when: "inventory_hostname == groups['master'][0]"
 
   - name: run calico containers
     command: kubectl apply -f /etc/calico/calico.yaml
@@ -27,16 +43,4 @@
     until: result|success
     retries: 10
     delay: 6
-
-  - name: get desired number of calico pods
-    command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
-    register: desiredPods
-    run_once: true
-
-  - name: wait until all calico pods are ready
-    command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
-    register: readyPods
-    until: desiredPods.stdout|int == readyPods.stdout|int
-    retries: 10
-    delay: 6
-    run_once: true
+    when: "inventory_hostname == groups['master'][0]"

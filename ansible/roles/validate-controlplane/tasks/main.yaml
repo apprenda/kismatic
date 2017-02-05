@@ -3,21 +3,21 @@
     command: kubectl get pods --namespace kube-system -l component=kube-apiserver -o jsonpath='{.items[*].metadata.name}'
     register: apiserverpods
     until: apiserverpods|success
-    retries: 20 # it might take some time for the API server to be up
+    retries: 5
     delay: 6
   - name: validate all kube-apiserver pods are running
     command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
     with_items: "{{ apiserverpods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
-    retries: 20
+    retries: 10
     delay: 6
 
   - name: get a list of kube-scheduler pods
     command: kubectl get pods --namespace kube-system -l component=kube-scheduler -o jsonpath='{.items[*].metadata.name}'
     register: schedulerpods
     until: schedulerpods|success
-    retries: 10
+    retries: 5
     delay: 6
   - name: validate all kube-scheduler pods are running
     command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
@@ -31,7 +31,7 @@
     command: kubectl get pods --namespace kube-system -l component=kube-controller-manager -o jsonpath='{.items[*].metadata.name}'
     register: controllermanagerpods
     until: controllermanagerpods|success
-    retries: 10
+    retries: 5
     delay: 6
   - name: validate all kube-controller-manager pods are running
     command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
@@ -45,12 +45,26 @@
     command: kubectl get pods --namespace kube-system -l component=kube-proxy -o jsonpath='{.items[*].metadata.name}'
     register: proxypods
     until: proxypods|success
-    retries: 10
+    retries: 5
     delay: 6
   - name: validate all kube-proxy pods are running
     command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
     with_items: "{{ proxypods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
+    retries: 10
+    delay: 6
+
+  - name: get desired number of calico pods
+    command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
+    register: desiredPods
+    until: desiredPods|success
+    retries: 5
+    delay: 6
+
+  - name: wait until all calico pods are ready
+    command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
+    register: readyPods
+    until: desiredPods.stdout|int == readyPods.stdout|int
     retries: 10
     delay: 6
