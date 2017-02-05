@@ -10,7 +10,7 @@
     with_items: "{{ apiserverpods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
-    retries: 10
+    retries: 20
     delay: 6
 
   - name: get a list of kube-scheduler pods
@@ -24,7 +24,7 @@
     with_items: "{{ schedulerpods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
-    retries: 10
+    retries: 20
     delay: 6
 
   - name: get a list of kube-controller-manager pods
@@ -38,7 +38,7 @@
     with_items: "{{ controllermanagerpods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
-    retries: 10
+    retries: 20
     delay: 6
 
   - name: get a list of kube-proxy pods
@@ -52,7 +52,7 @@
     with_items: "{{ proxypods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
-    retries: 10
+    retries: 20
     delay: 6
 
   - name: get desired number of calico pods
@@ -66,5 +66,5 @@
     command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
     register: readyPods
     until: desiredPods.stdout|int == readyPods.stdout|int
-    retries: 10
+    retries: 20
     delay: 6
