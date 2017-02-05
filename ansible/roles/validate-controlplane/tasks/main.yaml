@@ -10,7 +10,7 @@
     with_items: "{{ apiserverpods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
-    retries: 10
+    retries: 20
     delay: 6
 
   - name: get a list of kube-scheduler pods
