@@ -7,4 +7,4 @@
     run_once: true
 
     roles:
-      - addon-kubernetes-dashboard
+      - kube-dashboard

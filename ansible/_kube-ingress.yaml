@@ -1,10 +1,10 @@
 ---
   - hosts: master[0]
     any_errors_fatal: true
-    name: "Configure Kubernetes DNS"
+    name: "Configure Kubernetes Ingress"
     remote_user: root
     become_method: sudo
     run_once: true
 
     roles:
-      - addon-kubernetes-dns
+      - kube-ingress
