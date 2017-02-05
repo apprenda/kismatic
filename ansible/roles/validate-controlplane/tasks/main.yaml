@@ -16,8 +16,8 @@
   - name: verify all kube-apiserver pods are running
     fail:
       msg: "Timed out waiting for all kube-apiserver pods to be running."
-    when: phase|success and phase.stdout=="Running"
-
+    when: item|failure or item.stdout!="Running"
+    with_items: phase.results
 
   - name: get a list of kube-scheduler pods
     command: kubectl get pods --namespace kube-system -l component=kube-scheduler -o jsonpath='{.items[*].metadata.name}'
@@ -36,8 +36,8 @@
   - name: verify all kube-scheduler pods are running
     fail:
       msg: "Timed out waiting for all kube-scheduler pods to be running."
-    when: phase|success and phase.stdout=="Running"
-
+    when: item|failure or item.stdout!="Running"
+    with_items: phase.results
 
   - name: get a list of kube-controller-manager pods
     command: kubectl get pods --namespace kube-system -l component=kube-controller-manager -o jsonpath='{.items[*].metadata.name}'
@@ -56,7 +56,8 @@
   - name: verify all kube-controller-manager pods are running
     fail:
       msg: "Timed out waiting for all kube-controller-manager pods to be running."
-    when: phase|success and phase.stdout=="Running"
+    when: item|failure or item.stdout!="Running"
+    with_items: phase.results
 
   - name: get a list of kube-proxy pods
     command: kubectl get pods --namespace kube-system -l component=kube-proxy -o jsonpath='{.items[*].metadata.name}'
@@ -75,7 +76,8 @@
   - name: verify all kube-proxy pods are running
     fail:
       msg: "Timed out waiting for all kube-proxy pods to be running."
-    when: phase|success and phase.stdout=="Running"
+    when: item|failure or item.stdout!="Running"
+    with_items: phase.results
 
   - name: get desired number of calico pods
     command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
@@ -83,7 +85,6 @@
     until: desiredPods|success
     retries: 5
     delay: 6
-
   - name: wait until all calico pods are ready
     command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
     register: readyPods
@@ -94,4 +95,4 @@
   - name: verify all calico pods are running
     fail:
       msg: "Timed out waiting for all calico pods to be running."
-    when: desiredPods.stdout|int == readyPods.stdout|int
+    when: desiredPods.stdout|int != readyPods.stdout|int
