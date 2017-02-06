@@ -33,7 +33,9 @@ type Executor interface {
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunPlay(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
-	OfflineUpgrade(Plan, []ListableNode) error
+	UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode) error
+	UpgradeDockerRegistry(plan Plan) error
+	UpgradeClusterServices(plan Plan) error
 }
 
 // ExecutorOptions are used to configure the executor
@@ -130,6 +132,67 @@ type ansibleExecutor struct {
 	runnerExplainerFactory func(explain.AnsibleEventExplainer, io.Writer) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error)
 }
 
+type task struct {
+	// name of the task used for the runs dir
+	name string
+	// the inventory of nodes to use
+	inventory ansible.Inventory
+	// the cluster catalog to use
+	clusterCatalog ansible.ClusterCatalog
+	// the playbook filename
+	playbook string
+	// the explainer to use
+	explainer explain.AnsibleEventExplainer
+	// the plan
+	plan Plan
+	// run the task on specific nodes
+	limit []string
+}
+
+// execute will run the given task, and setup all what's needed for us to run ansible.
+func (ae *ansibleExecutor) execute(t task) error {
+	runDirectory, err := ae.createRunDirectory(t.name)
+	if err != nil {
+		return fmt.Errorf("error creating working directory for %q: %v", t.name, err)
+	}
+	// Save the plan file that was used for this execution
+	fp := FilePlanner{
+		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
+	}
+	if err = fp.Write(&t.plan); err != nil {
+		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
+	}
+	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
+	ansibleLogFile, err := os.Create(ansibleLogFilename)
+	if err != nil {
+		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
+	}
+	runner, explainer, err := ae.ansibleRunnerWithExplainer(t.explainer, ansibleLogFile, runDirectory)
+	if err != nil {
+		return err
+	}
+
+	// Start running ansible with the given playbook
+	var eventStream <-chan ansible.Event
+	if t.limit != nil && len(t.limit) != 0 {
+		eventStream, err = runner.StartPlaybookOnNode(t.playbook, t.inventory, t.clusterCatalog, t.limit...)
+	} else {
+		eventStream, err = runner.StartPlaybook(t.playbook, t.inventory, t.clusterCatalog)
+	}
+	if err != nil {
+		return fmt.Errorf("error running ansible playbook: %v", err)
+	}
+	// Ansible blocks until explainer starts reading from stream. Start
+	// explainer in a separate go routine
+	go explainer.Explain(eventStream)
+
+	// Wait until ansible exits
+	if err = runner.WaitPlaybook(); err != nil {
+		return fmt.Errorf("error running playbook: %v", err)
+	}
+	return nil
+}
+
 // Install the cluster according to the installation plan
 func (ae *ansibleExecutor) Install(p *Plan) error {
 	// Generate private keys and certificates for the cluster
@@ -151,79 +214,6 @@ func (ae *ansibleExecutor) Install(p *Plan) error {
 	}
 	util.PrintHeader(ae.stdout, "Installing Cluster", '=')
 	return ae.execute(t)
-}
-
-// creates the extra vars that are required for the installation playbook.
-func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog, error) {
-	tlsDir, err := filepath.Abs(ae.certsDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
-	}
-
-	dnsIP, err := getDNSServiceIP(p)
-	if err != nil {
-		return nil, fmt.Errorf("error getting DNS service IP: %v", err)
-	}
-
-	cc := ansible.ClusterCatalog{
-		ClusterName:               p.Cluster.Name,
-		AdminPassword:             p.Cluster.AdminPassword,
-		TLSDirectory:              tlsDir,
-		CalicoNetworkType:         p.Cluster.Networking.Type,
-		ServicesCIDR:              p.Cluster.Networking.ServiceCIDRBlock,
-		PodCIDR:                   p.Cluster.Networking.PodCIDRBlock,
-		DNSServiceIP:              dnsIP,
-		EnableModifyHosts:         p.Cluster.Networking.UpdateHostsFiles,
-		EnableCalicoPolicy:        p.Cluster.Networking.PolicyEnabled,
-		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
-		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
-		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
-		TargetVersion:             AboutKismatic.ShortVersion.String(),
-	}
-
-	// Setup FQDN or default to first master
-	if p.Master.LoadBalancedFQDN != "" {
-		cc.LoadBalancedFQDN = p.Master.LoadBalancedFQDN
-	} else {
-		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
-	}
-
-	if p.DockerRegistry.Address != "" {
-		cc.EnableInternalDockerRegistry = false
-		cc.EnablePrivateDockerRegistry = true
-		cc.DockerCAPath = p.DockerRegistry.CAPath
-		cc.DockerRegistryAddress = p.DockerRegistry.Address
-		cc.DockerRegistryPort = strconv.Itoa(p.DockerRegistry.Port)
-	} else if p.DockerRegistry.SetupInternal {
-		cc.EnableInternalDockerRegistry = true
-		cc.EnablePrivateDockerRegistry = true
-		cc.DockerRegistryAddress = p.Master.Nodes[0].IP
-		if p.Master.Nodes[0].InternalIP != "" {
-			cc.DockerRegistryAddress = p.Master.Nodes[0].InternalIP
-		}
-		cc.DockerCAPath = tlsDir + "/ca.pem"
-		cc.DockerRegistryPort = "8443"
-	} // Else just use DockerHub
-
-	if ae.options.RestartServices {
-		cc.EnableRestart()
-	}
-
-	if p.Ingress.Nodes != nil && len(p.Ingress.Nodes) > 0 {
-		cc.EnableConfigureIngress = true
-	} else {
-		cc.EnableConfigureIngress = false
-	}
-
-	for _, n := range p.NFS.Volumes {
-		cc.NFSVolumes = append(cc.NFSVolumes, ansible.NFSVolume{
-			Path: n.Path,
-			Host: n.Host,
-		})
-	}
-	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
-
-	return &cc, nil
 }
 
 func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
@@ -362,142 +352,202 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	return ae.execute(t)
 }
 
-func (ae *ansibleExecutor) OfflineUpgrade(plan Plan, nodesToUpgrade []ListableNode) error {
-	// build an inventory with the nodes that should be upgraded
-	etcdNodes := []ansible.Node{}
-	masterNodes := []ansible.Node{}
-	workerNodes := []ansible.Node{}
-	ingressNodes := []ansible.Node{}
-	storageNodes := []ansible.Node{}
-	for _, n := range nodesToUpgrade {
-		nodeIP := n.IP
-		for _, r := range n.Roles {
-			switch r {
-			case "etcd":
-				node, err := findNodeWithIP(plan.Etcd.Nodes, nodeIP)
+// UpgradeNodes upgrades the nodes of the cluster in the following phases:
+//   1. Etcd nodes
+//   2. Master nodes
+//   3. Worker nodes (regardless of specialization)
+//
+// When a node is being upgraded, all the components of the node are upgraded, regardless of
+// which phase of the upgrade we are in. For example, when upgrading a node that is both an etcd and master,
+// the etcd components and the master components will be upgraded when we are in the upgrade etcd nodes
+// phase.
+func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode) error {
+	// Nodes can have multiple roles. For this reason, we need to keep track of which nodes
+	// have been upgraded to avoid re-upgrading them.
+	upgradedNodes := map[string]bool{}
+	// Upgrade etcd nodes
+	for _, nodeToUpgrade := range nodesToUpgrade {
+		for _, role := range nodeToUpgrade.Roles {
+			if role == "etcd" {
+				node, err := plan.getNodeWithIP(nodeToUpgrade.IP)
 				if err != nil {
 					return err
 				}
-				etcdNodes = append(etcdNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
-			case "master":
-				node, err := findNodeWithIP(plan.Master.Nodes, nodeIP)
-				if err != nil {
-					return err
+				if err := ae.upgradeNode(plan, *node); err != nil {
+					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
 				}
-				masterNodes = append(masterNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
-			case "worker":
-				node, err := findNodeWithIP(plan.Worker.Nodes, nodeIP)
-				if err != nil {
-					return err
-				}
-				workerNodes = append(workerNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
-			case "ingress":
-				node, err := findNodeWithIP(plan.Ingress.Nodes, nodeIP)
-				if err != nil {
-					return err
-				}
-				ingressNodes = append(ingressNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
-			case "storage":
-				node, err := findNodeWithIP(plan.Storage.Nodes, nodeIP)
-				if err != nil {
-					return err
-				}
-				storageNodes = append(storageNodes, installNodeToAnsibleNode(node, &plan.Cluster.SSH))
+				upgradedNodes[node.IP] = true
+				break
 			}
 		}
 	}
-	inventory := ansible.Inventory{
-		Roles: []ansible.Role{
-			{
-				Name:  "etcd",
-				Nodes: etcdNodes,
-			},
-			{
-				Name:  "master",
-				Nodes: masterNodes,
-			},
-			{
-				Name:  "worker",
-				Nodes: workerNodes,
-			},
-			{
-				Name:  "ingress",
-				Nodes: ingressNodes,
-			},
-			{
-				Name:  "storage",
-				Nodes: storageNodes,
-			},
-		},
+
+	// Upgrade master nodes
+	for _, nodeToUpgrade := range nodesToUpgrade {
+		if upgradedNodes[nodeToUpgrade.IP] == true {
+			continue
+		}
+		for _, role := range nodeToUpgrade.Roles {
+			if role == "master" {
+				node, err := plan.getNodeWithIP(nodeToUpgrade.IP)
+				if err != nil {
+					return err
+				}
+				if err := ae.upgradeNode(plan, *node); err != nil {
+					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+				}
+				upgradedNodes[node.IP] = true
+				break
+			}
+		}
 	}
+
+	// Upgrade the rest of the nodes
+	for _, nodeToUpgrade := range nodesToUpgrade {
+		if upgradedNodes[nodeToUpgrade.IP] == true {
+			continue
+		}
+		for _, role := range nodeToUpgrade.Roles {
+			if role != "etcd" && role != "master" {
+				node, err := plan.getNodeWithIP(nodeToUpgrade.IP)
+				if err != nil {
+					return err
+				}
+				if err := ae.upgradeNode(plan, *node); err != nil {
+					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+				}
+				upgradedNodes[node.IP] = true
+				break
+			}
+		}
+	}
+	return nil
+}
+
+func (ae *ansibleExecutor) upgradeNode(plan Plan, node Node) error {
+	inventory := buildInventoryFromPlan(&plan)
 	cc, err := ae.buildClusterCatalog(&plan)
 	if err != nil {
 		return err
 	}
 	t := task{
-		name:           "upgrade",
-		playbook:       "upgrade.yaml",
+		name:           "upgrade-nodes",
+		playbook:       "upgrade-nodes.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      &explain.DefaultEventExplainer{},
+		limit:          []string{node.Host},
+	}
+	util.PrintHeader(ae.stdout, fmt.Sprintf("Upgrade Node %q", node.Host), '=')
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) UpgradeDockerRegistry(plan Plan) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "upgrade-docker-registry",
+		playbook:       "upgrade-docker-registry.yaml",
 		inventory:      inventory,
 		clusterCatalog: *cc,
 		plan:           plan,
 		explainer:      &explain.DefaultEventExplainer{},
 	}
-	util.PrintHeader(ae.stdout, "Execute Offline Cluster Upgrade", '=')
 	return ae.execute(t)
 }
 
-type task struct {
-	// name of the task used for the runs dir
-	name string
-	// the inventory of nodes to use
-	inventory ansible.Inventory
-	// the cluster catalog to use
-	clusterCatalog ansible.ClusterCatalog
-	// the playbook filename
-	playbook string
-	// the explainer to use
-	explainer explain.AnsibleEventExplainer
-	// the plan
-	plan Plan
-}
-
-func (ae *ansibleExecutor) execute(t task) error {
-	runDirectory, err := ae.createRunDirectory(t.name)
-	if err != nil {
-		return fmt.Errorf("error creating working directory for %q: %v", t.name, err)
-	}
-	// Save the plan file that was used for this execution
-	fp := FilePlanner{
-		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
-	}
-	if err = fp.Write(&t.plan); err != nil {
-		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
-	}
-	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
-	ansibleLogFile, err := os.Create(ansibleLogFilename)
-	if err != nil {
-		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
-	}
-	// Setup sinks for explainer and ansible stdout
-	runner, explainer, err := ae.ansibleRunnerWithExplainer(t.explainer, ansibleLogFile, runDirectory)
+func (ae *ansibleExecutor) UpgradeClusterServices(plan Plan) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
 	if err != nil {
 		return err
 	}
+	t := task{
+		name:           "upgrade-cluster-services",
+		playbook:       "upgrade-cluster-services.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      &explain.DefaultEventExplainer{},
+	}
+	return ae.execute(t)
+}
 
-	// Start running ansible with the given playbook
-	eventStream, err := runner.StartPlaybook(t.playbook, t.inventory, t.clusterCatalog)
+// creates the extra vars that are required for the installation playbook.
+func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog, error) {
+	tlsDir, err := filepath.Abs(ae.certsDir)
 	if err != nil {
-		return fmt.Errorf("error running ansible playbook: %v", err)
+		return nil, fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
 	}
-	// Ansible blocks until explainer starts reading from stream. Start
-	// explainer in a separate go routine
-	go explainer.Explain(eventStream)
 
-	// Wait until ansible exits
-	if err = runner.WaitPlaybook(); err != nil {
-		return fmt.Errorf("error running playbook: %v", err)
+	dnsIP, err := getDNSServiceIP(p)
+	if err != nil {
+		return nil, fmt.Errorf("error getting DNS service IP: %v", err)
 	}
-	return nil
+
+	cc := ansible.ClusterCatalog{
+		ClusterName:               p.Cluster.Name,
+		AdminPassword:             p.Cluster.AdminPassword,
+		TLSDirectory:              tlsDir,
+		CalicoNetworkType:         p.Cluster.Networking.Type,
+		ServicesCIDR:              p.Cluster.Networking.ServiceCIDRBlock,
+		PodCIDR:                   p.Cluster.Networking.PodCIDRBlock,
+		DNSServiceIP:              dnsIP,
+		EnableModifyHosts:         p.Cluster.Networking.UpdateHostsFiles,
+		EnableCalicoPolicy:        p.Cluster.Networking.PolicyEnabled,
+		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
+		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
+		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
+		TargetVersion:             AboutKismatic.ShortVersion.String(),
+	}
+
+	// Setup FQDN or default to first master
+	if p.Master.LoadBalancedFQDN != "" {
+		cc.LoadBalancedFQDN = p.Master.LoadBalancedFQDN
+	} else {
+		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
+	}
+
+	if p.DockerRegistry.Address != "" {
+		cc.EnableInternalDockerRegistry = false
+		cc.EnablePrivateDockerRegistry = true
+		cc.DockerCAPath = p.DockerRegistry.CAPath
+		cc.DockerRegistryAddress = p.DockerRegistry.Address
+		cc.DockerRegistryPort = strconv.Itoa(p.DockerRegistry.Port)
+	} else if p.DockerRegistry.SetupInternal {
+		cc.EnableInternalDockerRegistry = true
+		cc.EnablePrivateDockerRegistry = true
+		cc.DockerRegistryAddress = p.Master.Nodes[0].IP
+		if p.Master.Nodes[0].InternalIP != "" {
+			cc.DockerRegistryAddress = p.Master.Nodes[0].InternalIP
+		}
+		cc.DockerCAPath = tlsDir + "/ca.pem"
+		cc.DockerRegistryPort = "8443"
+	} // Else just use DockerHub
+
+	if ae.options.RestartServices {
+		cc.EnableRestart()
+	}
+
+	if p.Ingress.Nodes != nil && len(p.Ingress.Nodes) > 0 {
+		cc.EnableConfigureIngress = true
+	} else {
+		cc.EnableConfigureIngress = false
+	}
+
+	for _, n := range p.NFS.Volumes {
+		cc.NFSVolumes = append(cc.NFSVolumes, ansible.NFSVolume{
+			Path: n.Path,
+			Host: n.Host,
+		})
+	}
+	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
+
+	return &cc, nil
 }
 
 func (ae *ansibleExecutor) createRunDirectory(runName string) (string, error) {

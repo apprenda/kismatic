@@ -315,7 +315,7 @@ func (f *fakeRunner) StartPlaybook(playbookFile string, inventory ansible.Invent
 	return f.eventChan, f.err
 }
 func (f *fakeRunner) WaitPlaybook() error { return f.err }
-func (f *fakeRunner) StartPlaybookOnNode(playbookFile string, inventory ansible.Inventory, cc ansible.ClusterCatalog, node string) (<-chan ansible.Event, error) {
+func (f *fakeRunner) StartPlaybookOnNode(playbookFile string, inventory ansible.Inventory, cc ansible.ClusterCatalog, node ...string) (<-chan ansible.Event, error) {
 	f.incomingCatalog = cc
 	return f.eventChan, f.err
 }

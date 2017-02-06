@@ -144,6 +144,15 @@ func (p *Plan) getAllNodes() []Node {
 	return nodes
 }
 
+func (p *Plan) getNodeWithIP(ip string) (*Node, error) {
+	for _, n := range p.getAllNodes() {
+		if n.IP == ip {
+			return &n, nil
+		}
+	}
+	return nil, fmt.Errorf("Node with IP %q was not found in plan", ip)
+}
+
 // GetSSHConnection returns the SSHConnection struct containing the node and SSHConfig details
 func (p *Plan) GetSSHConnection(host string) (*SSHConnection, error) {
 	nodes := p.getAllNodes()

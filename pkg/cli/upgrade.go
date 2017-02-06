@@ -109,20 +109,33 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 
 	// Print message if there's no work to do
 	if len(toUpgrade) == 0 {
-		fmt.Fprintln(out, "All nodes are at the target version. Nothing to do.")
-		return nil
-	}
-
-	// Run upgrade preflight on the nodes that are to be UpgradeNodes
-	util.PrintHeader(out, "Validating nodes", '=')
-	if err := executor.RunUpgradePreFlightCheck(plan); err != nil {
-		return fmt.Errorf("Upgrade preflight check failed: %v", err)
+		fmt.Fprintln(out, "All nodes are at the target version. Skipping node upgrades.")
+	} else {
+		// Run upgrade preflight on the nodes that are to be UpgradeNodes
+		util.PrintHeader(out, "Validating nodes", '=')
+		if err := executor.RunUpgradePreFlightCheck(plan); err != nil {
+			return fmt.Errorf("Upgrade preflight check failed: %v", err)
+		}
 	}
 
 	// Run the upgrade on the nodes that need it
-	if err := executor.OfflineUpgrade(*plan, toUpgrade); err != nil {
-		return fmt.Errorf("Upgrade failed: %v", err)
+	if err := executor.UpgradeNodes(*plan, toUpgrade); err != nil {
+		return fmt.Errorf("Failed to upgrade nodes: %v", err)
 	}
+
+	if plan.DockerRegistry.SetupInternal {
+		util.PrintHeader(out, "Upgrade Internal Docker Registry", '=')
+		if err := executor.UpgradeDockerRegistry(*plan); err != nil {
+			return fmt.Errorf("Failed to upgrade internal docker registry: %v", err)
+		}
+	}
+
+	// Upgrade the cluster services
+	util.PrintHeader(out, "Upgrade Cluster Services", '=')
+	if err := executor.UpgradeClusterServices(*plan); err != nil {
+		return fmt.Errorf("Failed to upgrade cluster services: %v", err)
+	}
+
 	fmt.Fprintln(out)
 	util.PrintColor(out, util.Green, "Upgrade complete\n")
 	fmt.Fprintln(out)

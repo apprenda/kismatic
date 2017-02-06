@@ -54,7 +54,15 @@ func (fe *fakeExecutor) RunUpgradePreFlightCheck(p *install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) OfflineUpgrade(install.Plan, []install.ListableNode) error {
+func (fe *fakeExecutor) UpgradeNodes(install.Plan, []install.ListableNode) error {
+	return nil
+}
+
+func (fe *fakeExecutor) UpgradeDockerRegistry(install.Plan) error {
+	return nil
+}
+
+func (fe *fakeExecutor) UpgradeClusterServices(install.Plan) error {
 	return nil
 }
 
