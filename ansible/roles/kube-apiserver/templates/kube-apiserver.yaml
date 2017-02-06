@@ -14,29 +14,30 @@ spec:
     imagePullPolicy: IfNotPresent
     command:
       - kube-apiserver
-      - --insecure-bind-address=127.0.0.1
       - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota
+      - --advertise-address={{ internal_ipv4 }}
+      - --allow-privileged=true
+      - --anonymous-auth=false
       - --apiserver-count={{ kubernetes_master_apiserver_count }}
       - --authorization-mode=ABAC
       - --authorization-policy-file={{ kubernetes_authorization_policy_path }}
       - --basic-auth-file={{ kubernetes_basic_auth_path }}
+      - --insecure-bind-address=127.0.0.1
       - --bind-address=0.0.0.0
+      - --client-ca-file={{ kubernetes_certificates_ca_path }}
       - --etcd-cafile={{ kubernetes_certificates_ca_path }}
       - --etcd-certfile={{ kubernetes_certificates_cert_path }}
       - --etcd-keyfile={{ kubernetes_certificates_key_path}}
       - --etcd-servers={{ etcd_k8s_cluster_ip_list }}
-      - --service-cluster-ip-range={{ kubernetes_services_cidr }}
+      - --insecure-bind-address=127.0.0.1
+      - --insecure-port=8080
+      - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+      - --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true
+      - --secure-port=6443
       - --service-account-key-file={{ kubernetes_certificates_service_account_key_path }}
-      - --client-ca-file={{ kubernetes_certificates_ca_path }}
+      - --service-cluster-ip-range={{ kubernetes_services_cidr }}
       - --tls-cert-file={{ kubernetes_certificates_cert_path }}
       - --tls-private-key-file={{ kubernetes_certificates_key_path }}
-      - --insecure-port=8080
-      - --secure-port=6443
-      - --allow-privileged
-      - --advertise-address={{ internal_ipv4 }}
-      - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
-      - --anonymous-auth=false
-      - --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true
       - --v=2
     ports:
     - containerPort: 6443
