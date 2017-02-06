@@ -27,6 +27,11 @@ data:
         "kubernetes": {
             "kubeconfig": "{{ kubernetes_kubeconfig_path }}"
         }
+{% if enable_calico_policy is defined and enable_calico_policy|bool == true %}
+        "policy": {
+          "type": "k8s"		
+        },
+{% endif %}
     }
 
   # The default IP Pool to be created for the cluster.

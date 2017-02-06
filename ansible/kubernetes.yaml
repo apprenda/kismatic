@@ -23,14 +23,14 @@
   - include: _kube-proxy.yaml
   - include: _calico.yaml
   - include: _validate-controlplane.yaml
-  - include: _storage.yaml
-    when: configure_storage|bool == true
-  - include: _nfs-volumes.yaml
-    when: nfs_volumes|length > 0
   - include: _kube-dns.yaml
   - include: _kube-ingress.yaml
     when: configure_ingress|bool == true
   - include: _kube-dashboard.yaml
+  - include: _storage.yaml
+    when: configure_storage|bool == true
+  - include: _nfs-volumes.yaml
+    when: nfs_volumes|length > 0
   # add-ons
   - include: _addon-network-policy.yaml
     when: enable_calico_policy|bool == true
