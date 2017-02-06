@@ -1,5 +1,5 @@
-- debug:
-    var: item.1
+# - debug:
+#     var: item.1
 - set_fact:
     nfs_index: "{{item.0}}"
     nfs_host: "{{item.1.host}}"
