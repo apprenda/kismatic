@@ -14,6 +14,7 @@ spec:
     imagePullPolicy: IfNotPresent
     command:
       - kube-proxy
+      - --cluster-cidr={{ kubernetes_pods_cidr }}
       - --hostname-override={{ inventory_hostname }}
       - --kubeconfig={{ kubernetes_kubeconfig_path }}
       - --master={{ kubernetes_master_ip }}
