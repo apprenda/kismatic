@@ -52,6 +52,9 @@ func runServer(out io.Writer, commandName string, port int, nodeRoles string, en
 		return fmt.Errorf("error starting up inspector server: %v", err)
 	}
 	fmt.Fprintf(out, "Inspector is listening on port %d\n", port)
+	fmt.Fprintf(out, "Node roles: %s\n", nodeRoles)
+	fmt.Fprintf(out, "Enforce packages: %v\n", enforcePackages)
+	fmt.Fprintf(out, "Disconnected installation: %v\n", disconnectedInstallation)
 	fmt.Fprintf(out, "Run %s from another node to run checks remotely: %[1]s client [NODE_IP]:%d\n", commandName, port)
 	if err := s.Start(); err != nil {
 		return err
