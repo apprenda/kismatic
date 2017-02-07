@@ -27,18 +27,18 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: kube-dns
-    version: {{kubedns_version_id}}
+    version: {{kubedns_version}}
     kubernetes.io/cluster-service: "true"
 spec:
   replicas: 1
   selector:
     k8s-app: kube-dns
-    version: {{kubedns_version_id}}
+    version: {{kubedns_version}}
   template:
     metadata:
       labels:
         k8s-app: kube-dns
-        version: {{kubedns_version_id}}
+        version: {{kubedns_version}}
         kubernetes.io/cluster-service: "true"
     spec:
       volumes:

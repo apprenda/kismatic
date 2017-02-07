@@ -7,7 +7,6 @@ kismatic_docker_engine_apt_version: 1.11.2-0~xenial
 calico_docker_version: "v1.0.0"
 calico_kube_policy_controller_version: "v0.4.0"
 kubedns_version: "1.9"
-kubedns_version_id: "v19" # Used for the kube-dns replication controller's version label
 kube_dnsmasq_version: "1.4"
 exechealthz_version: "1.2"
 kubernetes_dashboard_version: "v1.5.1"
