@@ -12,7 +12,7 @@
     until: phase|success and phase.stdout=="Running"
     retries: 1
     delay: 6
-    ignore_errors: yes # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
   - name: verify all kube-apiserver pods are running
     fail:
       msg: "Timed out waiting for all kube-apiserver pods to be running."
@@ -32,7 +32,7 @@
     until: phase|success and phase.stdout=="Running"
     retries: 10
     delay: 6
-    ignore_errors: yes # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
   - name: verify all kube-scheduler pods are running
     fail:
       msg: "Timed out waiting for all kube-scheduler pods to be running."
@@ -52,7 +52,7 @@
     until: phase|success and phase.stdout=="Running"
     retries: 10
     delay: 6
-    ignore_errors: yes # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
   - name: verify all kube-controller-manager pods are running
     fail:
       msg: "Timed out waiting for all kube-controller-manager pods to be running."
@@ -72,7 +72,7 @@
     until: phase|success and phase.stdout=="Running"
     retries: 10
     delay: 6
-    ignore_errors: yes # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
   - name: verify all kube-proxy pods are running
     fail:
       msg: "Timed out waiting for all kube-proxy pods to be running."
@@ -91,7 +91,7 @@
     until: desiredPods.stdout|int == readyPods.stdout|int
     retries: 10
     delay: 6
-    ignore_errors: yes # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
   - name: verify all calico pods are running
     fail:
       msg: "Timed out waiting for all calico pods to be running."
