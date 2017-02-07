@@ -1,4 +1,12 @@
 ---
+  - name: "Upgrade Network Policy Controller"
+    hosts: master[0]
+    any_errors_fatal: true
+    remote_user: root
+    become_method: sudo
+    roles:
+      - addon-network-policy
+
   - name: "Upgrade Kubernetes DNS"
     hosts: master[0]
     any_errors_fatal: true
