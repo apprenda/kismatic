@@ -8,7 +8,7 @@
     command: kubectl apply -f /tmp/kubernetes-dns.yaml
     register: out
   - name: wait until at least one DNS pod is ready
-    command: kubectl get rc kube-dns-{{kubedns_version_id}} --namespace kube-system -o jsonpath='{.status.readyReplicas}'
+    command: kubectl get rc kube-dns --namespace kube-system -o jsonpath='{.status.readyReplicas}'
     register: readyReplicas
     until: readyReplicas.stdout|int > 0
     retries: 24

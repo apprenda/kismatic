@@ -23,7 +23,7 @@ spec:
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: kube-dns-{{kubedns_version_id}}
+  name: kube-dns
   namespace: kube-system
   labels:
     k8s-app: kube-dns
