@@ -6,10 +6,5 @@
     roles:
       - role: docker-registry-container
 
-  - name: Load Docker Images Into Private Registry
-    hosts: master[0]
-    remote_user: root
-    become_method: sudo
-    run_once: true
-    roles:
-      - role: docker-registry-images
+  - include: _docker-registry-images.yaml
+    when: use_private_docker_registry|bool == true and disconnected_installation|bool == true # only load images if offline
