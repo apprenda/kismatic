@@ -73,8 +73,6 @@
       - group_vars/all.yaml
     roles:
       - role: docker
-      - role: docker-registry-cert
-        when: use_private_docker_registry is defined and use_private_docker_registry|bool == true
 
   - name: Upgrade Cluster Network
     hosts: master:worker:ingress:storage
