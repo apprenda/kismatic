@@ -8,12 +8,12 @@ etcd_apt_version: 3.1.0
 docker_engine_yum_version: 1.11.2-1.el7.centos
 docker_engine_apt_version: 1.11.2-0~xenial
 
-calico_docker_version: "v1.0.2"
+calico_node_version: "v1.0.2"
 calico_ctl_version: "v1.0.2"
 calico_cni_version: "v1.5.6"
 calico_kube_policy_controller_version: "v0.5.2"
 kubedns_version: "1.9"
-kubedns_version_id: "v19" # Used for the kube-dns replication controller's name (e.g. kube-dns-v19)
+kubedns_version_id: "v19" # Used for the kube-dns replication controller's label
 kube_dnsmasq_version: "1.4"
 exechealthz_version: "1.2"
 kubernetes_dashboard_version: "v1.5.1"
@@ -139,8 +139,8 @@ kube_apiserver_orig_img: gcr.io/google-containers/kube-apiserver-amd64:{{kuberne
 kube_apiserver_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-apiserver-amd64:{{kubernetes_version}}"
 kube_apiserver_img: '{% if load_private_images|bool == true %}{{ kube_apiserver_priv_img }}{% else %}{{ kube_apiserver_orig_img }}{% endif %}'
 
-calico_node_orig_img: calico/node:{{calico_docker_version}}
-calico_node_priv_img: "{{ docker_registry_full_url }}/calico/node:{{calico_docker_version}}"
+calico_node_orig_img: calico/node:{{calico_node_version}}
+calico_node_priv_img: "{{ docker_registry_full_url }}/calico/node:{{calico_node_version}}"
 calico_node_img: '{% if load_private_images|bool == true %}{{ calico_node_priv_img }}{% else %}{{ calico_node_orig_img }}{% endif %}'
 
 calico_ctl_orig_img: calico/ctl:{{calico_ctl_version}}

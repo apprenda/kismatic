@@ -1,8 +1,8 @@
 [Unit]
 Description=Kubernetes Kubelet
 Documentation=https://github.com/GoogleCloudPlatform/kubernetes
+Wants=docker.service
 After=docker.service
-Requires=docker.service
 
 [Service]
 Environment=INTERNAL_IP={{ internal_ipv4 }}
