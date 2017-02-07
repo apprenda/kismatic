@@ -11,12 +11,15 @@
       - reload services
       - restart kubelet service
 
-  - meta: flush_handlers  #Run handlers
-
   # force_kubelet_restart=true to force restart
   - name: force restart kubelet
-    command: systemctl restart kubelet.service
+    command: /bin/true
+    notify:
+      - reload services
+      - restart kubelet service
     when: force_kubelet_restart is defined and force_kubelet_restart|bool == true
+
+  - meta: flush_handlers  #Run handlers
 
   - name: verify kubelet is running
     command: systemctl status kubelet

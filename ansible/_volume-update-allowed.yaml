@@ -1,7 +1,7 @@
 ---
   - hosts: storage[0]
     any_errors_fatal: true
-    name: "Update allowed nodes on all volumes"
+    name: "Update Allowed Nodes on All Volumes"
     become: yes
     vars_files:
       - group_vars/all.yaml

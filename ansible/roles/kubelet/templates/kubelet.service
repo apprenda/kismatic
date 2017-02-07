@@ -36,7 +36,7 @@ ExecStart=/usr/bin/kubelet \
   --network-plugin-dir=${NETWORK_PLUGIN_DIR} \
   --v=2
 Restart=on-failure
-RestartSec=10
+RestartSec=3
 WorkingDirectory=/root/
 
 [Install]

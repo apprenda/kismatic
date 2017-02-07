@@ -1,7 +1,7 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: "Run Docker"
+    name: "Start Docker"
     remote_user: root
     become_method: sudo
     vars_files:

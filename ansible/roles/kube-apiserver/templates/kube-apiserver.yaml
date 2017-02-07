@@ -22,16 +22,15 @@ spec:
       - --authorization-mode=ABAC
       - --authorization-policy-file={{ kubernetes_authorization_policy_path }}
       - --basic-auth-file={{ kubernetes_basic_auth_path }}
-      - --insecure-bind-address=127.0.0.1
       - --bind-address=0.0.0.0
       - --client-ca-file={{ kubernetes_certificates_ca_path }}
+      - --enable-swagger-ui=true
       - --etcd-cafile={{ kubernetes_certificates_ca_path }}
       - --etcd-certfile={{ kubernetes_certificates_cert_path }}
       - --etcd-keyfile={{ kubernetes_certificates_key_path}}
       - --etcd-servers={{ etcd_k8s_cluster_ip_list }}
       - --insecure-bind-address=127.0.0.1
       - --insecure-port=8080
-      - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
       - --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true
       - --secure-port=6443
       - --service-account-key-file={{ kubernetes_certificates_service_account_key_path }}

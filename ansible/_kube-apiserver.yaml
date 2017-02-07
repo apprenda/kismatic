@@ -1,7 +1,7 @@
 ---
   - hosts: master
     any_errors_fatal: true
-    name: "Install Kubernetes API Server"
+    name: "Start Kubernetes API Server"
     remote_user: root
     become_method: sudo
     vars_files:
