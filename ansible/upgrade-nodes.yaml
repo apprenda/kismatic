@@ -66,6 +66,7 @@
 
   - name: Upgrade Docker
     hosts: master:worker:ingress:storage
+    serial: 1
     any_errors_fatal: true
     remote_user: root
     become_method: sudo
@@ -76,6 +77,7 @@
 
   - name: Upgrade Cluster Network
     hosts: master:worker:ingress:storage
+    serial: 1
     any_errors_fatal: true
     remote_user: root
     become_method: sudo
