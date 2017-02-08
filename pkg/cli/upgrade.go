@@ -136,6 +136,11 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 		return fmt.Errorf("Failed to upgrade cluster services: %v", err)
 	}
 
+	util.PrintHeader(out, "Smoke Test Cluster", '=')
+	if err := executor.RunSmokeTest(plan); err != nil {
+		return fmt.Errorf("Smoke test failed: %v", err)
+	}
+
 	fmt.Fprintln(out)
 	util.PrintColor(out, util.Green, "Upgrade complete\n")
 	fmt.Fprintln(out)
