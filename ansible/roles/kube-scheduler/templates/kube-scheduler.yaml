@@ -31,7 +31,7 @@ spec:
         path: /healthz
         port: 10251
       initialDelaySeconds: 15
-      timeoutSeconds: 1
+      timeoutSeconds: 5
   volumes:
     - name: "kubeconfig"
       hostPath:

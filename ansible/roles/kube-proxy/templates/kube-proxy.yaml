@@ -31,6 +31,13 @@ spec:
       - mountPath: /etc/kubernetes
         name: "etc-kube-ssl"
         readOnly: true
+    livenessProbe:
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10249
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
   volumes:
     - name: "ssl-certs"
       hostPath:

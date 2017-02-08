@@ -27,8 +27,8 @@ spec:
             path: /healthz
             port: 10254
             scheme: HTTP
-          initialDelaySeconds: 10
-          timeoutSeconds: 1
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
         # use downward API
         env:
           - name: POD_NAME

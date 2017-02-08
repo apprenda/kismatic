@@ -30,7 +30,7 @@ spec:
         path: /healthz
         port: 10252
       initialDelaySeconds: 15
-      timeoutSeconds: 1
+      timeoutSeconds: 5
     volumeMounts:
     - mountPath: "{{ kubernetes_kubeconfig_path }}"
       name: "kubeconfig"
