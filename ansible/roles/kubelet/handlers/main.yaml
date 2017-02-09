@@ -1,16 +1,8 @@
 ---
   - name: reload services
     command: systemctl daemon-reload
-  - name: enable kubelet
-    command: systemctl enable kubelet.service
   - name: restart kubelet service
     service:
       name: kubelet.service
       state: restarted
       enabled: yes
-  - name: verify kubelet is running
-    command: systemctl status kubelet
-    register: running
-    until: running|success
-    retries: 3
-    delay: 5

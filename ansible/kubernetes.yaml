@@ -1,39 +1,37 @@
 ---
   # Contains list of playbooks to setup a HA enterprise ready kubernetes cluster
   - include: _all.yaml
-  - include: _packages.yaml
-    when: allow_package_installation|bool == true
   - include: _hosts.yaml
     when: modify_hosts_file|bool == true
+  - include: _certs.yaml
+  - include: _packages.yaml
+    when: allow_package_installation|bool == true
   # etcd
   - include: _etcd-k8s.yaml
   - include: _etcd-networking.yaml
-  # common prereqs
+  # docker
   - include: _docker.yaml
   - include: _docker-registry-container.yaml
     when: setup_internal_docker_registry|bool == true
   - include: _docker-registry-images.yaml
     when: use_private_docker_registry|bool == true and disconnected_installation|bool == true # only load images if offline
-  - include: _kubenode-cert.yaml
-  # master:worker:ingress
-  - include: _calico.yaml
-  # master
-  - include: _apiserver.yaml
-  - include: _scheduler.yaml
-  - include: _controller-manager.yaml
+  # kubernetes
   - include: _kubelet.yaml
-  # master:worker:ingress
-  - include: _proxy.yaml
+  - include: _kube-apiserver.yaml
+  - include: _kube-scheduler.yaml
+  - include: _kube-controller-manager.yaml
+  - include: _kube-proxy.yaml
+  - include: _calico.yaml
+  - include: _validate-control-plane.yaml
+  - include: _kube-dns.yaml
+  - include: _kube-ingress.yaml
+    when: configure_ingress|bool == true
+  - include: _kube-dashboard.yaml
   - include: _storage.yaml
     when: configure_storage|bool == true
+  - include: _nfs-volumes.yaml
+    when: nfs_volumes|length > 0
   - include: _update-version.yaml
-  # ----- CLUSTER LEVEL WORK -----
-  # add ons
+  # add-ons
   - include: _addon-network-policy.yaml
     when: enable_calico_policy|bool == true
-  - include: _addon-kubernetes-dns.yaml
-  - include: _addon-kubernetes-ingress.yaml
-    when: configure_ingress|bool == true
-  - include: _addon-kubernetes-dashboard.yaml
-  - include: _addon-nfs-volumes.yaml
-    when: nfs_volumes|length > 0

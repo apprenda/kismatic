@@ -19,7 +19,7 @@ var _ = Describe("install step commands", func() {
 				err := installKismaticMini(node, sshKey)
 				Expect(err).ToNot(HaveOccurred())
 
-				c := exec.Command("./kismatic", "install", "step", "_apiserver.yaml", "-f", "kismatic-testing.yaml")
+				c := exec.Command("./kismatic", "install", "step", "_kube-apiserver.yaml", "-f", "kismatic-testing.yaml")
 				c.Stdout = os.Stdout
 				c.Stderr = os.Stderr
 				err = c.Run()

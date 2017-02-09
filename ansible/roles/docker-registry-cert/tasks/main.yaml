@@ -21,9 +21,3 @@
       owner: "{{ docker_certificates_owner }}"
       group: "{{ docker_certificates_group }}"
       mode: "{{ docker_certificate_mode }}"
-
-  - name: restart docker service
-    service:
-      name: "docker"
-      state: restarted
-      enabled: yes

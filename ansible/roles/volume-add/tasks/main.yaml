@@ -14,7 +14,7 @@
       storage_node_space: available
       free_disk_space_bytes: "{{ item.size_available }}"
     when: "{{ item.mount == volume_mount and item.size_available > volume_quota_bytes|float }}"
-    with_items: ansible_mounts
+    with_items: "{{ ansible_mounts }}"
 
   # Groups the nodes into "available_storage_nodes" and "unavailable_storage_nodes"
   - name: create group of nodes that have enough disk space

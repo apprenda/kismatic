@@ -1,7 +1,7 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: "Install Docker"
+    name: "Start Docker"
     remote_user: root
     become_method: sudo
     vars_files:
@@ -9,5 +9,3 @@
 
     roles:
       - docker
-      - role: docker-registry-cert
-        when: use_private_docker_registry is defined and use_private_docker_registry|bool == true

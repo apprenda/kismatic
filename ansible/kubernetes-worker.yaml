@@ -1,12 +1,12 @@
 ---
   - include: _all.yaml
-  - include: _packages.yaml
-    when: allow_package_installation|bool == true
   - include: _hosts.yaml
     when: modify_hosts_file|bool == true
+  - include: _certs.yaml
+  - include: _packages.yaml
+    when: allow_package_installation|bool == true
   - include: _docker.yaml
-  - include: _kubenode-cert.yaml
-  - include: _calico.yaml
   - include: _kubelet.yaml
-  - include: _proxy.yaml
+  - include: _kube-proxy.yaml
+  - include: _calico.yaml
   - include: _worker-smoke-test.yaml

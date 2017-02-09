@@ -1,0 +1,16 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: "Deploy Cluster Certificates"
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - kubeconfig
+      - kubenode-cert
+      - role: docker-registry-container-cert
+        when: setup_internal_docker_registry is defined and setup_internal_docker_registry|bool == true
+      - role: docker-registry-cert
+        when: use_private_docker_registry is defined and use_private_docker_registry|bool == true

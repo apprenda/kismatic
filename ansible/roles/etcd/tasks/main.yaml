@@ -1,22 +1,20 @@
 ---
   # install and start etcd service
-  - name: copy {{ etcd_service_file }} to remote
+  - name: copy etcd.service to remote
     template:
-      src: "{{ etcd_service_template_name }}"
-      dest: "{{ etcd_service_path }}"
+      src: "etcd.service"
+      dest: "{{ init_system_dir }}/{{ etcd_service_name }}"
       owner: "{{ etcd_service_owner }}"
       group: "{{ etcd_service_group }}"
       mode: "{{ etcd_service_mode }}"
     notify:
       - reload services
-      - enable etcd
-      - restart etcd service
+      - start etcd service
 
   # force_etcd_restart=true to force restart
   - name: force restart etcd
     command: /bin/true
     notify:
-      - enable etcd
       - restart etcd service
     when: force_etcd_restart is defined and force_etcd_restart|bool == true
 

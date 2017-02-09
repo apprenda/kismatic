@@ -1,11 +1,17 @@
 #===============================================================================
 # VERSIONS
-kismatic_yum_version: 1.5.2_3-1
-kismatic_apt_version: 1.5.2-3
-kismatic_docker_engine_apt_version: 1.11.2-0~xenial
+kubernetes_version: v1.5.2
+kismatic_yum_version: 1.5.2_4-1
+kismatic_apt_version: 1.5.2-4
+etcd_yum_version: 3.1.0-1
+etcd_apt_version: 3.1.0
+docker_engine_yum_version: 1.11.2-1.el7.centos
+docker_engine_apt_version: 1.11.2-0~xenial
 
-calico_docker_version: "v1.0.0"
-calico_kube_policy_controller_version: "v0.4.0"
+calico_node_version: "v1.0.2"
+calico_ctl_version: "v1.0.2"
+calico_cni_version: "v1.5.6"
+calico_kube_policy_controller_version: "v0.5.2"
 kubedns_version: "1.9"
 kube_dnsmasq_version: "1.4"
 exechealthz_version: "1.2"
@@ -23,7 +29,6 @@ glusterfs_server_version_ubuntu: "3.8.7-ubuntu1~xenial1"
 glusterfs_server_version: "{% if ansible_os_family == 'RedHat' %}-{{ glusterfs_server_version_rhel }}{% elif ansible_os_family == 'Ubuntu' %}={{ glusterfs_server_version_ubuntu }}{% endif %}"
 #===============================================================================
 # common variables for all hosts
-temprary_download_dir: /tmp/kismatic
 init_system_dir: /etc/systemd/system/
 init_system_file_extenstion: service
 bin_dir: /usr/bin
@@ -43,10 +48,6 @@ etcd_certificates_mode: 0660
 etcd_install_executable_owner: 1000
 etcd_install_executable_group: 1000
 etcd_install_executable_mode: 0775
-# etcd-install:etcd.service.j2
-etcd_service_template_name: etcd.service.j2
-etcd_service_file: "{{ etcd_service_name }}.{{ init_system_file_extenstion }}"
-etcd_service_path: "{{ init_system_dir }}/{{ etcd_service_file }}"
 etcd_service_owner: root
 etcd_service_group: root
 etcd_service_mode: 0664
@@ -78,13 +79,12 @@ kubernetes_dns_service_addr: https://{{kubernetes_dns_service_ip}}:{{kubernetes_
 # kubernetes
 # directories
 kubernetes_install_dir: /etc/kubernetes
-kubernetes_service_dir: "{{ init_system_dir }}"
 network_plugin_dir: /etc/cni/net.d
-kubernetes_lib_dir: /var/lib/kubernetes
+kubernetes_auth_dir: /etc/kubernetes/auth
 kubelet_lib_dir: /var/lib/kubelet
 # paths
-kubernetes_basic_auth_path: "{{kubernetes_lib_dir}}/basicauth.csv"
-kubernetes_authorization_policy_path: "{{kubernetes_lib_dir}}/authorization-policy.json"
+kubernetes_basic_auth_path: "{{kubernetes_auth_dir}}/basicauth.csv"
+kubernetes_authorization_policy_path: "{{kubernetes_auth_dir}}/authorization-policy.json"
 kubernetes_kubeconfig_path: "{{kubelet_lib_dir}}/kubeconfig"
 # file modes
 kubernetes_executable_mode: 0775
@@ -115,17 +115,44 @@ kubernetes_certificates_key_path: "{{ kubernetes_install_dir }}/{{ kubernetes_ce
 kubernetes_certificates_service_account_cert_path: "{{ kubernetes_install_dir }}/{{ kubernetes_certificates_service_account_cert_file_name }}"
 kubernetes_certificates_service_account_key_path: "{{ kubernetes_install_dir }}/{{ kubernetes_certificates_service_account_key_file_name }}"
 # etcd IPs
-#etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}{% if hostvars[host]['inventory_hostname'] is defined %}https://{{ host }}:{{ etcd_networking_client_port }}{% if not loop.last %},{% endif %}{% endif %}{% endfor %}"
-#etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}{% if hostvars[host]['inventory_hostname'] is defined %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endif %}{% endfor %}"
 etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_networking_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 
 #===============================================================================
 docker_registry_full_url: "{{ docker_registry_address }}:{{ docker_registry_port }}"
 load_private_images: "{{ use_private_docker_registry is defined and use_private_docker_registry|bool == true and disconnected_installation is defined and disconnected_installation|bool == true }}"
-calico_node_orig_img: calico/node:{{calico_docker_version}}
-calico_node_priv_img: "{{ docker_registry_full_url }}/calico/node:{{calico_docker_version}}"
+
+kube_proxy_orig_img: gcr.io/google-containers/kube-proxy-amd64:{{kubernetes_version}}
+kube_proxy_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-proxy-amd64:{{kubernetes_version}}"
+kube_proxy_img: '{% if load_private_images|bool == true %}{{ kube_proxy_priv_img }}{% else %}{{ kube_proxy_orig_img }}{% endif %}'
+
+kube_controller_manager_orig_img: gcr.io/google-containers/kube-controller-manager-amd64:{{kubernetes_version}}
+kube_controller_manager_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-controller-manager-amd64:{{kubernetes_version}}"
+kube_controller_manager_img: '{% if load_private_images|bool == true %}{{ kube_controller_manager_priv_img }}{% else %}{{ kube_controller_manager_orig_img }}{% endif %}'
+
+kube_scheduler_orig_img: gcr.io/google-containers/kube-scheduler-amd64:{{kubernetes_version}}
+kube_scheduler_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-scheduler-amd64:{{kubernetes_version}}"
+kube_scheduler_img: '{% if load_private_images|bool == true %}{{ kube_scheduler_priv_img }}{% else %}{{ kube_scheduler_orig_img }}{% endif %}'
+
+kube_apiserver_orig_img: gcr.io/google-containers/kube-apiserver-amd64:{{kubernetes_version}}
+kube_apiserver_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-apiserver-amd64:{{kubernetes_version}}"
+kube_apiserver_img: '{% if load_private_images|bool == true %}{{ kube_apiserver_priv_img }}{% else %}{{ kube_apiserver_orig_img }}{% endif %}'
+
+calico_node_orig_img: calico/node:{{calico_node_version}}
+calico_node_priv_img: "{{ docker_registry_full_url }}/calico/node:{{calico_node_version}}"
 calico_node_img: '{% if load_private_images|bool == true %}{{ calico_node_priv_img }}{% else %}{{ calico_node_orig_img }}{% endif %}'
+
+calico_ctl_orig_img: calico/ctl:{{calico_ctl_version}}
+calico_ctl_priv_img: "{{ docker_registry_full_url }}/calico/ctl:{{calico_ctl_version}}"
+calico_ctl_img: '{% if load_private_images|bool == true %}{{ calico_ctl_priv_img }}{% else %}{{ calico_ctl_orig_img }}{% endif %}'
+
+calico_cni_orig_img: calico/cni:{{calico_cni_version}}
+calico_cni_priv_img: "{{ docker_registry_full_url }}/calico/cni:{{calico_cni_version}}"
+calico_cni_img: '{% if load_private_images|bool == true %}{{ calico_cni_priv_img }}{% else %}{{ calico_cni_orig_img }}{% endif %}'
+
+calico_kube_policy_controller_orig_img: calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}
+calico_kube_policy_controller_priv_img: "{{ docker_registry_full_url }}/calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}"
+calico_kube_policy_controller_img: '{% if load_private_images|bool == true %}{{ calico_kube_policy_controller_priv_img }}{% else %}{{ calico_kube_policy_controller_orig_img }}{% endif %}'
 
 defaultbackend_orig_img: gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}
 defaultbackend_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}"
@@ -146,10 +173,6 @@ busybox_img: '{% if load_private_images|bool == true %}{{ busybox_priv_img }}{% 
 pause_orig_img: gcr.io/google_containers/pause-amd64:{{ pause_version }}
 pause_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/pause-amd64:{{ pause_version }}"
 pause_img: '{% if load_private_images|bool == true %}{{ pause_priv_img }}{% else %}{{ pause_orig_img }}{% endif %}'
-
-calico_kube_policy_controller_orig_img: calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}
-calico_kube_policy_controller_priv_img: "{{ docker_registry_full_url }}/calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}"
-calico_kube_policy_controller_img: '{% if load_private_images|bool == true %}{{ calico_kube_policy_controller_priv_img }}{% else %}{{ calico_kube_policy_controller_orig_img }}{% endif %}'
 
 kubedns_orig_img: gcr.io/google_containers/kubedns-amd64:{{ kubedns_version }}
 kubedns_priv_img: "{{ docker_registry_full_url }}/kubedns-amd64:{{ kubedns_version }}"
@@ -182,11 +205,6 @@ deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/publi
 # yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
 # deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
 # deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
-# Uncomment below to use local repo
-# yum_repository_url: http://192.168.200.80/
-# yum_gpg_key_url: http://192.168.200.80/public.key
-# deb_repository_url: http://192.168.200.80/
-# yumdeb_gpg_key_url: http://192.168.200.80/public.key
 #===============================================================================
 # PV configs for monitoring and logging
 #pv_monitoring_nfs_server_ip: "192.168.99.20"
