@@ -455,6 +455,44 @@ func TestValidatePlanNFSDupes(t *testing.T) {
 	assertInvalidPlan(t, p)
 }
 
+func TestValidateNFSVolume(t *testing.T) {
+	tests := []struct {
+		host  string
+		path  string
+		valid bool
+	}{
+		{
+			host:  "10.10.2.10",
+			path:  "/foo",
+			valid: true,
+		},
+		{
+			host:  "10.10.2.10",
+			path:  "",
+			valid: false,
+		},
+		{
+			host:  "10.10.2.10",
+			path:  "../someRelativePath",
+			valid: false,
+		},
+		{
+			host:  "",
+			path:  "/foo",
+			valid: false,
+		},
+	}
+	for _, test := range tests {
+		v := NFSVolume{
+			Host: test.host,
+			Path: test.path,
+		}
+		if valid, _ := v.validate(); valid != test.valid {
+			t.Errorf("Expected valid = %v, but got %v", test.valid, valid)
+		}
+	}
+}
+
 func TestValidatePlanCerts(t *testing.T) {
 	p := &validPlan
 

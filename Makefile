@@ -10,6 +10,8 @@ endif
 # Setup some useful vars
 HOST_GOOS = $(shell go env GOOS)
 HOST_GOARCH = $(shell go env GOARCH)
+
+# Versions of external dependencies
 GLIDE_VERSION = v0.11.1
 ANSIBLE_VERSION = 2.1.4.0
 PROVISIONER_VERSION = v1.1
@@ -92,3 +94,11 @@ docs/kismatic-cli:
 	mkdir docs/kismatic-cli
 	go run cmd/kismatic-docs/main.go
 	cp docs/kismatic-cli/kismatic.md docs/kismatic-cli/README.md
+
+version: FORCE
+	@echo VERSION=$(VERSION)
+	@echo GLIDE_VERSION=$(GLIDE_VERSION)
+	@echo ANSIBLE_VERSION=$(ANSIBLE_VERSION)
+	@echo PROVISIONER_VERSION=$(PROVISIONER_VERSION)
+
+FORCE:

@@ -43,6 +43,8 @@ type catchAllRule struct {
 	ContentRegex      string   `yaml:"contentRegex"`
 	Timeout           string   `yaml:"timeout"`
 	SupportedVersions []string `yaml:"supportedVersions"`
+	Path              string   `yaml:"path"`
+	MinimumBytes      string   `yaml:"minimumBytes"`
 }
 
 // UnmarshalRulesYAML unmarshals the data into a list of rules
@@ -91,6 +93,13 @@ func buildRule(catchAll catchAllRule) (Rule, error) {
 		}
 		r.Meta = meta
 		return r, nil
+	case "packageavailableupgrade":
+		r := PackageAvailableUpgrade{
+			PackageName:    catchAll.PackageName,
+			PackageVersion: catchAll.PackageVersion,
+		}
+		r.Meta = meta
+		return r, nil
 	case "executableinpath":
 		r := ExecutableInPath{
 			Executable: catchAll.Executable,
@@ -123,5 +132,13 @@ func buildRule(catchAll catchAllRule) (Rule, error) {
 		}
 		r.Meta = meta
 		return r, nil
+	case "freespace":
+		r := FreeSpace{
+			Path:         catchAll.Path,
+			MinimumBytes: catchAll.MinimumBytes,
+		}
+		r.Meta = meta
+		return r, nil
+
 	}
 }

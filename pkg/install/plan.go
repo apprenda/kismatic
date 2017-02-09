@@ -174,15 +174,6 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 		}
 	}
 
-	p.NFS = NFS{
-		Volumes: []NFSVolume{
-			NFSVolume{
-				Host: "",
-				Path: "/",
-			},
-		},
-	}
-
 	if err := w.Write(p); err != nil {
 		return fmt.Errorf("error writing installation plan template: %v", err)
 	}

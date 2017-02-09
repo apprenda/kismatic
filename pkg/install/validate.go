@@ -377,11 +377,26 @@ func (nfs *NFS) validate() (bool, []error) {
 	v := newValidator()
 	uniqueVolumes := make(map[NFSVolume]bool)
 	for _, vol := range nfs.Volumes {
+		v.validate(vol)
 		if _, ok := uniqueVolumes[vol]; ok {
 			v.addError(fmt.Errorf("Duplicate NFS volume %v", vol))
 		} else {
 			uniqueVolumes[vol] = true
 		}
+	}
+	return v.valid()
+}
+
+func (nfsVol NFSVolume) validate() (bool, []error) {
+	v := newValidator()
+	if nfsVol.Host == "" {
+		v.addError(errors.New("NFS volume host cannot be empty"))
+	}
+	if nfsVol.Path == "" {
+		v.addError(errors.New("NFS volume path cannot be empty"))
+	}
+	if len(nfsVol.Path) > 0 && nfsVol.Path[0] != '/' {
+		v.addError(errors.New("NFS volume path must be absolute"))
 	}
 	return v.valid()
 }

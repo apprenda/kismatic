@@ -7,12 +7,17 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/cli"
+	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
 )
 
 // Set via linker flag
 var version string
 var buildDate string
+
+func init() {
+	install.SetVersion(version)
+}
 
 func main() {
 	rand.Seed(time.Now().UnixNano())

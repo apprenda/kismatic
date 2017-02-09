@@ -44,6 +44,9 @@ type ClusterPlan struct {
 		ExpectedCount int `yaml:"expected_count"`
 		Nodes         []NodePlan
 	}
+	NFS struct {
+		Volumes []NFSVolume `yaml:"nfs_volume"`
+	}
 }
 
 type NodePlan struct {

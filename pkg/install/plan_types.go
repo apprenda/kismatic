@@ -204,3 +204,38 @@ func firstIfItExists(nodes []Node) *Node {
 	}
 	return nil
 }
+
+func (p *Plan) GetRolesForIP(ip string) []string {
+	allRoles := []string{}
+
+	if hasIP(&p.Master.Nodes, ip) {
+		allRoles = append(allRoles, "master")
+	}
+
+	if hasIP(&p.Etcd.Nodes, ip) {
+		allRoles = append(allRoles, "etcd")
+	}
+
+	if hasIP(&p.Worker.Nodes, ip) {
+		allRoles = append(allRoles, "worker")
+	}
+
+	if hasIP(&p.Ingress.Nodes, ip) {
+		allRoles = append(allRoles, "ingress")
+	}
+
+	if hasIP(&p.Storage.Nodes, ip) {
+		allRoles = append(allRoles, "storage")
+	}
+
+	return allRoles
+}
+
+func hasIP(nodes *[]Node, ip string) bool {
+	for _, node := range *nodes {
+		if node.IP == ip {
+			return true
+		}
+	}
+	return false
+}

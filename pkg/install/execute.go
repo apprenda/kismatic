@@ -192,6 +192,7 @@ func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan) (*ansible.ClusterCatal
 		EnableCalicoPolicy:        p.Cluster.Networking.PolicyEnabled,
 		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
 		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
+		TargetVersion:             AboutKismatic.ShortVersion,
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
 	}
 

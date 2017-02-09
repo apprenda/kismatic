@@ -36,6 +36,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	if etcdNodes <= 0 {
 		return fmt.Errorf("The number of etcd nodes must be greater than zero")
 	}
+
 	masterNodes, err := util.PromptForInt(in, out, "Number of master nodes", 2)
 	if err != nil {
 		return fmt.Errorf("Error reading number of master nodes: %v", err)
@@ -43,6 +44,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	if masterNodes <= 0 {
 		return fmt.Errorf("The number of master nodes must be greater than zero")
 	}
+
 	workerNodes, err := util.PromptForInt(in, out, "Number of worker nodes", 3)
 	if err != nil {
 		return fmt.Errorf("Error reading number of worker nodes: %v", err)
@@ -50,6 +52,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	if workerNodes <= 0 {
 		return fmt.Errorf("The number of worker nodes must be greater than zero")
 	}
+
 	ingressNodes, err := util.PromptForInt(in, out, "Number of ingress nodes (optional, set to 0 if not required)", 2)
 	if err != nil {
 		return fmt.Errorf("Error reading number of ingress nodes: %v", err)
@@ -57,12 +60,21 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	if ingressNodes < 0 {
 		return fmt.Errorf("The number of ingress nodes must be greater than or equal to zero")
 	}
+
 	storageNodes, err := util.PromptForInt(in, out, "Number of storage nodes (optional, set to 0 if not required)", 0)
 	if err != nil {
 		return fmt.Errorf("Error reading number of storage nodes: %v", err)
 	}
 	if storageNodes < 0 {
 		return fmt.Errorf("The number of storage nodes must be greater than or equal to zero")
+	}
+
+	nfsVolumes, err := util.PromptForInt(in, out, "Number of existing NFS volumes to be attached", 0)
+	if err != nil {
+		return fmt.Errorf("Error reading number of nfs volumes: %v", err)
+	}
+	if nfsVolumes < 0 {
+		return fmt.Errorf("The number of nfs volumes must be greater than or equal to zero")
 	}
 
 	fmt.Fprintln(out)
@@ -72,9 +84,19 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	fmt.Fprintf(out, "- %d worker nodes\n", workerNodes)
 	fmt.Fprintf(out, "- %d ingress nodes\n", ingressNodes)
 	fmt.Fprintf(out, "- %d storage nodes\n", storageNodes)
+	fmt.Fprintf(out, "- %d nfs volumes\n", nfsVolumes)
 	fmt.Fprintln(out)
 
-	plan := buildPlan(etcdNodes, masterNodes, workerNodes, ingressNodes, storageNodes)
+	template := planTemplate{
+		etcdNodes:    etcdNodes,
+		masterNodes:  masterNodes,
+		workerNodes:  workerNodes,
+		ingressNodes: ingressNodes,
+		storageNodes: storageNodes,
+		nfsVolumes:   nfsVolumes,
+	}
+
+	plan := buildPlan(template)
 	// Write out the plan
 	if err = install.WritePlanTemplate(plan, planner); err != nil {
 		return fmt.Errorf("error planning installation: %v", err)
@@ -84,30 +106,44 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	return nil
 }
 
-func buildPlan(etcdNodes, masterNodes, workerNodes, ingressNodes, storageNodes int) *install.Plan {
+type planTemplate struct {
+	etcdNodes    int
+	masterNodes  int
+	workerNodes  int
+	ingressNodes int
+	storageNodes int
+	nfsVolumes   int
+}
+
+func buildPlan(template planTemplate) *install.Plan {
 	// Create a plan
 	masterNodeGroup := install.MasterNodeGroup{}
-	masterNodeGroup.ExpectedCount = masterNodes
+	masterNodeGroup.ExpectedCount = template.masterNodes
 	plan := install.Plan{
 		Etcd: install.NodeGroup{
-			ExpectedCount: etcdNodes,
+			ExpectedCount: template.etcdNodes,
 		},
 		Master: masterNodeGroup,
 		Worker: install.NodeGroup{
-			ExpectedCount: workerNodes,
+			ExpectedCount: template.workerNodes,
 		},
 	}
 
-	if ingressNodes > 0 {
+	if template.ingressNodes > 0 {
 		plan.Ingress = install.OptionalNodeGroup{
-			ExpectedCount: ingressNodes,
+			ExpectedCount: template.ingressNodes,
 		}
 	}
 
-	if storageNodes > 0 {
+	if template.storageNodes > 0 {
 		plan.Storage = install.OptionalNodeGroup{
-			ExpectedCount: storageNodes,
+			ExpectedCount: template.storageNodes,
 		}
+	}
+
+	for i := 0; i < template.nfsVolumes; i++ {
+		v := install.NFSVolume{Host: "", Path: "/"}
+		plan.NFS.Volumes = append(plan.NFS.Volumes, v)
 	}
 
 	return &plan
