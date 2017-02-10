@@ -1,0 +1,20 @@
+---
+  - name: copy kubernetes-dns.yaml to remote
+    template:
+      src: kubernetes-dns.yaml
+      dest: /tmp/kubernetes-dns.yaml
+  - name: start kubernetes-dns service
+    command: kubectl apply -f /tmp/kubernetes-dns.yaml
+    register: out
+  - name: wait until DNS pods are ready
+    command: kubectl get rc kube-dns --namespace kube-system -o jsonpath='{.status.readyReplicas}'
+    register: readyReplicas
+    until: readyReplicas.stdout|int > 0
+    retries: 24
+    delay: 10
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify DNS pods are ready
+    fail:
+      msg: "Timed out waiting for DNS pods to be in the ready state."
+    when: readyReplicas.stdout|int < 1
+  - debug: var=out.stdout_lines

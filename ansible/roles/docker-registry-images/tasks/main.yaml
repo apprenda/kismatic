@@ -1,14 +1,21 @@
 ---
+
   # Load docker images into private registry
   - name: load docker images
     command: docker load -i /opt/images/{{ item }}.tar
     with_items:
+     - kube-proxy
+     - kube-controller-manager
+     - kube-scheduler
+     - kube-apiserver
+     - calico
+     - calico-ctl
+     - calico-cni
      - kube-policy-controller
      - kubedns
      - kube-dnsmasq
      - exechealthz
      - kubernetes-dashboard
-     - calico
      - defaultbackend
      - nginx-ingress-controller
      - nginx
@@ -19,12 +26,18 @@
   - name: tag docker images
     command: docker tag {{ item }}
     with_items:
+      - "{{ kube_proxy_orig_img }} {{ kube_proxy_priv_img }}"
+      - "{{ kube_controller_manager_orig_img }} {{ kube_controller_manager_priv_img }}"
+      - "{{ kube_scheduler_orig_img }} {{ kube_scheduler_priv_img }}"
+      - "{{ kube_apiserver_orig_img }} {{ kube_apiserver_priv_img }}"
+      - "{{ calico_node_orig_img }} {{ calico_node_priv_img }}"
+      - "{{ calico_ctl_orig_img }} {{ calico_ctl_priv_img }}"
+      - "{{ calico_cni_orig_img }} {{ calico_cni_priv_img }}"
       - "{{ calico_kube_policy_controller_orig_img }} {{ calico_kube_policy_controller_priv_img }}"
       - "{{ kubedns_orig_img }} {{kubedns_priv_img }}"
       - "{{ kube_dnsmasq_orig_img }} {{kube_dnsmasq_priv_img }}"
       - "{{ exechealthz_orig_img }} {{ exechealthz_priv_img }}"
       - "{{ kubernetes_dashboard_orig_img }} {{ kubernetes_dashboard_priv_img }}"
-      - "{{ calico_node_orig_img }} {{ calico_node_priv_img }}"
       - "{{ defaultbackend_orig_img }} {{ defaultbackend_priv_img }}"
       - "{{ nginx_ingress_controller_orig_img }} {{ nginx_ingress_controller_priv_img }}"
       - "{{ nginx_orig_img }} {{ nginx_priv_img }}"
@@ -35,12 +48,18 @@
   - name: push docker image to private registry
     command: docker push {{ item }}
     with_items:
+      - "{{ kube_proxy_priv_img }}"
+      - "{{ kube_controller_manager_priv_img }}"
+      - "{{ kube_scheduler_priv_img }}"
+      - "{{ kube_apiserver_priv_img }}"
+      - "{{ calico_node_priv_img }}"
+      - "{{ calico_ctl_priv_img }}"
+      - "{{ calico_cni_priv_img }}"
       - "{{ calico_kube_policy_controller_priv_img }}"
       - "{{ kubedns_priv_img }}"
       - "{{ kube_dnsmasq_priv_img }}"
       - "{{ exechealthz_priv_img }}"
       - "{{ kubernetes_dashboard_priv_img }}"
-      - "{{ calico_node_priv_img }}"
       - "{{ defaultbackend_priv_img }}"
       - "{{ nginx_ingress_controller_priv_img }}"
       - "{{ nginx_priv_img }}"

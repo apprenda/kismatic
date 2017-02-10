@@ -1,7 +1,7 @@
 ---
   - hosts: etcd
     any_errors_fatal: true
-    name: "Install Kubernetes Etcd Cluster"
+    name: "Start Kubernetes Etcd Cluster"
     remote_user: root
     become_method: sudo
     vars_files:

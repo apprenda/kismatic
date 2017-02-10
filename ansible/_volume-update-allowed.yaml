@@ -1,7 +1,7 @@
 ---
   - hosts: storage[0]
     any_errors_fatal: true
-    name: "Update allowed nodes on all volumes"
+    name: "Update Allowed Nodes on All Volumes"
     become: yes
     vars_files:
       - group_vars/all.yaml
@@ -11,8 +11,8 @@
         register: gluster_volume_list
       - name: get allowed IP address whitelist on gluster volume
         shell: gluster volume get {{ item }} nfs.rpc-auth-allow | tail -n 1 | awk '{print $2}'
-        with_items: gluster_volume_list.stdout_lines
+        with_items: "{{ gluster_volume_list.stdout_lines }}"
         register: gluster_volume_list_allowed_ips
       - name: update allowed IP address whitelist on gluster volume
         command: gluster volume set {{ item.item }} nfs.rpc-auth-allow {{ item.stdout }},{{ hostvars[worker_node].internal_ipv4 }}
-        with_items: gluster_volume_list_allowed_ips.results
+        with_items: "{{ gluster_volume_list_allowed_ips.results }}"

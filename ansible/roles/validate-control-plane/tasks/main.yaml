@@ -1,0 +1,98 @@
+---
+  - name: get a list of kube-apiserver pods
+    command: kubectl get pods --namespace kube-system -l component=kube-apiserver -o jsonpath='{.items[*].metadata.name}'
+    register: apiserverpods
+    until: apiserverpods|success and apiserverpods.stdout != ""
+    retries: 10
+    delay: 6
+  - name: wait until all kube-apiserver pods are running
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
+    with_items: "{{ apiserverpods.stdout.split(' ') }}"
+    register: phase
+    until: phase|success and phase.stdout=="Running"
+    retries: 1
+    delay: 6
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify all kube-apiserver pods are running
+    fail:
+      msg: "Timed out waiting for all kube-apiserver pods to be running."
+    when: item|failure or item.stdout!="Running"
+    with_items: "{{ phase.results }}"
+
+  - name: get a list of kube-scheduler pods
+    command: kubectl get pods --namespace kube-system -l component=kube-scheduler -o jsonpath='{.items[*].metadata.name}'
+    register: schedulerpods
+    until: schedulerpods|success and schedulerpods.stdout != ""
+    retries: 10
+    delay: 6
+  - name: wait until all kube-scheduler pods are running
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
+    with_items: "{{ schedulerpods.stdout.split(' ') }}"
+    register: phase
+    until: phase|success and phase.stdout=="Running"
+    retries: 10
+    delay: 6
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify all kube-scheduler pods are running
+    fail:
+      msg: "Timed out waiting for all kube-scheduler pods to be running."
+    when: item|failure or item.stdout!="Running"
+    with_items: "{{ phase.results }}"
+
+  - name: get a list of kube-controller-manager pods
+    command: kubectl get pods --namespace kube-system -l component=kube-controller-manager -o jsonpath='{.items[*].metadata.name}'
+    register: controllermanagerpods
+    until: controllermanagerpods|success and controllermanagerpods.stdout != ""
+    retries: 10
+    delay: 6
+  - name: wait until all kube-controller-manager pods are running
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
+    with_items: "{{ controllermanagerpods.stdout.split(' ') }}"
+    register: phase
+    until: phase|success and phase.stdout=="Running"
+    retries: 10
+    delay: 6
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify all kube-controller-manager pods are running
+    fail:
+      msg: "Timed out waiting for all kube-controller-manager pods to be running."
+    when: item|failure or item.stdout!="Running"
+    with_items: "{{ phase.results }}"
+
+  - name: get a list of kube-proxy pods
+    command: kubectl get pods --namespace kube-system -l component=kube-proxy -o jsonpath='{.items[*].metadata.name}'
+    register: proxypods
+    until: proxypods|success and proxypods.stdout != ""
+    retries: 10
+    delay: 6
+  - name: wait until all kube-proxy pods are running
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
+    with_items: "{{ proxypods.stdout.split(' ') }}"
+    register: phase
+    until: phase|success and phase.stdout=="Running"
+    retries: 10
+    delay: 6
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify all kube-proxy pods are running
+    fail:
+      msg: "Timed out waiting for all kube-proxy pods to be running."
+    when: item|failure or item.stdout!="Running"
+    with_items: "{{ phase.results }}"
+
+  - name: get desired number of calico pods
+    command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
+    register: desiredPods
+    until: desiredPods|success
+    retries: 10
+    delay: 6
+  - name: wait until all calico pods are ready
+    command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
+    register: readyPods
+    until: desiredPods.stdout|int == readyPods.stdout|int
+    retries: 10
+    delay: 6
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify all calico pods are running
+    fail:
+      msg: "Timed out waiting for all calico pods to be running."
+    when: desiredPods.stdout|int != readyPods.stdout|int

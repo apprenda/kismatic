@@ -19,21 +19,21 @@ import (
 )
 
 const (
-	copyKismaticYumRepo        = `sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
-	installEtcdYum             = `sudo yum -y install kismatic-etcd-1.5.2_3-1`
-	installDockerEngineYum     = `sudo yum -y install kismatic-docker-engine-1.11.2-1.el7.centos`
-	installKubernetesMasterYum = `sudo yum -y install kismatic-kubernetes-master-1.5.2_3-1`
-	installKubernetesYum       = `sudo yum -y install kismatic-kubernetes-node-1.5.2_3-1`
-	installKismaticOfflineYum  = `sudo yum -y install kismatic-offline-1.5.2_3-1`
+	copyKismaticYumRepo       = `sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
+	installEtcdYum            = `sudo yum -y install etcd-3.1.0-1`
+	installDockerYum          = `sudo yum -y install docker-engine-1.11.2-1.el7.centos`
+	installKubeletYum         = `sudo yum -y install kubelet-1.5.2_4-1`
+	installKubectlYum         = `sudo yum -y install kubectl-1.5.2_4-1`
+	installKismaticOfflineYum = `sudo yum -y install kismatic-offline-1.5.2_4-1`
 
-	copyKismaticKeyDeb         = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add - `
-	copyKismaticRepoDeb        = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com xenial main"`
-	updateAptGet               = `sudo apt-get update`
-	installEtcdApt             = `sudo apt-get -y install kismatic-etcd=1.5.2-3`
-	installDockerApt           = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial`
-	installKubernetesMasterApt = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial kismatic-kubernetes-networking=1.5.2-3 kismatic-kubernetes-node=1.5.2-3 kismatic-kubernetes-master=1.5.2-3`
-	installKubernetesApt       = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial kismatic-kubernetes-networking=1.5.2-3 kismatic-kubernetes-node=1.5.2-3`
-	installKismaticOfflineApt  = `sudo apt-get -y install kismatic-docker-engine=1.11.2-0~xenial kismatic-offline=1.5.2-3`
+	copyKismaticKeyDeb        = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add - `
+	copyKismaticRepoDeb       = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main"`
+	updateAptGet              = `sudo apt-get update`
+	installEtcdApt            = `sudo apt-get -y install etcd=3.1.0`
+	installDockerApt          = `sudo apt-get -y install docker-engine=1.11.2-0~xenial`
+	installKubeletApt         = `sudo apt-get -y install kubelet=1.5.2-4`
+	installKubectlApt         = `sudo apt-get -y install kubectl=1.5.2-4`
+	installKismaticOfflineApt = `sudo apt-get -y install kismatic-offline=1.5.2-4`
 )
 
 type nodePrep struct {
@@ -49,17 +49,17 @@ var ubuntu1604Prep = nodePrep{
 	CommandsToPrepRepo:         []string{copyKismaticKeyDeb, copyKismaticRepoDeb, updateAptGet},
 	CommandsToInstallEtcd:      []string{installEtcdApt},
 	CommandsToInstallDocker:    []string{installDockerApt},
-	CommandsToInstallK8sMaster: []string{installKubernetesMasterApt},
-	CommandsToInstallK8s:       []string{installKubernetesApt},
-	CommandsToInstallOffline:   []string{installKismaticOfflineYum},
+	CommandsToInstallK8sMaster: []string{installDockerApt, installKubeletApt, installKubectlApt},
+	CommandsToInstallK8s:       []string{installDockerApt, installKubeletApt},
+	CommandsToInstallOffline:   []string{installKismaticOfflineApt},
 }
 
 var rhel7FamilyPrep = nodePrep{
 	CommandsToPrepRepo:         []string{copyKismaticYumRepo},
 	CommandsToInstallEtcd:      []string{installEtcdYum},
-	CommandsToInstallDocker:    []string{installDockerEngineYum},
-	CommandsToInstallK8sMaster: []string{installKubernetesMasterYum},
-	CommandsToInstallK8s:       []string{installKubernetesYum},
+	CommandsToInstallDocker:    []string{installDockerYum},
+	CommandsToInstallK8sMaster: []string{installDockerYum, installKubeletYum, installKubectlYum},
+	CommandsToInstallK8s:       []string{installDockerYum, installKubeletYum},
 	CommandsToInstallOffline:   []string{installKismaticOfflineYum},
 }
 

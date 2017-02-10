@@ -2,22 +2,28 @@
   # kubelet
   - name: copy kubelet.service to remote
     template:
-      src: kubelet.service.j2
-      dest: "{{ kubernetes_service_dir }}/kubelet.service"
+      src: kubelet.service
+      dest: "{{ init_system_dir }}/kubelet.service"
       owner: "{{ kubernetes_owner }}"
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
     notify:
       - reload services
-      - enable kubelet
       - restart kubelet service
-      - verify kubelet is running
 
   # force_kubelet_restart=true to force restart
   - name: force restart kubelet
     command: /bin/true
     notify:
-      - enable kubelet
+      - reload services
       - restart kubelet service
-      - verify kubelet is running
     when: force_kubelet_restart is defined and force_kubelet_restart|bool == true
+
+  - meta: flush_handlers  #Run handlers
+
+  - name: verify kubelet is running
+    command: systemctl status kubelet
+    register: running
+    until: running|success
+    retries: 3
+    delay: 5

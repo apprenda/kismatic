@@ -16,9 +16,9 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo yum -y install kismatic-etcd-1.5.2_3-1` |
-| Kubernetes Master | `sudo yum -y install kismatic-kubernetes-master-1.5.2_3-1` |
-| Kubernetes Worker | `sudo yum -y install kismatic-kubernetes-node-1.5.2_3-1` |
+| Etcd | `sudo yum -y install etcd-3.1.0-1` |
+| Kubernetes Master | `sudo yum -y install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1 kubectl-1.5.2_4-1` |
+| Kubernetes Worker | `sudo yum -y install docker-engine-1.11.2-1.el7.centos kubelet-1.5.2_4-1` |
 
 ## Installing via DEB (Ubuntu Xenial)
 
@@ -29,7 +29,10 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
    2. Add the Kismatic repo
 
-`sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com xenial main"`
+`cat <<EOF > /etc/apt/sources.list.d/kubernetes.list
+deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main
+EOF
+`
 
 2. Refresh the machine's repo cache
 
@@ -39,9 +42,9 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 | Product | Install Command |
 | --- | --- | --- |
-| Etcd | `sudo apt-get -y install kismatic-etcd=1.5.2-3` |
-| Kubernetes Master | `sudo apt-get -y install kismatic-kubernetes-master=1.5.2-3` |
-| Kubernetes Worker | `sudo apt-get -y install kismatic-kubernetes-node=1.5.2-3` |
+| Etcd | `sudo apt-get -y -t=kismatic-xenial  install etcd=3.1.0` |
+| Kubernetes Master | `sudo apt-get -y -t=kismatic-xenial install docker=1.11.2-0~xenial kubelet=1.5.2-4 kubectl=1.5.2-4` |
+| Kubernetes Worker | `sudo apt-get -y -t=kismatic-xenial  install docker=1.11.2-0~xenial kubelet=1.5.2-4` |
 
 # <a name="synclocal"></a>Synchronizing a local repo
 

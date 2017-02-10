@@ -1,0 +1,11 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: "Start Kubernetes Proxy"
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - kube-proxy

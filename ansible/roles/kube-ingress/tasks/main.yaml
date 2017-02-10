@@ -1,0 +1,35 @@
+---
+  # add ingress label to nodes
+  - name: label ingress nodeSelector
+    command: kubectl label nodes {% for host in groups['ingress'] %}{{ host }} {% endfor %} kismatic/ingress=true --overwrite
+
+  - name: copy default-backend.yaml to remote
+    template:
+      src: default-backend.yaml
+      dest: /tmp/default-backend.yaml
+  - name: start default-backend serivce
+    command: kubectl apply -f /tmp/default-backend.yaml
+
+  - name: copy nginx-ingress-controller.yaml to remote
+    template:
+      src: nginx-ingress-controller.yaml
+      dest: /tmp/nginx-ingress-controller.yaml
+  - name: start nginx-ingress-controller serivce
+    command: kubectl apply -f /tmp/nginx-ingress-controller.yaml
+    register: out
+
+  - name: get desired number of ingress pods
+    shell: "kubectl get ds ingress --namespace=kube-system -o=jsonpath='{.status.desiredNumberScheduled}'"
+    register: desiredPods
+
+  - name: wait until all ingress controllers pods are ready
+    command: "kubectl get ds ingress --namespace=kube-system -o=jsonpath='{.status.numberReady}'"
+    register: readyPods
+    until: desiredPods.stdout|int == readyPods.stdout|int
+    retries: 15
+    delay: 10
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify all ingress pods are ready
+    fail:
+      msg: "Timed out waiting for all ingress controllers pods to be in the ready state."
+    when: desiredPods.stdout|int != readyPods.stdout|int

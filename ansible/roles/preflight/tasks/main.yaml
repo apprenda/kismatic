@@ -100,12 +100,14 @@
         service:
           name: kismatic-inspector.service
           state: stopped
+      - name: verify Kismatic Inspector succeeded
+        command: /bin/true
+        failed_when: "out.rc != 0"
     always:
       - name: stop kismatic-inspector service
         service:
           name: kismatic-inspector.service
           state: stopped
-
-  - name: verify Kismatic Inspector succeeded
-    command: /bin/true
-    failed_when: "out.rc != 0"
+      - name: verify Kismatic Inspector succeeded
+        command: /bin/true
+        failed_when: "out.rc != 0"

@@ -1,16 +1,14 @@
 ---
-  # YUM repo
+  # YUM
   - name: ping Kismatic yum repository
     uri: url="{{ yum_gpg_key_url }}"
     when: ansible_os_family == 'RedHat'
     ignore_errors: yes
-    register: result
-    until: "result.status is defined and result.status == 200"
+    register: kismatic_result
+    until: "kismatic_result.status is defined and kismatic_result.status == 200"
     retries: 3
     delay: 1
-    changed_when: "result.status is defined and result.status == 200"
-
-  # only configure repository if it is reachable
+    changed_when: "kismatic_result.status is defined and kismatic_result.status == 200"
   - name: add Kismatic yum repository
     yum_repository:
       name: kismatic
@@ -18,51 +16,18 @@
       baseurl: "{{ yum_repository_url }}"
       gpgkey: "{{ yum_gpg_key_url }}"
       gpgcheck: yes
-    when: ansible_os_family == 'RedHat' and result.status is defined and result.status == 200
-  - name: clean Kismatic yum cache
+    when: ansible_os_family == 'RedHat' and kismatic_result.status is defined and kismatic_result.status == 200
+  - name: clean kismatic yum cache
     command: 'yum --enablerepo=kismatic clean metadata'
-    when: ansible_os_family == 'RedHat' and result.status is defined and result.status == 200
+    when: ansible_os_family == 'RedHat' and kismatic_result.status is defined and kismatic_result.status == 200
 
-  # DEB repo
-  - name: ping Kismatic deb repository
-    uri: url="{{ deb_gpg_key_url }}"
-    when: ansible_os_family == 'Debian'
-    ignore_errors: yes
-    register: result
-    until: "result.status is defined and result.status == 200"
-    retries: 3
-    delay: 1
-    changed_when: "result.status is defined and result.status == 200"
-
-  # only configure repository if it is reachable
-  - name: install apt-transport-https package
-    apt:
-      name: apt-transport-https
-      state: latest
-      update_cache: yes
-    when: ansible_os_family == 'Debian' and result.status is defined and result.status == 200
-  - name: add Kismatic deb key
-    apt_key:
-      url: "{{ deb_gpg_key_url }}"
-      validate_certs: no
-    when: ansible_os_family == 'Debian' and result.status is defined and result.status == 200
-  - name: add Kismatic deb repository
-    apt_repository:
-      repo: 'deb {{ deb_repository_url }} xenial main'
-      validate_certs: no
-    when: ansible_os_family == 'Debian' and result.status is defined and result.status == 200
-  - name: apt-get update
-    apt:
-      update_cache: yes
-    when: ansible_os_family == 'Debian' and result.status is defined and result.status == 200
-
-  # install packages
   - name: install yum packages
     command: /bin/true
     notify:
       - install etcd yum package
-      - install kubernetes master yum package
-      - install kubernetes node yum package
+      - install docker-engine yum package
+      - install kubelet yum package
+      - install kubectl yum package
     when: ansible_os_family == 'RedHat'
 
   - meta: flush_handlers  #Run handlers
@@ -75,14 +40,45 @@
     retries: 3
     delay: 3
 
+  # DEB
+  - name: ping Kismatic deb repository
+    uri: url="{{ deb_gpg_key_url }}"
+    when: ansible_os_family == 'Debian'
+    ignore_errors: yes
+    register: kismatic_result
+    until: "kismatic_result.status is defined and kismatic_result.status == 200"
+    retries: 3
+    delay: 1
+    changed_when: "kismatic_result.status is defined and kismatic_result.status == 200"
+
+  - name: install apt-transport-https package
+    apt:
+      name: apt-transport-https
+      state: latest
+      update_cache: yes
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
+  - name: add Kismatic deb key
+    apt_key:
+      url: "{{ deb_gpg_key_url }}"
+      validate_certs: no
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
+  - name: add Kismatic deb repository
+    apt_repository:
+      repo: 'deb {{ deb_repository_url }} kismatic-xenial main'
+      validate_certs: no
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
+  - name: apt-get update
+    apt:
+      update_cache: yes
+    when: ansible_os_family == 'Debian' and kismatic_result.status is defined and kismatic_result.status == 200
+
   - name: install deb packages
     command: /bin/true
     notify:
       - install etcd deb package
       - install docker-engine deb package
-      - install kubernetes networking deb package
-      - install kubernetes node deb package
-      - install kubernetes master deb package
+      - install kubelet deb package
+      - install kubectl deb package
     when: ansible_os_family == 'Debian'
 
   - meta: flush_handlers  #Run handlers
