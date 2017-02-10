@@ -1,7 +1,8 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: "Start Docker"
+    name: "{{ play_name | default('Start Docker') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:

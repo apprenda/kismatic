@@ -1,7 +1,8 @@
 ---
   - hosts: master
     any_errors_fatal: true
-    name: "Start Kubernetes Scheduler"
+    name: "{{ play_name | default('Start Kubernetes Scheduler') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:

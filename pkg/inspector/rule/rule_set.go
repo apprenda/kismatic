@@ -282,66 +282,114 @@ const upgradeRuleSet = `---
 
 - kind: PackageAvailableUpgrade
   when: ["etcd", "ubuntu"]
-  packageName: kismatic-etcd
-  packageVersion: 1.5.2-3
+  packageName: etcd
+  packageVersion: 3.1.0
 - kind: PackageAvailableUpgrade
   when: ["master","ubuntu"]
-  packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.2-3
+  packageName: kubelet
+  packageVersion: 1.5.2-4
+- kind: PackageAvailableUpgrade
+  when: ["master","ubuntu"]
+  packageName: kubectl
+  packageVersion: 1.5.2-4
+- kind: PackageAvailableUpgrade
+  when: ["master","ubuntu"]
+  packageName: docker-engine
+  packageVersion: 1.11.2-0~xenial
+- kind: PackageAvailableUpgrade
+  when: ["master","ubuntu", "disconnected"]
+  packageName: kismatic-offline
+  packageVersion: 1.5.2-4
 - kind: PackageAvailableUpgrade
   when: ["worker","ubuntu"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2-3
+  packageName: docker-engine
+  packageVersion: 1.11.2-0~xenial
+- kind: PackageAvailableUpgrade
+  when: ["worker","ubuntu"]
+  packageName: kubelet
+  packageVersion: 1.5.2-4
 - kind: PackageAvailableUpgrade
   when: ["ingress","ubuntu"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2-3
+  packageName: kubelet
+  packageVersion: 1.5.2-4
 - kind: PackageAvailableUpgrade
   when: ["storage","ubuntu"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2-3
+  packageName: kubelet
+  packageVersion: 1.5.2-4
 
 - kind: PackageAvailableUpgrade
   when: ["etcd", "centos"]
-  packageName: kismatic-etcd
-  packageVersion: 1.5.2_3-1
+  packageName: etcd
+  packageVersion: 3.1.0-1
 - kind: PackageAvailableUpgrade
   when: ["master","centos"]
-  packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.2_3-1
+  packageName: kubelet
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailableUpgrade
+  when: ["master","centos"]
+  packageName: kubectl
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailableUpgrade
+  when: ["master","centos"]
+  packageName: docker-engine
+  packageVersion: 1.11.2-1.el7.centos
+- kind: PackageAvailableUpgrade
+  when: ["master","centos", "disconnected"]
+  packageName: kismatic-offline
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailableUpgrade
   when: ["worker","centos"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageName: docker-engine
+  packageVersion: 1.11.2-1.el7.centos
+- kind: PackageAvailableUpgrade
+  when: ["worker","centos"]
+  packageName: kubelet
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailableUpgrade
   when: ["ingress","centos"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageName: kubelet
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailableUpgrade
   when: ["storage","centos"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageName: kubelet
+  packageVersion: 1.5.2_4-1
 
 - kind: PackageAvailableUpgrade
   when: ["etcd", "rhel"]
-  packageName: kismatic-etcd
-  packageVersion: 1.5.2_3-1
+  packageName: etcd
+  packageVersion: 3.1.0-1
 - kind: PackageAvailableUpgrade
   when: ["master","rhel"]
-  packageName: kismatic-kubernetes-master
-  packageVersion: 1.5.2_3-1
+  packageName: kubelet
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailableUpgrade
+  when: ["master","rhel"]
+  packageName: kubectl
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailableUpgrade
+  when: ["master","rhel"]
+  packageName: docker-engine
+  packageVersion: 1.11.2-1.el7.centos
+- kind: PackageAvailableUpgrade
+  when: ["master","rhel", "disconnected"]
+  packageName: kismatic-offline
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailableUpgrade
+  when: ["worker","centos"]
+  packageName: docker-engine
+  packageVersion: 1.11.2-1.el7.centos
 - kind: PackageAvailableUpgrade
   when: ["worker","rhel"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
-- kind: PackageAvailableUpgrade
+  packageName: PackageAvailableUpgrade
+  packageVersion: 1.5.2_4-1
+- kind: PackageAvailable
   when: ["ingress","rhel"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageName: kubelet
+  packageVersion: 1.5.2_4-1
 - kind: PackageAvailableUpgrade
   when: ["storage","rhel"]
-  packageName: kismatic-kubernetes-node
-  packageVersion: 1.5.2_3-1
+  packageName: kubelet
+  packageVersion: 1.5.2_4-1
 
 # Gluster packages
 - kind: PackageAvailableUpgrade

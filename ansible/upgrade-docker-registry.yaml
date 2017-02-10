@@ -1,22 +1,5 @@
 ---
-  - name: Upgrade Internal Docker Registry
-    hosts: master[0]
-    remote_user: root
-    become_method: sudo
-    roles:
-      - role: docker-registry-container
-    post_tasks:
-      # Restarting these is required because upgrading the docker registry brings down docker.
-      # Since the calico-node and kubelet unit files declare a dependency on docker, these
-      # units are brought down and not restarted.
-      - service:
-          name: calico-node
-          state: restarted
-          enabled: yes
-      - service:
-          name: kubelet
-          state: restarted
-          enabled: yes
-
+  # - include: _docker-registry-container.yaml play_name="Upgrade Internal Docker Registry"
+  #   when: setup_internal_docker_registry|bool == true
   - include: _docker-registry-images.yaml
     when: use_private_docker_registry|bool == true and disconnected_installation|bool == true # only load images if offline

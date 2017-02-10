@@ -1,7 +1,8 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: "Configure Cluster Network"
+    name: "{{ play_name | default('Configure Cluster Network') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:

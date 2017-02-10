@@ -5,12 +5,19 @@
     until: apiserverpods|success and apiserverpods.stdout != ""
     retries: 10
     delay: 6
+  - name: wait until all kube-apiserver pods have the desired version
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.metadata.labels.kismaticVersion}'
+    with_items: "{{ apiserverpods.stdout.split(' ') }}"
+    register: podVersion
+    until: podVersion.stdout == kismatic_short_version
+    retries: 10
+    delay: 6
   - name: wait until all kube-apiserver pods are running
     command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
     with_items: "{{ apiserverpods.stdout.split(' ') }}"
     register: phase
     until: phase|success and phase.stdout=="Running"
-    retries: 1
+    retries: 10
     delay: 6
     failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
   - name: verify all kube-apiserver pods are running
@@ -23,6 +30,13 @@
     command: kubectl get pods --namespace kube-system -l component=kube-scheduler -o jsonpath='{.items[*].metadata.name}'
     register: schedulerpods
     until: schedulerpods|success and schedulerpods.stdout != ""
+    retries: 10
+    delay: 6
+  - name: wait until all kube-scheduler pods have the desired version
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.metadata.labels.kismaticVersion}'
+    with_items: "{{ schedulerpods.stdout.split(' ') }}"
+    register: podVersion
+    until: podVersion.stdout == kismatic_short_version
     retries: 10
     delay: 6
   - name: wait until all kube-scheduler pods are running
@@ -45,6 +59,13 @@
     until: controllermanagerpods|success and controllermanagerpods.stdout != ""
     retries: 10
     delay: 6
+  - name: wait until all kube-controller-manager pods have the desired version
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.metadata.labels.kismaticVersion}'
+    with_items: "{{ controllermanagerpods.stdout.split(' ') }}"
+    register: podVersion
+    until: podVersion.stdout == kismatic_short_version
+    retries: 10
+    delay: 6
   - name: wait until all kube-controller-manager pods are running
     command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.status.phase}'
     with_items: "{{ controllermanagerpods.stdout.split(' ') }}"
@@ -63,6 +84,13 @@
     command: kubectl get pods --namespace kube-system -l component=kube-proxy -o jsonpath='{.items[*].metadata.name}'
     register: proxypods
     until: proxypods|success and proxypods.stdout != ""
+    retries: 10
+    delay: 6
+  - name: wait until all kube-proxy pods have the desired version
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.metadata.labels.kismaticVersion}'
+    with_items: "{{ proxypods.stdout.split(' ') }}"
+    register: podVersion
+    until: podVersion.stdout == kismatic_short_version
     retries: 10
     delay: 6
   - name: wait until all kube-proxy pods are running

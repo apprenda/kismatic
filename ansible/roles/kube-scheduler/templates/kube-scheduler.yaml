@@ -4,6 +4,8 @@ metadata:
   labels:
     tier: control-plane
     component: kube-scheduler
+    version: "{{ kubernetes_version }}"
+    kismaticVersion: "{{ kismatic_short_version }}"
   name: kube-scheduler
   namespace: kube-system
 spec:

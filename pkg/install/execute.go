@@ -34,6 +34,7 @@ type Executor interface {
 	RunPlay(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
 	UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode) error
+	ValidateControlPlane(plan Plan) error
 	UpgradeDockerRegistry(plan Plan) error
 	UpgradeClusterServices(plan Plan) error
 }
@@ -440,6 +441,23 @@ func (ae *ansibleExecutor) upgradeNode(plan Plan, node Node) error {
 		limit:          []string{node.Host},
 	}
 	util.PrintHeader(ae.stdout, fmt.Sprintf("Upgrade Node %q", node.Host), '=')
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) ValidateControlPlane(plan Plan) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "validate-control-plane",
+		playbook:       "validate-control-plane.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      &explain.DefaultEventExplainer{},
+	}
 	return ae.execute(t)
 }
 
