@@ -248,3 +248,8 @@ func hasIP(nodes *[]Node, ip string) bool {
 	}
 	return false
 }
+
+// ConfigureDockerRegistry returns true when confgiuring an external or on cluster registry is required
+func (p Plan) ConfigureDockerRegistry() bool {
+	return p.DockerRegistry.Address != "" || p.DockerRegistry.SetupInternal
+}

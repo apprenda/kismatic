@@ -1,7 +1,7 @@
 ---
   - hosts: master[0]
     any_errors_fatal: true
-    name: "Start Kubernetes DNS"
+    name: "{{ play_name | default('Start Kubernetes DNS') }}"
     remote_user: root
     become_method: sudo
     run_once: true

@@ -1,34 +1,8 @@
 ---
-  - name: "Upgrade Network Policy Controller"
-    hosts: master[0]
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    roles:
-      - addon-network-policy
-
-  - name: "Upgrade Kubernetes DNS"
-    hosts: master[0]
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    roles:
-      - addon-kubernetes-dns
-
-  - name: "Upgrade Kubernetes Ingress"
-    hosts: master[0]
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    roles:
-      - role: addon-kubernetes-ingress
-        when: configure_ingress|bool == true
-
-  - name: "Upgrade Kubernetes Dashboard"
-    hosts: master[0]
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    run_once: true
-    roles:
-      - addon-kubernetes-dashboard
+  - include: _kube-dns.yaml play_name="Upgrade Kubernetes DNS"
+  - include: _kube-ingress.yaml play_name="Upgrade Kubernetes Ingress"
+    when: configure_ingress|bool == true
+  - include: _kube-dashboard.yaml play_name="Upgrade Kubernetes DNS"
+  # add-ons
+  - include: _addon-network-policy.yaml play_name="Upgrade Network Policy Controller"
+    when: enable_calico_policy|bool == true

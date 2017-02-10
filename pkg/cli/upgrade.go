@@ -116,17 +116,21 @@ func doUpgradeOffline(out io.Writer, planFile string, opts upgradeOpts) error {
 		if err := executor.RunUpgradePreFlightCheck(plan); err != nil {
 			return fmt.Errorf("Upgrade preflight check failed: %v", err)
 		}
+		// Run the upgrade on the nodes that need it
+		if err := executor.UpgradeNodes(*plan, toUpgrade); err != nil {
+			return fmt.Errorf("Failed to upgrade nodes: %v", err)
+		}
+		// validate on the master
+		util.PrintHeader(out, "Validate Kubernetes Control Plane", '=')
+		if err := executor.ValidateControlPlane(*plan); err != nil {
+			return fmt.Errorf("Failed to validate kuberntes control plane: %v", err)
+		}
 	}
 
-	// Run the upgrade on the nodes that need it
-	if err := executor.UpgradeNodes(*plan, toUpgrade); err != nil {
-		return fmt.Errorf("Failed to upgrade nodes: %v", err)
-	}
-
-	if plan.DockerRegistry.SetupInternal {
-		util.PrintHeader(out, "Upgrade Internal Docker Registry", '=')
+	if plan.ConfigureDockerRegistry() && plan.Cluster.DisconnectedInstallation {
+		util.PrintHeader(out, "Upgrade Docker Registry", '=')
 		if err := executor.UpgradeDockerRegistry(*plan); err != nil {
-			return fmt.Errorf("Failed to upgrade internal docker registry: %v", err)
+			return fmt.Errorf("Failed to upgrade docker registry: %v", err)
 		}
 	}
 

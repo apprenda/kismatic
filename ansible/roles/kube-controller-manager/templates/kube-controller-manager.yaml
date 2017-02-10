@@ -4,6 +4,8 @@ metadata:
   labels:
     tier: control-plane
     component: kube-controller-manager
+    version: "{{ kubernetes_version }}"
+    kismaticVersion: "{{ kismatic_short_version }}"
   name: kube-controller-manager
   namespace: kube-system
 spec:

@@ -1,114 +1,18 @@
 ---
-    # TODO: Is this OK???
   - include: _packages.yaml
     when: allow_package_installation|bool == true
-
-  - name: Upgrade Kubernetes Etcd Cluster
-    hosts: etcd
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-      - group_vars/etcd-k8s.yaml
-    roles:
-      - etcd
-
-  - name: Upgrade Networking Etcd Cluster
-    hosts: etcd
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-      - group_vars/etcd-networking.yaml
-    roles:
-      - etcd-cert
-      - etcd
-
-  - name: Upgrade Kubernetes API Server
-    hosts: master
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-    roles:
-      - authorization-policy
-      - apiserver
-
-  - name: Upgrade Kubernetes Scheduler
-    hosts: master
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-    roles:
-      - kubeconfig
-      - scheduler
-
-  - name: Upgrade Kubernetes Controller Manager
-    hosts: master
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-    roles:
-      - kubeconfig
-      - controller-manager
-
-  - name: Upgrade Docker
-    hosts: master:worker:ingress:storage
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-    roles:
-      - role: docker
-
-  - name: Upgrade Cluster Network
-    hosts: master:worker:ingress:storage
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-    roles:
-      - kubeconfig
-      - calico
-
-  - name: Upgrade Kubelet
-    hosts: master:worker:ingress:storage
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-    roles:
-      - kubeconfig
-      - kubelet
-
-  - name: Upgrade Kubernetes Proxy
-    hosts: master:worker:ingress:storage
-    serial: 1
-    any_errors_fatal: true
-    remote_user: root
-    become_method: sudo
-    vars_files:
-      - group_vars/all.yaml
-    roles:
-      - kubeconfig
-      - proxy
+  # docker
+  #- include: _docker.yaml play_name="Upgrade Docker" serial="1"
+  # etcd
+  #- include: _etcd-k8s.yaml play_name="Upgrade Kubernetes Etcd Cluster" serial="1"
+  #- include: _etcd-networking.yaml play_name="Upgrade Network Etcd Cluster" serial="1"
+  # kubernetes
+  - include: _kube-apiserver.yaml play_name="Upgrade Kubernetes API Server" serial="1"
+  - include: _kube-scheduler.yaml play_name="Upgrade Kubernetes Scheduler" serial="1"
+  - include: _kube-controller-manager.yaml play_name="Upgrade Kubernetes Controller Manager" serial="1"
+  - include: _kube-proxy.yaml play_name="Upgrade Kubernetes Proxy" serial="1"
+  - include: _calico.yaml play_name="Upgrade Cluster Network" serial="1"
+  #- include: _validate-control-plane.yaml
+  - include: _kubelet.yaml play_name="Upgrade Kubernetes Kubelet" serial="1"
 
   - include: _update-version.yaml
