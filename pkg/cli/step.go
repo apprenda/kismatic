@@ -72,7 +72,7 @@ func (c stepCmd) run() error {
 		return err
 	}
 	plan, err := c.planner.Read()
-	if err = c.executor.RunTask(c.task, plan); err != nil {
+	if err = c.executor.RunPlay(c.task, plan); err != nil {
 		return err
 	}
 	util.PrintColor(c.out, util.Green, "\nTask completed successfully\n\n")

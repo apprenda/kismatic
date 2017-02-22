@@ -1,0 +1,42 @@
+---
+  - name: copy Kismatic Inspector to node
+    copy:
+      src: "{{ kismatic_preflight_checker }}"
+      dest: "{{ bin_dir }}/kismatic-inspector"
+      mode: 0744
+
+  - name: copy kismatic-inspector.service to remote
+    template:
+      src: kismatic-inspector.service.j2
+      dest: "{{ init_system_dir }}/kismatic-inspector.service"
+
+  - name: reload services
+    command: systemctl daemon-reload
+
+  - name: start kismatic-inspector service
+    service:
+      name: kismatic-inspector.service
+      state: started
+
+  # Run the pre-flights checks, and always stop the checker regardless of result
+  - block:
+      - name: run pre-flight checks using Kismatic Inspector
+        local_action: command {{ kismatic_preflight_checker_local | default(kismatic_preflight_checker) }} client {{ ansible_host }}:8888 --upgrade -o json --node-roles {{ ",".join(group_names) }}
+        register: out
+        become: no
+    rescue: # Need to repeat because of Ansible bug https://github.com/ansible/ansible/issues/18602
+      - name: stop kismatic-inspector service
+        service:
+          name: kismatic-inspector.service
+          state: stopped
+      - name: verify Kismatic Inspector succeeded
+        command: /bin/true
+        failed_when: "out.rc != 0"
+    always:
+      - name: stop kismatic-inspector service
+        service:
+          name: kismatic-inspector.service
+          state: stopped
+      - name: verify Kismatic Inspector succeeded
+        command: /bin/true
+        failed_when: "out.rc != 0"

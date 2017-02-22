@@ -1,0 +1,10 @@
+---
+  - name: remove unnecessary unit files
+    file:
+      path: "{{ init_system_dir }}/{{ item }}"
+      state: absent
+    with_items:
+      - "kube-apiserver.service"
+      - "kube-controller-manager.service"
+      - "kube-scheduler.service"
+      - "kube-proxy.service"

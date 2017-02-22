@@ -2,9 +2,9 @@
   # update hosts files of all nodes
   - hosts: all
     any_errors_fatal: true
-    name: "Install Kismatic packages"
+    name: "Configure Kismatic Package Repos"
     remote_user: root
     become_method: sudo
 
     roles:
-      - role: packages
+      - role: packages-repo

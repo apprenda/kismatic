@@ -1,0 +1,5 @@
+---
+  # - include: _docker-registry-container.yaml play_name="Upgrade Internal Docker Registry"
+  #   when: setup_internal_docker_registry|bool == true
+  - include: _docker-registry-images.yaml
+    when: use_private_docker_registry|bool == true and disconnected_installation|bool == true # only load images if offline

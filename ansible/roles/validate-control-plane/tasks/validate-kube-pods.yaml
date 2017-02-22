@@ -1,0 +1,28 @@
+---
+  - name: get a list of {{ component }} pods
+    # command: kubectl get pods --namespace kube-system -l component=kube-apiserver -o jsonpath='{.items[*].metadata.name}'
+    command: kubectl get pods --namespace kube-system -l component={{ component }} -o jsonpath='{.items[*].metadata.name}'
+    register: the_pods
+    until: the_pods|success and the_pods.stdout != ""
+    retries: 10
+    delay: 6
+  - name: wait until all {{ component }} pods have the desired version
+    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.metadata.labels.kismaticVersion}'
+    with_items: "{{ the_pods.stdout.split(' ') }}"
+    register: podVersion
+    until: podVersion.stdout == kismatic_short_version
+    retries: 10
+    delay: 6
+  - name: wait until all {{ component }} pods are running
+    command: kubectl get pods {{ item }} --namespace kube-system
+    with_items: "{{ the_pods.stdout.split(' ') }}"
+    register: phase
+    until: phase|success and "Running" in phase.stdout
+    retries: 10
+    delay: 6
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: fail if {{ component }} is not running
+    fail:
+      msg: "Timed out waiting for all {{ component }} pods to be running."
+    when: item|failure or "Running" not in item.stdout
+    with_items: "{{ phase.results }}"

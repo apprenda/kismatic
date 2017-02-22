@@ -11,7 +11,8 @@ import (
 
 var _ = Describe("Storage feature", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("Specifying multiple storage nodes in the plan file", func() {

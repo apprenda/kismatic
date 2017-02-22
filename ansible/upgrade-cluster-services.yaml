@@ -1,0 +1,8 @@
+---
+  - include: _kube-dns.yaml play_name="Upgrade Kubernetes DNS"
+  - include: _kube-ingress.yaml play_name="Upgrade Kubernetes Ingress"
+    when: configure_ingress|bool == true
+  - include: _kube-dashboard.yaml play_name="Upgrade Kubernetes DNS"
+  # add-ons
+  - include: _addon-network-policy.yaml play_name="Upgrade Network Policy Controller"
+    when: enable_calico_policy|bool == true

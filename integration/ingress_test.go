@@ -9,7 +9,8 @@ import (
 
 var _ = Describe("ingress feature", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("accessing the ingress point of a cluster", func() {

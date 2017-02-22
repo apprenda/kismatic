@@ -1,0 +1,11 @@
+---
+  - name: download kube-proxy image
+    command: docker pull {{ kube_proxy_img }}
+
+  - name: copy kube-proxy.yaml manifest
+    template:
+      src: kube-proxy.yaml
+      dest: "{{ kubelet_pod_manifests_dir }}/kube-proxy.yaml"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"

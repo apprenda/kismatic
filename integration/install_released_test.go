@@ -11,19 +11,10 @@ const previousKismaticVersion = "v1.2.0"
 
 // Test a specific released version of Kismatic
 var _ = Describe("Installing with previous version of Kismatic", func() {
-	var kisReleasedPath string
 	BeforeEach(func() {
 		// setup previous version of Kismatic
-		var err error
-		kisReleasedPath, err = DownloadKismaticRelease(previousKismaticVersion)
-		Expect(err).ToNot(HaveOccurred(), "Failed to download kismatic release")
-		os.Chdir(kisReleasedPath)
-	})
-
-	AfterEach(func() {
-		if !leaveIt() {
-			os.RemoveAll(kisReleasedPath)
-		}
+		tmp := setupTestWorkingDirWithVersion(previousKismaticVersion)
+		os.Chdir(tmp)
 	})
 
 	installOpts := installOptions{

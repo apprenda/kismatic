@@ -9,7 +9,8 @@ import (
 
 var _ = Describe("kismatic docker registry feature", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("enabling the internal docker registry feature", func() {

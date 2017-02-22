@@ -8,7 +8,8 @@ import (
 
 var _ = Describe("kismatic install validate tests", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("Running validation with package installation disabled", func() {

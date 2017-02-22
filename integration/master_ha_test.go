@@ -10,7 +10,8 @@ import (
 
 var _ = Describe("control plane high availability feature", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("running kuberang against an HA cluster", func() {

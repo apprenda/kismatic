@@ -9,7 +9,8 @@ import (
 
 var _ = Describe("hosts file modification feature", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("enabling the hosts file modification feature", func() {

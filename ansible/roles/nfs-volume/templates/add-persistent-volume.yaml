@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv{{ nfs_index }}
+  annotations:
+    volume.beta.kubernetes.io/storage-class: "kismatic"
+spec:
+  capacity:
+    storage: {{ nfs_size }}
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: {{ nfs_path }}
+    server: {{ nfs_host }}

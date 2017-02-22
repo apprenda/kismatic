@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    tier: control-plane
+    component: kube-controller-manager
+    version: "{{ kubernetes_version }}"
+    kismaticVersion: "{{ kismatic_short_version }}"
+  name: kube-controller-manager
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: kube-controller-manager
+    image: {{ kube_controller_manager_img }}
+    imagePullPolicy: IfNotPresent
+    command:
+      - kube-controller-manager
+      - --allocate-node-cidrs=true
+      - --cluster-cidr={{ kubernetes_pods_cidr }}
+      - --cluster-name={{ kubernetes_cluster_name }}
+      - --kubeconfig={{ kubernetes_kubeconfig_path }}
+      - --leader-elect=true
+      - --master={{ kubernetes_master_ip }}
+      - --root-ca-file={{ kubernetes_certificates_ca_path }}
+      - --service-account-private-key-file={{ kubernetes_certificates_service_account_key_path }}
+      - --service-cluster-ip-range={{ kubernetes_services_cidr }}
+      - --v=2
+    livenessProbe:
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 10252
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
+    volumeMounts:
+    - mountPath: "{{ kubernetes_kubeconfig_path }}"
+      name: "kubeconfig"
+      readOnly: true
+    - mountPath: /etc/kubernetes
+      name: ssl-certs-kubernetes
+      readOnly: true
+    - mountPath: /etc/ssl/certs
+      name: ssl-certs-host
+      readOnly: true
+  volumes:
+  - name: "kubeconfig"
+    hostPath:
+      path: "{{ kubernetes_kubeconfig_path }}"
+  - hostPath:
+      path: /etc/kubernetes
+    name: ssl-certs-kubernetes
+  - hostPath:
+      path: /usr/share/ca-certificates
+    name: ssl-certs-host

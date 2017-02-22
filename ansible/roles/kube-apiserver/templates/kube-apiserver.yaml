@@ -1,0 +1,70 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    tier: control-plane
+    component: kube-apiserver
+    version: "{{ kubernetes_version }}"
+    kismaticVersion: "{{ kismatic_short_version }}"
+  name: kube-apiserver
+  namespace: kube-system
+spec:
+  hostNetwork: true
+  containers:
+  - name: kube-apiserver
+    image: {{ kube_apiserver_img }}
+    imagePullPolicy: IfNotPresent
+    command:
+      - kube-apiserver
+      - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota
+      - --advertise-address={{ internal_ipv4 }}
+      - --allow-privileged=true
+      - --anonymous-auth=false
+      - --apiserver-count={{ kubernetes_master_apiserver_count }}
+      - --authorization-mode=ABAC
+      - --authorization-policy-file={{ kubernetes_authorization_policy_path }}
+      - --basic-auth-file={{ kubernetes_basic_auth_path }}
+      - --bind-address=0.0.0.0
+      - --client-ca-file={{ kubernetes_certificates_ca_path }}
+      - --enable-swagger-ui=true
+      - --etcd-cafile={{ kubernetes_certificates_ca_path }}
+      - --etcd-certfile={{ kubernetes_certificates_cert_path }}
+      - --etcd-keyfile={{ kubernetes_certificates_key_path}}
+      - --etcd-servers={{ etcd_k8s_cluster_ip_list }}
+      - --insecure-bind-address=127.0.0.1
+      - --insecure-port=8080
+      - --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true
+      - --secure-port=6443
+      - --service-account-key-file={{ kubernetes_certificates_service_account_key_path }}
+      - --service-cluster-ip-range={{ kubernetes_services_cidr }}
+      - --tls-cert-file={{ kubernetes_certificates_cert_path }}
+      - --tls-private-key-file={{ kubernetes_certificates_key_path }}
+      - --v=2
+    ports:
+    - containerPort: 6443
+      hostPort: 6443
+      name: https
+    - containerPort: 8080
+      hostPort: 8080
+      name: local
+    volumeMounts:
+    - mountPath: /etc/kubernetes
+      name: ssl-certs-kubernetes
+      readOnly: true
+    - mountPath: /etc/ssl/certs
+      name: ssl-certs-host
+      readOnly: true
+    livenessProbe:
+      httpGet:
+        host: 127.0.0.1
+        path: /healthz
+        port: 8080
+      initialDelaySeconds: 15
+      timeoutSeconds: 5
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes
+    name: ssl-certs-kubernetes
+  - hostPath:
+      path: /usr/share/ca-certificates
+    name: ssl-certs-host

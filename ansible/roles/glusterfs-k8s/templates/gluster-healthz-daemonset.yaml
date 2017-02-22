@@ -8,6 +8,7 @@ spec:
     metadata:
       labels:
         app: gluster-healthz
+        kismaticVersion: "{{ kismatic_short_version }}"
     spec:
       containers:
         - name: tcp-healthz

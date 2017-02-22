@@ -11,7 +11,8 @@ import (
 
 var _ = Describe("disconnected install feature", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("Installing on machines with no internet access", func() {

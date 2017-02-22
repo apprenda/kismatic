@@ -1,0 +1,39 @@
+---
+  - name: download kube-apiserver image
+    command: docker pull {{ kube_apiserver_img }}
+
+  - name: copy kube-apiserver.yaml manifest
+    template:
+      src: kube-apiserver.yaml
+      dest: "{{ kubelet_pod_manifests_dir }}/kube-apiserver.yaml"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
+
+  # enable below code and modify manifest file with different ports if need to debug kube-apiserver
+  # - name: get temp API-server
+  #   get_url:
+  #     url: https://storage.googleapis.com/kubernetes-release/release/{{ kubernetes_version }}/bin/linux/amd64/kube-apiserver
+  #     dest: /usr/bin/kube-apiserver
+  #     mode: 0770
+
+  # - name: copy debug kube-apiserver.service to remote
+  #   template:
+  #     src: kube-apiserver.service.debug
+  #     dest: "{{ init_system_dir }}/kube-apiserver.service"
+  #     owner: "{{ kubernetes_owner }}"
+  #     group: "{{ kubernetes_group }}"
+  #     mode: "{{ kubernetes_service_mode }}"
+  #   notify:
+  #     - reload services
+  #     - start kube-apiserver service
+  #     - verify kube-apiserver is running
+
+  # # force_apiserver_restart=true to force restart
+  # - name: force restart kube-apiserver
+  #   command: /bin/true
+  #   notify:
+  #     - enable kube-apiserver
+  #     - restart kube-apiserver service
+  #     - verify kube-apiserver is running
+  #   when: force_apiserver_restart is defined and force_apiserver_restart|bool == true

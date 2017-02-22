@@ -1,7 +1,8 @@
 ---
   - hosts: etcd
     any_errors_fatal: true
-    name: "Install Network Etcd Cluster"
+    name: "{{ play_name | default('Start Network Etcd Cluster') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:

@@ -8,7 +8,8 @@ import (
 
 var _ = Describe("NFS Shares", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Context("Specifying valid NFS shares in the plan file", func() {

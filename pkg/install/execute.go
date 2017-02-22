@@ -22,6 +22,7 @@ import (
 // environment defined in the plan file
 type PreFlightExecutor interface {
 	RunPreFlightCheck(*Plan) error
+	RunUpgradePreFlightCheck(*Plan) error
 }
 
 // The Executor will carry out the installation plan
@@ -30,8 +31,12 @@ type Executor interface {
 	Install(p *Plan) error
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
-	RunTask(string, *Plan) error
+	RunPlay(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
+	UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode) error
+	ValidateControlPlane(plan Plan) error
+	UpgradeDockerRegistry(plan Plan) error
+	UpgradeClusterServices(plan Plan) error
 }
 
 // ExecutorOptions are used to configure the executor
@@ -55,7 +60,6 @@ type ExecutorOptions struct {
 
 // NewExecutor returns an executor for performing installations according to the installation plan.
 func NewExecutor(stdout io.Writer, errOut io.Writer, options ExecutorOptions) (Executor, error) {
-	// TODO: Is there a better way to handle this path to the ansible install dir?
 	ansibleDir := "ansible"
 	if options.GeneratedAssetsDirectory == "" {
 		return nil, fmt.Errorf("GeneratedAssetsDirectory option cannot be empty")
@@ -129,47 +133,361 @@ type ansibleExecutor struct {
 	runnerExplainerFactory func(explain.AnsibleEventExplainer, io.Writer) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error)
 }
 
-// Install the cluster according to the installation plan
-func (ae *ansibleExecutor) Install(p *Plan) error {
-	runDirectory, err := ae.createRunDirectory("install")
+type task struct {
+	// name of the task used for the runs dir
+	name string
+	// the inventory of nodes to use
+	inventory ansible.Inventory
+	// the cluster catalog to use
+	clusterCatalog ansible.ClusterCatalog
+	// the playbook filename
+	playbook string
+	// the explainer to use
+	explainer explain.AnsibleEventExplainer
+	// the plan
+	plan Plan
+	// run the task on specific nodes
+	limit []string
+}
+
+// execute will run the given task, and setup all what's needed for us to run ansible.
+func (ae *ansibleExecutor) execute(t task) error {
+	runDirectory, err := ae.createRunDirectory(t.name)
 	if err != nil {
-		return fmt.Errorf("error creating working directory for installation: %v", err)
+		return fmt.Errorf("error creating working directory for %q: %v", t.name, err)
 	}
 	// Save the plan file that was used for this execution
 	fp := FilePlanner{
 		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
 	}
-	if err = fp.Write(p); err != nil {
+	if err = fp.Write(&t.plan); err != nil {
 		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
-	}
-	// Generate private keys and certificates for the cluster
-	if err = ae.generateTLSAssets(p); err != nil {
-		return err
-	}
-	// Build the ansible inventory
-	inventory := buildInventoryFromPlan(p)
-
-	cc, err := ae.buildInstallExtraVars(p)
-	if err != nil {
-		return err
 	}
 	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
 	ansibleLogFile, err := os.Create(ansibleLogFilename)
 	if err != nil {
 		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
 	}
-	// Run the installation playbook
-	util.PrintHeader(ae.stdout, "Installing Cluster", '=')
-	playbook := "kubernetes.yaml"
-	eventExplainer := &explain.DefaultEventExplainer{}
-	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
+	runner, explainer, err := ae.ansibleRunnerWithExplainer(t.explainer, ansibleLogFile, runDirectory)
+	if err != nil {
 		return err
+	}
+
+	// Start running ansible with the given playbook
+	var eventStream <-chan ansible.Event
+	if t.limit != nil && len(t.limit) != 0 {
+		eventStream, err = runner.StartPlaybookOnNode(t.playbook, t.inventory, t.clusterCatalog, t.limit...)
+	} else {
+		eventStream, err = runner.StartPlaybook(t.playbook, t.inventory, t.clusterCatalog)
+	}
+	if err != nil {
+		return fmt.Errorf("error running ansible playbook: %v", err)
+	}
+	// Ansible blocks until explainer starts reading from stream. Start
+	// explainer in a separate go routine
+	go explainer.Explain(eventStream)
+
+	// Wait until ansible exits
+	if err = runner.WaitPlaybook(); err != nil {
+		return fmt.Errorf("error running playbook: %v", err)
 	}
 	return nil
 }
 
+// Install the cluster according to the installation plan
+func (ae *ansibleExecutor) Install(p *Plan) error {
+	// Generate private keys and certificates for the cluster
+	if err := ae.generateTLSAssets(p); err != nil {
+		return err
+	}
+	// Build the ansible inventory
+	cc, err := ae.buildClusterCatalog(p)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "apply",
+		playbook:       "kubernetes.yaml",
+		plan:           *p,
+		inventory:      buildInventoryFromPlan(p),
+		clusterCatalog: *cc,
+		explainer:      &explain.DefaultEventExplainer{},
+	}
+	util.PrintHeader(ae.stdout, "Installing Cluster", '=')
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
+	cc, err := ae.buildClusterCatalog(p)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "smoketest",
+		playbook:       "smoketest.yaml",
+		explainer:      &explain.DefaultEventExplainer{},
+		plan:           *p,
+		inventory:      buildInventoryFromPlan(p),
+		clusterCatalog: *cc,
+	}
+	util.PrintHeader(ae.stdout, "Running Smoke Test", '=')
+	return ae.execute(t)
+}
+
+// RunPreflightCheck against the nodes defined in the plan
+func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	cc, err := ae.buildClusterCatalog(p)
+	if err != nil {
+		return err
+	}
+	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
+	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
+	cc.EnablePackageInstallation = p.Cluster.AllowPackageInstallation
+
+	t := task{
+		name:           "preflight",
+		playbook:       "preflight.yaml",
+		inventory:      buildInventoryFromPlan(p),
+		clusterCatalog: *cc,
+		explainer: &explain.PreflightEventExplainer{
+			DefaultExplainer: &explain.DefaultEventExplainer{},
+		},
+		plan: *p,
+	}
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan) error {
+	inventory := buildInventoryFromPlan(p)
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	cc, err := ae.buildClusterCatalog(p)
+	if err != nil {
+		return err
+	}
+	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
+	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
+	cc.EnablePackageInstallation = p.Cluster.AllowPackageInstallation
+	t := task{
+		name:     "upgrade-preflight",
+		playbook: "upgrade-preflight.yaml",
+		explainer: &explain.PreflightEventExplainer{
+			DefaultExplainer: &explain.DefaultEventExplainer{},
+		},
+		plan:           *p,
+		inventory:      inventory,
+		clusterCatalog: *cc,
+	}
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) RunPlay(playName string, p *Plan) error {
+	cc, err := ae.buildClusterCatalog(p)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "step",
+		playbook:       playName,
+		inventory:      buildInventoryFromPlan(p),
+		clusterCatalog: *cc,
+		explainer:      &explain.DefaultEventExplainer{},
+		plan:           *p,
+	}
+	util.PrintHeader(ae.stdout, "Running Task", '=')
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
+	// Validate that there are enough storage nodes to satisfy the request
+	nodesRequired := volume.ReplicateCount * volume.DistributionCount
+	if nodesRequired > len(plan.Storage.Nodes) {
+		return fmt.Errorf("the requested volume configuration requires %d storage nodes, but the cluster only has %d.", nodesRequired, len(plan.Storage.Nodes))
+	}
+
+	cc, err := ae.buildClusterCatalog(plan)
+	if err != nil {
+		return err
+	}
+	// Add storage related vars
+	cc.VolumeName = volume.Name
+	cc.VolumeReplicaCount = volume.ReplicateCount
+	cc.VolumeDistributionCount = volume.DistributionCount
+	cc.VolumeStorageClass = volume.StorageClass
+	cc.VolumeQuotaGB = volume.SizeGB
+	cc.VolumeQuotaBytes = volume.SizeGB * (1 << (10 * 3))
+	cc.VolumeMount = "/"
+
+	// Allow nodes and pods to access volumes
+	allowedNodes := plan.Master.Nodes
+	allowedNodes = append(allowedNodes, plan.Worker.Nodes...)
+	allowedNodes = append(allowedNodes, plan.Ingress.Nodes...)
+	allowedNodes = append(allowedNodes, plan.Storage.Nodes...)
+
+	allowed := volume.AllowAddresses
+	allowed = append(allowed, plan.Cluster.Networking.PodCIDRBlock)
+	for _, n := range allowedNodes {
+		ip := n.IP
+		if n.InternalIP != "" {
+			ip = n.InternalIP
+		}
+		allowed = append(allowed, ip)
+	}
+	cc.VolumeAllowedIPs = strings.Join(allowed, ",")
+
+	t := task{
+		name:           "add-volume",
+		playbook:       "volume-add.yaml",
+		plan:           *plan,
+		inventory:      buildInventoryFromPlan(plan),
+		clusterCatalog: *cc,
+		explainer:      &explain.DefaultEventExplainer{},
+	}
+	util.PrintHeader(ae.stdout, "Add Persistent Storage Volume", '=')
+	return ae.execute(t)
+}
+
+// UpgradeNodes upgrades the nodes of the cluster in the following phases:
+//   1. Etcd nodes
+//   2. Master nodes
+//   3. Worker nodes (regardless of specialization)
+//
+// When a node is being upgraded, all the components of the node are upgraded, regardless of
+// which phase of the upgrade we are in. For example, when upgrading a node that is both an etcd and master,
+// the etcd components and the master components will be upgraded when we are in the upgrade etcd nodes
+// phase.
+func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode) error {
+	// Nodes can have multiple roles. For this reason, we need to keep track of which nodes
+	// have been upgraded to avoid re-upgrading them.
+	upgradedNodes := map[string]bool{}
+	// Upgrade etcd nodes
+	for _, nodeToUpgrade := range nodesToUpgrade {
+		for _, role := range nodeToUpgrade.Roles {
+			if role == "etcd" {
+				node := nodeToUpgrade.Node
+				if err := ae.upgradeNode(plan, node); err != nil {
+					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+				}
+				upgradedNodes[node.IP] = true
+				break
+			}
+		}
+	}
+
+	// Upgrade master nodes
+	for _, nodeToUpgrade := range nodesToUpgrade {
+		if upgradedNodes[nodeToUpgrade.Node.IP] == true {
+			continue
+		}
+		for _, role := range nodeToUpgrade.Roles {
+			if role == "master" {
+				node := nodeToUpgrade.Node
+				if err := ae.upgradeNode(plan, node); err != nil {
+					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+				}
+				upgradedNodes[node.IP] = true
+				break
+			}
+		}
+	}
+
+	// Upgrade the rest of the nodes
+	for _, nodeToUpgrade := range nodesToUpgrade {
+		if upgradedNodes[nodeToUpgrade.Node.IP] == true {
+			continue
+		}
+		for _, role := range nodeToUpgrade.Roles {
+			if role != "etcd" && role != "master" {
+				node := nodeToUpgrade.Node
+				if err := ae.upgradeNode(plan, node); err != nil {
+					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+				}
+				upgradedNodes[node.IP] = true
+				break
+			}
+		}
+	}
+	return nil
+}
+
+func (ae *ansibleExecutor) upgradeNode(plan Plan, node Node) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "upgrade-nodes",
+		playbook:       "upgrade-nodes.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      &explain.DefaultEventExplainer{},
+		limit:          []string{node.Host},
+	}
+	util.PrintHeader(ae.stdout, fmt.Sprintf("Upgrade Node %q", node.Host), '=')
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) ValidateControlPlane(plan Plan) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "validate-control-plane",
+		playbook:       "validate-control-plane.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      &explain.DefaultEventExplainer{},
+	}
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) UpgradeDockerRegistry(plan Plan) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "upgrade-docker-registry",
+		playbook:       "upgrade-docker-registry.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      &explain.DefaultEventExplainer{},
+	}
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) UpgradeClusterServices(plan Plan) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "upgrade-cluster-services",
+		playbook:       "upgrade-cluster-services.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      &explain.DefaultEventExplainer{},
+	}
+	return ae.execute(t)
+}
+
 // creates the extra vars that are required for the installation playbook.
-func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan) (*ansible.ClusterCatalog, error) {
+func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog, error) {
 	tlsDir, err := filepath.Abs(ae.certsDir)
 	if err != nil {
 		return nil, fmt.Errorf("failed to determine absolute path to %s: %v", ae.certsDir, err)
@@ -193,6 +511,7 @@ func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan) (*ansible.ClusterCatal
 		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
 		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
+		TargetVersion:             AboutKismatic.ShortVersion.String(),
 	}
 
 	// Setup FQDN or default to first master
@@ -240,174 +559,6 @@ func (ae *ansibleExecutor) buildInstallExtraVars(p *Plan) (*ansible.ClusterCatal
 	return &cc, nil
 }
 
-func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
-	runDirectory, err := ae.createRunDirectory("smoketest")
-	if err != nil {
-		return fmt.Errorf("error creating working directory for smoke test: %v", err)
-	}
-
-	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
-	ansibleLogFile, err := os.Create(ansibleLogFilename)
-	if err != nil {
-		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
-	}
-
-	cc, err := ae.buildInstallExtraVars(p)
-	if err != nil {
-		return err
-	}
-	inventory := buildInventoryFromPlan(p)
-
-	// run the preflight playbook with preflight explainer
-	util.PrintHeader(ae.stdout, "Running Smoke Test", '=')
-	playbook := "smoketest.yaml"
-	explainer := &explain.PreflightEventExplainer{
-		DefaultExplainer: &explain.DefaultEventExplainer{},
-	}
-	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
-		return fmt.Errorf("error running smoketest: %v", err)
-	}
-	return nil
-}
-
-// RunPreflightCheck against the nodes defined in the plan
-func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
-	runDirectory, err := ae.createRunDirectory("preflight")
-	if err != nil {
-		return fmt.Errorf("error creating working directory for preflight: %v", err)
-	}
-	// Save the plan file that was used for this execution
-	fp := FilePlanner{
-		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
-	}
-	if err = fp.Write(p); err != nil {
-		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
-	}
-
-	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
-	ansibleLogFile, err := os.Create(ansibleLogFilename)
-	if err != nil {
-		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
-	}
-
-	// Build inventory and save it in runs directory
-	inventory := buildInventoryFromPlan(p)
-
-	pwd, _ := os.Getwd()
-
-	cc, err := ae.buildInstallExtraVars(p)
-	if err != nil {
-		return err
-	}
-
-	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
-	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
-	cc.EnablePackageInstallation = p.Cluster.AllowPackageInstallation
-
-	// run the pre-flight playbook with pre-flight explainer
-	playbook := "preflight.yaml"
-	explainer := &explain.PreflightEventExplainer{
-		DefaultExplainer: &explain.DefaultEventExplainer{},
-	}
-	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
-		return fmt.Errorf("error running preflight: %v", err)
-	}
-	return nil
-}
-
-func (ae *ansibleExecutor) RunTask(taskName string, p *Plan) error {
-	runDir, err := ae.createRunDirectory("step")
-	if err != nil {
-		return err
-	}
-	// Save the plan file that was used for this execution
-	fp := FilePlanner{
-		File: filepath.Join(runDir, "kismatic-cluster.yaml"),
-	}
-	if err = fp.Write(p); err != nil {
-		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
-	}
-	ansibleLogFilename := filepath.Join(runDir, "ansible.log")
-	ansibleLogFile, err := os.Create(ansibleLogFilename)
-	if err != nil {
-		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
-	}
-	explainer := &explain.DefaultEventExplainer{}
-	inventory := buildInventoryFromPlan(p)
-	ev, err := ae.buildInstallExtraVars(p)
-	if err != nil {
-		return err
-	}
-	util.PrintHeader(ae.stdout, "Running Task", '=')
-	if err := ae.runPlaybookWithExplainer(taskName, explainer, inventory, *ev, ansibleLogFile, runDir); err != nil {
-		return fmt.Errorf("error running task: %v", err)
-	}
-	return nil
-}
-
-func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
-	runDirectory, err := ae.createRunDirectory("add-volume")
-	if err != nil {
-		return fmt.Errorf("error creating working directory for add-volume: %v", err)
-	}
-	fp := FilePlanner{
-		File: filepath.Join(runDirectory, "kismatic-cluster.yaml"),
-	}
-	if err = fp.Write(plan); err != nil {
-		return fmt.Errorf("error recording plan file to %s: %v", fp.File, err)
-	}
-	inventory := buildInventoryFromPlan(plan)
-	cc, err := ae.buildInstallExtraVars(plan)
-	if err != nil {
-		return err
-	}
-
-	// Validate that there are enough storage nodes to satisfy the request
-	nodesRequired := volume.ReplicateCount * volume.DistributionCount
-	if nodesRequired > len(plan.Storage.Nodes) {
-		return fmt.Errorf("the requested volume configuration requires %d storage nodes, but the cluster only has %d.", nodesRequired, len(plan.Storage.Nodes))
-	}
-
-	// Add storage related vars
-	cc.VolumeName = volume.Name
-	cc.VolumeReplicaCount = volume.ReplicateCount
-	cc.VolumeDistributionCount = volume.DistributionCount
-	cc.VolumeStorageClass = volume.StorageClass
-	cc.VolumeQuotaGB = volume.SizeGB
-	cc.VolumeQuotaBytes = volume.SizeGB * (1 << (10 * 3))
-	cc.VolumeMount = "/"
-
-	// Allow nodes and pods to access volumes
-	allowedNodes := plan.Master.Nodes
-	allowedNodes = append(allowedNodes, plan.Worker.Nodes...)
-	allowedNodes = append(allowedNodes, plan.Ingress.Nodes...)
-	allowedNodes = append(allowedNodes, plan.Storage.Nodes...)
-
-	allowed := volume.AllowAddresses
-	allowed = append(allowed, plan.Cluster.Networking.PodCIDRBlock)
-	for _, n := range allowedNodes {
-		ip := n.IP
-		if n.InternalIP != "" {
-			ip = n.InternalIP
-		}
-		allowed = append(allowed, ip)
-	}
-	cc.VolumeAllowedIPs = strings.Join(allowed, ",")
-
-	ansibleLogFilename := filepath.Join(runDirectory, "ansible.log")
-	ansibleLogFile, err := os.Create(ansibleLogFilename)
-	if err != nil {
-		return fmt.Errorf("error creating ansible log file %q: %v", ansibleLogFilename, err)
-	}
-	util.PrintHeader(ae.stdout, "Add Persistent Storage Volume", '=')
-	playbook := "volume-add.yaml"
-	eventExplainer := &explain.DefaultEventExplainer{}
-	if err = ae.runPlaybookWithExplainer(playbook, eventExplainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (ae *ansibleExecutor) createRunDirectory(runName string) (string, error) {
 	start := time.Now()
 	runDirectory := filepath.Join(ae.options.RunsDirectory, runName, start.Format("2006-01-02-15-04-05"))
@@ -438,30 +589,7 @@ func (ae *ansibleExecutor) generateTLSAssets(p *Plan) error {
 	return nil
 }
 
-func (ae *ansibleExecutor) runPlaybookWithExplainer(playbook string, eventExplainer explain.AnsibleEventExplainer, inv ansible.Inventory, cc ansible.ClusterCatalog, ansibleLog io.Writer, runDirectory string) error {
-	// Setup sinks for explainer and ansible stdout
-	runner, explainer, err := ae.getAnsibleRunnerAndExplainer(eventExplainer, ansibleLog, runDirectory)
-	if err != nil {
-		return err
-	}
-
-	// Start running ansible with the given playbook
-	eventStream, err := runner.StartPlaybook(playbook, inv, cc)
-	if err != nil {
-		return fmt.Errorf("error running ansible playbook: %v", err)
-	}
-	// Ansible blocks until explainer starts reading from stream. Start
-	// explainer in a separate go routine
-	go explainer.Explain(eventStream)
-
-	// Wait until ansible exits
-	if err = runner.WaitPlaybook(); err != nil {
-		return fmt.Errorf("error running playbook: %v", err)
-	}
-	return nil
-}
-
-func (ae *ansibleExecutor) getAnsibleRunnerAndExplainer(explainer explain.AnsibleEventExplainer, ansibleLog io.Writer, runDirectory string) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error) {
+func (ae *ansibleExecutor) ansibleRunnerWithExplainer(explainer explain.AnsibleEventExplainer, ansibleLog io.Writer, runDirectory string) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error) {
 	if ae.runnerExplainerFactory != nil {
 		return ae.runnerExplainerFactory(explainer, ansibleLog)
 	}
@@ -568,4 +696,13 @@ func timestampWriter(out io.Writer) io.Writer {
 		}
 	}(pr)
 	return pw
+}
+
+func findNodeWithIP(nodes []Node, ip string) (*Node, error) {
+	for _, n := range nodes {
+		if n.IP == ip {
+			return &n, nil
+		}
+	}
+	return nil, fmt.Errorf("Node with IP %q not found", ip)
 }

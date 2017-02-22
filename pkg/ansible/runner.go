@@ -35,7 +35,7 @@ type Runner interface {
 	// StartPlaybookOnNode runs the playbook asynchronously with the given inventory and extra vars
 	// against the specific node.
 	// It returns a read-only channel that must be consumed for the playbook execution to proceed.
-	StartPlaybookOnNode(playbookFile string, inventory Inventory, cc ClusterCatalog, node string) (<-chan Event, error)
+	StartPlaybookOnNode(playbookFile string, inventory Inventory, cc ClusterCatalog, node ...string) (<-chan Event, error)
 }
 
 type runner struct {
@@ -96,18 +96,18 @@ func (r *runner) WaitPlaybook() error {
 
 // RunPlaybook with the given inventory and extra vars
 func (r *runner) StartPlaybook(playbookFile string, inv Inventory, cc ClusterCatalog) (<-chan Event, error) {
-	return r.startPlaybook(playbookFile, inv, cc, "") // Don't set the --limit arg
+	return r.startPlaybook(playbookFile, inv, cc) // Don't set the --limit arg
 }
 
 // StartPlaybookOnNode runs the playbook asynchronously with the given inventory and extra vars
 // against the specific node.
 // It returns a read-only channel that must be consumed for the playbook execution to proceed.
-func (r *runner) StartPlaybookOnNode(playbookFile string, inv Inventory, cc ClusterCatalog, node string) (<-chan Event, error) {
-	limitArg := node // set the --limit arg to the node we want to target
-	return r.startPlaybook(playbookFile, inv, cc, limitArg)
+func (r *runner) StartPlaybookOnNode(playbookFile string, inv Inventory, cc ClusterCatalog, nodes ...string) (<-chan Event, error) {
+	// set the --limit arg to the node we want to target
+	return r.startPlaybook(playbookFile, inv, cc, nodes...)
 }
 
-func (r *runner) startPlaybook(playbookFile string, inv Inventory, cc ClusterCatalog, limitArg string) (<-chan Event, error) {
+func (r *runner) startPlaybook(playbookFile string, inv Inventory, cc ClusterCatalog, nodes ...string) (<-chan Event, error) {
 	playbook := filepath.Join(r.ansibleDir, "playbooks", playbookFile)
 	if _, err := os.Stat(playbook); os.IsNotExist(err) {
 		return nil, fmt.Errorf("playbook %q does not exist", playbook)
@@ -140,6 +140,7 @@ func (r *runner) startPlaybook(playbookFile string, inv Inventory, cc ClusterCat
 
 	log.SetOutput(r.out)
 
+	limitArg := strings.Join(nodes, ",")
 	if limitArg != "" {
 		cmd.Args = append(cmd.Args, "--limit", limitArg)
 	}

@@ -1,7 +1,7 @@
 ---
   - hosts: master
     any_errors_fatal: true
-    name: "Smoke test Master Nodes"
+    name: "Smoke Test Master Nodes"
     remote_user: root
     become_method: sudo
     serial: 1

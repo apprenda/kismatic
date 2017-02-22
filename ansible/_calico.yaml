@@ -1,12 +1,27 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: "Configure Cluster Network"
+    name: "{{ play_name | default('Configure Cluster Network') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:
       - group_vars/all.yaml
 
+    pre_tasks:  # stop all systemd services for older installs
+      - name: check if calico-node is active
+        command: systemctl is-active calico-node.service
+        register: status
+        failed_when: status.rc !=0 and status.rc != 3 # 0=running, 3=stopped or doesnt exist
+        when: upgrading is defined and upgrading|bool == true
+
+      # always stop and disable if service exists
+      - name: stop calico-node service
+        service:
+          name: calico-node.service
+          state: stopped
+          enabled: no
+        when: upgrading is defined and upgrading|bool == true and status is defined and (status.stdout == "active" or status.stdout == "inactive")
+
     roles:
-      - kubeconfig
       - calico

@@ -1,0 +1,11 @@
+---
+  - name: download kube-controller-manager image
+    command: docker pull {{ kube_controller_manager_img }}
+
+  - name: copy kube-controller-manager.yaml manifest
+    template:
+      src: kube-controller-manager.yaml
+      dest: "{{ kubelet_pod_manifests_dir }}/kube-controller-manager.yaml"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"

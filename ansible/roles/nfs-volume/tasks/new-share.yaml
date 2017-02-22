@@ -1,0 +1,44 @@
+# - debug:
+#     var: item.1
+- set_fact:
+    nfs_index: "{{item.0}}"
+    nfs_host: "{{item.1.host}}"
+    nfs_path: "{{item.1.path}}"
+
+- name: mount share read/write
+  mount:
+    name: "/mnt/test-{{nfs_index}}"
+    src: "{{nfs_host}}:{{nfs_path}}"
+    fstype: nfs
+    state: mounted
+
+#Backslash escaped Regex to find the available size in df output such as this:
+#Filesystem      1K-blocks   Used Available Use% Mounted on
+#/mnt/test-0      12246332 882716  10760892   8% /
+- name: Grab share size
+  shell: "df /mnt/test-{{nfs_index}} | grep -oP '\\K\\d+(?=\\s+\\d+%)'"
+  register: nfs_size_blob
+
+# - debug:
+#     var: nfs_size_blob
+
+- set_fact:
+    nfs_size: "{{nfs_size_blob.stdout}}"
+
+# - debug:
+#     var: nfs_size
+
+- name: unmount share read/write
+  mount:
+    name: "/mnt/test-{{nfs_index}}"
+    src: "{{nfs_host}}:{{nfs_path}}"
+    fstype: nfs
+    state: unmounted
+
+- name: copy PV.yaml to remote
+  template:
+    src: add-persistent-volume.yaml
+    dest: /tmp/add-persistent-volume-{{nfs_index}}.yaml
+
+- name: create pv pv{{ nfs_index }}
+  command: kubectl apply -f /tmp/add-persistent-volume-{{nfs_index}}.yaml

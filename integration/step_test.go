@@ -10,7 +10,8 @@ import (
 
 var _ = Describe("install step commands", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("Running the api server play against an existing cluster", func() {
@@ -19,7 +20,7 @@ var _ = Describe("install step commands", func() {
 				err := installKismaticMini(node, sshKey)
 				Expect(err).ToNot(HaveOccurred())
 
-				c := exec.Command("./kismatic", "install", "step", "_apiserver.yaml", "-f", "kismatic-testing.yaml")
+				c := exec.Command("./kismatic", "install", "step", "_kube-apiserver.yaml", "-f", "kismatic-testing.yaml")
 				c.Stdout = os.Stdout
 				c.Stderr = os.Stderr
 				err = c.Run()

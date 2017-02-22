@@ -1,15 +1,15 @@
 ---
   # setup directories
-  - name: create {{ kubernetes_lib_dir }} directory
+  - name: create {{ kubernetes_auth_dir }} directory
     file:
-      path: "{{ kubernetes_lib_dir }}"
+      path: "{{ kubernetes_auth_dir }}"
       state: directory
 
   - name: copy basicauth.csv to remote
     template:
       src: basicauth.csv
-      dest: "{{ kubernetes_lib_dir }}/basicauth.csv"
+      dest: "{{ kubernetes_auth_dir }}/basicauth.csv"
   - name: copy authorization-policy.json to remote
     copy:
       src: authorization-policy.json
-      dest: "{{ kubernetes_lib_dir }}/authorization-policy.json"
+      dest: "{{ kubernetes_auth_dir }}/authorization-policy.json"

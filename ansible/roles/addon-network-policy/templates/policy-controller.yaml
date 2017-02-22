@@ -6,6 +6,7 @@ metadata:
   labels:
     k8s-app: calico-policy
     kubernetes.io/cluster-service: "true"
+    kismaticVersion: "{{ kismatic_short_version }}"
 spec:
   replicas: 1
   selector:

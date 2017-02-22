@@ -10,10 +10,11 @@ import (
 )
 
 type clientOpts struct {
-	outputType string
-	nodeRoles  string
-	rulesFile  string
-	targetNode string
+	outputType         string
+	nodeRoles          string
+	rulesFile          string
+	targetNode         string
+	useUpgradeDefaults bool
 }
 
 var clientExample = `# Run the inspector against an etcd node
@@ -44,6 +45,7 @@ func NewCmdClient(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVarP(&opts.outputType, "output", "o", "table", "set the result output type. Options are 'json', 'table'")
 	cmd.Flags().StringVar(&opts.nodeRoles, "node-roles", "", "comma-separated list of the node's roles. Valid roles are 'etcd', 'master', 'worker'")
 	cmd.Flags().StringVarP(&opts.rulesFile, "file", "f", "", "the path to an inspector rules file. If blank, the inspector uses the default rules")
+	cmd.Flags().BoolVarP(&opts.useUpgradeDefaults, "upgrade", "u", false, "use defaults for upgrade, rather than install")
 	return cmd
 }
 
@@ -62,7 +64,7 @@ func runClient(out io.Writer, opts clientOpts) error {
 	if err != nil {
 		return fmt.Errorf("error creating inspector client: %v", err)
 	}
-	rules, err := getRulesFromFileOrDefault(out, opts.rulesFile)
+	rules, err := getRulesFromFileOrDefault(out, opts.rulesFile, opts.useUpgradeDefaults)
 	if err != nil {
 		return err
 	}

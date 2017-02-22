@@ -112,22 +112,19 @@ type SSHConnection struct {
 	Node      *Node
 }
 
-func (p *Plan) GetUniqueNodeIPs() []string {
-	ipMap := make(map[string]bool)
-	nodes := p.getAllNodes()
-	for _, node := range nodes {
-		ipMap[node.IP] = true
+// GetUniqueNodes returns a list of the unique nodes that are listed in the plan file.
+// That is, if a node has multiple roles, it will only appear once in the list.
+func (p *Plan) GetUniqueNodes() []Node {
+	seenNodes := map[Node]bool{}
+	nodes := []Node{}
+	for _, node := range p.getAllNodes() {
+		if seenNodes[node] {
+			continue
+		}
+		nodes = append(nodes, node)
+		seenNodes[node] = true
 	}
-
-	ips := make([]string, len(ipMap))
-
-	i := 0
-	for k := range ipMap {
-		ips[i] = k
-		i++
-	}
-
-	return ips
+	return nodes
 }
 
 func (p *Plan) getAllNodes() []Node {
@@ -142,6 +139,15 @@ func (p *Plan) getAllNodes() []Node {
 		nodes = append(nodes, p.Storage.Nodes...)
 	}
 	return nodes
+}
+
+func (p *Plan) getNodeWithIP(ip string) (*Node, error) {
+	for _, n := range p.getAllNodes() {
+		if n.IP == ip {
+			return &n, nil
+		}
+	}
+	return nil, fmt.Errorf("Node with IP %q was not found in plan", ip)
 }
 
 // GetSSHConnection returns the SSHConnection struct containing the node and SSHConfig details
@@ -203,4 +209,44 @@ func firstIfItExists(nodes []Node) *Node {
 		return &nodes[0]
 	}
 	return nil
+}
+
+func (p *Plan) GetRolesForIP(ip string) []string {
+	allRoles := []string{}
+
+	if hasIP(&p.Master.Nodes, ip) {
+		allRoles = append(allRoles, "master")
+	}
+
+	if hasIP(&p.Etcd.Nodes, ip) {
+		allRoles = append(allRoles, "etcd")
+	}
+
+	if hasIP(&p.Worker.Nodes, ip) {
+		allRoles = append(allRoles, "worker")
+	}
+
+	if hasIP(&p.Ingress.Nodes, ip) {
+		allRoles = append(allRoles, "ingress")
+	}
+
+	if hasIP(&p.Storage.Nodes, ip) {
+		allRoles = append(allRoles, "storage")
+	}
+
+	return allRoles
+}
+
+func hasIP(nodes *[]Node, ip string) bool {
+	for _, node := range *nodes {
+		if node.IP == ip {
+			return true
+		}
+	}
+	return false
+}
+
+// ConfigureDockerRegistry returns true when confgiuring an external or on cluster registry is required
+func (p Plan) ConfigureDockerRegistry() bool {
+	return p.DockerRegistry.Address != "" || p.DockerRegistry.SetupInternal
 }

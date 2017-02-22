@@ -1,11 +1,15 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: "Install Kubernetes Kubelet"
+    name: "{{ play_name | default('Start Kubernetes Kubelet') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:
       - group_vars/all.yaml
     roles:
-      - kubeconfig
+      - role: packages-kubernetes
+        when: allow_package_installation|bool == true
+      - role: packages-offline
+        when: allow_package_installation|bool == true and disconnected_installation|bool == true
       - kubelet

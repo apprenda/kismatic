@@ -1,0 +1,23 @@
+---
+  - include: validate-kube-pods.yaml component="kube-apiserver"
+  - include: validate-kube-pods.yaml component="kube-scheduler"
+  - include: validate-kube-pods.yaml component="kube-controller-manager"
+  - include: validate-kube-pods.yaml component="kube-proxy"
+
+  - name: get desired number of calico pods
+    command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
+    register: desiredPods
+    until: desiredPods|success
+    retries: 10
+    delay: 6
+  - name: wait until all calico pods are ready
+    command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
+    register: readyPods
+    until: desiredPods.stdout|int == readyPods.stdout|int
+    retries: 10
+    delay: 6
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: verify all calico pods are running
+    fail:
+      msg: "Timed out waiting for all calico pods to be running."
+    when: desiredPods.stdout|int != readyPods.stdout|int

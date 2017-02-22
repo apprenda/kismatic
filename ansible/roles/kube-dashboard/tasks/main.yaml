@@ -1,0 +1,10 @@
+---
+  - name: copy kubernetes-dashboard.yaml to remote
+    template:
+      src: kubernetes-dashboard.yaml
+      dest: /tmp/kubernetes-dashboard.yaml
+  - name: start kubernetes-dashboard service
+    command: kubectl apply -f /tmp/kubernetes-dashboard.yaml
+    register: out
+
+  - debug: var=out.stdout_lines

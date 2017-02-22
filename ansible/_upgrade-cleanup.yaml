@@ -1,0 +1,12 @@
+---
+  - hosts: all
+    any_errors_fatal: true
+    name: Remove Old Kismatic Artifacts
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+    roles:
+      - role: packages-cleanup
+        when: allow_package_installation is defined and allow_package_installation|bool == true
+      - unit-file-cleanup

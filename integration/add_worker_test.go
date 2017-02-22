@@ -9,7 +9,8 @@ import (
 
 var _ = Describe("kismatic install add-worker tests", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("adding a worker to an existing cluster", func() {

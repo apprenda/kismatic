@@ -1,7 +1,8 @@
 ---
   - hosts: etcd
     any_errors_fatal: true
-    name: "Install Kubernetes Etcd Cluster"
+    name: "{{ play_name | default('Start Kubernetes Etcd Cluster') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:
@@ -9,5 +10,7 @@
       - group_vars/etcd-k8s.yaml
 
     roles:
+      - role: packages-etcd
+        when: allow_package_installation|bool == true
       - etcd-cert
       - etcd

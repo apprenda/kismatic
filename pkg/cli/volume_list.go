@@ -35,15 +35,15 @@ This function requires a target cluster that has storage nodes.`,
 }
 
 func doVolumeList(out io.Writer, opts volumeListOptions, planFile string, args []string) error {
+	// verify command
+	if opts.outputFormat != "simple" && opts.outputFormat != "json" {
+		return fmt.Errorf("output format %q is not supported", opts.outputFormat)
+	}
+
 	// Setup ansible
 	planner := &install.FilePlanner{File: planFile}
 	if !planner.PlanExists() {
 		return fmt.Errorf("plan file not found at %q", planFile)
-	}
-
-	// verify command
-	if opts.outputFormat != "simple" && opts.outputFormat != "json" {
-		return fmt.Errorf("output format %q is not supported", opts.outputFormat)
 	}
 
 	plan, err := planner.Read()

@@ -15,7 +15,8 @@ import (
 
 var _ = Describe("kismatic", func() {
 	BeforeEach(func() {
-		os.Chdir(kisPath)
+		dir := setupTestWorkingDir()
+		os.Chdir(dir)
 	})
 
 	Describe("calling kismatic with no verb", func() {

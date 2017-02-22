@@ -1,0 +1,22 @@
+---
+  # YUM
+  - name: install etcd yum package
+    yum: name=etcd-{{ etcd_yum_version }} state=present
+    register: etcd_installation
+    until: etcd_installation|success
+    retries: 3
+    delay: 3
+    when: ansible_os_family == 'RedHat'
+
+  # DEB
+  - name: install etcd deb package
+    apt:
+      name: etcd={{etcd_apt_version}}
+      state: present
+      default_release: kismatic-xenial
+      dpkg_options: force-confdef,force-confold,force-overwrite
+    register: etcd_installation
+    until: etcd_installation|success
+    retries: 3
+    delay: 3
+    when: ansible_os_family == 'Debian'

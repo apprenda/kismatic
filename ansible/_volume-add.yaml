@@ -1,7 +1,7 @@
 ---
   - hosts: storage
     any_errors_fatal: true
-    name: "Add Gluster volume"
+    name: "Add Gluster Volume"
     become: yes
     vars_files:
       - group_vars/all.yaml

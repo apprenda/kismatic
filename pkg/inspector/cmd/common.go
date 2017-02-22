@@ -18,22 +18,21 @@ func getNodeRoles(commaSepRoles string) ([]string, error) {
 	return roles, nil
 }
 
-func getRulesFromFileOrDefault(out io.Writer, file string) ([]rule.Rule, error) {
-	var rules []rule.Rule
-	var err error
+func getRulesFromFileOrDefault(out io.Writer, file string, useUpgradeRules bool) ([]rule.Rule, error) {
 	if file != "" {
-		rules, err = rule.ReadFromFile(file)
+		rules, err := rule.ReadFromFile(file)
 		if err != nil {
 			return nil, err
 		}
 		if ok := validateRules(out, rules); !ok {
 			return nil, fmt.Errorf("rules read from %q did not pass validation", file)
 		}
-	} else {
-		rules = rule.DefaultRules()
+		return rules, nil
 	}
-
-	return rules, nil
+	if useUpgradeRules {
+		return rule.UpgradeRules(), nil
+	}
+	return rule.DefaultRules(), nil
 }
 
 func validateOutputType(outputType string) error {

@@ -2,22 +2,38 @@
   # kubelet
   - name: copy kubelet.service to remote
     template:
-      src: kubelet.service.j2
-      dest: "{{ kubernetes_service_dir }}/kubelet.service"
+      src: kubelet.service
+      dest: "{{ init_system_dir }}/kubelet.service"
       owner: "{{ kubernetes_owner }}"
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
     notify:
       - reload services
-      - enable kubelet
       - restart kubelet service
-      - verify kubelet is running
+
+  - name: create static pod manifests directory
+    file:
+      path: "{{ kubelet_pod_manifests_dir }}"
+      state: directory
+      mode: 0700
 
   # force_kubelet_restart=true to force restart
+  # on install, service will be started with the task before this
+  # on upgrade, this will be restarted only of the package was upgraded
   - name: force restart kubelet
     command: /bin/true
     notify:
-      - enable kubelet
+      - reload services
       - restart kubelet service
-      - verify kubelet is running
-    when: force_kubelet_restart is defined and force_kubelet_restart|bool == true
+    when: >
+      (force_kubelet_restart is defined and force_kubelet_restart|bool == true) or
+      (kubelet_installation is defined and kubelet_installation.changed == true and upgrading is defined and upgrading|bool == true)
+
+  - meta: flush_handlers  #Run handlers
+
+  - name: verify kubelet is running
+    command: systemctl status kubelet
+    register: running
+    until: running|success
+    retries: 3
+    delay: 5

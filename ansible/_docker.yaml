@@ -1,13 +1,14 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: "Install Docker"
+    name: "{{ play_name | default('Start Docker') }}"
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:
       - group_vars/all.yaml
 
     roles:
+      - role: packages-docker
+        when: allow_package_installation|bool == true
       - docker
-      - role: docker-registry-cert
-        when: use_private_docker_registry is defined and use_private_docker_registry|bool == true

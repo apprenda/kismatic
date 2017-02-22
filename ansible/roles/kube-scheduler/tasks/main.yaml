@@ -1,0 +1,11 @@
+---
+  - name: download kube-scheduler image
+    command: docker pull {{ kube_scheduler_img }}
+
+  - name: copy kube-scheduler.yaml manifest
+    template:
+      src: kube-scheduler.yaml
+      dest: "{{ kubelet_pod_manifests_dir }}/kube-scheduler.yaml"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
