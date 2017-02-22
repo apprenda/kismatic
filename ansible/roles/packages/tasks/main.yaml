@@ -9,6 +9,7 @@
     retries: 3
     delay: 1
     changed_when: "result.status is defined and result.status == 200"
+    run_once: true
 
   # only configure repository if it is reachable
   - name: add Kismatic yum repository
@@ -33,6 +34,7 @@
     retries: 3
     delay: 1
     changed_when: "result.status is defined and result.status == 200"
+    run_once: true
 
   # only configure repository if it is reachable
   - name: install apt-transport-https package
