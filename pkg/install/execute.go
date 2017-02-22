@@ -261,8 +261,8 @@ func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
 	// run the preflight playbook with preflight explainer
 	util.PrintHeader(ae.stdout, "Running Smoke Test", '=')
 	playbook := "smoketest.yaml"
-	explainer := &explain.PreflightEventExplainer{
-		DefaultExplainer: &explain.DefaultEventExplainer{},
+	explainer := &explain.SmokeTestEventExplainer{
+		DefaultEventExplainer: &explain.DefaultEventExplainer{},
 	}
 	if err = ae.runPlaybookWithExplainer(playbook, explainer, inventory, *cc, ansibleLogFile, runDirectory); err != nil {
 		return fmt.Errorf("error running smoketest: %v", err)
