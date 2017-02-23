@@ -7,7 +7,7 @@ User=root
 ExecStart={{ bin_dir }}/kismatic-inspector server \
   --node-roles={{ group_names|join(",") }} \
   --port=8888 \
-  --enforcePackages={% if allow_package_installation|bool %}false{% else %}true{% endif %} \
+  --pkg-installation-disabled={% if allow_package_installation|bool %}false{% else %}true{% endif %} \
   --disconnected-installation={% if disconnected_installation|bool %}true{% else %}false{% endif %}
 
 [Install]
