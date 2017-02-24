@@ -136,6 +136,7 @@ func (explainer *verboseExplainer) ExplainEvent(e ansible.Event) {
 
 	// Ignored events
 	case *ansible.RunnerItemRetryEvent:
+		fmt.Fprintf(out, " %s Retrying: %s (%d/%d attempts)\n", event.Host, explainer.currentTask, event.Result.Attempts, event.Result.MaxRetries)
 	case *ansible.PlaybookStartEvent:
 	default:
 		util.PrintColor(out, util.Orange, "Unhandled event: %T\n", event)
