@@ -16,3 +16,5 @@ import:
   - ssh
 - package: github.com/pkg/browser
 - package: github.com/gosuri/uilive
+- package: github.com/mattn/go-isatty
+  version: ~0.0.1

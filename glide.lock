@@ -1,8 +1,8 @@
-hash: c83ff795ee2fa2a591063739a4ab70eecc00715f2e40473daf6d15673f06c59f
-updated: 2017-02-23T12:01:48.392373855-05:00
+hash: c6115b2e5cd6ab4a2b9a4ba9b59a607512be2289d715d0d2784165a397d5e1bf
+updated: 2017-02-24T10:01:39.488464716-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 08762661fb8f2c081b434de78a363daf6e8615a0
+  version: 106ddd8e308f1f57a8907b191a4ea94db104b3da
   subpackages:
   - aws
   - aws/awserr
@@ -66,35 +66,35 @@ imports:
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
 - name: github.com/go-ini/ini
-  version: 74bdc99692c3408cb103221e38675ce8fda0a718
+  version: c437d20015c2ab6454b7a66a13109ff0fb99e17a
 - name: github.com/google/certificate-transparency
-  version: 6e5648d13b43cdde25cc8274b87675230ffefbd6
+  version: 32acc4216ea1f20eca97a1cdbc72b73af9e27d20
   repo: https://github.com/google/certificate-transparency
   subpackages:
   - go
   - go/client
+  - go/tls
   - go/x509
+  - go/jsonclient
   - go/asn1
   - go/x509/pkix
 - name: github.com/gosuri/uilive
-  version: efb88ccd059957c48f24f9d351d33a0eb00ede41
+  version: d0940d76630b415cbb002ef3e753ca4fddd3c99f
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/mattn/go-colorable
-  version: d898aa9fb31c91f35dd28ca75db377eff023c076
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: dda3de49cbfcec471bd7a70e6cc01fcc3ff90109
+  version: 3a115632dcd687f9c8cd01679c83a06a0e21c1f3
 - name: github.com/michaelbironneau/garbler
   version: eaea49f3709333a999768eddd70d24eba599e78d
   subpackages:
   - lib
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
-- name: github.com/mreiferson/go-httpclient
-  version: 63fe23f7434723dc904c901043af07931f293c47
-  repo: https://github.com/mreiferson/go-httpclient
 - name: github.com/onsi/ginkgo
   version: bb93381d543b0e5725244abe752214a110791d01
   subpackages:
@@ -144,14 +144,22 @@ imports:
 - name: github.com/spf13/pflag
   version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
 - name: golang.org/x/crypto
-  version: 1f22c0103821b9390939b6776727195525381532
+  version: 9a6f0a01987842989747adff311d80750ba25530
   subpackages:
   - ssh
   - pkcs12
   - curve25519
+  - ed25519
   - pkcs12/internal/rc2
+  - ed25519/internal/edwards25519
+- name: golang.org/x/net
+  version: 3f122ce3dbbe488b7e6a8bdb26f41edec852a40b
+  repo: https://go.googlesource.com/net
+  subpackages:
+  - context
+  - context/ctxhttp
 - name: golang.org/x/sys
-  version: 075e574b89e4c2d22f2286a7e2b919519c6f3547
+  version: e24f485414aeafb646f6fca458b0bf869c0880a1
   subpackages:
   - unix
 - name: gopkg.in/yaml.v2
