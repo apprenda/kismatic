@@ -14,7 +14,7 @@ import (
 
 // PreflightExplainer is an explainer to be used when running preflight checks.
 func PreflightExplainer(verbose bool, out io.Writer) AnsibleEventExplainer {
-	if verbose {
+	if verbose || !isTerminal(out) {
 		return &verbosePreflightExplainer{
 			out:       out,
 			explainer: verboseExplainer{out: out},

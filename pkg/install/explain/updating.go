@@ -12,7 +12,7 @@ import (
 
 // DefaultExplainer returns the default ansible explainer
 func DefaultExplainer(verbose bool, out io.Writer) AnsibleEventExplainer {
-	if verbose {
+	if verbose || !isTerminal(out) {
 		return &verboseExplainer{out: out}
 	}
 	// otherwise, return the updating explainer
