@@ -20,6 +20,7 @@ type upgradeOpts struct {
 	online             bool
 	planFile           string
 	restartServices    bool
+	partialAllowed     bool
 }
 
 // NewCmdUpgrade returns the upgrade command
@@ -38,6 +39,7 @@ func NewCmdUpgrade(out io.Writer) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&opts.outputFormat, "output", "o", "simple", "installation output format (options \"simple\"|\"raw\")")
 	cmd.PersistentFlags().BoolVar(&opts.skipPreflight, "skip-preflight", false, "skip upgrade pre-flight checks")
 	cmd.PersistentFlags().BoolVar(&opts.restartServices, "restart-services", false, "force restart cluster services (Use with care)")
+	cmd.PersistentFlags().BoolVar(&opts.partialAllowed, "partial-ok", false, "")
 	addPlanFileFlag(cmd.PersistentFlags(), &opts.planFile)
 
 	// Subcommands
@@ -152,7 +154,6 @@ func doUpgrade(out io.Writer, opts *upgradeOpts) error {
 		return fmt.Errorf("Failed to upgrade cluster services: %v", err)
 	}
 
-	util.PrintHeader(out, "Smoke Test Cluster", '=')
 	if err := executor.RunSmokeTest(plan); err != nil {
 		return fmt.Errorf("Smoke test failed: %v", err)
 	}
@@ -163,38 +164,93 @@ func doUpgrade(out io.Writer, opts *upgradeOpts) error {
 	return nil
 }
 
-func upgradeNodes(out io.Writer, plan install.Plan, opts upgradeOpts, toUpgrade []install.ListableNode, executor install.Executor) error {
-	// Validate that we are able to perform an online upgrade
+func upgradeNodes(out io.Writer, plan install.Plan, opts upgradeOpts, nodesNeedUpgrade []install.ListableNode, executor install.Executor) error {
+	// Run safety checks if doing an online upgrade
+	unsafeNodes := []install.ListableNode{}
 	if opts.online {
 		util.PrintHeader(out, "Validate Online Upgrade", '=')
-		var foundErrs bool
 		// Use the first master node for running kubectl
-		client, _ := plan.GetSSHClient(plan.Master.Nodes[0].Host)
+		client, err := plan.GetSSHClient(plan.Master.Nodes[0].Host)
+		if err != nil {
+			return fmt.Errorf("error getting SSH client: %v", err)
+		}
 		kubeClient := data.RemoteKubectl{SSHClient: client}
-		for _, node := range toUpgrade {
+		for _, node := range nodesNeedUpgrade {
 			util.PrettyPrint(out, "Node %q", node.Node.Host)
 			errs := install.DetectNodeUpgradeSafety(plan, node.Node, kubeClient)
 			if len(errs) != 0 {
-				foundErrs = true
 				util.PrintError(out)
 				fmt.Fprintln(out)
 				for _, err := range errs {
 					fmt.Println("-", err.Error())
 				}
+				unsafeNodes = append(unsafeNodes, node)
 			} else {
 				util.PrintOkln(out)
 			}
 		}
-		if foundErrs {
+		// If we found any unsafe nodes, and we are not doing a partial upgrade, exit.
+		if len(unsafeNodes) > 0 && !opts.partialAllowed {
 			return errors.New("Unable to perform an online upgrade due to the unsafe conditions detected.")
+		}
+		// Block the upgrade if partial is allowed but there is an etcd or master node
+		// that cannot be upgraded
+		if opts.partialAllowed {
+			for _, n := range unsafeNodes {
+				for _, r := range n.Roles {
+					if r == "master" || r == "etcd" {
+						return errors.New("Unable to perform an online upgrade due to the unsafe conditions detected.")
+					}
+				}
+			}
 		}
 	}
 
-	// Run upgrade preflight on the nodes that are to be UpgradeNodes
+	// Run upgrade preflight on the nodes that are to be upgraded
+	unreadyNodes := []install.ListableNode{}
 	if !opts.skipPreflight {
-		util.PrintHeader(out, "Validating nodes", '=')
-		if err := executor.RunUpgradePreFlightCheck(&plan); err != nil {
-			return fmt.Errorf("Upgrade preflight check failed: %v", err)
+		for _, node := range nodesNeedUpgrade {
+			util.PrintHeader(out, fmt.Sprintf("Running Preflight Checks on %s", node.Node.Host), '=')
+			if err := executor.RunUpgradePreFlightCheck(&plan, node); err != nil {
+				// return fmt.Errorf("Upgrade preflight check failed: %v", err)
+				unreadyNodes = append(unreadyNodes, node)
+			}
+		}
+	}
+
+	// Block upgrade if we found unready nodes, and we are not doing a partial upgrade
+	if len(unreadyNodes) > 0 && !opts.partialAllowed {
+		return errors.New("Errors found during preflight checks")
+	}
+
+	// Block the upgrade if partial is allowed but there is an etcd or master node
+	// that cannot be upgraded
+	if opts.partialAllowed {
+		for _, n := range unreadyNodes {
+			for _, r := range n.Roles {
+				if r == "master" || r == "etcd" {
+					return errors.New("Errors found during preflight checks")
+				}
+			}
+		}
+	}
+
+	// Filter out the nodes that are unsafe/unready
+	toUpgrade := []install.ListableNode{}
+	for _, n := range nodesNeedUpgrade {
+		upgrade := true
+		for _, unsafe := range unsafeNodes {
+			if unsafe.Node == n.Node {
+				upgrade = false
+			}
+		}
+		for _, unready := range unreadyNodes {
+			if unready.Node == n.Node {
+				upgrade = false
+			}
+		}
+		if upgrade {
+			toUpgrade = append(toUpgrade, n)
 		}
 	}
 

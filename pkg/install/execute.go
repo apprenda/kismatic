@@ -22,7 +22,7 @@ import (
 // environment defined in the plan file
 type PreFlightExecutor interface {
 	RunPreFlightCheck(*Plan) error
-	RunUpgradePreFlightCheck(*Plan) error
+	RunUpgradePreFlightCheck(*Plan, ListableNode) error
 }
 
 // The Executor will carry out the installation plan
@@ -259,7 +259,7 @@ func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
 	return ae.execute(t)
 }
 
-func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan) error {
+func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan, node ListableNode) error {
 	inventory := buildInventoryFromPlan(p)
 	pwd, err := os.Getwd()
 	if err != nil {
@@ -279,6 +279,7 @@ func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan) error {
 		plan:           *p,
 		inventory:      inventory,
 		clusterCatalog: *cc,
+		limit:          []string{node.Node.Host},
 	}
 	return ae.execute(t)
 }
