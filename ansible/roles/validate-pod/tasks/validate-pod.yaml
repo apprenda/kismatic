@@ -13,7 +13,23 @@
     retries: 10
     delay: 6
     failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+
   - name: fail if {{ item }} pod is not running
     fail:
       msg: "Timed out waiting for {{ item }} pod to be running."
+    when: phase|failure or "Running" not in phase.stdout
+
+  - name: pause to verify {{ item }} pod keeps running
+    pause:
+      seconds: 6
+    when: phase|success
+
+  - name: verify {{ item }} pod is still running
+    command: kubectl get pods {{ item }} --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+    register: phase
+    failed_when: false
+
+  - name: fail if {{ item }} pod is not running
+    fail:
+      msg: "{ item }} pod might be in a restart loop."
     when: phase|failure or "Running" not in phase.stdout
