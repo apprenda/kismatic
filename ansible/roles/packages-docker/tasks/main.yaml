@@ -1,4 +1,9 @@
 ---
+  - name: check if docker deamon is already installed
+    command: docker ps
+    register: docker_ps
+    ignore_errors: yes # dont fail, next task will start it if not running
+
   # YUM
   - name: install docker-engine yum package
     yum: name=docker-engine-{{ docker_engine_yum_version }} state=present
@@ -6,7 +11,7 @@
     until: docker_installation|success
     retries: 3
     delay: 3
-    when: ansible_os_family == 'RedHat'
+    when: ansible_os_family == 'RedHat' and docker_ps|failed
 
   # DEB
   - name: install docker-engine deb package
@@ -19,4 +24,4 @@
     until: docker_installation|success
     retries: 3
     delay: 3
-    when: ansible_os_family == 'Debian'
+    when: ansible_os_family == 'Debian' and docker_ps|failed
