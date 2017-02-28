@@ -39,7 +39,7 @@ func NewCmdUpgrade(out io.Writer) *cobra.Command {
 	cmd.PersistentFlags().StringVarP(&opts.outputFormat, "output", "o", "simple", "installation output format (options \"simple\"|\"raw\")")
 	cmd.PersistentFlags().BoolVar(&opts.skipPreflight, "skip-preflight", false, "skip upgrade pre-flight checks")
 	cmd.PersistentFlags().BoolVar(&opts.restartServices, "restart-services", false, "force restart cluster services (Use with care)")
-	cmd.PersistentFlags().BoolVar(&opts.partialAllowed, "partial-ok", false, "")
+	cmd.PersistentFlags().BoolVar(&opts.partialAllowed, "partial-ok", false, "allow the upgrade of ready nodes, and skip nodes that have been deemed unready for upgrade")
 	addPlanFileFlag(cmd.PersistentFlags(), &opts.planFile)
 
 	// Subcommands
@@ -148,6 +148,19 @@ func doUpgrade(out io.Writer, opts *upgradeOpts) error {
 		}
 	}
 
+	if opts.partialAllowed {
+		util.PrintColor(out, util.Green, `
+
+Partial upgrade complete.
+
+Cluster level services are still left to upgrade. These can only be upgraded 
+when performing a full upgrade. When you are ready, you may use "kismatic upgrade"
+without the "--partial-ok" flag to perform a full upgrade.
+
+`)
+		return nil
+	}
+
 	// Upgrade the cluster services
 	util.PrintHeader(out, "Upgrade Cluster Services", '=')
 	if err := executor.UpgradeClusterServices(*plan); err != nil {
@@ -210,7 +223,7 @@ func upgradeNodes(out io.Writer, plan install.Plan, opts upgradeOpts, nodesNeedU
 	unreadyNodes := []install.ListableNode{}
 	if !opts.skipPreflight {
 		for _, node := range nodesNeedUpgrade {
-			util.PrintHeader(out, fmt.Sprintf("Running Preflight Checks on %s", node.Node.Host), '=')
+			util.PrintHeader(out, fmt.Sprintf("Preflight Checks: %s %s", node.Node.Host, node.Roles), '=')
 			if err := executor.RunUpgradePreFlightCheck(&plan, node); err != nil {
 				// return fmt.Errorf("Upgrade preflight check failed: %v", err)
 				unreadyNodes = append(unreadyNodes, node)

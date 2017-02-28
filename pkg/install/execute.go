@@ -367,11 +367,11 @@ func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode
 	for _, nodeToUpgrade := range nodesToUpgrade {
 		for _, role := range nodeToUpgrade.Roles {
 			if role == "etcd" {
-				node := nodeToUpgrade.Node
+				node := nodeToUpgrade
 				if err := ae.upgradeNode(plan, node, onlineUpgrade); err != nil {
-					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+					return fmt.Errorf("error upgrading node %q: %v", node.Node.Host, err)
 				}
-				upgradedNodes[node.IP] = true
+				upgradedNodes[node.Node.IP] = true
 				break
 			}
 		}
@@ -384,11 +384,11 @@ func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode
 		}
 		for _, role := range nodeToUpgrade.Roles {
 			if role == "master" {
-				node := nodeToUpgrade.Node
+				node := nodeToUpgrade
 				if err := ae.upgradeNode(plan, node, onlineUpgrade); err != nil {
-					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+					return fmt.Errorf("error upgrading node %q: %v", node.Node.Host, err)
 				}
-				upgradedNodes[node.IP] = true
+				upgradedNodes[node.Node.IP] = true
 				break
 			}
 		}
@@ -401,11 +401,11 @@ func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode
 		}
 		for _, role := range nodeToUpgrade.Roles {
 			if role != "etcd" && role != "master" {
-				node := nodeToUpgrade.Node
+				node := nodeToUpgrade
 				if err := ae.upgradeNode(plan, node, onlineUpgrade); err != nil {
-					return fmt.Errorf("error upgrading node %q: %v", node.Host, err)
+					return fmt.Errorf("error upgrading node %q: %v", node.Node.Host, err)
 				}
-				upgradedNodes[node.IP] = true
+				upgradedNodes[node.Node.IP] = true
 				break
 			}
 		}
@@ -413,7 +413,7 @@ func (ae *ansibleExecutor) UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode
 	return nil
 }
 
-func (ae *ansibleExecutor) upgradeNode(plan Plan, node Node, onlineUpgrade bool) error {
+func (ae *ansibleExecutor) upgradeNode(plan Plan, node ListableNode, onlineUpgrade bool) error {
 	inventory := buildInventoryFromPlan(&plan)
 	cc, err := ae.buildClusterCatalog(&plan)
 	if err != nil {
@@ -427,9 +427,9 @@ func (ae *ansibleExecutor) upgradeNode(plan Plan, node Node, onlineUpgrade bool)
 		clusterCatalog: *cc,
 		plan:           plan,
 		explainer:      ae.defaultExplainer(),
-		limit:          []string{node.Host},
+		limit:          []string{node.Node.Host},
 	}
-	util.PrintHeader(ae.stdout, fmt.Sprintf("Upgrade Node %q", node.Host), '=')
+	util.PrintHeader(ae.stdout, fmt.Sprintf("Upgrade: %s %s", node.Node.Host, node.Roles), '=')
 	return ae.execute(t)
 }
 
