@@ -39,3 +39,10 @@
     until: running|success
     retries: 3
     delay: 5
+
+  - name: pause to verify kubelet keeps running
+    pause:
+      seconds: 4
+
+  - name: verify kubelet is still running
+    command: systemctl status kubelet
