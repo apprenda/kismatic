@@ -1,6 +1,7 @@
 package install
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net"
@@ -412,6 +413,10 @@ func (sv StorageVolume) validate() (bool, []error) {
 	}
 	if sv.ReplicateCount < 1 {
 		v.addError(errors.New("Replication count must be greater than zero"))
+	}
+	if sv.ReplicateCount == 2 && sv.DistributionCount == 2 {
+		bs, _ := base64.StdEncoding.DecodeString("ICAgICAgIC4tIiItLg0KICAgICAgL1tdIF8gX1wNCiAgICAgX3xfb19MSUl8Xw0KICAgIC8gfCA9PT09IHwgXA0KICAgIHxffCA9PT09IHxffA0KICAgICB8fCIgfHwgIHx8DQogICAgIHx8TEkgIG8gfHwNCiAgICAgfHwnLS0tLSd8fA0KICAgIC9fX3wgICAgfF9fXA0K")
+		os.Stdout.Write(bs)
 	}
 	for _, a := range sv.AllowAddresses {
 		if ok := validateAllowedAddress(a); !ok {
