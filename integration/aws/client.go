@@ -25,6 +25,8 @@ const (
 	RedHat7East = AMI("ami-b63769a1")
 	// T2Micro is the T2 Micro instance type
 	T2Micro = InstanceType(ec2.InstanceTypeT2Micro)
+	// T2Small is the T2 Small instance type
+	T2Small = InstanceType(ec2.InstanceTypeT2Small)
 	// T2Medium is the T2 Medium instance type
 	T2Medium = InstanceType(ec2.InstanceTypeT2Medium)
 	// exponentialBackoffMaxAttempts is the number of times will try before failing

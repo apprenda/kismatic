@@ -164,35 +164,35 @@ func (p awsProvisioner) ProvisionNodes(nodeCount NodeCount, distro linuxDistro) 
 	provisioned := provisionedNodes{}
 	var i uint16
 	for i = 0; i < nodeCount.Etcd; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Small)
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.etcd = append(provisioned.etcd, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Master; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Small)
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.master = append(provisioned.master, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Worker; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Small)
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.worker = append(provisioned.worker, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Ingress; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Small)
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.ingress = append(provisioned.ingress, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Storage; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Small)
 		if err != nil {
 			return provisioned, err
 		}
@@ -468,7 +468,7 @@ func (p packetProvisioner) waitForPublicIP(nodeID string) (*packet.Node, error) 
 func waitForSSH(provisionedNodes provisionedNodes, sshKey string) error {
 	nodes := provisionedNodes.allNodes()
 	for _, n := range nodes {
-		if open := WaitUntilSSHOpen(n.PublicIP, n.SSHUser, sshKey, 5 * time.Minute); !open {
+		if open := WaitUntilSSHOpen(n.PublicIP, n.SSHUser, sshKey, 5*time.Minute); !open {
 			return fmt.Errorf("Timed out waiting for SSH at %q", n.PublicIP)
 		}
 	}
