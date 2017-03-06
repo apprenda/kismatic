@@ -1,8 +1,8 @@
 ---
   - name: get etcd server version
     command: curl --cert {{ etcd_certificates_cert_file }} --key {{ etcd_certificates_key_file }} --cacert {{ etcd_certificates_ca_file }} https://{{ inventory_hostname }}:{{ etcd_service_client_port }}/version
-    register: etcd_version
+    register: current_etcd_version
 
   - name: check if etcd needs to be upgraded
     set_fact:
-      etcd_needs_upgrade: "{{ (etcd_version.stdout | from_json)['etcdserver'] != etcd_version }}"
+      etcd_needs_upgrade: "{{ (current_etcd_version.stdout | from_json)['etcdserver'] != etcd_version }}"
