@@ -3,8 +3,10 @@ package integration
 import (
 	"os"
 	"os/exec"
+	"time"
 
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Upgrade", func() {
@@ -47,6 +49,10 @@ var _ = Describe("Upgrade", func() {
 						err := installKismatic(nodes, opts, sshKey)
 						FailIfError(err)
 
+						// Extract current version of kismatic
+						extractCurrentKismaticInstaller()
+
+						// Perform upgrade
 						upgradeCluster()
 
 						sub := SubDescribe("Using an upgraded cluster")
@@ -73,9 +79,61 @@ var _ = Describe("Upgrade", func() {
 							return verifyIngressNodes(nodes.master[0], nodes.ingress, sshKey)
 						})
 
+						sub.It("should have an accessible dashboard", func() error {
+							return canAccessDashboard()
+						})
 						sub.It("should not have kube-apiserver systemd service", func() error {
 							return nil
 						})
+					})
+				})
+			})
+
+			Context("Using a 1/2/1 cluster", func() {
+				ItOnAWS("should still be a highly available cluster after upgrade", func(aws infrastructureProvisioner) {
+					WithInfrastructureAndDNS(NodeCount{1, 2, 1, 0, 0}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+						opts := installOptions{allowPackageInstallation: true}
+						err := installKismatic(nodes, opts, sshKey)
+						Expect(err).ToNot(HaveOccurred())
+
+						// Extract current version of kismatic
+						extractCurrentKismaticInstaller()
+
+						// Perform upgrade
+						upgradeCluster()
+
+						By("Removing a Kubernetes master node")
+						err = aws.TerminateNode(nodes.master[0])
+						Expect(err).ToNot(HaveOccurred(), "could not remove node")
+
+						By("Re-running Kuberang")
+						err = runViaSSH([]string{"sudo kuberang"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute)
+						Expect(err).ToNot(HaveOccurred())
+					})
+				})
+			})
+
+			Context("Using a cluster that has no internet access", func() {
+				ItOnAWS("should result in an upgraded cluster", func(aws infrastructureProvisioner) {
+					distro := CentOS7
+					WithInfrastructure(NodeCount{Etcd: 1, Master: 1, Worker: 1}, distro, aws, func(nodes provisionedNodes, sshKey string) {
+						// Standup cluster with previous version
+						opts := installOptions{allowPackageInstallation: true}
+						err := installKismatic(nodes, opts, sshKey)
+						FailIfError(err)
+
+						// Extract current version of kismatic
+						extractCurrentKismaticInstaller()
+
+						// Manually install the new packages
+						InstallKismaticPackages(nodes, distro, sshKey, true)
+
+						// Lock down internet access
+						err = disableInternetAccess(nodes.allNodes(), sshKey)
+						FailIfError(err)
+
+						// Perform upgrade
+						upgradeCluster()
 					})
 				})
 			})
@@ -135,22 +193,23 @@ func installAndUpgradeMinikube(node NodeDeets, sshKey string) {
 	// Install previous version cluster
 	err := installKismaticMini(node, sshKey)
 	FailIfError(err)
-
+	extractCurrentKismaticInstaller()
 	upgradeCluster()
 }
 
-func upgradeCluster() {
+func extractCurrentKismaticInstaller() {
 	// Extract current version of kismatic
 	pwd, err := os.Getwd()
 	FailIfError(err)
 	err = extractCurrentKismatic(pwd)
 	FailIfError(err)
-
+}
+func upgradeCluster() {
 	// Perform upgrade
 	cmd := exec.Command("./kismatic", "upgrade", "offline", "-f", "kismatic-testing.yaml")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-	err = cmd.Run()
+	err := cmd.Run()
 	FailIfError(err)
 
 	assertClusterVersionIsCurrent()

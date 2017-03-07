@@ -118,12 +118,22 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
+		// This spec will be used for testing non-destructive kismatic features on
+		// a new cluster.
+		// This spec is open to modification when new assertions have to be made
 		Context("when deploying a skunkworks cluster", func() {
 			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
 				WithInfrastructure(NodeCount{3, 2, 3, 2, 2}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
 					installOpts := installOptions{allowPackageInstallation: true}
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
+
+					sub := SubDescribe("Trying to access the Dashboard")
+					defer sub.Check()
+
+					sub.It("should succeed", func() error {
+						return canAccessDashboard()
+					})
 				})
 			})
 		})

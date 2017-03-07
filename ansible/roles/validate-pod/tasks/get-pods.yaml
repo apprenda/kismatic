@@ -1,9 +1,0 @@
----
-    - name: get a list of {{ component }} pods
-      # command: kubectl get pods --namespace kube-system -l component=kube-apiserver -o jsonpath='{.items[*].metadata.name}'
-      # kubeconfig is required becuase this task can be triggered from any k8s node
-      command: kubectl get pods -l component={{ component }} --namespace=kube-system -o jsonpath='{.items[*].metadata.name}' --kubeconfig {{ kubernetes_kubeconfig_path }}
-      register: the_pods
-      until: the_pods|success and the_pods.stdout != ""
-      retries: 10
-      delay: 6

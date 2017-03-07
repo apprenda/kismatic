@@ -43,8 +43,8 @@ func installKismaticMini(node NodeDeets, sshKey string) error {
 		Worker:                   []NodeDeets{node},
 		Ingress:                  []NodeDeets{node},
 		Storage:                  []NodeDeets{node},
-		MasterNodeFQDN:           node.Hostname,
-		MasterNodeShortName:      node.Hostname,
+		MasterNodeFQDN:           node.PublicIP,
+		MasterNodeShortName:      node.PublicIP,
 		SSHKeyFile:               sshKey,
 		SSHUser:                  sshUser,
 		AllowPackageInstallation: true,
@@ -54,7 +54,7 @@ func installKismaticMini(node NodeDeets, sshKey string) error {
 
 func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey string) error {
 	sshUser := nodes.master[0].SSHUser
-	masterDNS := nodes.master[0].Hostname
+	masterDNS := nodes.master[0].PublicIP
 	if nodes.dnsRecord != nil && nodes.dnsRecord.Name != "" {
 		masterDNS = nodes.dnsRecord.Name
 	}
@@ -167,6 +167,20 @@ func completesInTime(dothis func(), howLong time.Duration) bool {
 	case <-time.After(howLong):
 		return false
 	}
+}
+
+func canAccessDashboard() error {
+	// Access the dashboard a few times to hit all replicas
+	for i := 0; i < 3; i++ {
+		cmd := exec.Command("./kismatic", "dashboard", "--url", "-f", "kismatic-testing.yaml")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func FailIfError(err error, message ...interface{}) {

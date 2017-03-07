@@ -13,6 +13,19 @@
     retries: 10
     delay: 6
     failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+
+  - name: get docker container ID for {{ item }}
+    command: docker ps -a -f name={{ item }} --format {%raw%}"{{.ID}}"{%endraw%} -l
+    register: container_ID
+    when: phase|failure or "Running" not in phase.stdout
+
+    #failed_when: true to always print stderr and stdout
+  - name: get docker logs for {{ item }}
+    command: docker logs {{ container_ID.stdout }}
+    register: docker_logs
+    failed_when: true
+    when: container_ID is defined and container_ID|success and container_ID.stdout != ""
+
   - name: fail if {{ item }} pod is not running
     fail:
       msg: "Timed out waiting for {{ item }} pod to be running."

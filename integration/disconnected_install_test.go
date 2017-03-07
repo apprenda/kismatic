@@ -33,17 +33,7 @@ var _ = Describe("disconnected install feature", func() {
 					err := runViaSSH([]string{"curl --head www.google.com"}, theNode, sshKey, 1*time.Minute)
 					FailIfError(err, "Failed to curl google")
 
-					By("Blocking all outbound connections")
-					allowPorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10249,10250,10251,10252,10254" // ports needed/checked by inspector
-					cmd := []string{
-						"sudo iptables -A OUTPUT -o lo -j ACCEPT",                                                         // allow loopback
-						"sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT",                // allow SSH
-						fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowPorts), // allow inspector
-						"sudo iptables -A OUTPUT -s 172.16.0.0/16 -j ACCEPT",
-						"sudo iptables -A OUTPUT -d 172.16.0.0/16 -j ACCEPT", // Allow pod network
-						"sudo iptables -P OUTPUT DROP",                       // drop everything else
-					}
-					err = runViaSSH(cmd, theNode, sshKey, 1*time.Minute)
+					err = disableInternetAccess(theNode, sshKey)
 					FailIfError(err, "Failed to create iptable rule")
 
 					By("Verifying that connections are blocked")
@@ -66,3 +56,17 @@ var _ = Describe("disconnected install feature", func() {
 		})
 	})
 })
+
+func disableInternetAccess(nodes []NodeDeets, sshKey string) error {
+	By("Blocking all outbound connections")
+	allowPorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10249,10250,10251,10252,10254" // ports needed/checked by inspector
+	cmd := []string{
+		"sudo iptables -A OUTPUT -o lo -j ACCEPT",                                                         // allow loopback
+		"sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT",                // allow SSH
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowPorts), // allow inspector
+		"sudo iptables -A OUTPUT -s 172.16.0.0/16 -j ACCEPT",
+		"sudo iptables -A OUTPUT -d 172.16.0.0/16 -j ACCEPT", // Allow pod network
+		"sudo iptables -P OUTPUT DROP",                       // drop everything else
+	}
+	return runViaSSH(cmd, nodes, sshKey, 1*time.Minute)
+}
