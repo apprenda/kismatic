@@ -11,29 +11,6 @@ data:
   # Configure the Calico backend to use.
   calico_backend: "bird"
 
-  # The CNI network configuration to install on each node.
-  cni_network_config: |-
-    {
-        "name": "k8s-pod-network",
-        "type": "calico",
-        "etcd_endpoints": "{{ etcd_networking_cluster_ip_list }}",
-        "etcd_cert_file": "{{ kubernetes_certificates_cert_path }}",
-        "etcd_key_file": "{{ kubernetes_certificates_key_path }}",
-        "etcd_ca_cert_file": "{{ kubernetes_certificates_ca_path }}",
-        "log_level": "info",
-        "ipam": {
-            "type": "calico-ipam"
-        },
-{% if enable_calico_policy is defined and enable_calico_policy|bool == true %}
-        "policy": {
-          "type": "k8s"
-        },
-{% endif %}
-        "kubernetes": {
-            "kubeconfig": "{{ kubernetes_kubeconfig_path }}"
-        }
-    }
-
   # If you're using TLS enabled etcd uncomment the following.
   # You must also populate the Secret below with these files.
   etcd_ca: "{{ kubernetes_certificates_ca_path }}"
@@ -147,12 +124,6 @@ spec:
                 configMapKeyRef:
                   name: calico-config
                   key: etcd_endpoints
-            # The CNI network config to install on each node.
-            - name: CNI_NETWORK_CONFIG
-              valueFrom:
-                configMapKeyRef:
-                  name: calico-config
-                  key: cni_network_config
           securityContext:
             privileged: true
           volumeMounts:

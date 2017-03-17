@@ -1,7 +1,7 @@
 ---
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
-    name: Generate kubectl config file
+    name: Generate Kubectl Config File
     remote_user: root
     become_method: sudo
     vars_files:

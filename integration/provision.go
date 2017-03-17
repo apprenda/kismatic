@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/apprenda/kismatic/integration/aws"
@@ -239,14 +238,10 @@ func (p awsProvisioner) updateNodeWithDeets(nodeID string, node *NodeDeets) erro
 		if err != nil {
 			return err
 		}
+		node.Hostname = awsNode.PrivateDNSName
 		node.PublicIP = awsNode.PublicIP
 		node.PrivateIP = awsNode.PrivateIP
 		node.SSHUser = awsNode.SSHUser
-
-		// Get the hostname from the DNS name
-		re := regexp.MustCompile("[^.]*")
-		hostname := re.FindString(awsNode.PrivateDNSName)
-		node.Hostname = hostname
 		if node.PublicIP != "" && node.Hostname != "" && node.PrivateIP != "" {
 			return nil
 		}
@@ -468,7 +463,7 @@ func (p packetProvisioner) waitForPublicIP(nodeID string) (*packet.Node, error) 
 func waitForSSH(provisionedNodes provisionedNodes, sshKey string) error {
 	nodes := provisionedNodes.allNodes()
 	for _, n := range nodes {
-		if open := WaitUntilSSHOpen(n.PublicIP, n.SSHUser, sshKey, 5 * time.Minute); !open {
+		if open := WaitUntilSSHOpen(n.PublicIP, n.SSHUser, sshKey, 5*time.Minute); !open {
 			return fmt.Errorf("Timed out waiting for SSH at %q", n.PublicIP)
 		}
 	}
