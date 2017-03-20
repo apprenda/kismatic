@@ -36,8 +36,29 @@
     delay: 6
     failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
     run_once: true
+  - name: get calico-node daemonset if calico pods are not ready
+    command: kubectl get ds calico-node --namespace=kube-system
+    register: get_calico_node_ds
+    run_once: true
+    when: desiredPods.stdout|int != readyPods.stdout|int
+  - name: get all calico-node pods if calico pods are not ready
+    command: kubectl get pods -l k8s-app=calico-node --namespace=kube-system 
+    register: get_calico_node_pods
+    run_once: true
+    when: desiredPods.stdout|int != readyPods.stdout|int
   - name: fail if any calico pods are not ready
     fail:
-      msg: "Timed out waiting for all calico pods to be ready."
+      msg: |
+          Timed out waiting for all calico pods to be ready.
+          
+          ---- calico-node daemonset ----
+          {{ get_calico_node_ds.stdout }}
+
+          ------ calico-node pods -------
+          {{ get_calico_node_pods.stdout }}
+
+          See https://github.com/apprenda/kismatic/blob/master/docs/TROUBLESHOOTING.md
+          for troubleshooting documentation.
+          
     run_once: true
     when: desiredPods.stdout|int != readyPods.stdout|int
