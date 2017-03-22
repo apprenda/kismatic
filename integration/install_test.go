@@ -168,7 +168,7 @@ var _ = Describe("kismatic", func() {
 					nodes.worker = allWorkers[0 : len(nodes.worker)-1]
 
 					// install cluster
-					installOpts := installOptions{allowPackageInstallation: true}
+					installOpts := installOptions{allowPackageInstallation: true, enableNetowrkPolicy: true}
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 
@@ -189,8 +189,12 @@ var _ = Describe("kismatic", func() {
 						return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
 					})
 
+					sub.It("should respect network policies", func() error {
+						return verifyNetworkPolicy(nodes.master[0], sshKey)
+					})
+
 					// This test should always be last
-					sub.It("should still be a highly available cluster after upgrade", func() error {
+					sub.It("should still be a highly available cluster after removing a master node", func() error {
 						By("Removing a Kubernetes master node")
 						if err = aws.TerminateNode(nodes.master[0]); err != nil {
 							return fmt.Errorf("could not remove node: %v", err)

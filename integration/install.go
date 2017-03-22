@@ -38,6 +38,7 @@ type installOptions struct {
 	modifyHostsFiles            bool
 	useDirectLVM                bool
 	serviceCIDR                 string
+	enableNetowrkPolicy         bool
 }
 
 func installKismaticMini(node NodeDeets, sshKey string) error {
@@ -86,6 +87,7 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		ModifyHostsFiles:             installOpts.modifyHostsFiles,
 		UseDirectLVM:                 installOpts.useDirectLVM,
 		ServiceCIDR:                  installOpts.serviceCIDR,
+		EnableNetworkPolicy:          installOpts.enableNetowrkPolicy,
 	}
 	return plan
 }

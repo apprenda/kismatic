@@ -1,0 +1,17 @@
+apiVersion: extensions/v1beta1
+kind: NetworkPolicy
+metadata:
+ name: test-network-policy
+ namespace: default
+spec:
+ podSelector:
+  matchLabels:
+    app: network-policy-echoserver
+ ingress:
+  - from:
+     - podSelector:
+        matchLabels:
+         app: network-policy-tester
+    ports:
+     - protocol: TCP
+       port: 80

@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: network-policy-echoserver
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: network-policy-echoserver
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: network-policy-echoserver
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: network-policy-echoserver
+    spec:
+      containers:
+      - image: nginx
+        imagePullPolicy: IfNotPresent
+        name: network-policy-echoserver
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: network-policy-tester
+  namespace: default
+  labels:
+    app: network-policy-tester
+spec:
+  containers:
+  - image: busybox
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+    name: busybox
+  restartPolicy: Always
