@@ -19,7 +19,7 @@
      - kube-policy-controller
      - kubedns
      - kube-dnsmasq
-     - exechealthz
+     - kubedns-sidecar
      - kubernetes-dashboard
      - defaultbackend
      - nginx-ingress-controller
@@ -41,7 +41,7 @@
       - "{{ calico_kube_policy_controller_orig_img }} {{ calico_kube_policy_controller_priv_img }}"
       - "{{ kubedns_orig_img }} {{kubedns_priv_img }}"
       - "{{ kube_dnsmasq_orig_img }} {{kube_dnsmasq_priv_img }}"
-      - "{{ exechealthz_orig_img }} {{ exechealthz_priv_img }}"
+      - "{{ kubedns_sidecar_orig_img }} {{ kubedns_sidecar_priv_img }}"
       - "{{ kubernetes_dashboard_orig_img }} {{ kubernetes_dashboard_priv_img }}"
       - "{{ defaultbackend_orig_img }} {{ defaultbackend_priv_img }}"
       - "{{ nginx_ingress_controller_orig_img }} {{ nginx_ingress_controller_priv_img }}"
@@ -63,7 +63,7 @@
       - "{{ calico_kube_policy_controller_priv_img }}"
       - "{{ kubedns_priv_img }}"
       - "{{ kube_dnsmasq_priv_img }}"
-      - "{{ exechealthz_priv_img }}"
+      - "{{ kubedns_sidecar_priv_img }}"
       - "{{ kubernetes_dashboard_priv_img }}"
       - "{{ defaultbackend_priv_img }}"
       - "{{ nginx_ingress_controller_priv_img }}"

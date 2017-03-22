@@ -15,9 +15,9 @@ calico_node_version: "v1.1.0"
 calico_ctl_version: "v1.1.0"
 calico_cni_version: "v1.6.1"
 calico_kube_policy_controller_version: "v0.5.4"
-kubedns_version: "1.9"
-kube_dnsmasq_version: "1.4"
-exechealthz_version: "1.2"
+kubedns_version: "1.14.1"
+kube_dnsmasq_version: "1.14.1"
+kubedns_sidecar_version: "1.14.1"
 kubernetes_dashboard_version: "v1.6.0"
 defaultbackend_version: "1.0"
 nginx_ingress_controller_version: "0.8.3"
@@ -187,17 +187,17 @@ pause_orig_img: gcr.io/google_containers/pause-amd64:{{ pause_version }}
 pause_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/pause-amd64:{{ pause_version }}"
 pause_img: '{% if load_private_images|bool == true %}{{ pause_priv_img }}{% else %}{{ pause_orig_img }}{% endif %}'
 
-kubedns_orig_img: gcr.io/google_containers/kubedns-amd64:{{ kubedns_version }}
-kubedns_priv_img: "{{ docker_registry_full_url }}/kubedns-amd64:{{ kubedns_version }}"
+kubedns_orig_img: gcr.io/google_containers/k8s-dns-kube-dns-amd64:{{ kubedns_version }}
+kubedns_priv_img: "{{ docker_registry_full_url }}/k8s-dns-kube-dns-amd64:{{ kubedns_version }}"
 kubedns_img: '{% if load_private_images|bool == true %}{{ kubedns_priv_img }}{% else %}{{ kubedns_orig_img }}{% endif %}'
 
-kube_dnsmasq_orig_img: gcr.io/google_containers/kube-dnsmasq-amd64:{{ kube_dnsmasq_version }}
-kube_dnsmasq_priv_img: "{{ docker_registry_full_url }}/kube-dnsmasq-amd64:{{ kube_dnsmasq_version }}"
+kube_dnsmasq_orig_img: gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:{{ kube_dnsmasq_version }}
+kube_dnsmasq_priv_img: "{{ docker_registry_full_url }}/k8s-dns-dnsmasq-nanny-amd64:{{ kube_dnsmasq_version }}"
 kube_dnsmasq_img: '{% if load_private_images|bool == true %}{{ kube_dnsmasq_priv_img }}{% else %}{{ kube_dnsmasq_orig_img }}{% endif %}'
 
-exechealthz_orig_img: gcr.io/google_containers/exechealthz-amd64:{{ exechealthz_version }}
-exechealthz_priv_img: "{{ docker_registry_full_url }}/exechealthz-amd64:{{ exechealthz_version }}"
-exechealthz_img: '{% if load_private_images|bool == true %}{{ exechealthz_priv_img }}{% else %}{{ exechealthz_orig_img }}{% endif %}'
+kubedns_sidecar_orig_img: gcr.io/google_containers/k8s-dns-sidecar-amd64:{{ kubedns_sidecar_version }}
+kubedns_sidecar_priv_img: "{{ docker_registry_full_url }}/exechealthz-amd64:{{ kubedns_sidecar_version }}"
+kubedns_sidecar_img: '{% if load_private_images|bool == true %}{{ kubedns_sidecar_priv_img }}{% else %}{{ kubedns_sidecar_orig_img }}{% endif %}'
 
 kubernetes_dashboard_orig_img: gcr.io/google_containers/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}
 kubernetes_dashboard_priv_img: "{{ docker_registry_full_url }}/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}"
