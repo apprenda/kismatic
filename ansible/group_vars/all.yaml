@@ -11,10 +11,10 @@ transition_etcd_apt_version: 3.0.17
 docker_engine_yum_version: 1.11.2-1.el7.centos
 docker_engine_apt_version: 1.11.2-0~xenial
 
-calico_node_version: "v1.0.2"
-calico_ctl_version: "v1.0.2"
-calico_cni_version: "v1.5.6"
-calico_kube_policy_controller_version: "v0.5.2"
+calico_node_version: "v1.1.0"
+calico_ctl_version: "v1.1.0"
+calico_cni_version: "v1.6.1"
+calico_kube_policy_controller_version: "v0.5.4"
 kubedns_version: "1.9"
 kube_dnsmasq_version: "1.4"
 exechealthz_version: "1.2"
