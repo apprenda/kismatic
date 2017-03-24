@@ -184,7 +184,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["etcd", "ubuntu"]
   packageName: etcd
-  packageVersion: 3.1.1
+  packageVersion: 3.1.4
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
@@ -229,7 +229,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["etcd", "centos"]
   packageName: etcd
-  packageVersion: 3.1.1-1
+  packageVersion: 3.1.4-1
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
@@ -274,7 +274,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["etcd", "rhel"]
   packageName: etcd
-  packageVersion: 3.1.1-1
+  packageVersion: 3.1.4-1
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet
@@ -398,7 +398,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["etcd", "ubuntu"]
   packageName: etcd
-  packageVersion: 3.1.1
+  packageVersion: 3.1.4
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
@@ -455,7 +455,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["etcd", "centos"]
   packageName: etcd
-  packageVersion: 3.1.1-1
+  packageVersion: 3.1.4-1
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
@@ -512,7 +512,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["etcd", "rhel"]
   packageName: etcd
-  packageVersion: 3.1.1-1
+  packageVersion: 3.1.4-1
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet

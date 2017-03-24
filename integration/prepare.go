@@ -17,7 +17,7 @@ import (
 const (
 	copyKismaticYumRepo       = `sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
 	installCurlYum            = `sudo yum -y install curl`
-	installEtcdYum            = `sudo yum -y install etcd-3.1.1-1`
+	installEtcdYum            = `sudo yum -y install etcd-3.1.4-1`
 	installTransitionEtcdYum  = `sudo yum -y install transition-etcd`
 	installDockerYum          = `sudo yum -y install docker-engine-1.11.2-1.el7.centos`
 	installKubeletYum         = `sudo yum -y install kubelet-1.6.0_1-1`
@@ -28,7 +28,7 @@ const (
 	copyKismaticRepoDeb       = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main"`
 	updateAptGet              = `sudo apt-get update`
 	installCurlApt            = `sudo apt-get -y install curl`
-	installEtcdApt            = `sudo apt-get -y install etcd=3.1.1`
+	installEtcdApt            = `sudo apt-get -y install etcd=3.1.4`
 	installTransitionEtcdApt  = `sudo apt-get -y install transition-etcd`
 	installDockerApt          = `sudo apt-get -y install docker-engine=1.11.2-0~xenial`
 	installKubeletApt         = `sudo apt-get -y install kubelet=1.6.0-1`

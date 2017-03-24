@@ -128,7 +128,7 @@ If you are building a large cluster or one that won't have access to these repos
     <td>yes</td>
   </tr>
   <tr>
-    <td>Kismatic package of Etcd 3.1.1</td>
+    <td>Kismatic package of Etcd 3.1.4</td>
     <td>inter-pod networking</td>
     <td>yes</td>
     <td></td>
