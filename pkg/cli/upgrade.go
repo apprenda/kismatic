@@ -201,6 +201,14 @@ without the "--partial-ok" flag to perform a full upgrade.
 		return nil
 	}
 
+	// Migate Kubernetes etcd to v3
+	// TODO in future KET releases need to check for a minimum version
+	// All KET releases with v1.6+ do not need this to run
+	util.PrintHeader(out, "Migrate: Kubernetes Etcd Cluster", '=')
+	if err := executor.MigrateEtcdCluster(*plan); err != nil {
+		return fmt.Errorf("Failed to migrate kubernetes etcd cluster: %v", err)
+	}
+
 	// Upgrade the cluster services
 	util.PrintHeader(out, "Upgrade: Cluster Services", '=')
 	if err := executor.UpgradeClusterServices(*plan); err != nil {

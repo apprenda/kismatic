@@ -1,3 +1,3 @@
 ---
   - name: save etcd data to {{etcd_install_dir}}/backup
-    command: "{{ bin_dir }}/{{ etcdctl_install_bin_name }} --endpoint='https://127.0.0.1:{{ etcd_service_client_port }}/' --cert-file={{ etcd_certificates_cert_file }} --key-file={{ etcd_certificates_key_file }} --ca-file={{ etcd_certificates_ca_file }} backup --data-dir /var/lib/etcd_k8s --backup-dir {{etcd_install_dir}}/backup/{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"
+    command: "{{ bin_dir }}/{{ etcdctl_install_bin_name }} --endpoint='https://127.0.0.1:{{ etcd_service_client_port }}/' --cert-file={{ etcd_certificates_cert_file }} --key-file={{ etcd_certificates_key_file }} --ca-file={{ etcd_certificates_ca_file }} backup --data-dir {{ etcd_service_data_dir }} --backup-dir {{etcd_install_dir}}/backup/{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"

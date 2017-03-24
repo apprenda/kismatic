@@ -39,6 +39,7 @@ type Executor interface {
 	ValidateControlPlane(plan Plan) error
 	UpgradeDockerRegistry(plan Plan) error
 	UpgradeClusterServices(plan Plan) error
+	MigrateEtcdCluster(plan Plan) error
 }
 
 // DiagnosticsExecutor will run diagnostics on the nodes after an install
@@ -580,6 +581,23 @@ func (ae *ansibleExecutor) UpgradeClusterServices(plan Plan) error {
 	t := task{
 		name:           "upgrade-cluster-services",
 		playbook:       "upgrade-cluster-services.yaml",
+		inventory:      inventory,
+		clusterCatalog: *cc,
+		plan:           plan,
+		explainer:      ae.defaultExplainer(),
+	}
+	return ae.execute(t)
+}
+
+func (ae *ansibleExecutor) MigrateEtcdCluster(plan Plan) error {
+	inventory := buildInventoryFromPlan(&plan)
+	cc, err := ae.buildClusterCatalog(&plan)
+	if err != nil {
+		return err
+	}
+	t := task{
+		name:           "etcd-migrate",
+		playbook:       "etcd-migrate.yaml",
 		inventory:      inventory,
 		clusterCatalog: *cc,
 		plan:           plan,

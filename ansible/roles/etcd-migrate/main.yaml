@@ -1,0 +1,11 @@
+---
+  - name: migrate etcd data
+    command: "{{ bin_dir }}/{{ etcdctl_install_bin_name }} --endpoint='https://127.0.0.1:{{ etcd_service_client_port }}/' --cert-file={{ etcd_certificates_cert_file }} --key-file={{ etcd_certificates_key_file }} --ca-file={{ etcd_certificates_ca_file }} migrate --data-dir {{ etcd_service_data_dir }} --backup-dir {{etcd_install_dir}}/backup/{{ ansible_date_time.iso8601 | regex_replace(':', '-') }}"
+    args:
+      ETCDCTL_API: 3
+    when: >
+      (force_etcd_restart is defined and force_etcd_restart|bool == true) or
+      ((upgrading is defined and upgrading|bool == true) and
+      (allow_package_installation|bool == false or
+      ((etcd_installation_rpm is defined and etcd_installation_rpm.changed == true) or
+      (etcd_installation_deb is defined and etcd_installation_deb.changed == true))))

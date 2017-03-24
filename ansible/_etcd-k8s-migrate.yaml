@@ -1,0 +1,12 @@
+  - hosts: etcd
+    any_errors_fatal: true
+    name: "{{ play_name | default('Migrate Kubernetes Etcd Cluster to v3') }}"
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/etcd-k8s.yaml
+
+    roles:
+      - role: etcd-migrate
+        when: upgrading is defined and upgrading|bool == true
