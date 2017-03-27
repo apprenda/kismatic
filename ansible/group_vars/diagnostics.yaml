@@ -27,7 +27,7 @@ diagnostics:
     - {msg: "Dumping kube-dashboard docker logs", command: "docker logs `docker ps -a -f name=k8s_kubernetes-dashboard --format=\\{\\{.ID\\}\\} -l`", file: "logs_kubernetes_dashboard"}
     - {msg: "Dumping kubedns docker logs", command: "docker logs `docker ps -a -f name=k8s_kubedns --format=\\{\\{.ID\\}\\} -l`", file: "logs_kubedns"}
     - {msg: "Dumping dnsmasq docker logs", command: "docker logs `docker ps -a -f name=k8s_dnsmasq --format=\\{\\{.ID\\}\\} -l`", file: "logs_dnsmasq"}
-    - {msg: "Dumping dns-healthz docker logs", command: "docker logs `docker ps -a -f name=k8s_healthz --format=\\{\\{.ID\\}\\} -l`", file: "logs_kube_healthz"}
+    - {msg: "Dumping kubedns sidecar docker logs", command: "docker logs `docker ps -a -f name=k8s_sidecar_kube-dns --format=\\{\\{.ID\\}\\} -l`", file: "logs_kubedns_sidecar"}
   calico_diagnostics:
     - {msg: "Dumping calico-node nodes", command: "docker run -i{% if modify_hosts_file is defined and modify_hosts_file|bool == true %} -v /etc/hosts:/etc/hosts{% endif %} -v /etc/kubernetes:/etc/kubernetes -v {{ calicoctl_conf_path }}:{{ calicoctl_conf_path }} {{ calico_ctl_img }} get nodes -o wide", file: "calicoctl_nodes"}
     - {msg: "Dumping calico-node docker logs", command: "docker logs `docker ps -a -f name=k8s_calico-node --format=\\{\\{.ID\\}\\} -l`", file: "logs_calico_node"}

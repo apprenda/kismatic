@@ -2,6 +2,7 @@
   - hosts: master:worker:ingress:storage
     any_errors_fatal: true
     name: Generate Kubectl Config File
+    serial: "{{ serial_count | default('100%') }}"
     remote_user: root
     become_method: sudo
     vars_files:
@@ -9,11 +10,3 @@
 
     roles:
       - kubeconfig
-
-    post_tasks:
-      # Remove old kubeconfig files from old installations during upgrades
-      - name: Remove old kubectl config file
-        file: 
-          # Hard-coded to the right path in case we change kubelet_lib_dir
-          path: /var/lib/kubelet/kubeconfig
-          state: absent

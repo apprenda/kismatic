@@ -1,6 +1,6 @@
 #===============================================================================
 # VERSIONS
-kubernetes_version: v1.6.0
+kubernetes_version: v1.6.0-beta.4
 kismatic_yum_version: 1.6.0_1-1
 kismatic_apt_version: 1.6.0-1
 etcd_version: 3.1.4
@@ -113,6 +113,7 @@ docker_certificates_owner: root
 docker_certificates_group: root
 # kubernetes cluster config
 kubernetes_master_apiserver_count: "{{ groups['master'] | length }}"
+local_kubernetes_master_ip: https://127.0.0.1:{{ kubernetes_master_secure_port }}
 kubernetes_master_ip: https://{{ kubernetes_load_balanced_fqdn }}:{{ kubernetes_master_secure_port }}
 kubernetes_schedulable: "{% if 'worker' in group_names %}true{% else %}false{% endif %}"
 kube_dns_replicas: "{{ [2, groups['worker'] | length] | min }}"
@@ -208,16 +209,16 @@ apprenda_tcp_healthz_priv_img: "{{ docker_registry_address }}:{{ docker_registry
 apprenda_tcp_healthz_img: "{% if load_private_images|bool == true %}{{ apprenda_tcp_healthz_priv_img }}{% else %}{{ apprenda_tcp_healthz_orig_img }}{% endif %}"
 
 # kismatic packages
-yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
-yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
-deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
-deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
+# yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
+# yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
+# deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
+# deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
 
 # Uncomment below to use test repo
-# yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
-# yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
-# deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
-# deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
+yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
+yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
+deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
+deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
 #===============================================================================
 # PV configs for monitoring and logging
 #pv_monitoring_nfs_server_ip: "192.168.99.20"

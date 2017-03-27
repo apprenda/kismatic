@@ -9,21 +9,21 @@
     when: allow_package_installation|bool == true
 
   # docker
-  - include: _docker.yaml play_name="Upgrade Docker" serial="1" upgrading=true
+  - include: _docker.yaml play_name="Upgrade Docker" upgrading=true
 
   #etcd
-  - include: _etcd-k8s.yaml play_name="Upgrade Kubernetes Etcd Cluster" serial="1" upgrading=true
-  - include: _etcd-networking.yaml play_name="Upgrade Network Etcd Cluster" serial="1" upgrading=true
+  - include: _etcd-k8s.yaml play_name="Upgrade Kubernetes Etcd Cluster" serial_count="1" upgrading=true
+  - include: _etcd-networking.yaml play_name="Upgrade Network Etcd Cluster" serial_count="1" upgrading=true
 
   # kubernetes
-  - include: _kube-config.yaml
-  - include: _kubelet.yaml play_name="Upgrade Kubernetes Kubelet" serial="1" upgrading=true
-  - include: _kube-apiserver.yaml play_name="Upgrade Kubernetes API Server" serial="1" upgrading=true
-  - include: _kube-scheduler.yaml play_name="Upgrade Kubernetes Scheduler" serial="1" upgrading=true
-  - include: _kube-controller-manager.yaml play_name="Upgrade Kubernetes Controller Manager" serial="1" upgrading=true
+  - include: _kube-config.yaml upgrading=true
+  - include: _kubelet.yaml play_name="Upgrade Kubernetes Kubelet" upgrading=true
+  - include: _kube-apiserver.yaml play_name="Upgrade Kubernetes API Server" upgrading=true
+  - include: _kube-scheduler.yaml play_name="Upgrade Kubernetes Scheduler" upgrading=true
+  - include: _kube-controller-manager.yaml play_name="Upgrade Kubernetes Controller Manager" upgrading=true
   - include: _validate-control-plane-node.yaml serial_count="1" upgrading=true
-  - include: _kube-proxy.yaml play_name="Upgrade Kubernetes Proxy" serial="1" upgrading=true
-  - include: _calico.yaml play_name="Upgrade Cluster Network" serial="1" upgrading=true
+  - include: _kube-proxy.yaml play_name="Upgrade Kubernetes Proxy" upgrading=true
+  - include: _calico.yaml play_name="Upgrade Cluster Network" upgrading=true
 
   - include: _kube-uncordon-node.yaml
     when: online_upgrade is defined and online_upgrade|bool == true

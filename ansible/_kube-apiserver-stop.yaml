@@ -1,0 +1,22 @@
+---
+  - hosts: master
+    any_errors_fatal: true
+    name: "{{ play_name | default('Stop Kubernetes API Server') }}"
+    remote_user: root
+    become_method: sudo
+    vars_files:
+      - group_vars/all.yaml
+
+    tasks:
+      - name: check if kube-apiserver service is active
+        command: systemctl is-active -q kube-apiserver.service
+        register: status
+        failed_when: status.rc !=0 and status.rc != 3 # 0 = running. 3 = stopped/doesn't exist
+        when: upgrading is defined and upgrading|bool == true
+
+      - name: stop kube-apiserver service if running
+        service:
+          name: kube-apiserver.service
+          state: stopped
+          enabled: no
+        when: upgrading is defined and upgrading|bool == true and status is defined and status.rc == 0 # only stop if it's running

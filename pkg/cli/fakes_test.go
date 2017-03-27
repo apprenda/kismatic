@@ -78,6 +78,10 @@ func (fe *fakeExecutor) UpgradeClusterServices(install.Plan) error {
 	return nil
 }
 
+func (fe *fakeExecutor) MigrateEtcdCluster(install.Plan) error {
+	return nil
+}
+
 func (fe *fakeExecutor) RunSmokeTest(p *install.Plan) error {
 	return nil
 }

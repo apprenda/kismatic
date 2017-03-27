@@ -11,5 +11,5 @@
 
     post_tasks:
       - name: remove old kube-dns replication controller if exists
-        command: kubectl delete rc kube-dns kube-dns-v18 kube-dns-v19 -n kube-system
+        command: kubectl delete rc kube-dns kube-dns-v18 kube-dns-v19 -n kube-system --now
         failed_when: false

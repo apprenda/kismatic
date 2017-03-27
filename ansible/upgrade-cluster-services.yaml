@@ -7,3 +7,5 @@
   # add-ons
   - include: _addon-network-policy.yaml play_name="Upgrade Network Policy Controller"
     when: enable_calico_policy|bool == true
+  # remove old kubeconfig after everything has been upgraded
+  - include: _post-upgrade-cleanup.yaml upgrading=true

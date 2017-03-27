@@ -1,2 +1,3 @@
 ---
+  - include: _kube-apiserver-stop.yaml upgrading=true
   - include: _etcd-k8s-migrate.yaml upgrading=true

@@ -2,12 +2,12 @@
   - name: stop etcd service
     service:
       name: "{{ etcd_service_name }}"
-      state: stop
+      state: stopped
       enabled: yes
 
   - name: migrate etcd data
-    command: "{{ bin_dir }}/{{ etcdctl_install_bin_name }} --data-dir {{ etcd_service_data_dir }}"
-    args:
+    command: "{{ bin_dir }}/{{ etcdctl_install_bin_name }} migrate --data-dir {{ etcd_service_data_dir }}"
+    environment:
       ETCDCTL_API: 3
 
   - name: start etcd service

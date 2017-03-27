@@ -201,14 +201,6 @@ without the "--partial-ok" flag to perform a full upgrade.
 		return nil
 	}
 
-	// Migate Kubernetes etcd to v3
-	// TODO in future KET releases need to check for a minimum version
-	// All KET releases with v1.6+ do not need this to run
-	util.PrintHeader(out, "Migrate: Kubernetes Etcd Cluster", '=')
-	if err := executor.MigrateEtcdCluster(*plan); err != nil {
-		return fmt.Errorf("Failed to migrate kubernetes etcd cluster: %v", err)
-	}
-
 	// Upgrade the cluster services
 	util.PrintHeader(out, "Upgrade: Cluster Services", '=')
 	if err := executor.UpgradeClusterServices(*plan); err != nil {
@@ -326,6 +318,14 @@ func upgradeNodes(out io.Writer, plan install.Plan, opts upgradeOpts, nodesNeedU
 		if err := executor.UpgradeEtcd2Nodes(plan, etcdToUpgrade); err != nil {
 			return fmt.Errorf("Failed to upgrade etcd2 nodes: %v", err)
 		}
+	}
+
+	// Migate Kubernetes etcd to v3
+	// TODO in future KET releases need to check for a minimum version
+	// All KET releases with v1.6+ do not need this to run
+	util.PrintHeader(out, "Migrate: Kubernetes Etcd Cluster", '=')
+	if err := executor.MigrateEtcdCluster(plan); err != nil {
+		return fmt.Errorf("Failed to migrate kubernetes etcd cluster: %v", err)
 	}
 
 	// Run the upgrade on the nodes that need it
