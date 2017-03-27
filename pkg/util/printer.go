@@ -93,6 +93,15 @@ func PrintHeader(out io.Writer, msg string, padding byte) {
 	w.Flush()
 }
 
+func PrintTable(out io.Writer, msgMap map[string][]string) {
+	w := tabwriter.NewWriter(out, 84, 0, 0, ' ', 0)
+	for k, v := range msgMap {
+		format := fmt.Sprintf("- %s %s", k, v) + "\t\n"
+		fmt.Fprintf(w, format)
+	}
+	w.Flush()
+}
+
 // PrintColor prints text in color
 func PrintColor(out io.Writer, clr *color.Color, msg string, a ...interface{}) {
 	// Remove any newline, results in only one \n

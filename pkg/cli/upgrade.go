@@ -21,6 +21,7 @@ type upgradeOpts struct {
 	planFile           string
 	restartServices    bool
 	partialAllowed     bool
+	maxParallelWorkers int
 	dryRun             bool
 }
 
@@ -81,6 +82,7 @@ production workloads.
 			return doUpgrade(out, opts)
 		},
 	}
+	cmd.Flags().IntVar(&opts.maxParallelWorkers, "max-parallel-workers", 1, "the maximum number of worker nodes to be upgraded in parallel")
 	return &cmd
 }
 
@@ -107,6 +109,10 @@ before any changes are applied.
 }
 
 func doUpgrade(out io.Writer, opts *upgradeOpts) error {
+	if opts.maxParallelWorkers < 1 {
+		return fmt.Errorf("max-parallel-workers must be greater or equal to 1, got: %d", opts.maxParallelWorkers)
+	}
+
 	planFile := opts.planFile
 	planner := install.FilePlanner{File: planFile}
 	executorOpts := install.ExecutorOptions{
@@ -321,7 +327,7 @@ func upgradeNodes(out io.Writer, plan install.Plan, opts upgradeOpts, nodesNeedU
 	}
 
 	// Run the upgrade on the nodes that need it
-	if err := executor.UpgradeNodes(plan, toUpgrade, opts.online); err != nil {
+	if err := executor.UpgradeNodes(plan, toUpgrade, opts.online, opts.maxParallelWorkers); err != nil {
 		return fmt.Errorf("Failed to upgrade nodes: %v", err)
 	}
 	return nil
