@@ -222,6 +222,7 @@ func uploadKismaticLogs(path string) {
 	cmd := exec.Command("tar", "czf", archiveName, filepath.Join(path, "runs"))
 	// include the diagnostics directory if exists
 	if _, err := os.Stat(filepath.Join(path, "diagnostics")); err == nil {
+		fmt.Println("Including diagnostics directory")
 		cmd.Args = append(cmd.Args, filepath.Join(path, "diagnostics"))
 	}
 	cmd.Stdout = os.Stdout
