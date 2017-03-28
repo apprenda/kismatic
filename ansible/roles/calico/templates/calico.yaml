@@ -82,6 +82,11 @@ spec:
               value: "true"
             - name: FELIX_LOGSEVERITYSCREEN
               value: "info"
+            # Configure the IP Pool from which Pod IPs will be chosen.
+            - name: CALICO_IPV4POOL_CIDR
+              value: "{{ kubernetes_pods_cidr }}"
+            - name: CALICO_IPV4POOL_IPIP
+              value: "always"
             # Location of the CA certificate for etcd.
             - name: ETCD_CA_CERT_FILE
               valueFrom:
@@ -105,6 +110,9 @@ spec:
               value: ""
           securityContext:
             privileged: true
+          resources:
+            requests:
+              cpu: 250m
           volumeMounts:
             - mountPath: /lib/modules
               name: lib-modules

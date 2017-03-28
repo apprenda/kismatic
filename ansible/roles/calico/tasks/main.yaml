@@ -11,6 +11,18 @@
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
 
+  - name: create {{ calicoctl_conf_path }} directory
+    file:
+      path: "{{ calicoctl_conf_path }}"
+      state: directory
+  - name: copy calicoctl.cfg to remote
+    template:
+      src: calicoctl.cfg
+      dest: "{{ calicoctl_conf_path }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ network_environment_mode }}"
+
     # label nodes that will have have calico isntalled
   - name: label nodes for calico
     command: kubectl label nodes {% for host in play_hosts %}{{ host }} {% endfor %} kismatic/calico=true --overwrite --kubeconfig {{ kubernetes_kubeconfig_path }}

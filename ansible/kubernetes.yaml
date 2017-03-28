@@ -28,7 +28,6 @@
   # after installing kube-proxy, there is a dependecy on the API server to validate the static pod
   - include: _kube-proxy.yaml
   - include: _calico.yaml
-  - include: _calico-config.yaml
   - include: _kube-dns.yaml
   - include: _kube-ingress.yaml
     when: configure_ingress|bool == true
