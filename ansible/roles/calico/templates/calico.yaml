@@ -147,7 +147,7 @@ spec:
             path: /opt/cni/bin
         - name: cni-net-dir
           hostPath:
-            path: /etc/cni/net.d
+            path: {{ network_plugin_dir }}
         # Mount in the etcd TLS secrets.
         - name: etcd-certs
           hostPath:

@@ -1,5 +1,14 @@
 ---
   # kubelet
+  - name: create {{ network_plugin_dir }} directory
+    file:
+      path: "{{ network_plugin_dir }}"
+      state: directory
+  - name: copy 10-calico.conf to remote
+    template:
+      src: 10-calico.conf
+      dest: "{{ network_plugin_dir }}/10-calico.conf"
+
   - name: copy kubelet.service to remote
     template:
       src: kubelet.service
