@@ -1,4 +1,13 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kube-dns
+  namespace: kube-system
+  labels:
+    addonmanager.kubernetes.io/mode: EnsureExists
+
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: kube-dns
@@ -60,6 +69,10 @@ spec:
       - name: "ssl-certs"
         hostPath:
           path: "{{ kubernetes_certificates_ca_path }}"
+      - name: kube-dns-config
+        configMap:
+          name: kube-dns
+          optional: true
       containers:
       - name: kubedns
         image: "{{ kubedns_img }}"
@@ -94,6 +107,7 @@ spec:
         args:
         - --domain=cluster.local
         - --dns-port=10053
+        - --config-dir=/kube-dns-config
         - --kubecfg-file=/root/.kube/config
         - --v=2
         # env:
@@ -114,6 +128,8 @@ spec:
           name: "ssl-certs"
         - mountPath: /root/.kube/config
           name: "worker-kubeconfig"
+        - name: kube-dns-config
+          mountPath: /kube-dns-config
       - name: dnsmasq
         image: "{{ kube_dnsmasq_img }}"
         livenessProbe:
@@ -128,6 +144,7 @@ spec:
         args:
         - -v=2
         - -logtostderr
+        - -configDir=/etc/k8s/dns/dnsmasq-nanny
         - -restartDnsmasq=true
         - --
         - -k
@@ -153,6 +170,8 @@ spec:
           name: "ssl-certs"
         - mountPath: /root/.kube/config
           name: "worker-kubeconfig"
+        - name: kube-dns-config
+          mountPath: /kube-dns-config
       - name: sidecar
         image: "{{ kubedns_sidecar_img }}"
         livenessProbe:
