@@ -71,7 +71,7 @@ var _ = Describe("kismatic", func() {
 		})
 	})
 
-	Describe("calling `install apply`", func() {
+	Describe("calling install apply", func() {
 		Context("when targetting non-existent infrastructure", func() {
 			It("should fail in a reasonable amount of time", func() {
 				if !completesInTime(installKismaticWithABadNode, 600*time.Second) {

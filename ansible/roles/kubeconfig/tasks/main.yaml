@@ -1,7 +1,13 @@
 ---
   # setup directories
-  - name: create {{ kubernetes_kubectl_config_dir }} directory
+  - name: create {{ kubernetes_kubectl_config_dir }} directory for kubectl
     file: path={{ kubernetes_kubectl_config_dir }} state=directory
 
-  - name: copy kubeconfig to remote
+  - name: create {{ kubelet_lib_dir }} directory for cluster services
+    file: path={{ kubelet_lib_dir }} state=directory
+
+  - name: copy kubectl config to remote
     template: src=kubeconfig.j2 dest={{ kubernetes_kubeconfig_path }}
+
+  - name: copy cluster services kubeconfig to remote
+    template: src=services-kubeconfig.j2 dest={{ kubernetes_services_kubeconfig_path }}
