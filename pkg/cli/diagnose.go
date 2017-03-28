@@ -64,45 +64,14 @@ func doDiagnostics(out io.Writer, opts *diagsOpts) error {
 	}
 	util.PrettyPrintOk(out, "Validate SSH connectivity to nodes")
 
-	// Get versions as only supported nodes are >=1.3
-	cv, err := install.ListVersions(plan)
+	options := install.ExecutorOptions{
+		OutputFormat: opts.outputFormat,
+		Verbose:      opts.verbose,
+	}
+	executor, err := install.NewDiagnosticsExecutor(out, os.Stderr, options)
 	if err != nil {
-		return fmt.Errorf("error listing cluster versions: %v", err)
+		return err
 	}
-	var toDiagnose []install.ListableNode
-	var toSkip []install.ListableNode
-	for _, n := range cv.Nodes {
-		if install.IsGreaterOrEqualThanVersion(n.Version, "v1.3.0-alpha") {
-			toDiagnose = append(toDiagnose, n)
-		} else {
-			toSkip = append(toSkip, n)
-		}
-	}
-
-	// Print the nodes that will be skipped
-	if len(toSkip) > 0 {
-		util.PrintHeader(out, "Skipping nodes that are not eligible", '=')
-		for _, n := range toSkip {
-			util.PrettyPrintOk(out, "- %q is at an unsupported version %q", n.Node.Host, n.Version)
-		}
-		fmt.Fprintln(out)
-	}
-
-	// Print message if there's no work to do
-	if len(toDiagnose) == 0 {
-		fmt.Fprintln(out, "All nodes have an unsupported version")
-	} else {
-		options := install.ExecutorOptions{
-			OutputFormat: opts.outputFormat,
-			Verbose:      opts.verbose,
-		}
-		executor, err := install.NewDiagnosticsExecutor(out, os.Stderr, options)
-		if err != nil {
-			return err
-		}
-		return executor.DiagnoseNodes(*plan)
-	}
-
-	return nil
+	return executor.DiagnoseNodes(*plan)
 
 }
