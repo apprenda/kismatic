@@ -76,10 +76,6 @@ spec:
             # Set Felix endpoint to host default action to ACCEPT.
             - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
               value: ACCEPT
-            # Don't configure a default pool.  This is done by the Job
-            # below.
-            - name: NO_DEFAULT_POOLS
-              value: "true"
             - name: FELIX_LOGSEVERITYSCREEN
               value: "info"
             # Configure the IP Pool from which Pod IPs will be chosen.
