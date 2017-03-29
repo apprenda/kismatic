@@ -78,7 +78,6 @@ docker_certificates_key_path: "{{ docker_install_dir }}/{{ docker_certificates_k
 # directories
 calico_dir: /etc/calico
 # paths
-calico_ippool_path: "{{ calico_dir }}/ippool.yaml"
 calicoctl_conf_path: "{{ calico_dir }}/calicoctl.cfg"
 #file modes
 calico_executable_mode: 0775

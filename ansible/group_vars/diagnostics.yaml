@@ -20,6 +20,7 @@ diagnostics:
     - {msg: "Dumping nodes", command: "kubectl get nodes", file: "kubectl_nodes"}
     - {msg: "Dumping apis", command: "kubectl get api-versions", file: "kubectl_apis"}
     - {msg: "Dumping pods", command: "kubectl get pods -n kube-system", file: "kubectl_pods"}
+    - {msg: "Dumping pods details", command: "kubectl describe pods -n kube-system", file: "kubectl_describe_pods"}
     - {msg: "Dumping services", command: "kubectl get services -n kube-system", file: "kubectl_services"}
     - {msg: "Dumping daemonsets", command: "kubectl get ds -n kube-system", file: "kubectl_daemonset"}
     - {msg: "Dumping deployments", command: "kubectl get deployments -n kube-system", file: "kubectl_deployments"}

@@ -11,9 +11,9 @@
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
 
-  - name: create {{ calicoctl_conf_path }} directory
+  - name: create {{ calico_dir }} directory
     file:
-      path: "{{ calicoctl_conf_path }}"
+      path: "{{ calico_dir }}"
       state: directory
   - name: copy calicoctl.cfg to remote
     template:
