@@ -1,3 +1,13 @@
 ---
 - name: Install python 2.7
   script: python27.sh
+
+- name: detect SSH pipelining support
+  shell: grep --extended-regexp "^\w+\s+requiretty" /etc/sudoers || echo "string not found"
+  register: requiretty
+  changed_when: False
+
+- name: enable SSH pipelining
+  set_fact:
+    ansible_ssh_pipelining: yes
+  when: requiretty.stdout == "string not found"

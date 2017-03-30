@@ -85,7 +85,7 @@ var _ = Describe("kismatic", func() {
 				allowPackageInstallation: true,
 			}
 			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-				WithInfrastructure(NodeCount{1, 1, 1, 1, 1}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+				WithInfrastructure(NodeCount{1, 1, 1, 1, 1}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 				})
@@ -124,7 +124,7 @@ var _ = Describe("kismatic", func() {
 		// This spec is open to modification when new assertions have to be made
 		Context("when deploying a skunkworks cluster", func() {
 			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-				WithInfrastructureAndDNS(NodeCount{3, 2, 3, 2, 2}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+				WithInfrastructureAndDNS(NodeCount{3, 2, 3, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 					// reserve one of the workers for the add-worker test
 					allWorkers := nodes.worker
 					nodes.worker = allWorkers[0 : len(nodes.worker)-1]
@@ -168,7 +168,7 @@ var _ = Describe("kismatic", func() {
 		})
 
 		ItOnPacket("should install successfully [slow]", func(packet infrastructureProvisioner) {
-			WithMiniInfrastructure(CentOS7, packet, func(node NodeDeets, sshKey string) {
+			WithMiniInfrastructure(Ubuntu1604LTS, packet, func(node NodeDeets, sshKey string) {
 				err := installKismaticMini(node, sshKey)
 				Expect(err).ToNot(HaveOccurred())
 			})

@@ -16,7 +16,7 @@ var _ = Describe("hosts file modification feature", func() {
 
 	Describe("enabling the hosts file modification feature", func() {
 		ItOnAWS("should result in a functional cluster [slow]", func(aws infrastructureProvisioner) {
-			WithInfrastructure(NodeCount{1, 1, 2, 0, 0}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+			WithInfrastructure(NodeCount{1, 1, 2, 0, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 				By("Setting the hostnames to be different than the actual ones")
 
 				loadBalancedFQDN := nodes.master[0].PublicIP

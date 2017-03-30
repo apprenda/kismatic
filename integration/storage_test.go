@@ -33,7 +33,7 @@ var _ = Describe("Storage feature", func() {
 	Describe("Deploying a stateful workload", func() {
 		Context("on a cluster with storage nodes", func() {
 			ItOnAWS("should be able to read/write to a persistent volume [slow]", func(aws infrastructureProvisioner) {
-				WithInfrastructure(NodeCount{Etcd: 1, Master: 1, Worker: 2, Storage: 2}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+				WithInfrastructure(NodeCount{Etcd: 1, Master: 1, Worker: 2, Storage: 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 					By("Installing a cluster with storage")
 					opts := installOptions{
 						allowPackageInstallation: true,

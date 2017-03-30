@@ -33,9 +33,9 @@ var _ = Describe("kismatic install validate tests", func() {
 	})
 
 	Describe("Running validation with bad SSH key", func() {
-		Context("Using CentOS 7", func() {
+		Context("Using Ubuntu 16.04", func() {
 			ItOnAWS("should result in an ssh validation error", func(aws infrastructureProvisioner) {
-				WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
+				WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
 					badSSHKey, err := getBadSSHKeyFile()
 					if err != nil {
 						Fail("Unexpected error generating fake SSH key: %v")

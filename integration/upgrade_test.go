@@ -39,7 +39,7 @@ var _ = Describe("Upgrade", func() {
 			// This spec is open to modification when new assertions have to be made.
 			Context("Using a skunkworks cluster", func() {
 				ItOnAWS("should result in an upgraded cluster [slow] [upgrade]", func(aws infrastructureProvisioner) {
-					WithInfrastructureAndDNS(NodeCount{Etcd: 3, Master: 2, Worker: 3, Ingress: 2, Storage: 2}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+					WithInfrastructureAndDNS(NodeCount{Etcd: 3, Master: 2, Worker: 3, Ingress: 2, Storage: 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 						// reserve one of the workers for the add-worker test
 						allWorkers := nodes.worker
 						nodes.worker = allWorkers[0 : len(nodes.worker)-1]
