@@ -1,24 +1,33 @@
 ---
-  - name: Install lvm2 package
+  - name: install lvm2 package
     package:
       name: lvm2
       state: present
+    when: "ansible_os_family == 'RedHat'"
   # Not using lvol and lvg ansible modules here as they are in preview
-  - name: Create a physical volume on the block device
+  - name: create a physical volume on the block device
     command: pvcreate {{ docker_direct_lvm_block_device_path }}
-  - name: Create docker volume group
+    when: "ansible_os_family == 'RedHat'"
+  - name: create docker volume group
     command: vgcreate docker {{ docker_direct_lvm_block_device_path }}
-  - name: Create thinpool logical volume
+    when: "ansible_os_family == 'RedHat'"
+  - name: create thinpool logical volume
     command: lvcreate --wipesignatures y -n thinpool docker -l 95%VG
-  - name: Create thinpoolmeta logical volume
+    when: "ansible_os_family == 'RedHat'"
+  - name: create thinpoolmeta logical volume
     command: lvcreate --wipesignatures y -n thinpoolmeta docker -l 1%VG
-  - name: Convert the pool to a thin pool
+    when: "ansible_os_family == 'RedHat'"
+  - name: convert the pool to a thin pool
     command: lvconvert -y --zero n -c 512K --thinpool docker/thinpool --poolmetadata docker/thinpoolmeta
-  - name: Create auto extension profile
+    when: "ansible_os_family == 'RedHat'"
+  - name: create auto extension profile
     template:
       src: docker-thinpool.profile
       dest: /etc/lvm/profile/docker-thinpool.profile
-  - name: Apply lvm profile
+    when: "ansible_os_family == 'RedHat'"
+  - name: apply lvm profile
     command: lvchange --metadataprofile docker-thinpool docker/thinpool
-  - name: Enable monitoring to ensure autoextend executes
+    when: "ansible_os_family == 'RedHat'"
+  - name: enable monitoring to ensure autoextend executes
     command: lvchange --metadataprofile docker-thinpool docker/thinpool
+    when: "ansible_os_family == 'RedHat'"

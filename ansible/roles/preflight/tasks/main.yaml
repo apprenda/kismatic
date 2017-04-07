@@ -75,7 +75,7 @@
 
   - name: Validate devicemapper direct-lvm block device
     include: direct_lvm_preflight.yaml
-    when: "docker_direct_lvm_enabled|bool == true and ('master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names)"
+    when: "ansible_os_family == 'RedHat' and docker_direct_lvm_enabled|bool == true and ('master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names)"
 
   # setup Kismatic Inspector
   - name: copy Kismatic Inspector to node
