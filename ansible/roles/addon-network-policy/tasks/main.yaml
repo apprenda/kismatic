@@ -12,4 +12,17 @@
     command: kubectl apply -f {{ kubernetes_spec_dir }}/policy-controller.yaml
     register: out
 
+  - name: wait until policy controller pods are ready
+    command: kubectl get deployment calico-policy-controller -n kube-system -o jsonpath='{.status.availableReplicas}'
+    register: readyReplicas
+    until: readyReplicas.stdout|int == 1
+    retries: 24
+    delay: 10
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: fail if any policy controller pods are not ready
+    fail:
+      msg: "Timed out waiting for policy controller pods to be in the ready state."
+    when: readyReplicas.stdout|int != 1
+  - debug: var=out.stdout_lines
+
   - debug: var=out.stdout_lines

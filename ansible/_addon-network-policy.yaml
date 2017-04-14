@@ -8,3 +8,9 @@
 
     roles:
       - addon-network-policy
+
+    post_tasks:
+      - name: remove old calico-policy replication controller if exists
+        command: kubectl delete rc calico-policy -n kube-system
+        failed_when: false
+        when: upgrading is defined and upgrading|bool == true

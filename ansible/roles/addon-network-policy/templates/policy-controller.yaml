@@ -1,25 +1,29 @@
-apiVersion: v1
-kind: ReplicationController
+apiVersion: extensions/v1beta1
+kind: Deployment
 metadata:
   name: calico-policy-controller
   namespace: kube-system
   labels:
-    k8s-app: calico-policy
-    kubernetes.io/cluster-service: "true"
+    tier: control-plane
+    k8s-app: calico-policy-controller
   annotations:
     kismatic/version: "{{ kismatic_short_version }}"
 spec:
+  # The policy controller can only have a single active instance.
   replicas: 1
-  selector:
-    k8s-app: calico-policy
+  strategy:
+    type: Recreate
   template:
     metadata:
       name: calico-policy-controller
       namespace: kube-system
       labels:
-        kubernetes.io/cluster-service: "true"
-        k8s-app: calico-policy
+        tier: control-plane
+        k8s-app: calico-policy-controller
+        kismaticVersion: "{{ kismatic_short_version }}"
     spec:
+      # The policy controller must run in the host network namespace so that
+      # it isn't governed by policy that would prevent it from working.
       hostNetwork: true
       volumes:
         - name: "ca"
@@ -33,7 +37,7 @@ spec:
             path: "{{kubernetes_certificates_key_path}}"
       containers:
         - name: calico-policy-controller
-          image: "{{ calico_kube_policy_controller_img }}"
+          image: {{ calico_kube_policy_controller_img }}
           volumeMounts:
             - mountPath: "{{kubernetes_certificates_ca_path}}"
               name: "ca"
@@ -42,16 +46,33 @@ spec:
             - mountPath: "{{kubernetes_certificates_key_path}}"
               name: "key"
           env:
-            # Configure the policy controller with the location of your etcd cluster.
+            # The location of the Calico etcd cluster.
             - name: ETCD_ENDPOINTS
-              value: "{{etcd_networking_cluster_ip_list}}"
+              valueFrom:
+                configMapKeyRef:
+                  name: calico-config
+                  key: etcd_endpoints
+            # Location of the CA certificate for etcd.
             - name: ETCD_CA_CERT_FILE
-              value: "{{kubernetes_certificates_ca_path}}"
+              valueFrom:
+                configMapKeyRef:
+                  name: calico-config
+                  key: etcd_ca
+            # Location of the client certificate for etcd.
             - name: ETCD_CERT_FILE
-              value: "{{kubernetes_certificates_cert_path}}"
+              valueFrom:
+                configMapKeyRef:
+                  name: calico-config
+                  key: etcd_cert
+            # Location of the client key for etcd.
             - name: ETCD_KEY_FILE
-              value: "{{kubernetes_certificates_key_path}}"
+              valueFrom:
+                configMapKeyRef:
+                  name: calico-config
+                  key: etcd_key
+            # The location of the Kubernetes API.  Use the default Kubernetes
+            # service for API access.
             - name: K8S_API
-              value: "https://kubernetes.default:443"
+              value: "https://{{ hostvars[groups['master'][0]].inventory_hostname }}:{{ kubernetes_master_secure_port }}" # this can only be a hostname, use master 0 for now
             - name: CONFIGURE_ETC_HOSTS
               value: "true"
