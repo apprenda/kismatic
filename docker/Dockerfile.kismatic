@@ -1,0 +1,11 @@
+FROM python:2-slim
+
+WORKDIR /workdir
+
+ADD kismatic /usr/bin/kismatic
+RUN chmod +x /usr/bin/kismatic
+
+ADD /ansible/ /ansible/
+
+ENTRYPOINT ["/usr/bin/kismatic"]
+CMD ["--help"]

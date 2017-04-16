@@ -8,10 +8,12 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/apprenda/kismatic/pkg/util"
 	garbler "github.com/michaelbironneau/garbler/lib"
+	homedir "github.com/mitchellh/go-homedir"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -101,7 +103,8 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 
 	// Set SSH defaults
 	p.Cluster.SSH.User = "kismaticuser"
-	p.Cluster.SSH.Key = "kismaticuser.key"
+	p.Cluster.SSH.Key = getSSHKey()
+
 	p.Cluster.SSH.Port = 22
 
 	// Set Networking defaults
@@ -164,6 +167,20 @@ func getDNSServiceIP(p *Plan) (string, error) {
 		return "", fmt.Errorf("error getting DNS service IP: %v", err)
 	}
 	return ip.To4().String(), nil
+}
+
+func getSSHKey() string {
+	key := "kismaticuser.key"
+	// If running in a docker container use /root/.ssh/
+	// Otherwise use $(HOME)/.ssh/
+	if util.RunningInDocker() {
+		key = filepath.Join("/root", ".ssh", "kismaticuser.key")
+	} else {
+		if dir, err := homedir.Dir(); err == nil {
+			key = filepath.Join(dir, ".ssh", "kismaticuser.key")
+		}
+	}
+	return key
 }
 
 func generateAlphaNumericPassword() (string, error) {

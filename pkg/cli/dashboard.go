@@ -62,7 +62,9 @@ func doDashboard(out io.Writer, planner install.Planner, opts *dashboardOpts) er
 		return fmt.Errorf("Error verifying connectivity to cluster dashboard: %v", err)
 	}
 	// Dashboard is accessible.. take action
-	if opts.dashboardURLMode {
+	// In URL mode or
+	// Running in a docker container, can't open a browser from here
+	if opts.dashboardURLMode || util.RunningInDocker() {
 		fmt.Fprintln(out, unauthURL)
 		return nil
 	}
