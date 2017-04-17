@@ -1,1 +1,1 @@
-{{ kubernetes_admin_password }},admin,1
+{{ kubernetes_admin_password }},admin,1,"system:masters"

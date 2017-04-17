@@ -747,7 +747,7 @@ func (ae *ansibleExecutor) generateTLSAssets(p *Plan) error {
 	}
 
 	// Generate node and user certificates
-	err = ae.pki.GenerateClusterCertificates(p, ca, []string{"admin"})
+	err = ae.pki.GenerateClusterCertificates(p, ca)
 	if err != nil {
 		return fmt.Errorf("error generating certificates for the cluster: %v", err)
 	}

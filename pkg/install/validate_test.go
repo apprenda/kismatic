@@ -502,8 +502,7 @@ func TestValidatePlanCerts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	users := []string{"admin"}
-	if err := pki.GenerateClusterCertificates(p, ca, users); err != nil {
+	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
@@ -524,8 +523,7 @@ func TestValidatePlanBadCerts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	users := []string{"admin"}
-	if err := pki.GenerateClusterCertificates(p, ca, users); err != nil {
+	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 	p.Master.Nodes[0] = Node{
@@ -563,8 +561,7 @@ func TestValidatePlanMissingSomeCerts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	users := []string{"admin"}
-	if err := pki.GenerateClusterCertificates(p, ca, users); err != nil {
+	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
