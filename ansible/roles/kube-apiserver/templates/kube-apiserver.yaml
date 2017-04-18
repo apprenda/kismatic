@@ -34,7 +34,7 @@ spec:
       - --etcd-servers={{ etcd_k8s_cluster_ip_list }}
       - --insecure-bind-address=127.0.0.1
       - --insecure-port=8080
-      - --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true
+      - --runtime-config={{ api_runtime_config }}
       - --secure-port=6443
       - --service-account-key-file={{ kubernetes_certificates_service_account_key_path }}
       - --service-cluster-ip-range={{ kubernetes_services_cidr }}

@@ -20,6 +20,7 @@ type ClusterCatalog struct {
 	DisconnectedInstallation  bool   `yaml:"disconnected_installation"`
 	KuberangPath              string `yaml:"kuberang_path"`
 	LoadBalancedFQDN          string `yaml:"kubernetes_load_balanced_fqdn"`
+	ApiRuntimeConfig          string `yaml:"api_runtime_config"`
 
 	EnablePrivateDockerRegistry  bool   `yaml:"use_private_docker_registry"`
 	EnableInternalDockerRegistry bool   `yaml:"setup_internal_docker_registry"`

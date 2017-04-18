@@ -57,6 +57,10 @@ func getPlan() *Plan {
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/24", // required for DNS service
 			},
+			ApiRuntimeConfigOptions:map[string]bool{
+				"beta/v1Option": true,
+				"beta/v2Option": true,
+			},
 		},
 		Etcd: NodeGroup{
 			Nodes: []Node{

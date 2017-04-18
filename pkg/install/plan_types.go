@@ -3,7 +3,8 @@ package install
 import (
 	"fmt"
 	"net"
-
+	"strings"
+	"sort"
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
 
@@ -37,6 +38,7 @@ type Cluster struct {
 	Networking               NetworkConfig
 	Certificates             CertsConfig
 	SSH                      SSHConfig
+	ApiRuntimeConfigOptions  map[string]bool `yaml:"api_runtime_config"`
 }
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster
@@ -287,4 +289,30 @@ func hasIP(nodes *[]Node, ip string) bool {
 // ConfigureDockerRegistry returns true when confgiuring an external or on cluster registry is required
 func (p Plan) ConfigureDockerRegistry() bool {
 	return p.DockerRegistry.Address != "" || p.DockerRegistry.SetupInternal
+}
+
+func (cluster Cluster) ApiRuntimeConfig() string {
+	var configOptions = cluster.ApiRuntimeConfigOptions
+
+	enableIfNotSet(configOptions, "extensions/v1beta1");
+	enableIfNotSet(configOptions, "extensions/v1beta1/networkpolicies")
+
+	var keys []string
+	for key := range configOptions {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	var flatten []string
+	for _, key := range keys {
+		flatten = append(flatten, fmt.Sprintf("%s=%t", key, configOptions[key]))
+	}
+	return strings.Join(flatten, ",");
+}
+
+func enableIfNotSet(m map[string]bool, option string) {
+	_, ok := m[option]
+	if !ok {
+		m[option] = true
+	}
 }
