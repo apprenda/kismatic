@@ -202,7 +202,10 @@ func (lp *LocalPKI) GenerateNodeCertificate(plan *Plan, node Node, ca *tls.CA) e
 	if err != nil {
 		return err
 	}
-	nodeSANs := append(clusterSANs, node.Host, node.IP, node.InternalIP)
+	nodeSANs := append(clusterSANs, node.Host, node.IP)
+	if node.InternalIP != "" {
+		nodeSANs = append(nodeSANs, node.InternalIP)
+	}
 	if isMasterNode(*plan, node) {
 		if plan.Master.LoadBalancedFQDN != "" {
 			nodeSANs = append(nodeSANs, plan.Master.LoadBalancedFQDN)
@@ -247,7 +250,10 @@ func (lp *LocalPKI) validateNodeCertificate(p *Plan, node Node) (valid bool, war
 	if err != nil {
 		return false, nil, err
 	}
-	nodeSANs := append(clusterSANs, node.Host, node.IP, node.InternalIP)
+	nodeSANs := append(clusterSANs, node.Host, node.IP)
+	if node.InternalIP != "" {
+		nodeSANs = append(nodeSANs, node.InternalIP)
+	}
 	if isMasterNode(*p, node) {
 		if p.Master.LoadBalancedFQDN != "" {
 			nodeSANs = append(nodeSANs, p.Master.LoadBalancedFQDN)

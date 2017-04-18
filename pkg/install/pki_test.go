@@ -659,3 +659,66 @@ func TestBadDockerCertificate(t *testing.T) {
 		t.Fatalf("expected an error, got nil")
 	}
 }
+
+func TestGenerateNodeCertNoEmptyDNSNames(t *testing.T) {
+	pki := getPKI(t)
+	pki.Log = os.Stdout
+	defer cleanup(pki.GeneratedCertsDirectory, t)
+
+	p := getPlan()
+	p.DockerRegistry.SetupInternal = true
+
+	ca, err := pki.GenerateClusterCA(p)
+	if err != nil {
+		t.Fatalf("error generating CA for test: %v", err)
+	}
+	node := Node{
+		Host: "master",
+		IP:   "11.12.13.14",
+	}
+	if err := pki.GenerateNodeCertificate(p, node, ca); err != nil {
+		t.Fatalf("failed to generate certificate for node: %v", err)
+	}
+	certFile := filepath.Join(pki.GeneratedCertsDirectory, "master.pem")
+	cert := mustReadCertFile(certFile, t)
+	for _, name := range cert.DNSNames {
+		if name == "" {
+			t.Errorf("found an empty DNS name")
+		}
+	}
+}
+
+func TestGenerateNodeCertWithInternalIP(t *testing.T) {
+	pki := getPKI(t)
+	pki.Log = os.Stdout
+	defer cleanup(pki.GeneratedCertsDirectory, t)
+
+	p := getPlan()
+	p.DockerRegistry.SetupInternal = true
+
+	ca, err := pki.GenerateClusterCA(p)
+	if err != nil {
+		t.Fatalf("error generating CA for test: %v", err)
+	}
+	node := Node{
+		Host:       "master",
+		IP:         "11.12.13.14",
+		InternalIP: "22.33.44.55",
+	}
+	if err := pki.GenerateNodeCertificate(p, node, ca); err != nil {
+		t.Fatalf("failed to generate certificate for node: %v", err)
+	}
+	certFile := filepath.Join(pki.GeneratedCertsDirectory, "master.pem")
+	cert := mustReadCertFile(certFile, t)
+	found := false
+	internalIP := net.ParseIP(node.InternalIP)
+	for _, ip := range cert.IPAddresses {
+		if ip.Equal(internalIP) {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("Node certificate does not have the internal IP as a DNS name")
+	}
+}
