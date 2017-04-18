@@ -3,8 +3,9 @@ package install
 import (
 	"fmt"
 	"net"
-	"strings"
 	"sort"
+	"strings"
+
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
 
@@ -29,16 +30,20 @@ type SSHConfig struct {
 	Port int    `yaml:"ssh_port"`
 }
 
+type ApiServer struct {
+	ApiRuntimeConfigOptions map[string]string `yaml:"runtime_config"`
+}
+
 // Cluster describes a Kubernetes cluster
 type Cluster struct {
 	Name                     string
-	AdminPassword            string `yaml:"admin_password"`
-	AllowPackageInstallation bool   `yaml:"allow_package_installation"`
-	DisconnectedInstallation bool   `yaml:"disconnected_installation"`
+	AdminPassword            string        `yaml:"admin_password"`
+	AllowPackageInstallation bool          `yaml:"allow_package_installation"`
+	DisconnectedInstallation bool          `yaml:"disconnected_installation"`
 	Networking               NetworkConfig
 	Certificates             CertsConfig
 	SSH                      SSHConfig
-	ApiRuntimeConfigOptions  map[string]bool `yaml:"api_runtime_config"`
+	ApiServer                ApiServer     `yaml:"api_server"`
 }
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster
@@ -76,7 +81,7 @@ type MasterNodeGroup struct {
 
 // DockerRegistry details for docker registry, either confgiured by the cli or customer provided
 type DockerRegistry struct {
-	SetupInternal bool `yaml:"setup_internal"`
+	SetupInternal bool   `yaml:"setup_internal"`
 	Address       string
 	Port          int
 	CAPath        string `yaml:"CA"`
@@ -102,14 +107,14 @@ type DockerStorageDirectLVM struct {
 	// BlockDevice is the path to the block device that will be used. E.g. /dev/sdb
 	BlockDevice            string `yaml:"block_device"`
 	// EnableDeferredDeletion determines whether deferred deletion should be enabled
-	EnableDeferredDeletion bool `yaml:"enable_deferred_deletion"`
+	EnableDeferredDeletion bool   `yaml:"enable_deferred_deletion"`
 }
 
 // Plan is the installation plan that the user intends to execute
 type Plan struct {
 	Cluster        Cluster
 	Docker         Docker
-	DockerRegistry DockerRegistry `yaml:"docker_registry"`
+	DockerRegistry DockerRegistry    `yaml:"docker_registry"`
 	Etcd           NodeGroup
 	Master         MasterNodeGroup
 	Worker         NodeGroup
@@ -291,37 +296,45 @@ func (p Plan) ConfigureDockerRegistry() bool {
 	return p.DockerRegistry.Address != "" || p.DockerRegistry.SetupInternal
 }
 
-func (cluster Cluster) ApiRuntimeConfig() string {
-	var configOptions = cluster.ApiRuntimeConfigOptions
+func (apiServer ApiServer) RuntimeConfig() string {
+	var configOptions = apiServer.ApiRuntimeConfigOptions
 
 	if len(configOptions) == 0 {
-		configOptions = make(map[string]bool)
+		configOptions = make(map[string]string)
 	}
 
-	enableIfNotSet(configOptions, "extensions/v1beta1");
-	enableIfNotSet(configOptions, "extensions/v1beta1/networkpolicies")
+	enableIfNotSet(configOptions, "extensions/v1beta1", "true");
+	enableIfNotSet(configOptions, "extensions/v1beta1/networkpolicies", "true")
 
 	sortedList := mapToSortedList(configOptions)
 
 	return strings.Join(sortedList, ",");
 }
 
-func mapToSortedList(input map[string]bool) (output []string) {
-	var keys []string
-	for key := range input {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
+func mapToSortedList(input map[string]string) []string {
+	keys := sortedKeyValues(input);
 
-	for _, key := range keys {
-		output = append(output, fmt.Sprintf("%s=%t", key, input[key]))
+	output := make([]string, len(input))
+	for i, key := range keys {
+		output[i] = fmt.Sprintf("%s=%s", key, input[key])
 	}
-	return
+	return output;
 }
 
-func enableIfNotSet(m map[string]bool, option string) {
-	_, ok := m[option]
+func sortedKeyValues(input map[string]string) []string {
+	keys := make([]string, len(input))
+	i := 0
+	for key := range input {
+		keys[i] = key
+		i++
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func enableIfNotSet(m map[string]string, key string, defaultValue string) {
+	_, ok := m[key]
 	if !ok {
-		m[option] = true
+		m[key] = defaultValue
 	}
 }

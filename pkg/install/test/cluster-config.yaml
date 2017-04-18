@@ -15,6 +15,7 @@ cluster:
     user: kismatic
     ssh_key: .ssh/id_rsa
     ssh_port: 22
-  api_runtime_config:
-    "beta/v2api": true
-    "alpha/v1api": true
+  api_server:
+    runtime_config:
+      "beta/v2api": true
+      "alpha/v1api": true
