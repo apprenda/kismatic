@@ -1,5 +1,5 @@
 cluster:
-  name: cluster_name
+  name: my_cluster_name
   admin_password: secret_admin_password
   allow_package_installation: true
   disconnected_installation: false

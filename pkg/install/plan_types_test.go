@@ -9,12 +9,12 @@ import (
 )
 
 func TestReadPlanFile(t *testing.T) {
-	d, _ := ioutil.ReadFile("./test/cluster-config.yaml")
+	d, _ := ioutil.ReadFile("test/cluster-config.yaml")
 	p := &Plan{}
 
 	yaml.Unmarshal(d, p)
 
-	assertEqual(t, p.Cluster.Name, "cluster_name")
+	assertEqual(t, p.Cluster.Name, "my_cluster_name")
 	assertEqual(t, p.Cluster.AdminPassword, "secret_admin_password")
 
 	assertEqual(t, p.Cluster.ApiRuntimeConfig(), "alpha/v1api=true,beta/v2api=true,extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true");
@@ -49,6 +49,14 @@ func TestApiConfigString(t *testing.T) {
 
 	assertEqual(t, cluster.ApiRuntimeConfig(), "beta/v1Option=true,beta/v2Option=false,extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
 }
+
+func TestApiConfigStringWithNoEntries(t *testing.T) {
+
+	cluster := Cluster{}
+
+	assertEqual(t, cluster.ApiRuntimeConfig(), "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
+}
+
 
 func assertEqual(t *testing.T, a, b interface{}) {
 	if !reflect.DeepEqual(a, b) {

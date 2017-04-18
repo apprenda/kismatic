@@ -98,9 +98,9 @@ type DockerStorage struct {
 // device mapper in direct-lvm mode
 type DockerStorageDirectLVM struct {
 	// Determines whether direct-lvm mode is enabled
-	Enabled bool
+	Enabled                bool
 	// BlockDevice is the path to the block device that will be used. E.g. /dev/sdb
-	BlockDevice string `yaml:"block_device"`
+	BlockDevice            string `yaml:"block_device"`
 	// EnableDeferredDeletion determines whether deferred deletion should be enabled
 	EnableDeferredDeletion bool `yaml:"enable_deferred_deletion"`
 }
@@ -121,17 +121,17 @@ type Plan struct {
 // StorageVolume managed by Kismatic
 type StorageVolume struct {
 	// Name of the storage volume
-	Name string
+	Name              string
 	// SizeGB is the size of the volume, in gigabytes
-	SizeGB int
+	SizeGB            int
 	// ReplicateCount is the number of replicas
-	ReplicateCount int
+	ReplicateCount    int
 	// DistributionCount is the degree to which data will be distributed across the cluster
 	DistributionCount int
 	// StorageClass is the annotation that will be used when creating the persistent-volume in kubernetes
-	StorageClass string
+	StorageClass      string
 	// AllowAddresses is a list of address wildcards that have access to the volume
-	AllowAddresses []string
+	AllowAddresses    []string
 }
 
 type SSHConnection struct {
@@ -294,20 +294,29 @@ func (p Plan) ConfigureDockerRegistry() bool {
 func (cluster Cluster) ApiRuntimeConfig() string {
 	var configOptions = cluster.ApiRuntimeConfigOptions
 
+	if len(configOptions) == 0 {
+		configOptions = make(map[string]bool)
+	}
+
 	enableIfNotSet(configOptions, "extensions/v1beta1");
 	enableIfNotSet(configOptions, "extensions/v1beta1/networkpolicies")
 
+	sortedList := mapToSortedList(configOptions)
+
+	return strings.Join(sortedList, ",");
+}
+
+func mapToSortedList(input map[string]bool) (output []string) {
 	var keys []string
-	for key := range configOptions {
+	for key := range input {
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
 
-	var flatten []string
 	for _, key := range keys {
-		flatten = append(flatten, fmt.Sprintf("%s=%t", key, configOptions[key]))
+		output = append(output, fmt.Sprintf("%s=%t", key, input[key]))
 	}
-	return strings.Join(flatten, ",");
+	return
 }
 
 func enableIfNotSet(m map[string]bool, option string) {

@@ -319,3 +319,18 @@ udp:0-65535</td>
 Kismatic will automate generation and installation of TLS certificates and keys used for intra-cluster security. It does this using the open source CloudFlare SSL library. These certificates and keys are exclusively used to encrypt and authorize traffic between Kubernetes components; they are not presented to end-users.
 
 The default expiry period for certificates is **17520h** (2 years). Certificates must be updated prior to expiration or the cluster will cease to operate without warning. Replacing certificates will cause momentary downtime with Kubernetes as of version 1.4; future versions should allow for certificate "rolling" without downtime.
+
+## Kubernetes Api Server Options
+
+Kubernetes api versions and extensions can be enabled or disabled as required in the plan file
+
+```
+cluster:
+...
+  api_runtime_config:
+    "batch/v2alpha1": true
+    "extensions/v1beta1/ingress": false
+
+```
+
+By default `extensions/v1beta1` and `extensions/v1beta1/networkpolicies` are enabled and will need to be explicitly disabled if not required. Be aware that invalid extensions will cause the api-server to fail initialisation.
