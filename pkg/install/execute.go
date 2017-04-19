@@ -671,7 +671,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
 		TargetVersion:             AboutKismatic.String(),
-		ApiRuntimeConfig:          p.Cluster.ApiServer.RuntimeConfig(),
+		APIRuntimeConfig:          p.Cluster.APIServer.RuntimeConfig(),
 	}
 
 	// Setup FQDN or default to first master

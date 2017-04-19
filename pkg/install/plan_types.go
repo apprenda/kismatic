@@ -30,8 +30,8 @@ type SSHConfig struct {
 	Port int    `yaml:"ssh_port"`
 }
 
-type ApiServer struct {
-	ApiRuntimeConfigOptions map[string]string `yaml:"runtime_config"`
+type APIServer struct {
+	APIRuntimeConfigOptions map[string]string `yaml:"runtime_config"`
 }
 
 // Cluster describes a Kubernetes cluster
@@ -43,7 +43,7 @@ type Cluster struct {
 	Networking               NetworkConfig
 	Certificates             CertsConfig
 	SSH                      SSHConfig
-	ApiServer                ApiServer     `yaml:"api_server"`
+	APIServer                APIServer     `yaml:"api_server"`
 }
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster
@@ -296,15 +296,15 @@ func (p Plan) ConfigureDockerRegistry() bool {
 	return p.DockerRegistry.Address != "" || p.DockerRegistry.SetupInternal
 }
 
-func (apiServer ApiServer) RuntimeConfig() string {
-	var configOptions = apiServer.ApiRuntimeConfigOptions
+func (apiServer APIServer) RuntimeConfig() string {
+	var configOptions = apiServer.APIRuntimeConfigOptions
 
 	if len(configOptions) == 0 {
 		configOptions = make(map[string]string)
 	}
 
-	enableIfNotSet(configOptions, "extensions/v1beta1", "true");
-	enableIfNotSet(configOptions, "extensions/v1beta1/networkpolicies", "true")
+	defaultIfNotSet(configOptions, "extensions/v1beta1", "true");
+	defaultIfNotSet(configOptions, "extensions/v1beta1/networkpolicies", "true")
 
 	sortedList := mapToSortedList(configOptions)
 
@@ -332,7 +332,7 @@ func sortedKeyValues(input map[string]string) []string {
 	return keys
 }
 
-func enableIfNotSet(m map[string]string, key string, defaultValue string) {
+func defaultIfNotSet(m map[string]string, key string, defaultValue string) {
 	_, ok := m[key]
 	if !ok {
 		m[key] = defaultValue
