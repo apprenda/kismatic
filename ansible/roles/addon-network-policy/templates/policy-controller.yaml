@@ -73,6 +73,6 @@ spec:
             # The location of the Kubernetes API.  Use the default Kubernetes
             # service for API access.
             - name: K8S_API
-              value: "https://{{ hostvars[groups['master'][0]].inventory_hostname }}:{{ kubernetes_master_secure_port }}" # this can only be a hostname, use master 0 for now
+              value: "{{ kubernetes_master_ip }}"
             - name: CONFIGURE_ETC_HOSTS
               value: "true"

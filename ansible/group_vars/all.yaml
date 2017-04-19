@@ -14,7 +14,7 @@ docker_engine_apt_version: 1.11.2-0~xenial
 calico_node_version: "v1.1.0"
 calico_ctl_version: "v1.1.0"
 calico_cni_version: "v1.6.1"
-calico_kube_policy_controller_version: "v0.5.4"
+calico_kube_policy_controller_version: "v0.6.0"
 kubedns_version: "1.14.1"
 kube_dnsmasq_version: "1.14.1"
 kubedns_sidecar_version: "1.14.1"
