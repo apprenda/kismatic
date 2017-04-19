@@ -327,10 +327,10 @@ Kubernetes api versions and extensions can be enabled or disabled as required in
 ```
 cluster:
 ...
-  api_runtime_config:
-    "batch/v2alpha1": true
-    "extensions/v1beta1/ingress": false
-
+  api_server:
+    runtime_config:
+      "batch/v2alpha1": true
+      "extensions/v1beta1/ingress": false
 ```
 
 By default `extensions/v1beta1` and `extensions/v1beta1/networkpolicies` are enabled and will need to be explicitly disabled if not required. Be aware that invalid extensions will cause the api-server to fail initialisation.
