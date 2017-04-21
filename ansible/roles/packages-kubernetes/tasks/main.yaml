@@ -28,7 +28,7 @@
   # DEB
   - name: install kubelet deb package
     apt:
-      name: kubelet={{ kismatic_apt_version }}
+      name: kubelet={{ kismatic_deb_version }}
       state: present
       allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kismatic-xenial
@@ -40,7 +40,7 @@
 
   - name: install kubectl deb package
     apt:
-      name: kubectl={{ kismatic_apt_version }}
+      name: kubectl={{ kismatic_deb_version }}
       state: present
       allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kismatic-xenial
