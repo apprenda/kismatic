@@ -20,7 +20,6 @@ spec:
       labels:
         tier: control-plane
         k8s-app: calico-policy-controller
-        kismaticVersion: "{{ kismatic_short_version }}"
     spec:
       # The policy controller must run in the host network namespace so that
       # it isn't governed by policy that would prevent it from working.

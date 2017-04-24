@@ -38,7 +38,7 @@ type installOptions struct {
 	modifyHostsFiles            bool
 	useDirectLVM                bool
 	serviceCIDR                 string
-	enableNetowrkPolicy         bool
+	enableNetworkPolicy         bool
 }
 
 func installKismaticMini(node NodeDeets, sshKey string) error {
@@ -87,7 +87,7 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		ModifyHostsFiles:             installOpts.modifyHostsFiles,
 		UseDirectLVM:                 installOpts.useDirectLVM,
 		ServiceCIDR:                  installOpts.serviceCIDR,
-		EnableNetworkPolicy:          installOpts.enableNetowrkPolicy,
+		EnableNetworkPolicy:          installOpts.enableNetworkPolicy,
 	}
 	return plan
 }
@@ -96,7 +96,7 @@ func installKismaticWithPlan(plan PlanAWS, sshKey string) error {
 	writePlanFile(plan)
 
 	By("Punch it Chewie!")
-	cmd := exec.Command("./kismatic", "install", "apply", "-f", "kismatic-testing.yaml")
+	cmd := exec.Command("./kismatic", "install", "apply", "-f", "kismatic-testing.yaml", "--skip-preflight")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

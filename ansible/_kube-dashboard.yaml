@@ -11,6 +11,5 @@
 
     post_tasks:
       - name: remove old dashboard replication controller if exists
-        command: kubectl delete rs -l "app=kubernetes-dashboard" -n kube-system --now
-        failed_when: false
+        command: kubectl delete rs -l "app=kubernetes-dashboard" -n kube-system --now --ignore-not-found
         when: upgrading is defined and upgrading|bool == true
