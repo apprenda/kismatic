@@ -13,10 +13,8 @@
   - include: _etcd-networking.yaml
   # docker
   - include: _docker.yaml
-  - include: _docker-registry-container.yaml
-    when: setup_internal_docker_registry|bool == true
-  - include: _docker-registry-images.yaml
-    when: use_private_docker_registry|bool == true and disconnected_installation|bool == true # only load images if offline
+  - include: _docker-registry.yaml
+    when: use_private_docker_registry|bool == true  # configure private registry when either internal of an external is provided
   # kubernetes
   - include: _kubelet.yaml
   - include: _kube-apiserver.yaml

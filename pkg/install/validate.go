@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -147,6 +148,14 @@ func (c *Cluster) validate() (bool, []error) {
 	}
 	if c.AdminPassword == "" {
 		v.addError(errors.New("Admin password cannot be empty"))
+	}
+	if c.PackageRepoURLs != "" {
+		urls := strings.Split(c.PackageRepoURLs, ",")
+		for _, u := range urls {
+			if _, err := url.ParseRequestURI(u); err != nil {
+				v.addError(fmt.Errorf("Package repository %s must be a valid URL", u))
+			}
+		}
 	}
 	v.validate(&c.Networking)
 	v.validate(&c.Certificates)

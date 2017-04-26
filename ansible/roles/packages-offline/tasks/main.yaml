@@ -1,7 +1,11 @@
 ---
   # YUM
   - name: install kismatic offline yum package
-    yum: name=kismatic-offline-{{ kismatic_yum_version }} state=present
+    yum:
+      name: kismatic-offline-{{ kismatic_yum_version }}
+      state: present
+      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
+      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     register: kismatic_offline_installation_rpm
     until: kismatic_offline_installation_rpm|success
     retries: 3
@@ -10,7 +14,11 @@
 
   # DEB
   - name: install kismatic offline deb package
-    apt: name=kismatic-offline={{ kismatic_apt_version }} state=present
+    apt:
+      name: kismatic-offline={{ kismatic_apt_version }}
+      state: present
+      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
+      default_release: kismatic-xenial
     register: kismatic_offline_installation_deb
     until: kismatic_offline_installation_deb|success
     retries: 3

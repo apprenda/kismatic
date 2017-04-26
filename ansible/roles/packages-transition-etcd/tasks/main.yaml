@@ -1,9 +1,25 @@
 ---
   # YUM
   - name: install transition-etcd yum package
-    yum: name=transition-etcd-{{ transition_etcd_yum_version }} state=present
+    yum:
+      name: transition-etcd-{{ transition_etcd_yum_version }}
+      state: present
+      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% end %}'
+      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% end %}'
     register: etcd_installation_rpm
     until: etcd_installation_rpm|success
+    retries: 3
+    delay: 3
+    when: ansible_os_family == 'RedHat'
+
+  - name: install curl yum package
+    yum:
+      name: curl
+      state: present
+      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
+      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
+    register: curl_installation_rpm
+    until: curl_installation_rpm|success
     retries: 3
     delay: 3
     when: ansible_os_family == 'RedHat'
@@ -13,6 +29,7 @@
     apt:
       name: transition-etcd={{transition_etcd_apt_version}}
       state: present
+      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kismatic-xenial
     register: etcd_installation_deb
     until: etcd_installation_deb|success
@@ -21,9 +38,13 @@
     when: ansible_os_family == 'Debian'
 
   # required until https://github.com/ansible/ansible/issues/14804
-  - name: install curl package
-    package: name=curl state=present
-    register: curl_installation_rpm
-    until: curl_installation_rpm|success
+  - name: install curl deb package
+    apt:
+      name: curl
+      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
+      state: present
+    register: curl_installation_deb
+    until: curl_installation_deb|success
     retries: 3
     delay: 3
+    when: ansible_os_family == 'Debian'

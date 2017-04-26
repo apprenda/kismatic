@@ -8,3 +8,9 @@
 
     roles:
       - role: packages-repo
+        when: >
+              disconnected_installation|bool != true and
+              ((package_repository_urls is undefined) or
+              (package_repository_urls is defined and package_repository_urls == ""))
+      - role: packages-repo-custom
+        when: package_repository_urls is defined and package_repository_urls != ""

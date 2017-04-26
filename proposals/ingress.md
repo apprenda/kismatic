@@ -1,5 +1,7 @@
 # Basic Ingress for Kismatic
 
+Status: Implemented
+
 The very first question anybody has upon installing Kubernetes is “how do I access my workloads?”
 
 With overlay or policy-enforcing networking in play, this question becomes even more imperative. Answers such as “join the Kubernetes Pod network,” “SSH to one of the nodes” or “Use a NodePort service” all have flaws from a security and usability perspective.

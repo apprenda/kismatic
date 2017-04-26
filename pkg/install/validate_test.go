@@ -739,3 +739,61 @@ func TestValidateDockerStorageDirectLVM(t *testing.T) {
 		}
 	}
 }
+
+func TestRepository(t *testing.T) {
+	tests := []struct {
+		config Cluster
+		valid  bool
+	}{
+		{
+			config: Cluster{
+				PackageRepoURLs: "",
+			},
+			valid: true,
+		},
+		{
+			config: Cluster{
+				PackageRepoURLs: "https://repo.com",
+			},
+			valid: true,
+		},
+		{
+			config: Cluster{
+				PackageRepoURLs: "http://repo.com",
+			},
+			valid: true,
+		},
+		{
+			config: Cluster{
+				PackageRepoURLs: "http://192.168.0.1",
+			},
+			valid: true,
+		},
+		{
+			config: Cluster{
+				PackageRepoURLs: "https://repo.com/kismatic,https://repo.com/gluster",
+			},
+			valid: true,
+		},
+		{
+			config: Cluster{
+				PackageRepoURLs: "repo.com",
+			},
+			valid: false,
+		},
+		{
+			config: Cluster{
+				PackageRepoURLs: "https://repo.com/kismatic,repo.com/gluster",
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		p := &validPlan
+		p.Cluster.PackageRepoURLs = test.config.PackageRepoURLs
+		ok, _ := p.Cluster.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}

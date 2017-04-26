@@ -1,7 +1,11 @@
 ---
   # YUM
   - name: install docker-engine yum package
-    yum: name=docker-engine-{{ docker_engine_yum_version }} state=present
+    yum:
+      name: docker-engine-{{ docker_engine_yum_version }}
+      state: present
+      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
+      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     register: docker_installation_rpm
     until: docker_installation_rpm|success
     retries: 3
@@ -13,6 +17,7 @@
     apt:
       name: docker-engine={{ docker_engine_apt_version }}
       state: present
+      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kismatic-xenial
     register: docker_installation_deb
     until: docker_installation_deb|success

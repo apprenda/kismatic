@@ -1,7 +1,11 @@
 ---
   # YUM
   - name: install kubelet yum package
-    yum: name=kubelet-{{ kismatic_yum_version }} state=present
+    yum:
+      name: kubelet-{{ kismatic_yum_version }}
+      state: present
+      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
+      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     register: kubelet_installation_rpm
     until: kubelet_installation_rpm|success
     retries: 3
@@ -9,7 +13,11 @@
     when: ansible_os_family == 'RedHat'
 
   - name: install kubectl yum package
-    yum: name=kubectl-{{ kismatic_yum_version }} state=present
+    yum:
+      name: kubectl-{{ kismatic_yum_version }}
+      state: present
+      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
+      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     when: "'master' in group_names"
     register: result
     until: result|success
@@ -22,6 +30,7 @@
     apt:
       name: kubelet={{ kismatic_apt_version }}
       state: present
+      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kismatic-xenial
     register: kubelet_installation_deb
     until: kubelet_installation_deb|success
@@ -33,6 +42,7 @@
     apt:
       name: kubectl={{ kismatic_apt_version }}
       state: present
+      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kismatic-xenial
     register: result
     until: result|success

@@ -194,6 +194,7 @@ func generateAlphaNumericPassword() (string, error) {
 var commentMap = map[string]string{
 	"admin_password":             "This password is used to login to the Kubernetes Dashboard and can also be used for administration without a security certificate",
 	"allow_package_installation": "When false, installation will not occur if any node is missing the correct deb/rpm packages. When true, the installer will attempt to install missing packages for you.",
+	"package_repository_urls":    "Comma-separated list of URLs of the repositories that should be used during installation. These repositories must contain the kismatic packages and all their transitive dependencies.",
 	"disconnected_installation":  "Set to true if you have local package and Docker repositories seeded with Kismatic binaries.",
 	"type":                     "overlay or routed. Routed pods can be addressed from outside the Kubernetes cluster; Overlay pods can only address each other.",
 	"pod_cidr_block":           "Kubernetes will assign pods IPs in this range. Do not use a range that is already in use on your local network!",

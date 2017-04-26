@@ -1,5 +1,7 @@
 # Cluster Upgrade
 
+Status: Implemented.
+
 This document describes the initial implementation of upgrades in Kismatic. An upgrade
 is defined as the replacement of _binaries_ or _configuration_ of a cluster created by Kismatic. 
 An upgrade does not include the operating system, or any packages that are not managed by Kismatic.

@@ -152,8 +152,15 @@ func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, 
 	FailIfError(err, "Error copying kubectl dummy")
 	err = runViaSSH([]string{"sudo mv ~/kubectl /usr/bin/kubectl", "sudo chmod +x /usr/bin/kubectl"}, nodes[0:1], sshKey, 1*time.Minute)
 
+	By("Running the packages-repo play with the plan")
+	cmd := exec.Command("./kismatic", "install", "step", "_packages-repo.yaml", "-f", planFile.Name())
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	FailIfError(err, "Error running package-repo play")
+
 	By("Running the storage play with the plan")
-	cmd := exec.Command("./kismatic", "install", "step", "_storage.yaml", "-f", planFile.Name())
+	cmd = exec.Command("./kismatic", "install", "step", "_storage.yaml", "-f", planFile.Name())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
