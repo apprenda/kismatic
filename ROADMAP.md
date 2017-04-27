@@ -1,6 +1,6 @@
 # High Level Roadmap
 
-- [ ] Cluster Upgrades
+- [x] Cluster Upgrades
    * Before the release of Kubernetes 1.6, we expect to have a release of Kismatic that will allow users to upgrade Kubernetes custers with controlled downtime.
    
 - [ ] Logging
