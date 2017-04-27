@@ -25,15 +25,31 @@ var _ = Describe("Upgrade", func() {
 			})
 		})
 
-		Describe("From KET version v1.2.2", func() {
+		Describe("From KET version v1.3.1", func() {
 			BeforeEach(func() {
-				dir := setupTestWorkingDirWithVersion("v1.2.2")
+				dir := setupTestWorkingDirWithVersion("v1.3.1")
 				os.Chdir(dir)
 			})
 			Context("Using a minikube layout", func() {
 				Context("Using Ubuntu 16.04", func() {
 					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
 						WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
+							installAndUpgradeMinikube(node, sshKey)
+						})
+					})
+				})
+			})
+		})
+
+		Describe("From KET version v1.2.2", func() {
+			BeforeEach(func() {
+				dir := setupTestWorkingDirWithVersion("v1.2.2")
+				os.Chdir(dir)
+			})
+			Context("Using a minikube layout", func() {
+				Context("Using CentOS 7", func() {
+					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
+						WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
 							installAndUpgradeMinikube(node, sshKey)
 						})
 					})
