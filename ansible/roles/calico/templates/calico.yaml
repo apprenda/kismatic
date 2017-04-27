@@ -136,8 +136,6 @@ spec:
           volumeMounts:
             - mountPath: /host/opt/cni/bin
               name: cni-bin-dir
-            - mountPath: /host/etc/cni/net.d
-              name: cni-net-dir
             - mountPath: {{ kubernetes_install_dir }}
               name: etcd-certs
       volumes:
@@ -152,9 +150,6 @@ spec:
         - name: cni-bin-dir
           hostPath:
             path: /opt/cni/bin
-        - name: cni-net-dir
-          hostPath:
-            path: {{ network_plugin_dir }}
         # Mount in the etcd TLS secrets.
         - name: etcd-certs
           hostPath:

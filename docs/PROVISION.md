@@ -135,14 +135,14 @@ If you are building a large cluster or one that won't have access to these repos
     <td></td>
   </tr>
   <tr>
-    <td>Kismatic package of Kubernetes kubelet 1.6.0-2</td>
+    <td>Kismatic package of Kubernetes kubelet 1.6.2-1</td>
     <td>Kubernetes</td>
     <td></td>
     <td>yes</td>
     <td>yes</td>
   </tr>
   <tr>
-    <td>Kismatic package of Kubernetes kubectl 1.6.0-2</td>
+    <td>Kismatic package of Kubernetes kubectl 1.6.2-1</td>
     <td>Kubernetes</td>
     <td></td>
     <td>yes</td>
