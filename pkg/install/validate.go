@@ -222,7 +222,7 @@ func (s sshConnectionSet) validate() (bool, []error) {
 
 	err := ssh.ValidUnencryptedPrivateKey(s.SSHConfig.Key)
 	if err != nil {
-		v.addError(fmt.Errorf("error parsing SSH key: %v", err))
+		v.addError(fmt.Errorf("SSH key validation error: %v", err))
 	} else {
 		var wg sync.WaitGroup
 		errQueue := make(chan error, len(s.Nodes))

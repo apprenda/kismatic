@@ -141,7 +141,7 @@ func ValidUnencryptedPrivateKey(file string) error {
 			return fmt.Errorf("'%s' is not readable", file)
 		}
 		if perm&0077 != 0 {
-			return fmt.Errorf("permissions %#o for '%s' are too open", perm, file)
+			return fmt.Errorf("permissions %#o for '%s' are too open. Permissions should be set to 0600.", perm, file)
 		}
 	}
 
