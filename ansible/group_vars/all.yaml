@@ -8,8 +8,8 @@ etcd_yum_version: 3.1.4-1
 etcd_apt_version: 3.1.4
 transition_etcd_yum_version: 3.0.17-1
 transition_etcd_apt_version: 3.0.17
-docker_engine_yum_version: 1.11.2-1.el7.centos
-docker_engine_apt_version: 1.11.2-0~xenial
+docker_engine_yum_version: 1.12.6-1.el7.centos
+docker_engine_apt_version: 1.12.6-0~ubuntu-xenial
 
 calico_node_version: "v1.1.3"
 calico_ctl_version: "v1.1.3"
@@ -217,16 +217,16 @@ apprenda_tcp_healthz_priv_img: "{{ docker_registry_address }}:{{ docker_registry
 apprenda_tcp_healthz_img: "{% if load_private_images|bool == true %}{{ apprenda_tcp_healthz_priv_img }}{% else %}{{ apprenda_tcp_healthz_orig_img }}{% endif %}"
 
 # kismatic packages
-yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
-yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
-deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
-deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
+# yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
+# yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
+# deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
+# deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
 
 # Uncomment below to use test repo
-# yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
-# yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
-# deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
-# deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
+yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
+yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
+deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
+deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
 #===============================================================================
 # PV configs for monitoring and logging
 #pv_monitoring_nfs_server_ip: "192.168.99.20"
