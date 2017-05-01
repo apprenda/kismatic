@@ -19,7 +19,7 @@ Although current k8s clusters built with KET _support_ Helm and can be configure
 * Create a new _phase_ to deploy Helm
   * Use the included binary to run `helm init`
   * `helm` will be executed from the install machine and not part of the regular install, the new UI would looks something like:
-  ```
+```
 Installing Cluster==================================================================
 Generating Kubeconfig File==========================================================
 Installing Helm on the Cluster======================================================
