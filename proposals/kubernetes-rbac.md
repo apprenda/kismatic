@@ -1,6 +1,6 @@
 # Enable RBAC support in Kubernetes
 
-Status: Proposal
+Status: Implemented
 
 # Motivation
 As of Kubernetes v1.6.0, the role-based access control authorizer API was promoted

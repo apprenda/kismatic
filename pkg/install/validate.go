@@ -64,7 +64,7 @@ func ValidateSSHConnection(con *SSHConnection, prefix string) (bool, []error) {
 func ValidateCertificates(p *Plan, pki *LocalPKI) (bool, []error) {
 	v := newValidator()
 
-	warn, err := pki.ValidateClusterCertificates(p, []string{"admin"})
+	warn, err := pki.ValidateClusterCertificates(p)
 	if err != nil && len(err) > 0 {
 		v.addError(err...)
 	}

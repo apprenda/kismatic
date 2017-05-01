@@ -11,11 +11,16 @@ import (
 )
 
 const (
-	certOrganization = "Apprenda"
-	certOrgUnit      = "Kismatic"
-	certCountry      = "US"
-	certState        = "NY"
-	certLocality     = "Troy"
+	certOrganization             = "Apprenda"
+	certOrgUnit                  = "Kismatic"
+	certCountry                  = "US"
+	certState                    = "NY"
+	certLocality                 = "Troy"
+	adminUser                    = "admin"
+	adminGroup                   = "system:masters"
+	dockerRegistryCertFilename   = "docker"
+	serviceAccountCertFilename   = "service-account"
+	serviceAccountCertCommonName = "kube-service-account"
 )
 
 // The PKI provides a way for generating certificates for the cluster described by the Plan
@@ -25,7 +30,7 @@ type PKI interface {
 	GenerateNodeCertificate(plan *Plan, node Node, ca *tls.CA) error
 	GetClusterCA() (*tls.CA, error)
 	GenerateClusterCA(p *Plan) (*tls.CA, error)
-	GenerateClusterCertificates(p *Plan, ca *tls.CA, users []string) error
+	GenerateClusterCertificates(p *Plan, ca *tls.CA) error
 }
 
 // LocalPKI is a file-based PKI
@@ -98,7 +103,7 @@ func (lp *LocalPKI) GenerateClusterCA(p *Plan) (*tls.CA, error) {
 }
 
 // GenerateClusterCertificates creates a Certificates for all nodes on the cluster
-func (lp *LocalPKI) GenerateClusterCertificates(p *Plan, ca *tls.CA, users []string) error {
+func (lp *LocalPKI) GenerateClusterCertificates(p *Plan, ca *tls.CA) error {
 	if lp.Log == nil {
 		lp.Log = ioutil.Discard
 	}
@@ -134,17 +139,15 @@ func (lp *LocalPKI) GenerateClusterCertificates(p *Plan, ca *tls.CA, users []str
 	if err := lp.generateServiceAccountCert(p, ca); err != nil {
 		return err
 	}
-	// Finally, create certs for user if they are missing
-	for _, user := range users {
-		if err := lp.generateUserCert(p, user, ca); err != nil {
-			return err
-		}
+	// Create the admin user's certificate
+	if err := lp.generateUserCert(p, ca, adminUser, []string{adminGroup}); err != nil {
+		return err
 	}
 	return nil
 }
 
 // ValidateClusterCertificates validates all certificates in the cluster
-func (lp *LocalPKI) ValidateClusterCertificates(p *Plan, users []string) (warn []error, err []error) {
+func (lp *LocalPKI) ValidateClusterCertificates(p *Plan) (warn []error, err []error) {
 	if lp.Log == nil {
 		lp.Log = ioutil.Discard
 	}
@@ -183,20 +186,18 @@ func (lp *LocalPKI) ValidateClusterCertificates(p *Plan, users []string) (warn [
 	if err != nil {
 		err = append(err, saErr)
 	}
-	// Finally, create certs for user if they are missing
-	for _, user := range users {
-		_, userWarn, userErr := lp.validateUserCert(user)
-		warn = append(warn, userWarn...)
-		if err != nil {
-			err = append(err, userErr)
-		}
+	// Validate admin certificate
+	_, userWarn, userErr := lp.validateUserCert(adminUser, []string{adminGroup})
+	warn = append(warn, userWarn...)
+	if err != nil {
+		err = append(err, userErr)
 	}
 	return warn, err
 }
 
 // GenerateNodeCertificate creates a private key and certificate for the given node
 func (lp *LocalPKI) GenerateNodeCertificate(plan *Plan, node Node, ca *tls.CA) error {
-	CN := node.Host
+	commonName := node.Host
 	// Build list of SANs
 	clusterSANs, err := clusterCertsSubjectAlternateNames(plan)
 	if err != nil {
@@ -216,7 +217,7 @@ func (lp *LocalPKI) GenerateNodeCertificate(plan *Plan, node Node, ca *tls.CA) e
 	}
 
 	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(CN, nodeSANs, node.Host, lp.GeneratedCertsDirectory)
+	valid, warn, err := tls.CertExistsAndValid(commonName, nodeSANs, []string{}, node.Host, lp.GeneratedCertsDirectory)
 	if err != nil {
 		return err
 	}
@@ -232,7 +233,7 @@ func (lp *LocalPKI) GenerateNodeCertificate(plan *Plan, node Node, ca *tls.CA) e
 
 	util.PrettyPrintOk(lp.Log, "Generating certificates for host %q", node.Host)
 
-	key, cert, err := generateCert(CN, plan, nodeSANs, ca)
+	key, cert, err := generateCert(ca, commonName, nodeSANs)
 	if err != nil {
 		return fmt.Errorf("error during cluster cert generation: %v", err)
 	}
@@ -263,17 +264,17 @@ func (lp *LocalPKI) validateNodeCertificate(p *Plan, node Node) (valid bool, war
 		}
 	}
 
-	return tls.CertExistsAndValid(CN, nodeSANs, node.Host, lp.GeneratedCertsDirectory)
+	return tls.CertExistsAndValid(CN, nodeSANs, []string{}, node.Host, lp.GeneratedCertsDirectory)
 }
 
 func (lp *LocalPKI) generateDockerRegistryCert(p *Plan, ca *tls.CA) error {
 	// Default registry will be deployed on the first master
 	n := p.Master.Nodes[0]
-	CN := n.Host
+	commonName := n.Host
 	SANs := []string{n.Host, n.IP, n.InternalIP}
 
 	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(CN, SANs, "docker", lp.GeneratedCertsDirectory)
+	valid, warn, err := tls.CertExistsAndValid(commonName, SANs, []string{}, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
 	if err != nil {
 		return err
 	}
@@ -289,11 +290,11 @@ func (lp *LocalPKI) generateDockerRegistryCert(p *Plan, ca *tls.CA) error {
 
 	util.PrettyPrintOk(lp.Log, "Generating certificates for docker registry")
 
-	dockerKey, dockerCert, err := generateCert(CN, p, SANs, ca)
+	dockerKey, dockerCert, err := generateCert(ca, commonName, SANs)
 	if err != nil {
 		return fmt.Errorf("error during user cert generation: %v", err)
 	}
-	err = tls.WriteCert(dockerKey, dockerCert, "docker", lp.GeneratedCertsDirectory)
+	err = tls.WriteCert(dockerKey, dockerCert, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
 	if err != nil {
 		return fmt.Errorf("error writing cert files for docker registry")
 	}
@@ -306,16 +307,13 @@ func (lp *LocalPKI) validateDockerRegistryCert(p *Plan) (valid bool, warn []erro
 	CN := n.Host
 	SANs := []string{n.Host, n.IP, n.InternalIP}
 
-	return tls.CertExistsAndValid(CN, SANs, "docker", lp.GeneratedCertsDirectory)
+	return tls.CertExistsAndValid(CN, SANs, []string{}, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
 }
 
 func (lp *LocalPKI) generateServiceAccountCert(p *Plan, ca *tls.CA) error {
-	CN := "kube-service-account"
 	SANs := []string{}
-	certName := "service-account"
-
 	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(CN, SANs, certName, lp.GeneratedCertsDirectory)
+	valid, warn, err := tls.CertExistsAndValid(serviceAccountCertCommonName, SANs, []string{}, serviceAccountCertFilename, lp.GeneratedCertsDirectory)
 	if err != nil {
 		return err
 	}
@@ -328,32 +326,28 @@ func (lp *LocalPKI) generateServiceAccountCert(p *Plan, ca *tls.CA) error {
 		util.PrettyPrintOk(lp.Log, "Found key and certificate for service accounts")
 		return nil
 	}
-
 	util.PrettyPrintOk(lp.Log, "Generating certificates for service accounts")
 
-	key, cert, err := generateCert(CN, p, SANs, ca)
+	key, cert, err := generateCert(ca, serviceAccountCertCommonName, SANs)
 	if err != nil {
 		return fmt.Errorf("error generating service account certs: %v", err)
 	}
-	if err = tls.WriteCert(key, cert, certName, lp.GeneratedCertsDirectory); err != nil {
+	if err = tls.WriteCert(key, cert, serviceAccountCertFilename, lp.GeneratedCertsDirectory); err != nil {
 		return fmt.Errorf("error writing generated service account cert: %v", err)
 	}
 	return nil
 }
 
 func (lp *LocalPKI) validateServiceAccountCert() (valid bool, warn []error, err error) {
-	CN := "kube-service-account"
 	SANs := []string{}
-	certName := "service-account"
-
-	return tls.CertExistsAndValid(CN, SANs, certName, lp.GeneratedCertsDirectory)
+	return tls.CertExistsAndValid(serviceAccountCertCommonName, SANs, []string{}, serviceAccountCertFilename, lp.GeneratedCertsDirectory)
 }
 
-func (lp *LocalPKI) generateUserCert(p *Plan, user string, ca *tls.CA) error {
+func (lp *LocalPKI) generateUserCert(p *Plan, ca *tls.CA, user string, groups []string) error {
 	SANs := []string{user}
 
 	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(user, SANs, user, lp.GeneratedCertsDirectory)
+	valid, warn, err := tls.CertExistsAndValid(user, SANs, groups, user, lp.GeneratedCertsDirectory)
 	if err != nil {
 		return err
 	}
@@ -369,7 +363,7 @@ func (lp *LocalPKI) generateUserCert(p *Plan, user string, ca *tls.CA) error {
 
 	util.PrettyPrintOk(lp.Log, "Generating certificates for user %q", user)
 
-	adminKey, adminCert, err := generateCert(user, p, SANs, ca)
+	adminKey, adminCert, err := generateCert(ca, user, SANs, groups...)
 	if err != nil {
 		return fmt.Errorf("error during user cert generation: %v", err)
 	}
@@ -380,15 +374,14 @@ func (lp *LocalPKI) generateUserCert(p *Plan, user string, ca *tls.CA) error {
 	return nil
 }
 
-func (lp *LocalPKI) validateUserCert(user string) (valid bool, warn []error, err error) {
+func (lp *LocalPKI) validateUserCert(user string, groups []string) (valid bool, warn []error, err error) {
 	SANs := []string{user}
-
-	return tls.CertExistsAndValid(user, SANs, user, lp.GeneratedCertsDirectory)
+	return tls.CertExistsAndValid(user, SANs, groups, user, lp.GeneratedCertsDirectory)
 }
 
-func generateCert(cnName string, p *Plan, hostList []string, ca *tls.CA) (key, cert []byte, err error) {
+func generateCert(ca *tls.CA, commonName string, hostList []string, organizations ...string) (key, cert []byte, err error) {
 	req := csr.CertificateRequest{
-		CN: cnName,
+		CN: commonName,
 		KeyRequest: &csr.BasicKeyRequest{
 			A: "rsa",
 			S: 2048,
@@ -406,7 +399,7 @@ func generateCert(cnName string, p *Plan, hostList []string, ca *tls.CA) (key, c
 	}
 	key, cert, err = tls.NewCert(ca, req)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating certs for %q: %v", cnName, err)
+		return nil, nil, fmt.Errorf("error generating certs for %q: %v", commonName, err)
 	}
 	return key, cert, err
 }

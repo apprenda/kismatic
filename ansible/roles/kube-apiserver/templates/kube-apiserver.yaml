@@ -22,7 +22,7 @@ spec:
       - --allow-privileged=true
       - --anonymous-auth=false
       - --apiserver-count={{ kubernetes_master_apiserver_count }}
-      - --authorization-mode=ABAC
+      - --authorization-mode=RBAC,ABAC
       - --authorization-policy-file={{ kubernetes_authorization_policy_path }}
       - --basic-auth-file={{ kubernetes_basic_auth_path }}
       - --bind-address=0.0.0.0
