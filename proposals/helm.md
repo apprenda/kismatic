@@ -17,6 +17,22 @@ Although current k8s clusters built with KET _support_ Helm and can be configure
 # Required Changes
 * Include the `helm` binary as part of the KET tar ball
 * Create a new _phase_ to deploy Helm
-  * Use the included binary to run `helm init` (explore including it as a Go dependency instead)
+  * Use the included binary to run `helm init`
+  * `helm` will be executed from the install machine and not part of the regular install, the new UI would looks something like:
+  ```
+Installing Cluster==================================================================
+Generating Kubeconfig File==========================================================
+Installing Helm on the Cluster======================================================
+Running Smoke Test==================================================================
+```
+* All helm charts for cluster components KET is installing will be included in the distribution and used by the installer. This allows to lock down and test specific versions.
 * Include `tiller` docker images in the offline package
 * Plan file option to disable *NOTE* This will block installation of any charts that KET would configure, ie logging and monitoring and any others in the future     
+```
+cluster:
+    features:
+      package_manager:
+        enabled: true|false
+        provider: helm
+```
+* If an existing `./helm` directory is detected, it will be backed up prior to running `helm init` 
