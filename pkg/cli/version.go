@@ -24,7 +24,7 @@ func NewCmdVersion(buildDate string, out io.Writer) *cobra.Command {
 		Short: "display the Kismatic CLI version",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			v := versionOut{
-				Version:   install.AboutKismatic.String(),
+				Version:   install.KismaticVersion.String(),
 				BuildDate: buildDate,
 				GoVersion: runtime.Version(),
 			}
@@ -37,7 +37,7 @@ func NewCmdVersion(buildDate string, out io.Writer) *cobra.Command {
 				return nil
 			}
 			fmt.Fprintln(out, "Kismatic:")
-			fmt.Fprintf(out, "  Version: %s\n", install.AboutKismatic)
+			fmt.Fprintf(out, "  Version: %s\n", install.KismaticVersion)
 			fmt.Fprintf(out, "  Built: %s\n", buildDate)
 			fmt.Fprintf(out, "  Go Version: %s\n", runtime.Version())
 			return nil
