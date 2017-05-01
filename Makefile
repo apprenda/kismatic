@@ -18,6 +18,7 @@ ANSIBLE_VERSION = 2.1.4.0
 PROVISIONER_VERSION = v1.2.0
 KUBERANG_VERSION = v1.1.3
 GO_VERSION = 1.8.0
+HELM_VERSION = v2.3.1
 
 ifeq ($(origin GLIDE_GOOS), undefined)
 	GLIDE_GOOS := $(HOST_GOOS)
@@ -43,7 +44,7 @@ bin/$(GOOS)/kismatic: vendor
 	    -w /go/src/$(PKG)                                                           \
 	    golang:$(GO_VERSION)                                                        \
 	    go build -o $@                                                              \
-	        -ldflags "-X main.version=$(VERSION) -X 'main.buildDate=$(BUILD_DATE)'" \
+	        -ldflags "-X main.version=$(VERSION) -X main.helmVersion=$(HELM_VERSION) -X 'main.buildDate=$(BUILD_DATE)'" \
 	        ./cmd/kismatic
 
 .PHONY: bin/inspector/$(GOOS)/amd64/kismatic-inspector
@@ -57,18 +58,18 @@ bin/inspector/$(GOOS)/amd64/kismatic-inspector: vendor
 	    -w /go/src/$(PKG)                                                            \
 	    golang:$(GO_VERSION)                                                         \
 	    go build -o $@                                                               \
-	        -ldflags "-X main.version=$(VERSION) -X 'main.buildDate=$(BUILD_DATE)'"  \
+	        -ldflags "-X main.version=$(VERSION) -X main.helmVersion=$(HELM_VERSION) -X 'main.buildDate=$(BUILD_DATE)'"  \
 	        ./cmd/kismatic-inspector
-
 
 clean:
 	rm -rf bin
 	rm -rf out
 	rm -rf vendor
 	rm -rf vendor-ansible/out
-	rm -rf vendor-provision/out
+	rm -rf vendor-provision
 	rm -rf integration/vendor
 	rm -rf vendor-kuberang
+	rm -rf vendor-helm
 
 test: vendor
 	@docker run                                                   \
@@ -109,7 +110,14 @@ vendor-kuberang/$(KUBERANG_VERSION):
 	mkdir -p vendor-kuberang/$(KUBERANG_VERSION)
 	curl https://kismatic-installer.s3-accelerate.amazonaws.com/kuberang/$(KUBERANG_VERSION)/kuberang-linux-amd64 -o vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-amd64
 
-dist: vendor-ansible/out vendor-provision/out vendor-kuberang/$(KUBERANG_VERSION) build build-inspector
+vendor-helm/out:
+	mkdir -p vendor-helm/out/
+	curl -L https://storage.googleapis.com/kubernetes-helm/helm-$(HELM_VERSION)-$(GOOS)-amd64.tar.gz | tar zx -C vendor-helm
+	cp vendor-helm/$(GOOS)-amd64/helm vendor-helm/out/helm
+	rm -rf vendor-helm/$(GOOS)-amd64
+	chmod +x vendor-helm/out/helm
+
+dist: vendor-ansible/out vendor-provision/out vendor-kuberang/$(KUBERANG_VERSION) vendor-helm/out build build-inspector
 	mkdir -p out
 	cp bin/$(GOOS)/kismatic out
 	mkdir -p out/ansible
@@ -121,6 +129,7 @@ dist: vendor-ansible/out vendor-provision/out vendor-kuberang/$(KUBERANG_VERSION
 	mkdir -p out/ansible/playbooks/kuberang/linux/amd64/
 	cp vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-amd64 out/ansible/playbooks/kuberang/linux/amd64/kuberang
 	cp vendor-provision/out/provision-$(GOOS)-amd64 out/provision
+	cp vendor-helm/out/helm out/helm
 	rm -f out/kismatic.tar.gz
 	tar -czf kismatic.tar.gz -C out .
 	mv kismatic.tar.gz out

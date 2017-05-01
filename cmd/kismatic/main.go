@@ -14,9 +14,11 @@ import (
 // Set via linker flag
 var version string
 var buildDate string
+var helmVersion string
 
 func init() {
 	install.SetVersion(version)
+	install.SetHelmVersion(helmVersion)
 }
 
 func main() {

@@ -681,21 +681,17 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
 	}
 
-	if p.DockerRegistry.Address != "" {
-		cc.EnableInternalDockerRegistry = false
+	if p.ConfigureDockerRegistry() {
 		cc.EnablePrivateDockerRegistry = true
+		cc.DockerRegistryAddress = p.DockerRegistryAddress()
+		cc.DockerCAPath = filepath.Join(tlsDir, "ca.pem")
+		cc.DockerRegistryPort = strconv.Itoa(p.DockerRegistry.Port)
+	}
+	if p.DockerRegistry.Address != "" { // Use external registry
 		cc.DockerCAPath = p.DockerRegistry.CAPath
 		cc.DockerRegistryAddress = p.DockerRegistry.Address
-		cc.DockerRegistryPort = strconv.Itoa(p.DockerRegistry.Port)
-	} else if p.DockerRegistry.SetupInternal {
+	} else if p.DockerRegistry.SetupInternal { // Use registry on master[0]
 		cc.EnableInternalDockerRegistry = true
-		cc.EnablePrivateDockerRegistry = true
-		cc.DockerRegistryAddress = p.Master.Nodes[0].IP
-		if p.Master.Nodes[0].InternalIP != "" {
-			cc.DockerRegistryAddress = p.Master.Nodes[0].InternalIP
-		}
-		cc.DockerCAPath = tlsDir + "/ca.pem"
-		cc.DockerRegistryPort = "8443"
 	} // Else just use DockerHub
 
 	// Setup docker options

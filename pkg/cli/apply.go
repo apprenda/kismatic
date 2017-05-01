@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -88,18 +89,13 @@ func (c *applyCmd) run() error {
 	if err != nil {
 		return fmt.Errorf("error validating plan: %v", err)
 	}
-	plan, err := c.planner.Read()
+	plan, _ := c.planner.Read()
 
 	// Perform the installation
 	err = c.executor.Install(plan)
 	if err != nil {
 		return fmt.Errorf("error installing: %v", err)
 	}
-
-	if err := c.executor.RunSmokeTest(plan); err != nil {
-		return fmt.Errorf("error during smoke test: %v", err)
-	}
-	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully\n")
 
 	// Generate kubeconfig
 	util.PrintHeader(c.out, "Generating Kubeconfig File", '=')
@@ -108,14 +104,52 @@ func (c *applyCmd) run() error {
 		util.PrettyPrintWarn(c.out, "Error generating kubeconfig file: %v\n", err)
 	} else {
 		util.PrettyPrintOk(c.out, "Generated kubeconfig file in the %q directory", c.generatedAssetsDir)
-		fmt.Fprintf(c.out, "\n")
-		msg := "To use the generated kubeconfig file with kubectl:" +
-			"\n  * use \"kubectl --kubeconfig %s/kubeconfig\"" +
-			"\n  * or copy the config file \"cp %[1]s/kubeconfig ~/.kube/config\"\n"
-		fmt.Fprintf(c.out, msg, c.generatedAssetsDir)
-		fmt.Fprintf(c.out, "Use \"kismatic dashboard\" command to view the Kubernetes dashboard")
 	}
 
-	fmt.Fprintf(c.out, "\n")
+	// Install Helm
+	if plan.Features.PackageManager.Enabled {
+		util.PrintHeader(c.out, "Installing Helm on the Cluster", '=')
+		helm, err := install.DefaultHelmClient()
+		if err != nil {
+			return fmt.Errorf("error getting a valid Helm client: %v", err)
+		}
+		helm.Kubeconfig = filepath.Join(c.generatedAssetsDir, "kubeconfig")
+		// On a disconnected install set tiller image with the correct tag
+		// Prepend the custom registry address and port
+		if plan.ConfigureDockerRegistry() && plan.Cluster.DisconnectedInstallation {
+			// TODO how to cleanly get the tiller tag?
+			helm.TillerImage = fmt.Sprintf("%s:%d/%s", plan.DockerRegistryAddress(), plan.DockerRegistry.Port, helm.TillerImage)
+		}
+
+		// Backup helm directory if exists
+		if backedup, err := helm.BackupClient(); err != nil {
+			return fmt.Errorf("error preparing Helm client: %v", err)
+		} else if backedup {
+			util.PrettyPrintOk(c.out, "Backed up %q directory", helm.ClientDirectory)
+		}
+		// Run 'helm init'
+		if err := helm.Init(); err != nil {
+			util.PrettyPrintErr(c.out, "Installed Helm on the cluster")
+			return fmt.Errorf("error installing Helm on the cluster: %v", err)
+		}
+		util.PrettyPrintOk(c.out, "Installed Tiller (the helm server side component)")
+	}
+
+	// Run smoketest
+	if err := c.executor.RunSmokeTest(plan); err != nil {
+		return fmt.Errorf("error running smoke test: %v", err)
+	}
+
+	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully!\n")
+
+	util.PrintHeader(c.out, "How to Use the Cluster", '=')
+	msg := "- To use the generated kubeconfig file with kubectl:" +
+		"\n    * use \"kubectl --kubeconfig %s/kubeconfig\"" +
+		"\n    * or copy the config file \"cp %[1]s/kubeconfig ~/.kube/config\"\n"
+	util.PrintColor(c.out, util.Blue, msg, c.generatedAssetsDir)
+	util.PrintColor(c.out, util.Blue, "- To view the Kubernetes dashboard: \"./kismatic dashboard\"\n")
+	util.PrintColor(c.out, util.Blue, "- To SSH into a cluster node: \"./kismatic ssh etcd|master|worker|storage|$node.host\"\n")
+	util.PrintColor(c.out, util.Blue, "- To dump diagnostics data: \"./kismatic diagnose\"\n")
+
 	return nil
 }

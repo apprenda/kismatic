@@ -1,6 +1,6 @@
 # Helm
 
-Status: Proposal
+Status: Implemented
 
 Helm is a tool for managing Kubernetes charts. Charts are packages of pre-configured Kubernetes resources.
 
@@ -35,4 +35,4 @@ cluster:
         enabled: true|false
         provider: helm
 ```
-* If an existing `./helm` directory is detected, it will be backed up prior to running `helm init` 
+* If an existing `./helm` directory is detected, it will be backed up prior to running `helm init`

@@ -52,3 +52,4 @@ package/out
 integration/vendor
 vendor-provision/*
 vendor-kuberang/*
+vendor-helm

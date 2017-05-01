@@ -130,7 +130,8 @@ func (p *Plan) validate() (bool, []error) {
 	v.validate(&p.DockerRegistry)
 	v.validateWithErrPrefix("Docker", p.Docker)
 	// on a disconnected_installation a registry must be provided
-	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()})
+	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerRegistry()})
+	v.validate(&p.Features)
 	v.validateWithErrPrefix("Etcd nodes", &p.Etcd)
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
@@ -212,6 +213,20 @@ func (s *SSHConfig) validate() (bool, []error) {
 	}
 	if s.Port < 1 || s.Port > 65535 {
 		v.addError(fmt.Errorf("SSH port %d is invalid. Port must be in the range 1-65535", s.Port))
+	}
+	return v.valid()
+}
+
+func (f *Features) validate() (bool, []error) {
+	v := newValidator()
+	v.validate(&f.PackageManager)
+	return v.valid()
+}
+
+func (p *PackageManager) validate() (bool, []error) {
+	v := newValidator()
+	if p.Enabled && p.Provider != "helm" {
+		v.addError(fmt.Errorf("Package Manager valid options are: 'helm'"))
 	}
 	return v.valid()
 }
