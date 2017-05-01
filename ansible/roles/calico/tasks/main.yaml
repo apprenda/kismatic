@@ -39,7 +39,7 @@
 
   - name: delete calico pod running on this node
     command: kubectl delete pod {{ calico_pod_name.stdout }} -n kube-system --now
-    when: calico_pod_name is defined and calico_pod_name.stdout != ""
+    when: calico_pod_name is defined and calico_pod_name.stdout is defined and calico_pod_name.stdout != ""
 
     # wait for pod to shutdown
   - name: wait until the calico pod running on this node is deleted
@@ -48,4 +48,4 @@
     until: poddeleted|success and poddeleted.stdout == ""
     retries: 20
     delay: 6
-    when: calico_pod_name is defined and calico_pod_name.stdout != ""
+    when: calico_pod_name is defined and calico_pod_name.stdout is defined and calico_pod_name.stdout != ""
