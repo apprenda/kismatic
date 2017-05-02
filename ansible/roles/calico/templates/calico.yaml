@@ -82,7 +82,7 @@ spec:
             - name: CALICO_IPV4POOL_CIDR
               value: "{{ kubernetes_pods_cidr }}"
             - name: CALICO_IPV4POOL_IPIP
-              value: "always"
+              value: {% if calico_network_type == 'overlay' %}"always"{% else %}"off"{% endif %}
             # Location of the CA certificate for etcd.
             - name: ETCD_CA_CERT_FILE
               valueFrom:
