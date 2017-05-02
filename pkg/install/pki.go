@@ -397,6 +397,12 @@ func generateCert(ca *tls.CA, commonName string, hostList []string, organization
 			},
 		},
 	}
+
+	for _, org := range organizations {
+		name := csr.Name{O: org}
+		req.Names = append(req.Names, name)
+	}
+
 	key, cert, err = tls.NewCert(ca, req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating certs for %q: %v", commonName, err)

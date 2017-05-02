@@ -519,6 +519,17 @@ func TestGenerateClusterCertificatesUserSubject(t *testing.T) {
 	if userCert.Subject.CommonName != users[0] {
 		t.Errorf("common name mismatch: got %q, expected %q", userCert.Subject.CommonName, users[0])
 	}
+
+	adminGroupMissing := true
+	for _, org := range userCert.Subject.Organization {
+		if org == adminGroup {
+			adminGroupMissing = false
+		}
+	}
+
+	if adminGroupMissing {
+		t.Errorf("the system:masters group is not part of the admin's certificate")
+	}
 }
 
 func TestGenerateClusterCertificatesDockerCert(t *testing.T) {
