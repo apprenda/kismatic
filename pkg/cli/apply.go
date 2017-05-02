@@ -97,15 +97,6 @@ func (c *applyCmd) run() error {
 		return fmt.Errorf("error installing: %v", err)
 	}
 
-	// Generate kubeconfig
-	util.PrintHeader(c.out, "Generating Kubeconfig File", '=')
-	err = install.GenerateKubeconfig(plan, c.generatedAssetsDir)
-	if err != nil {
-		util.PrettyPrintWarn(c.out, "Error generating kubeconfig file: %v\n", err)
-	} else {
-		util.PrettyPrintOk(c.out, "Generated kubeconfig file in the %q directory", c.generatedAssetsDir)
-	}
-
 	// Install Helm
 	if plan.Features.PackageManager.Enabled {
 		util.PrintHeader(c.out, "Installing Helm on the Cluster", '=')
@@ -140,16 +131,14 @@ func (c *applyCmd) run() error {
 		return fmt.Errorf("error running smoke test: %v", err)
 	}
 
-	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully!\n")
+	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully!\n\n")
 
-	util.PrintHeader(c.out, "How to Use the Cluster", '=')
 	msg := "- To use the generated kubeconfig file with kubectl:" +
 		"\n    * use \"kubectl --kubeconfig %s/kubeconfig\"" +
 		"\n    * or copy the config file \"cp %[1]s/kubeconfig ~/.kube/config\"\n"
 	util.PrintColor(c.out, util.Blue, msg, c.generatedAssetsDir)
 	util.PrintColor(c.out, util.Blue, "- To view the Kubernetes dashboard: \"./kismatic dashboard\"\n")
 	util.PrintColor(c.out, util.Blue, "- To SSH into a cluster node: \"./kismatic ssh etcd|master|worker|storage|$node.host\"\n")
-	util.PrintColor(c.out, util.Blue, "- To dump diagnostics data: \"./kismatic diagnose\"\n")
 
 	return nil
 }
