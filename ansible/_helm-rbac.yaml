@@ -17,3 +17,14 @@
         failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
       - name: "Patch the tiller spec to use the new serviceaccount"
         command: "kubectl -n kube-system patch deploy/tiller-deploy -p '{\"spec\": {\"template\": {\"spec\": {\"serviceAccountName\": \"tiller\"}}}}'"
+      - name: wait until the tiller pod is ready
+        command: kubectl get deployment tiller-deploy -n kube-system -o jsonpath='{.status.availableReplicas}'
+        register: readyReplicas
+        until: readyReplicas.stdout|int == 1
+        retries: 24
+        delay: 10
+        failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+      - name: fail if the tiller pod is not ready
+        fail:
+          msg: "Timed out waiting for the tiller pod to be in the ready state."
+        when: readyReplicas.stdout|int != 1
