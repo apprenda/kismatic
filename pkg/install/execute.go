@@ -373,7 +373,6 @@ func (ae *ansibleExecutor) RunPlay(playName string, p *Plan) error {
 		explainer:      ae.defaultExplainer(),
 		plan:           *p,
 	}
-	util.PrintHeader(ae.stdout, "Running Task", '=')
 	return ae.execute(t)
 }
 

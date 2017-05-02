@@ -124,6 +124,12 @@ func (c *applyCmd) run() error {
 			return fmt.Errorf("error installing Helm on the cluster: %v", err)
 		}
 		util.PrettyPrintOk(c.out, "Installed Tiller (the helm server side component)")
+
+		// HelmRBAC will create a new role RBAC manually
+		// TODO remove when https://github.com/kubernetes/helm/issues/2224 gets fully fixed
+		if err := c.executor.RunPlay("_helm-rbac.yaml", plan); err != nil {
+			return fmt.Errorf("error configuring Helm RBAC: %v", err)
+		}
 	}
 
 	// Run smoketest

@@ -1,0 +1,19 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "{{ play_name | default('Create Required RBAC Role for Helm') }}"
+    remote_user: root
+    become_method: sudo
+    run_once: true
+
+    tasks:
+      - name: "Create new serviceaccount for tiller"
+        command: "kubectl -n kube-system create sa tiller"
+        register: out
+        failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
+      - name: "Attach cluster-admin role to the service account tiller"
+        command: "kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller"
+        register: out
+        failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
+      - name: "Patch the tiller spec to use the new serviceaccount"
+        command: "kubectl -n kube-system patch deploy/tiller-deploy -p '{\"spec\": {\"template\": {\"spec\": {\"serviceAccountName\": \"tiller\"}}}}'"
