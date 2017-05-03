@@ -19,6 +19,7 @@ type HelmConfig struct {
 	Binary          string
 	ClientDirectory string
 	TillerImage     string
+	ServiceAccount  string
 	Kubeconfig      string
 	Stdout          io.Writer
 	Stderr          io.Writer
@@ -34,6 +35,7 @@ func DefaultHelmClient() (*HelmConfig, error) {
 		ClientDirectory: path.Join(home, ".helm"),
 		Kubeconfig:      "~/.kube/config",
 		TillerImage:     fmt.Sprintf("%s:v%s", tillerImg, HelmVersion),
+		ServiceAccount:  "tiller",
 	}
 
 	return &helm, nil
@@ -62,7 +64,7 @@ func (h *HelmConfig) BackupClient() (bool, error) {
 
 // Init exectues 'helm init' using the local binary
 func (h *HelmConfig) Init() error {
-	cmd := exec.Command(h.Binary, "init")
+	cmd := exec.Command(h.Binary, "init", "--service-account", h.ServiceAccount)
 	if h.TillerImage != "" {
 		cmd.Args = append(cmd.Args, "-i", h.TillerImage)
 	}

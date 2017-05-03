@@ -7,16 +7,14 @@
     run_once: true
 
     tasks:
-      - name: "Create new serviceaccount for tiller"
+      - name: "create new serviceaccount for tiller"
         command: "kubectl -n kube-system create sa tiller"
         register: out
         failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
-      - name: "Attach cluster-admin role to the service account tiller"
+      - name: "attach cluster-admin role to the service account tiller"
         command: "kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller"
         register: out
         failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
-      - name: "Patch the tiller spec to use the new serviceaccount"
-        command: "kubectl -n kube-system patch deploy/tiller-deploy -p '{\"spec\": {\"template\": {\"spec\": {\"serviceAccountName\": \"tiller\"}}}}'"
       - name: wait until the tiller pod is ready
         command: kubectl get deployment tiller-deploy -n kube-system -o jsonpath='{.status.availableReplicas}'
         register: readyReplicas
