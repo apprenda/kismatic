@@ -91,6 +91,11 @@ func (c *applyCmd) run() error {
 	}
 	plan, _ := c.planner.Read()
 
+	// Generate certificates
+	if err := c.executor.GenerateCertificates(plan); err != nil {
+		return fmt.Errorf("error installing: %v", err)
+	}
+
 	// Generate kubeconfig
 	util.PrintHeader(c.out, "Generating Kubeconfig File", '=')
 	err = install.GenerateKubeconfig(plan, c.generatedAssetsDir)
@@ -101,8 +106,7 @@ func (c *applyCmd) run() error {
 	}
 
 	// Perform the installation
-	err = c.executor.Install(plan)
-	if err != nil {
+	if err := c.executor.Install(plan); err != nil {
 		return fmt.Errorf("error installing: %v", err)
 	}
 

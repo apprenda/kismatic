@@ -29,6 +29,7 @@ type PreFlightExecutor interface {
 type Executor interface {
 	PreFlightExecutor
 	Install(p *Plan) error
+	GenerateCertificates(p *Plan) error
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunPlay(string, *Plan) error
@@ -241,12 +242,13 @@ func (ae *ansibleExecutor) execute(t task) error {
 	return nil
 }
 
+// GenerateCertificatesprivate generates keys and certificates for the cluster, if needed
+func (ae *ansibleExecutor) GenerateCertificates(p *Plan) error {
+	return ae.generateTLSAssets(p)
+}
+
 // Install the cluster according to the installation plan
 func (ae *ansibleExecutor) Install(p *Plan) error {
-	// Generate private keys and certificates for the cluster
-	if err := ae.generateTLSAssets(p); err != nil {
-		return err
-	}
 	// Build the ansible inventory
 	cc, err := ae.buildClusterCatalog(p)
 	if err != nil {
