@@ -745,14 +745,6 @@ func (ae *ansibleExecutor) generateTLSAssets(p *Plan) error {
 		return fmt.Errorf("error generating certificates for the cluster: %v", err)
 	}
 
-	// Generate kubeconfig
-	err = GenerateKubeconfig(p, ae.options.GeneratedAssetsDirectory)
-	if err != nil {
-		return fmt.Errorf("error generating kubeconfig file: %v", err)
-	} else {
-		util.PrettyPrintOk(ae.stdout, "Generating \"kubeconfig\" file")
-	}
-
 	util.PrettyPrintOk(ae.stdout, "Cluster certificates can be found in the %q directory", ae.options.GeneratedAssetsDirectory)
 	return nil
 }

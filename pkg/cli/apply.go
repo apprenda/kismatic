@@ -91,6 +91,15 @@ func (c *applyCmd) run() error {
 	}
 	plan, _ := c.planner.Read()
 
+	// Generate kubeconfig
+	util.PrintHeader(c.out, "Generating Kubeconfig File", '=')
+	err = install.GenerateKubeconfig(plan, c.generatedAssetsDir)
+	if err != nil {
+		return fmt.Errorf("error generating kubeconfig file: %v", err)
+	} else {
+		util.PrettyPrintOk(c.out, "Generated kubeconfig file in the %q directory", c.generatedAssetsDir)
+	}
+
 	// Perform the installation
 	err = c.executor.Install(plan)
 	if err != nil {
