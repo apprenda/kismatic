@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"time"
 
 	"strings"
@@ -680,17 +679,16 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
 	}
 
-	if p.ConfigureDockerRegistry() {
-		cc.EnablePrivateDockerRegistry = true
+	if p.ConfgiureDockerWithPrivateRegistry() {
+		cc.ConfgiureDockerWithPrivateRegistry = true
 		cc.DockerRegistryAddress = p.DockerRegistryAddress()
+		cc.DockerRegistryPort = p.DockerRegistryPort()
 		cc.DockerCAPath = filepath.Join(tlsDir, "ca.pem")
-		cc.DockerRegistryPort = strconv.Itoa(p.DockerRegistry.Port)
 	}
 	if p.DockerRegistry.Address != "" { // Use external registry
 		cc.DockerCAPath = p.DockerRegistry.CAPath
-		cc.DockerRegistryAddress = p.DockerRegistry.Address
 	} else if p.DockerRegistry.SetupInternal { // Use registry on master[0]
-		cc.EnableInternalDockerRegistry = true
+		cc.DeployInternalDockerRegistry = true
 	} // Else just use DockerHub
 
 	// Setup docker options

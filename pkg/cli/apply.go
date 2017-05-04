@@ -107,8 +107,7 @@ func (c *applyCmd) run() error {
 		helm.Kubeconfig = filepath.Join(c.generatedAssetsDir, "kubeconfig")
 		// On a disconnected install set tiller image with the correct tag
 		// Prepend the custom registry address and port
-		if plan.ConfigureDockerRegistry() && plan.Cluster.DisconnectedInstallation {
-			// TODO how to cleanly get the tiller tag?
+		if plan.ConfgiureDockerWithPrivateRegistry() && plan.Cluster.DisconnectedInstallation {
 			helm.TillerImage = fmt.Sprintf("%s:%d/%s", plan.DockerRegistryAddress(), plan.DockerRegistry.Port, helm.TillerImage)
 		}
 

@@ -3,6 +3,7 @@ package install
 import (
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
@@ -294,8 +295,8 @@ func hasIP(nodes *[]Node, ip string) bool {
 	return false
 }
 
-// ConfigureDockerRegistry returns true when confgiuring an external or on cluster registry is required
-func (p Plan) ConfigureDockerRegistry() bool {
+// ConfgiureDockerWithPrivateRegistry returns true when confgiuring an external or on cluster registry is required
+func (p Plan) ConfgiureDockerWithPrivateRegistry() bool {
 	return p.DockerRegistry.Address != "" || p.DockerRegistry.SetupInternal
 }
 
@@ -303,7 +304,20 @@ func (p Plan) DockerRegistryAddress() string {
 	address := p.DockerRegistry.Address
 	// If external is not set usem master[0]
 	if address == "" {
-		address = p.Master.Nodes[0].InternalIP
+		address = p.Master.Nodes[0].IP
+		// Use internal address if available
+		if p.Master.Nodes[0].InternalIP != "" {
+			address = p.Master.Nodes[0].InternalIP
+		}
 	}
 	return address
+}
+
+func (p Plan) DockerRegistryPort() string {
+	port := 8443
+	// If external is not set usem master[0]
+	if p.DockerRegistry.Port != 0 {
+		port = p.DockerRegistry.Port
+	}
+	return strconv.Itoa(port)
 }
