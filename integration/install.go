@@ -29,16 +29,17 @@ func GetSSHKeyFile() (string, error) {
 }
 
 type installOptions struct {
-	allowPackageInstallation    bool
-	disconnectedInstallation    bool
-	autoConfigureDockerRegistry bool
-	dockerRegistryIP            string
-	dockerRegistryPort          int
-	dockerRegistryCAPath        string
-	modifyHostsFiles            bool
-	useDirectLVM                bool
-	serviceCIDR                 string
-	enableNetworkPolicy         bool
+	allowPackageInstallation       bool
+	disableAutoConfigurationDocker bool
+	disconnectedInstallation       bool
+	autoConfigureDockerRegistry    bool
+	dockerRegistryIP               string
+	dockerRegistryPort             int
+	dockerRegistryCAPath           string
+	modifyHostsFiles               bool
+	useDirectLVM                   bool
+	serviceCIDR                    string
+	enableNetworkPolicy            bool
 }
 
 func installKismaticMini(node NodeDeets, sshKey string) error {
@@ -69,8 +70,9 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		masterDNS = nodes.dnsRecord.Name
 	}
 	plan := PlanAWS{
-		AllowPackageInstallation: installOpts.allowPackageInstallation,
-		DisconnectedInstallation: installOpts.disconnectedInstallation,
+		AllowPackageInstallation:       installOpts.allowPackageInstallation,
+		DisableAutoConfigurationDocker: installOpts.disableAutoConfigurationDocker,
+		DisconnectedInstallation:       installOpts.disconnectedInstallation,
 		Etcd:                nodes.etcd,
 		Master:              nodes.master,
 		Worker:              nodes.worker,

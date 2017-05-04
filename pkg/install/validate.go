@@ -382,6 +382,10 @@ func (dr *DockerRegistry) validate() (bool, []error) {
 
 func (d Docker) validate() (bool, []error) {
 	v := newValidator()
+	// when disable_auto_configuration: true, will not modify any docker configs
+	if d.DisableAutoConfiguration && d.Storage.DirectLVM.Enabled {
+		v.addError(fmt.Errorf("When docker.disable_auto_configuration is false, will not enable direct_lvm"))
+	}
 	v.validateWithErrPrefix("Storage", d.Storage)
 	return v.valid()
 }

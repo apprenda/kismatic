@@ -697,6 +697,21 @@ func TestDisconnectedInstallationPrereq(t *testing.T) {
 	}
 }
 
+func TestValidateDocker(t *testing.T) {
+	docker := Docker{
+		DisableAutoConfiguration: true,
+		Storage: DockerStorage{
+			DirectLVM: DockerStorageDirectLVM{
+				Enabled: true,
+			},
+		},
+	}
+	ok, _ := docker.validate()
+	if ok {
+		t.Errorf("expect invalid, but got valid")
+	}
+}
+
 func TestValidateDockerStorageDirectLVM(t *testing.T) {
 	tests := []struct {
 		config DockerStorageDirectLVM

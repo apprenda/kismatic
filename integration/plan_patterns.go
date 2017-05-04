@@ -5,27 +5,28 @@ type NFSVolume struct {
 }
 
 type PlanAWS struct {
-	Etcd                         []NodeDeets
-	Master                       []NodeDeets
-	Worker                       []NodeDeets
-	Ingress                      []NodeDeets
-	Storage                      []NodeDeets
-	NFSVolume                    []NFSVolume
-	MasterNodeFQDN               string
-	MasterNodeShortName          string
-	SSHUser                      string
-	SSHKeyFile                   string
-	HomeDirectory                string
-	AllowPackageInstallation     bool
-	DisconnectedInstallation     bool
-	AutoConfiguredDockerRegistry bool
-	DockerRegistryIP             string
-	DockerRegistryPort           int
-	DockerRegistryCAPath         string
-	ModifyHostsFiles             bool
-	UseDirectLVM                 bool
-	ServiceCIDR                  string
-	EnableNetworkPolicy          bool
+	Etcd                           []NodeDeets
+	Master                         []NodeDeets
+	Worker                         []NodeDeets
+	Ingress                        []NodeDeets
+	Storage                        []NodeDeets
+	NFSVolume                      []NFSVolume
+	MasterNodeFQDN                 string
+	MasterNodeShortName            string
+	SSHUser                        string
+	SSHKeyFile                     string
+	HomeDirectory                  string
+	AllowPackageInstallation       bool
+	DisableAutoConfigurationDocker bool
+	DisconnectedInstallation       bool
+	AutoConfiguredDockerRegistry   bool
+	DockerRegistryIP               string
+	DockerRegistryPort             int
+	DockerRegistryCAPath           string
+	ModifyHostsFiles               bool
+	UseDirectLVM                   bool
+	ServiceCIDR                    string
+	EnableNetworkPolicy            bool
 }
 
 const planAWSOverlay = `cluster:
@@ -47,8 +48,9 @@ const planAWSOverlay = `cluster:
   ssh:
     user: {{.SSHUser}}
     ssh_key: {{.SSHKeyFile}}
-    ssh_port: 22{{if .UseDirectLVM}}
+    ssh_port: 22
 docker:
+  disable_auto_configuration: {{.DisableAutoConfigurationDocker}}{{if .UseDirectLVM}}
   storage:
     direct_lvm:
       enabled: true

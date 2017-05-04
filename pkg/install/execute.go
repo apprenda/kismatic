@@ -669,6 +669,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		EnableCalicoPolicy:        p.Cluster.Networking.PolicyEnabled,
 		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
 		PackageRepoURLs:           p.Cluster.PackageRepoURLs,
+		AutoConfigureDocker:       !p.Docker.DisableAutoConfiguration, // need to inverse logic to handle backwards compatability with plan files missing this field
 		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
 		TargetVersion:             AboutKismatic.String(),

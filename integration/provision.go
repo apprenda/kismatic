@@ -73,6 +73,19 @@ func (p provisionedNodes) allNodes() []NodeDeets {
 	return n
 }
 
+func (p provisionedNodes) uniqueNodes() []NodeDeets {
+	seenNodes := map[NodeDeets]bool{}
+	nodes := []NodeDeets{}
+	for _, node := range p.allNodes() {
+		if seenNodes[node] {
+			continue
+		}
+		nodes = append(nodes, node)
+		seenNodes[node] = true
+	}
+	return nodes
+}
+
 type NodeDeets struct {
 	id        string
 	Hostname  string

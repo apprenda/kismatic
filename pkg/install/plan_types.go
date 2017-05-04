@@ -83,6 +83,7 @@ type DockerRegistry struct {
 
 // Docker includes the configuration for the docker installation owned by KET.
 type Docker struct {
+	DisableAutoConfiguration bool `yaml:"disable_auto_configuration"`
 	// Storage includes the storage-specific configuration for docker
 	Storage DockerStorage
 }

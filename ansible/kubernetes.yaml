@@ -13,6 +13,7 @@
   - include: _etcd-networking.yaml
   # docker
   - include: _docker.yaml
+    when: auto_configure_docker|bool == true
   - include: _docker-registry.yaml
     when: use_private_docker_registry|bool == true  # configure private registry when either internal of an external is provided
   # kubernetes
