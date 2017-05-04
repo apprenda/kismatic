@@ -2,11 +2,12 @@ package install
 
 import (
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
-	"path"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -60,7 +61,12 @@ func getPlan() *Plan {
 		Etcd: NodeGroup{
 			Nodes: []Node{
 				Node{
-					Host:       "etcd",
+					Host:       "etcd01",
+					IP:         "99.99.99.99",
+					InternalIP: "88.88.88.88",
+				},
+				Node{
+					Host:       "etcd02",
 					IP:         "99.99.99.99",
 					InternalIP: "88.88.88.88",
 				},
@@ -69,7 +75,12 @@ func getPlan() *Plan {
 		Master: MasterNodeGroup{
 			Nodes: []Node{
 				Node{
-					Host:       "master",
+					Host:       "master01",
+					IP:         "99.99.99.99",
+					InternalIP: "88.88.88.88",
+				},
+				Node{
+					Host:       "master02",
 					IP:         "99.99.99.99",
 					InternalIP: "88.88.88.88",
 				},
@@ -80,7 +91,12 @@ func getPlan() *Plan {
 		Worker: NodeGroup{
 			Nodes: []Node{
 				Node{
-					Host:       "worker",
+					Host:       "worker01",
+					IP:         "99.99.99.99",
+					InternalIP: "88.88.88.88",
+				},
+				Node{
+					Host:       "worker02",
 					IP:         "99.99.99.99",
 					InternalIP: "88.88.88.88",
 				},
@@ -89,7 +105,12 @@ func getPlan() *Plan {
 		Ingress: OptionalNodeGroup{
 			Nodes: []Node{
 				Node{
-					Host:       "ingress",
+					Host:       "ingress01",
+					IP:         "99.99.99.99",
+					InternalIP: "88.88.88.88",
+				},
+				Node{
+					Host:       "ingress02",
 					IP:         "99.99.99.99",
 					InternalIP: "88.88.88.88",
 				},
@@ -98,7 +119,12 @@ func getPlan() *Plan {
 		Storage: OptionalNodeGroup{
 			Nodes: []Node{
 				Node{
-					Host:       "storage",
+					Host:       "storage01",
+					IP:         "99.99.99.99",
+					InternalIP: "88.88.88.88",
+				},
+				Node{
+					Host:       "storage02",
 					IP:         "99.99.99.99",
 					InternalIP: "88.88.88.88",
 				},
@@ -196,58 +222,47 @@ func TestClusterCAExistsGenerationSkipped(t *testing.T) {
 	}
 }
 
-func TestGenerateClusterCertificatesNodeCertIsValid(t *testing.T) {
+func TestGenerateClusterCertificatesExistingCertsAreNotRegen(t *testing.T) {
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
 	p := getPlan()
-	node := p.Worker.Nodes[0]
-
 	ca, err := pki.GenerateClusterCA(p)
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
 	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, node.Host+".pem")
-	cert := mustReadCertFile(certFile, t)
-
-	if cert.Subject.CommonName != node.Host {
-		t.Errorf("common name mismatch: got %q, expected %q", cert.Subject.CommonName, node.Host)
+		t.Fatalf("error generating cluster certificates: %v", err)
 	}
 
-	// Validate DNS names
-	nameFound := false
-	for _, name := range cert.DNSNames {
-		if name == node.Host {
-			nameFound = true
-			break
+	// Get the mod time of all the generated files
+	files, err := ioutil.ReadDir(pki.GeneratedCertsDirectory)
+	if err != nil {
+		t.Fatalf("error listing files in generated certs dir: %v", err)
+	}
+	modTime := map[string]time.Time{}
+	for _, f := range files {
+		modTime[f.Name()] = f.ModTime()
+	}
+
+	// Run generation again. Nothing should be touched.
+	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+		t.Fatalf("error generating cluster certificates: %v", err)
+	}
+
+	files2, err := ioutil.ReadDir(pki.GeneratedCertsDirectory)
+	if err != nil {
+		t.Fatalf("error listing files in generated certs dir: %v", err)
+	}
+	modTime2 := map[string]time.Time{}
+	for _, f := range files2 {
+		modTime2[f.Name()] = f.ModTime()
+	}
+
+	for k := range modTime {
+		if modTime[k] != modTime2[k] {
+			t.Errorf("file %s was modified. modification time changed from %v to %v", k, modTime[k], modTime2[k])
 		}
-	}
-	if !nameFound {
-		t.Error("Expected node's DNS name in certificate, but was not there")
-	}
-	// Validate IP Addresses
-	ipFound := false
-	for _, ip := range cert.IPAddresses {
-		if net.ParseIP(node.InternalIP).Equal(ip) {
-			ipFound = true
-			break
-		}
-	}
-	if !ipFound {
-		t.Error("Expected node's Internal IP in cert, but was not there")
-	}
-	ipFound = false
-	for _, ip := range cert.IPAddresses {
-		if net.ParseIP(node.IP).Equal(ip) {
-			ipFound = true
-			break
-		}
-	}
-	if !ipFound {
-		t.Error("Expected node's IP in cert, but was not there")
 	}
 }
 
@@ -256,208 +271,224 @@ func TestNodeCertExistsSkipGeneration(t *testing.T) {
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
 	p := getPlan()
-	node := p.Worker.Nodes[0]
-	p.Master = MasterNodeGroup{}
-	p.Etcd = NodeGroup{}
-	p.Ingress = OptionalNodeGroup{}
-	p.Storage = OptionalNodeGroup{}
+	node := p.Master.Nodes[0]
 
 	// Create the node cert and key file
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, node.Host+".pem")
-	keyFile := filepath.Join(pki.GeneratedCertsDirectory, node.Host+"-key.pem")
 	ca, err := pki.GenerateClusterCA(p)
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	if err = pki.GenerateNodeCertificate(p, node, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
-	// try to generate again
-	time := time.Now()
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-
-	// Assert cert and key were not regenerated
-	cert, err := os.Stat(certFile)
-	if err != nil {
-		t.Fatalf("error reading cert file:%v", err)
-	}
-	if cert.ModTime().After(time) {
-		t.Error("cert file was modified")
-	}
-
-	key, err := os.Stat(keyFile)
-	if err != nil {
-		t.Fatalf("error reading key file:%v", err)
-	}
-	if key.ModTime().After(time) {
-		t.Error("key file was modified")
-	}
-
-	// Assert no other files were created
-	expectedFiles := []string{
-		"ca.pem", "ca-key.pem",
-		node.Host + ".pem", node.Host + "-key.pem",
-		"admin.pem", "admin-key.pem",
-		"service-account.pem", "service-account-key.pem",
-	}
+	// Get the mod time of all the generated files
 	files, err := ioutil.ReadDir(pki.GeneratedCertsDirectory)
 	if err != nil {
-		t.Fatalf("error getting generated dir contents: %v", err)
+		t.Fatalf("error listing files in generated certs dir: %v", err)
 	}
-	if len(files) != len(expectedFiles) {
-		t.Errorf("expected 6 files in certs directory, but found %d", len(files))
-	}
+	modTime := map[string]time.Time{}
 	for _, f := range files {
-		found := false
-		for _, fn := range expectedFiles {
-			if f.Name() == fn {
+		modTime[f.Name()] = f.ModTime()
+	}
+
+	// Run generation again
+	if err = pki.GenerateNodeCertificate(p, node, ca); err != nil {
+		t.Fatalf("failed to generate certs: %v", err)
+	}
+
+	// Assert files did not change
+	files2, err := ioutil.ReadDir(pki.GeneratedCertsDirectory)
+	if err != nil {
+		t.Fatalf("error listing files in generated certs dir: %v", err)
+	}
+	modTime2 := map[string]time.Time{}
+	for _, f := range files2 {
+		modTime2[f.Name()] = f.ModTime()
+	}
+
+	for k := range modTime {
+		if modTime[k] != modTime2[k] {
+			t.Errorf("file %s was modified. modification time changed from %v to %v", k, modTime[k], modTime2[k])
+		}
+	}
+}
+
+func TestGenerateClusterCertificatesValidateCertificateInformation(t *testing.T) {
+	pki := getPKI(t)
+	defer cleanup(pki.GeneratedCertsDirectory, t)
+
+	p := getPlan()
+	ca, err := pki.GenerateClusterCA(p)
+	if err != nil {
+		t.Fatalf("failed to generate cluster CA")
+	}
+	etcdNode := p.Etcd.Nodes[0]
+	masterNode := p.Master.Nodes[0]
+	workerNode := p.Worker.Nodes[0]
+	ingressNode := p.Ingress.Nodes[0]
+	storageNode := p.Storage.Nodes[0]
+
+	// Generate the cluster certificates
+	err = pki.GenerateClusterCertificates(p, ca)
+	if err != nil {
+		t.Fatalf("failed to generate cluster certificates")
+	}
+
+	t.Run("etcd node: etcd server certificate", func(t *testing.T) {
+		certFilename := fmt.Sprintf("%s-etcd.pem", etcdNode.Host)
+		cert := mustReadCertFile(filepath.Join(pki.GeneratedCertsDirectory, certFilename), t)
+
+		if cert.Subject.CommonName != etcdNode.Host {
+			t.Errorf("expected common name %q but got %q", etcdNode.Host, cert.Subject.CommonName)
+		}
+
+		var found bool
+		for _, n := range cert.DNSNames {
+			if n == etcdNode.Host {
 				found = true
+				break
 			}
 		}
 		if !found {
-			t.Errorf("found an unexpected file %q", f.Name())
+			t.Errorf("did not find node's hostname %q in certificate DNS names %v", etcdNode.Host, cert.DNSNames)
 		}
-	}
-}
 
-func TestGenerateClusterCertificatesMultipleNodes(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("error generating cluster certs: %v", err)
-	}
-
-	// Validate all certs were created
-	expectedFiles := []string{
-		"ca.pem", "ca-key.pem",
-		"master.pem", "master-key.pem",
-		"etcd.pem", "etcd-key.pem",
-		"worker.pem", "worker-key.pem",
-		"ingress.pem", "ingress-key.pem",
-		"storage.pem", "storage-key.pem",
-		"admin.pem", "admin-key.pem",
-		"service-account.pem", "service-account-key.pem",
-	}
-	files, err := ioutil.ReadDir(pki.GeneratedCertsDirectory)
-	if err != nil {
-		t.Fatalf("error reading generated certs directory: %v", err)
-	}
-	if len(expectedFiles) != len(files) {
-		t.Errorf("expected %d files, but found %d", len(expectedFiles), len(files))
-	}
-	for _, expected := range expectedFiles {
-		found := false
-		for _, file := range files {
-			if file.Name() == expected {
+		found = false
+		internalFound := false
+		nodeIP := net.ParseIP(etcdNode.IP)
+		internalIP := net.ParseIP(etcdNode.IP)
+		for _, ip := range cert.IPAddresses {
+			if ip.Equal(nodeIP) {
 				found = true
+			}
+			if ip.Equal(internalIP) {
+				internalFound = true
 			}
 		}
 		if !found {
-			t.Errorf("did not find expected file %q in list of generated certs", expected)
+			t.Errorf("did not find node's IP address %q in cert's IP addresses %v", etcdNode.IP, cert.IPAddresses)
 		}
+		if !internalFound {
+			t.Errorf("did not find node's internal IP address %q in cert's IP address %v", etcdNode.InternalIP, cert.IPAddresses)
+		}
+	})
+
+	// Verify the API server certificate
+	t.Run("master node: api server certificate", func(t *testing.T) {
+		certFilename := fmt.Sprintf("%s-apiserver.pem", masterNode.Host)
+		cert := mustReadCertFile(filepath.Join(pki.GeneratedCertsDirectory, certFilename), t)
+
+		// The common name should match the hostname
+		if cert.Subject.CommonName != masterNode.Host {
+			t.Errorf("expected common name: %q, but got %q", masterNode.Host, cert.Subject.CommonName)
+		}
+
+		// DNS names should contain node's hostname and load balanced names
+		for _, expected := range []string{masterNode.Host, p.Master.LoadBalancedFQDN, p.Master.LoadBalancedShortName} {
+			var found bool
+			for _, n := range cert.DNSNames {
+				if n == expected {
+					found = true
+					break
+				}
+			}
+			if !found {
+				t.Errorf("did not find name %q in the certificates DNS names: %v", masterNode.Host, cert.DNSNames)
+			}
+		}
+
+		// Node's ip  and private ip should be in the cert
+		found := false
+		internalFound := false
+		nodeIP := net.ParseIP(masterNode.IP)
+		internalIP := net.ParseIP(masterNode.InternalIP)
+		for _, ip := range cert.IPAddresses {
+			if ip.Equal(nodeIP) {
+				found = true
+			}
+			if ip.Equal(internalIP) {
+				internalFound = true
+			}
+		}
+		if !found {
+			t.Errorf("did not find node's IP %q in the certificate's IPs: %v", masterNode.IP, cert.IPAddresses)
+		}
+		if !internalFound {
+			t.Errorf("did not find node's internal IP %q in the certificate's IPs: %v", masterNode.InternalIP, cert.IPAddresses)
+		}
+	})
+
+	// Validate API server client certificates
+	tests := []struct {
+		name                  string
+		certFilename          string
+		expectedCommonName    string
+		expectedOrganizations []string
+	}{
+		{
+			name:               "kube scheduler certificate",
+			certFilename:       "kube-scheduler.pem",
+			expectedCommonName: "system:kube-scheduler",
+		},
+		{
+			name:               "kube controller mgr certificate",
+			certFilename:       "kube-controller-manager.pem",
+			expectedCommonName: "system:kube-controller-manager",
+		},
+		{
+			name:               "kube-proxy certificate",
+			certFilename:       "kube-proxy.pem",
+			expectedCommonName: "system:kube-proxy",
+		},
+		{
+			name:                  "master node/kubelet certificate",
+			certFilename:          fmt.Sprintf("%s-kubelet.pem", masterNode.Host),
+			expectedCommonName:    fmt.Sprintf("system:node:%s", masterNode.Host),
+			expectedOrganizations: []string{"system:nodes"},
+		},
+		{
+			name:                  "worker node/kubelet certificate",
+			certFilename:          fmt.Sprintf("%s-kubelet.pem", workerNode.Host),
+			expectedCommonName:    fmt.Sprintf("system:node:%s", workerNode.Host),
+			expectedOrganizations: []string{"system:nodes"},
+		},
+		{
+			name:                  "ingress node/kubelet certificate",
+			certFilename:          fmt.Sprintf("%s-kubelet.pem", ingressNode.Host),
+			expectedCommonName:    fmt.Sprintf("system:node:%s", ingressNode.Host),
+			expectedOrganizations: []string{"system:nodes"},
+		},
+		{
+			name:                  "storage node/kubelet certificate",
+			certFilename:          fmt.Sprintf("%s-kubelet.pem", storageNode.Host),
+			expectedCommonName:    fmt.Sprintf("system:node:%s", storageNode.Host),
+			expectedOrganizations: []string{"system:nodes"},
+		},
+		{
+			name:                  "admin user certificate",
+			certFilename:          "admin.pem",
+			expectedCommonName:    "admin",
+			expectedOrganizations: []string{"system:masters"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, validateClientCertificateAndKey(pki.GeneratedCertsDirectory,
+			test.certFilename, test.expectedCommonName, test.expectedOrganizations...))
 	}
 }
 
-func TestGeneratedMasterCertContainsLoadBalancedNames(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-	p.Etcd = NodeGroup{}
-	p.Worker = NodeGroup{}
-
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("error generating cluster certs: %v", err)
-	}
-
-	// Verify master node has load balanced name and FQDN
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "master.pem")
-	cert := mustReadCertFile(certFile, t)
-
-	found := false
-	for _, name := range cert.DNSNames {
-		if name == p.Master.LoadBalancedFQDN {
-			found = true
-			break
+func validateClientCertificateAndKey(certsDir, filename, expectedCommonName string, expectedOrganizations ...string) func(t *testing.T) {
+	return func(t *testing.T) {
+		cert := mustReadCertFile(filepath.Join(certsDir, filename), t)
+		if expectedCommonName != cert.Subject.CommonName {
+			t.Errorf("Expected common name %q but got %q", expectedCommonName, cert.Subject.CommonName)
 		}
-	}
-	if !found {
-		t.Errorf("load balanced FQDN was not found in master certificate")
-	}
 
-	found = false
-	for _, name := range cert.DNSNames {
-		if name == p.Master.LoadBalancedShortName {
-			found = true
-			break
+		if !reflect.DeepEqual(cert.Subject.Organization, expectedOrganizations) {
+			t.Errorf("Expected organizations: %v, but got %v", expectedOrganizations, cert.Subject.Organization)
 		}
-	}
-	if !found {
-		t.Errorf("load balanced name was not found in master certificate")
-	}
-}
-
-func TestLoadBalancedNamesNotInWorkerCert(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-	p.Etcd = NodeGroup{}
-
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("error generating cluster certs: %v", err)
-	}
-
-	// Verify master node has load balanced name and FQDN
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "worker.pem")
-	cert := mustReadCertFile(certFile, t)
-
-	found := false
-	for _, name := range cert.DNSNames {
-		if name == p.Master.LoadBalancedFQDN {
-			found = true
-			break
-		}
-	}
-	if found {
-		t.Errorf("load balanced FQDN was found in worker certificate")
-	}
-
-	found = false
-	for _, name := range cert.DNSNames {
-		if name == p.Master.LoadBalancedShortName {
-			found = true
-			break
-		}
-	}
-	if found {
-		t.Errorf("load balanced name was found in worker certificate")
 	}
 }
 
@@ -472,12 +503,12 @@ func TestLoadBalancedNamesNotInEtcdCert(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	if err = pki.GenerateNodeCertificate(p, p.Etcd.Nodes[0], ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
 	// Verify master node has load balanced name and FQDN
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "etcd.pem")
+	certFile := filepath.Join(pki.GeneratedCertsDirectory, "etcd01-etcd.pem")
 	cert := mustReadCertFile(certFile, t)
 
 	found := false
@@ -503,41 +534,7 @@ func TestLoadBalancedNamesNotInEtcdCert(t *testing.T) {
 	}
 }
 
-func TestGenerateClusterCertificatesValidateAdminCertificate(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "admin.pem")
-	userCert := mustReadCertFile(certFile, t)
-
-	// Validate CommonName
-	if userCert.Subject.CommonName != "admin" {
-		t.Errorf("common name mismatch: got %q, expected %q", userCert.Subject.CommonName, "admin")
-	}
-
-	// Validate organizations
-	AdminOrgMissing := true
-	for _, org := range userCert.Subject.Organization {
-		if org == adminGroup {
-			AdminOrgMissing = false
-		}
-	}
-
-	if AdminOrgMissing {
-		t.Errorf("the system:masters organization is not part of the admin's certificate")
-	}
-}
-
-func TestGenerateClusterCertificatesDockerCert(t *testing.T) {
+func TestInternalDockerRegistryCertGenerated(t *testing.T) {
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
@@ -552,7 +549,7 @@ func TestGenerateClusterCertificatesDockerCert(t *testing.T) {
 	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "docker.pem")
+	certFile := filepath.Join(pki.GeneratedCertsDirectory, "docker-registry.pem")
 	mustReadCertFile(certFile, t)
 }
 
@@ -566,12 +563,13 @@ func TestInvalidNodeCertificateShouldFailValidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	if err = pki.GenerateNodeCertificate(p, p.Master.Nodes[0], ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
+	// Change the IP so that the IPs don't match the valid ones
 	p.Master.Nodes[0] = Node{
-		Host:       "master",
+		Host:       "master01",
 		IP:         "11.12.13.14",
 		InternalIP: "22.33.44.55",
 	}
@@ -582,64 +580,7 @@ func TestInvalidNodeCertificateShouldFailValidation(t *testing.T) {
 	}
 }
 
-func TestInvalidUserCertificateShouldError(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	// Generate a bogus user keypair
-	err = pki.generateUserCert(p, ca, "someBadUser", []string{})
-	if err != nil {
-		t.Fatalf("error generating bogus certificate for testing")
-	}
-	// Rename the bad key pair to simluate a user providing a bad cert for the admin user
-	err = os.Rename(path.Join(pki.GeneratedCertsDirectory, "someBadUser.pem"), path.Join(pki.GeneratedCertsDirectory, "admin.pem"))
-	if err != nil {
-		t.Fatalf("error renaming test certificate")
-	}
-	err = os.Rename(path.Join(pki.GeneratedCertsDirectory, "someBadUser-key.pem"), path.Join(pki.GeneratedCertsDirectory, "admin-key.pem"))
-	if err != nil {
-		t.Fatalf("error renaming test certificate")
-	}
-
-	err = pki.GenerateClusterCertificates(p, ca)
-	if err == nil {
-		t.Fatalf("expected an error, got nil")
-	}
-}
-
-func TestBadServiceAccountCertificate(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	file := path.Join(pki.GeneratedCertsDirectory, "service-account.pem")
-	os.Remove(file)
-	os.Create(file)
-
-	err = pki.GenerateClusterCertificates(p, ca)
-	if err == nil {
-		t.Fatalf("expected an error, got nil")
-	}
-}
-
-func TestBadDockerCertificate(t *testing.T) {
+func TestAPIServerCertNoEmptyDNSNames(t *testing.T) {
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
@@ -650,40 +591,11 @@ func TestBadDockerCertificate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-
-	p.Master.Nodes[0] = Node{
-		Host:       "master",
-		IP:         "11.12.13.14",
-		InternalIP: "22.33.44.55",
-	}
-	err = pki.generateDockerRegistryCert(p, ca)
-	if err == nil {
-		t.Fatalf("expected an error, got nil")
-	}
-}
-
-func TestGenerateNodeCertNoEmptyDNSNames(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-	p.DockerRegistry.SetupInternal = true
-
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	node := Node{
-		Host: "master",
-		IP:   "11.12.13.14",
-	}
+	node := p.Master.Nodes[0]
 	if err := pki.GenerateNodeCertificate(p, node, ca); err != nil {
 		t.Fatalf("failed to generate certificate for node: %v", err)
 	}
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "master.pem")
+	certFile := filepath.Join(pki.GeneratedCertsDirectory, fmt.Sprintf("%s-apiserver.pem", node.Host))
 	cert := mustReadCertFile(certFile, t)
 	for _, name := range cert.DNSNames {
 		if name == "" {
@@ -692,26 +604,20 @@ func TestGenerateNodeCertNoEmptyDNSNames(t *testing.T) {
 	}
 }
 
-func TestGeneratedNodeCertContainsInternalIP(t *testing.T) {
+func TestAPIServerCertContainsInternalIP(t *testing.T) {
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
 	p := getPlan()
-	p.DockerRegistry.SetupInternal = true
-
 	ca, err := pki.GenerateClusterCA(p)
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	node := Node{
-		Host:       "master",
-		IP:         "11.12.13.14",
-		InternalIP: "22.33.44.55",
-	}
+	node := p.Master.Nodes[0]
 	if err := pki.GenerateNodeCertificate(p, node, ca); err != nil {
 		t.Fatalf("failed to generate certificate for node: %v", err)
 	}
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "master.pem")
+	certFile := filepath.Join(pki.GeneratedCertsDirectory, fmt.Sprintf("%s-apiserver.pem", node.Host))
 	cert := mustReadCertFile(certFile, t)
 	found := false
 	internalIP := net.ParseIP(node.InternalIP)
@@ -723,5 +629,97 @@ func TestGeneratedNodeCertContainsInternalIP(t *testing.T) {
 	}
 	if !found {
 		t.Error("Node certificate does not have the internal IP as a DNS name")
+	}
+}
+
+func TestValidateClusterCertificatesNoExistingCerts(t *testing.T) {
+	pki := getPKI(t)
+	defer cleanup(pki.GeneratedCertsDirectory, t)
+
+	warn, err := pki.ValidateClusterCertificates(getPlan())
+	if len(err) != 0 {
+		t.Errorf("expected no errors when validating directory with no certificates, but got: %v", err)
+	}
+	if len(warn) != 0 {
+		t.Errorf("expected no warnings when validating directory with no certificates, but got: %v", warn)
+	}
+}
+
+func TestValidateClusterCertificatesWithValidExistingCerts(t *testing.T) {
+	pki := getPKI(t)
+	defer cleanup(pki.GeneratedCertsDirectory, t)
+
+	p := getPlan()
+
+	ca, err := pki.GenerateClusterCA(p)
+	if err != nil {
+		t.Fatalf("error generating CA for test: %v", err)
+	}
+	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+		t.Fatalf("failed to generate certs: %v", err)
+	}
+
+	warn, errs := pki.ValidateClusterCertificates(p)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors when validating certs that are valid, but got: %v", err)
+	}
+	if len(warn) != 0 {
+		t.Errorf("expected no warnings when validating certs that are valid, but got: %v", warn)
+	}
+}
+
+func TestValidateClusterCertificatesInvalidCerts(t *testing.T) {
+	pki := getPKI(t)
+	defer cleanup(pki.GeneratedCertsDirectory, t)
+
+	p := getPlan()
+	p.DockerRegistry.SetupInternal = true
+
+	ca, err := pki.GenerateClusterCA(p)
+	if err != nil {
+		t.Fatalf("error generating CA for test: %v", err)
+	}
+	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+		t.Fatalf("failed to generate certs: %v", err)
+	}
+
+	tests := []struct {
+		description      string
+		plan             func(Plan) Plan
+		expectedWarnings int
+	}{
+		{
+			description: "bad etcd certificate",
+			plan: func(p Plan) Plan {
+				etcd := p.Etcd.Nodes[0]
+				etcd.IP = "20.0.0.1"
+				p.Etcd.Nodes = []Node{etcd}
+				return p
+			},
+			expectedWarnings: 1,
+		},
+		{
+			description: "bad master certificates",
+			plan: func(p Plan) Plan {
+				master := p.Master.Nodes[0]
+				master.IP = "20.0.0.1"
+				p.Master.Nodes = []Node{master}
+				return p
+			},
+			expectedWarnings: 2, // api-server and internal docker registry cert
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			plan := test.plan(*p)
+			warn, errs := pki.ValidateClusterCertificates(&plan)
+			if len(errs) != 0 {
+				t.Fatalf("unexpected error ocurred validating certs: %v", err)
+			}
+			if len(warn) != test.expectedWarnings {
+				t.Errorf("expected %d warnings, but got %d. warnings were: %v", test.expectedWarnings, len(warn), warn)
+			}
+		})
 	}
 }
