@@ -26,7 +26,7 @@ type Subject struct {
 }
 
 // NewCACert creates a new Certificate Authority and returns it's private key and public certificate.
-func NewCACert(csrFile string, commonName string, subject Subject) (key, cert []byte, err error) {
+func NewCACert(csrFile string, commonName string) (key, cert []byte, err error) {
 	// Open CSR file
 	f, err := os.Open(csrFile)
 	if os.IsNotExist(err) {
@@ -43,15 +43,6 @@ func NewCACert(csrFile string, commonName string, subject Subject) (key, cert []
 	if err != nil {
 		return nil, nil, fmt.Errorf("error decoding CSR: %v", err)
 	}
-	// Set the subject information
-	name := csr.Name{
-		C:  subject.Country,
-		ST: subject.State,
-		L:  subject.Locality,
-		O:  subject.Organization,
-		OU: subject.OrganizationalUnit,
-	}
-	caCSR.Names = []csr.Name{name}
 	caCSR.CN = commonName
 	// Generate CA Cert according to CSR
 	cert, _, key, err = initca.New(caCSR)

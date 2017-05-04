@@ -9,11 +9,7 @@ import (
 )
 
 func TestNewCACert(t *testing.T) {
-	subject := Subject{
-		Organization:       "someOrg",
-		OrganizationalUnit: "someOrgUnit",
-	}
-	_, cert, err := NewCACert("test/ca-csr.json", "someCommonName", subject)
+	_, cert, err := NewCACert("test/ca-csr.json", "someCommonName")
 	if err != nil {
 		t.Fatalf("error creating CA cert: %v", err)
 	}
@@ -30,14 +26,6 @@ func TestNewCACert(t *testing.T) {
 	expectedCN := "someCommonName"
 	if parsedCert.Subject.CommonName != expectedCN {
 		t.Errorf("CN mismatch: expected %q, found %q", expectedCN, parsedCert.Subject.CommonName)
-	}
-
-	if parsedCert.Subject.Organization[0] != subject.Organization {
-		t.Errorf("Organization mismatch: expected %q, found %q", subject.Organization, parsedCert.Subject.Organization[0])
-	}
-
-	if parsedCert.Subject.OrganizationalUnit[0] != subject.OrganizationalUnit {
-		t.Errorf("OrganizationalUnit mismatch: expected %q, found %q", subject.OrganizationalUnit, parsedCert.Subject.OrganizationalUnit[0])
 	}
 
 	if !reflect.DeepEqual(parsedCert.Issuer, parsedCert.Subject) {

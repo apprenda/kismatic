@@ -16,15 +16,7 @@ import (
 )
 
 func TestGenerateNewCertificate(t *testing.T) {
-	// Create CA Cert
-	subject := Subject{
-		Country:            "someCountry",
-		State:              "someState",
-		Locality:           "someLocality",
-		Organization:       "someOrganization",
-		OrganizationalUnit: "someOrgUnit",
-	}
-	key, caCert, err := NewCACert("test/ca-csr.json", "someCN", subject)
+	key, caCert, err := NewCACert("test/ca-csr.json", "someCN")
 	if err != nil {
 		t.Fatalf("error creating CA: %v", err)
 	}
@@ -274,15 +266,7 @@ func TestCertValid(t *testing.T) {
 	}
 	defer cleanup(tempDir, t)
 
-	// Create CA Cert
-	subject := Subject{
-		Country:            "someCountry",
-		State:              "someState",
-		Locality:           "someLocality",
-		Organization:       "someOrganization",
-		OrganizationalUnit: "someOrgUnit",
-	}
-	key, caCert, err := NewCACert("test/ca-csr.json", "someCN", subject)
+	key, caCert, err := NewCACert("test/ca-csr.json", "someCN")
 	if err != nil {
 		t.Fatalf("error creating CA: %v", err)
 	}
