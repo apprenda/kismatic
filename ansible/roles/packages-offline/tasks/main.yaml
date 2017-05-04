@@ -15,7 +15,7 @@
   # DEB
   - name: install kismatic offline deb package
     apt:
-      name: kismatic-offline={{ kismatic_apt_version }}
+      name: kismatic-offline={{ kismatic_deb_version }}
       state: present
       allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kismatic-xenial
