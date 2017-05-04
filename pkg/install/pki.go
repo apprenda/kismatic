@@ -11,11 +11,6 @@ import (
 )
 
 const (
-	certOrganization             = "Apprenda"
-	certOrgUnit                  = "Kismatic"
-	certCountry                  = "US"
-	certState                    = "NY"
-	certLocality                 = "Troy"
 	adminUser                    = "admin"
 	adminGroup                   = "system:masters"
 	dockerRegistryCertFilename   = "docker"
@@ -81,16 +76,9 @@ func (lp *LocalPKI) GenerateClusterCA(p *Plan) (*tls.CA, error) {
 		return lp.GetClusterCA()
 	}
 
+	// CA keypair doesn't exist, generate one
 	util.PrettyPrintOk(lp.Log, "Generating cluster Certificate Authority")
-	// It doesn't exist, generate one
-	caSubject := tls.Subject{
-		Organization:       certOrganization,
-		OrganizationalUnit: certOrgUnit,
-		Country:            certCountry,
-		State:              certState,
-		Locality:           certLocality,
-	}
-	key, cert, err := tls.NewCACert(lp.CACsr, p.Cluster.Name, caSubject)
+	key, cert, err := tls.NewCACert(lp.CACsr, p.Cluster.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create CA Cert: %v", err)
 	}
@@ -102,22 +90,13 @@ func (lp *LocalPKI) GenerateClusterCA(p *Plan) (*tls.CA, error) {
 	return ca, nil
 }
 
-// GenerateClusterCertificates creates a Certificates for all nodes on the cluster
+// GenerateClusterCertificates creates all certificates required for the cluster
+// described in the plan file.
 func (lp *LocalPKI) GenerateClusterCertificates(p *Plan, ca *tls.CA) error {
 	if lp.Log == nil {
 		lp.Log = ioutil.Discard
 	}
-	nodes := []Node{}
-	nodes = append(nodes, p.Etcd.Nodes...)
-	nodes = append(nodes, p.Master.Nodes...)
-	nodes = append(nodes, p.Worker.Nodes...)
-	if p.Ingress.Nodes != nil {
-		nodes = append(nodes, p.Ingress.Nodes...)
-	}
-	if p.Storage.Nodes != nil {
-		nodes = append(nodes, p.Storage.Nodes...)
-	}
-
+	nodes := p.getAllNodes()
 	seenNodes := map[string]bool{}
 	for _, n := range nodes {
 		// Only generate certs once for each node, nodes can be in more than one group
@@ -151,14 +130,8 @@ func (lp *LocalPKI) ValidateClusterCertificates(p *Plan) (warn []error, err []er
 	if lp.Log == nil {
 		lp.Log = ioutil.Discard
 	}
-	nodes := []Node{}
-	nodes = append(nodes, p.Etcd.Nodes...)
-	nodes = append(nodes, p.Master.Nodes...)
-	nodes = append(nodes, p.Worker.Nodes...)
-	if p.Ingress.Nodes != nil {
-		nodes = append(nodes, p.Ingress.Nodes...)
-	}
-
+	// Validate node certificates
+	nodes := p.getAllNodes()
 	seenNodes := map[string]bool{}
 	for _, n := range nodes {
 		// Only generate certs once for each node, nodes can be in more than one group
@@ -172,7 +145,7 @@ func (lp *LocalPKI) ValidateClusterCertificates(p *Plan) (warn []error, err []er
 			err = append(err, nodeErr)
 		}
 	}
-	// Create certs for docker registry if it's missing
+	// Validate docker registry cert
 	if p.DockerRegistry.SetupInternal {
 		_, dockerWarn, dockerErr := lp.validateDockerRegistryCert(p)
 		warn = append(warn, dockerWarn...)
@@ -180,7 +153,7 @@ func (lp *LocalPKI) ValidateClusterCertificates(p *Plan) (warn []error, err []er
 			err = append(err, dockerErr)
 		}
 	}
-	// Create key for service account signing
+	// Validate service account certificate
 	_, saWarn, saErr := lp.validateServiceAccountCert()
 	warn = append(warn, saWarn...)
 	if err != nil {
@@ -386,17 +359,17 @@ func generateCert(ca *tls.CA, commonName string, hostList []string, organization
 			A: "rsa",
 			S: 2048,
 		},
-		Hosts: hostList,
-		Names: []csr.Name{
-			{
-				O:  certOrganization,
-				OU: certOrgUnit,
-				C:  certCountry,
-				ST: certState,
-				L:  certLocality,
-			},
-		},
 	}
+
+	if len(hostList) > 0 {
+		req.Hosts = hostList
+	}
+
+	for _, org := range organizations {
+		name := csr.Name{O: org}
+		req.Names = append(req.Names, name)
+	}
+
 	key, cert, err = tls.NewCert(ca, req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error generating certs for %q: %v", commonName, err)
