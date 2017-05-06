@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
+	"path"
+	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -113,33 +115,20 @@ func (c *applyCmd) run() error {
 	// Install Helm
 	if plan.Features.PackageManager.Enabled {
 		util.PrintHeader(c.out, "Installing Helm on the Cluster", '=')
-		helm, err := install.DefaultHelmClient()
+		home, err := homedir.Dir()
 		if err != nil {
-			return fmt.Errorf("error getting a valid Helm client: %v", err)
+			return fmt.Errorf("Could not determine helm directory: %v", err)
 		}
-		helm.Kubeconfig = filepath.Join(c.generatedAssetsDir, "kubeconfig")
-		// On a disconnected install set tiller image with the correct tag
-		// Prepend the custom registry address and port
-		if plan.ConfgiureDockerWithPrivateRegistry() && plan.Cluster.DisconnectedInstallation {
-			helm.TillerImage = fmt.Sprintf("%s:%d/%s", plan.DockerRegistryAddress(), plan.DockerRegistry.Port, helm.TillerImage)
-		}
-
+		helmDir := path.Join(home, ".helm")
+		backupDir := fmt.Sprintf("%s.backup-%s", helmDir, time.Now().Format("2006-01-02-15-04-05"))
 		// Backup helm directory if exists
-		if backedup, err := helm.BackupClient(); err != nil {
+		if backedup, err := util.BackupDirectory(helmDir, backupDir); err != nil {
 			return fmt.Errorf("error preparing Helm client: %v", err)
 		} else if backedup {
-			util.PrettyPrintOk(c.out, "Backed up %q directory", helm.ClientDirectory)
+			util.PrettyPrintOk(c.out, "Backed up %q directory", helmDir)
 		}
-		// Run 'helm init'
-		if err := helm.Init(); err != nil {
-			util.PrettyPrintErr(c.out, "Installed Helm on the cluster")
-			return fmt.Errorf("error installing Helm on the cluster: %v", err)
-		}
-		util.PrettyPrintOk(c.out, "Installed Tiller (the helm server side component)")
-
-		// HelmRBAC will create a new role RBAC manually
-		// TODO remove when https://github.com/kubernetes/helm/issues/2224 gets fully fixed
-		if err := c.executor.RunPlay("_helm-rbac.yaml", plan); err != nil {
+		// Create a new serviceaccount and run helm init
+		if err := c.executor.RunPlay("_helm.yaml", plan); err != nil {
 			return fmt.Errorf("error configuring Helm RBAC: %v", err)
 		}
 	}

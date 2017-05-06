@@ -44,7 +44,7 @@ bin/$(GOOS)/kismatic: vendor
 	    -w /go/src/$(PKG)                                                           \
 	    golang:$(GO_VERSION)                                                        \
 	    go build -o $@                                                              \
-	        -ldflags "-X main.version=$(VERSION) -X main.helmVersion=$(HELM_VERSION) -X 'main.buildDate=$(BUILD_DATE)'" \
+	        -ldflags "-X main.version=$(VERSION) -X 'main.buildDate=$(BUILD_DATE)'" \
 	        ./cmd/kismatic
 
 .PHONY: bin/inspector/$(GOOS)/amd64/kismatic-inspector
@@ -58,7 +58,7 @@ bin/inspector/$(GOOS)/amd64/kismatic-inspector: vendor
 	    -w /go/src/$(PKG)                                                            \
 	    golang:$(GO_VERSION)                                                         \
 	    go build -o $@                                                               \
-	        -ldflags "-X main.version=$(VERSION) -X main.helmVersion=$(HELM_VERSION) -X 'main.buildDate=$(BUILD_DATE)'"  \
+	        -ldflags "-X main.version=$(VERSION) -X 'main.buildDate=$(BUILD_DATE)'"  \
 	        ./cmd/kismatic-inspector
 
 clean:

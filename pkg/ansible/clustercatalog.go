@@ -68,6 +68,8 @@ type ClusterCatalog struct {
 	DockerDirectLVMEnabled                 bool   `yaml:"docker_direct_lvm_enabled"`
 	DockerDirectLVMBlockDevicePath         string `yaml:"docker_direct_lvm_block_device_path"`
 	DockerDirectLVMDeferredDeletionEnabled bool   `yaml:"docker_direct_lvm_deferred_deletion_enabled"`
+
+	LocalKubeconfigDirectory string `yaml:"local_kubeconfig_directory"`
 }
 
 type NFSVolume struct {

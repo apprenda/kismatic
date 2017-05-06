@@ -673,6 +673,13 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
 		TargetVersion:             KismaticVersion.String(),
 	}
+	cc.LocalKubeconfigDirectory = filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig")
+	// absolute path required for ansible
+	generatedDir, err := filepath.Abs(filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path to %s: %v", filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig"), err)
+	}
+	cc.LocalKubeconfigDirectory = generatedDir
 
 	// Setup FQDN or default to first master
 	if p.Master.LoadBalancedFQDN != "" {

@@ -31,9 +31,6 @@ func (n *ListableNode) HasRoles(roles ...string) bool {
 // KismaticVersion contains the version information of the currently running binary
 var KismaticVersion semver.Version
 
-// HelmVersion contains the version information for Helm and tiller
-var HelmVersion semver.Version
-
 // SetVersion parses the given version, and sets it as the global version of the binary
 func SetVersion(v string) {
 	ver, err := parseVersion(v)
@@ -41,15 +38,6 @@ func SetVersion(v string) {
 		panic("failed to parse version " + v)
 	}
 	KismaticVersion = ver
-}
-
-// SetHelmVersion parses the given version, and sets it as the global version of the binary
-func SetHelmVersion(v string) {
-	ver, err := parseVersion(v)
-	if err != nil {
-		panic("failed to parse Helm version " + v)
-	}
-	HelmVersion = ver
 }
 
 // IsOlderVersion returns true if the provided version is older than the current Kismatic version
