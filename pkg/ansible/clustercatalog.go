@@ -22,7 +22,7 @@ type ClusterCatalog struct {
 	KuberangPath              string `yaml:"kuberang_path"`
 	LoadBalancedFQDN          string `yaml:"kubernetes_load_balanced_fqdn"`
 
-	ConfgiureDockerWithPrivateRegistry bool   `yaml:"confgiure_docker_with_private_registry"`
+	ConfigureDockerWithPrivateRegistry bool   `yaml:"configure_docker_with_private_registry"`
 	DeployInternalDockerRegistry       bool   `yaml:"deploy_internal_docker_registry"`
 	DockerCAPath                       string `yaml:"docker_certificates_ca_path"`
 	DockerRegistryAddress              string `yaml:"docker_registry_address"`

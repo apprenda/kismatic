@@ -688,8 +688,8 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
 	}
 
-	if p.ConfgiureDockerWithPrivateRegistry() {
-		cc.ConfgiureDockerWithPrivateRegistry = true
+	if p.ConfigureDockerWithPrivateRegistry() {
+		cc.ConfigureDockerWithPrivateRegistry = true
 		cc.DockerRegistryAddress = p.DockerRegistryAddress()
 		cc.DockerRegistryPort = p.DockerRegistryPort()
 		cc.DockerCAPath = filepath.Join(tlsDir, "ca.pem")

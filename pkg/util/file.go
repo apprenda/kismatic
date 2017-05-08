@@ -12,7 +12,7 @@ func BackupDirectory(sourceDir string, backupDir string) (bool, error) {
 	// Directory exists
 	if err == nil {
 		if err = os.Rename(sourceDir, backupDir); err != nil {
-			return true, fmt.Errorf("Could not back up %q directory: %v", sourceDir, err)
+			return false, fmt.Errorf("Could not back up %q directory: %v", sourceDir, err)
 		}
 		return true, nil
 	} else if !os.IsNotExist(err) { // Directory does not exist but got some other error

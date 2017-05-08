@@ -11,4 +11,4 @@
       - role: docker-registry-container
         when: deploy_internal_docker_registry|bool == true and (upgrading is not defined or upgrading|bool == false) # setup a registry running on master[0]
       - role: docker-registry-images
-        when: confgiure_docker_with_private_registry|bool == true and disconnected_installation|bool == true # load docker images into the registry
+        when: configure_docker_with_private_registry|bool == true and disconnected_installation|bool == true # load docker images into the registry

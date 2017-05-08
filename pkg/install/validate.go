@@ -130,7 +130,7 @@ func (p *Plan) validate() (bool, []error) {
 	v.validate(&p.DockerRegistry)
 	v.validateWithErrPrefix("Docker", p.Docker)
 	// on a disconnected_installation a registry must be provided
-	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfgiureDockerWithPrivateRegistry()})
+	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()})
 	v.validate(&p.Features)
 	v.validateWithErrPrefix("Etcd nodes", &p.Etcd)
 	v.validateWithErrPrefix("Master nodes", &p.Master)

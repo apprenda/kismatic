@@ -14,7 +14,7 @@
   # docker
   - include: _docker.yaml
   - include: _docker-registry.yaml
-    when: confgiure_docker_with_private_registry|bool == true  # configure private registry when either internal of an external is provided
+    when: configure_docker_with_private_registry|bool == true  # configure private registry when either internal of an external is provided
   # kubernetes
   - include: _kubelet.yaml
   - include: _kube-apiserver.yaml

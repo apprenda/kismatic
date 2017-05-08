@@ -91,7 +91,10 @@ func (c *applyCmd) run() error {
 	if err != nil {
 		return fmt.Errorf("error validating plan: %v", err)
 	}
-	plan, _ := c.planner.Read()
+	plan, err := c.planner.Read()
+	if err != nil {
+		return fmt.Errorf("error reading plan file: %v", err)
+	}
 
 	// Generate certificates
 	if err := c.executor.GenerateCertificates(plan); err != nil {

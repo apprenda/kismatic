@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -71,7 +72,10 @@ func (c stepCmd) run() error {
 	if err := doValidate(c.out, c.planner, valOpts); err != nil {
 		return err
 	}
-	plan, _ := c.planner.Read()
+	plan, err := c.planner.Read()
+	if err != nil {
+		return fmt.Errorf("error reading plan file: %v", err)
+	}
 	util.PrintHeader(c.out, "Running Task", '=')
 	if err := c.executor.RunPlay(c.task, plan); err != nil {
 		return err
