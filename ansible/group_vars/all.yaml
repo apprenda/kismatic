@@ -126,17 +126,27 @@ local_kubernetes_master_ip: https://127.0.0.1:{{ kubernetes_master_secure_port }
 kubernetes_master_ip: https://{{ kubernetes_load_balanced_fqdn }}:{{ kubernetes_master_secure_port }}
 kubernetes_schedulable: "{% if 'worker' in group_names %}true{% else %}false{% endif %}"
 kube_dns_replicas: "{{ [2, groups['worker'] | length] | min }}"
+
 # kubernetes certificate config
-kubernetes_certificates_ca_file_name: ca.pem
-kubernetes_certificates_cert_file_name: kubenode.pem
-kubernetes_certificates_key_file_name: kubenode-key.pem
-kubernetes_certificates_service_account_cert_file_name: service-account.pem
-kubernetes_certificates_service_account_key_file_name: service-account-key.pem
-kubernetes_certificates_ca_path: "{{ kubernetes_install_dir }}/{{ kubernetes_certificates_ca_file_name }}"
-kubernetes_certificates_cert_path: "{{ kubernetes_install_dir }}/{{ kubernetes_certificates_cert_file_name }}"
-kubernetes_certificates_key_path: "{{ kubernetes_install_dir }}/{{ kubernetes_certificates_key_file_name }}"
-kubernetes_certificates_service_account_cert_path: "{{ kubernetes_install_dir }}/{{ kubernetes_certificates_service_account_cert_file_name }}"
-kubernetes_certificates_service_account_key_path: "{{ kubernetes_install_dir }}/{{ kubernetes_certificates_service_account_key_file_name }}"
+# TODO: Do we want to change this?
+kubernetes_certificates_dir: "{{ kubernetes_install_dir }}" 
+kubernetes_certificates:
+  ca: "{{ kubernetes_certificates_dir }}/ca.pem"
+  api_server: "{{ kubernetes_certificates_dir }}/api-server.pem"
+  api_server_key: "{{ kubernetes_certificates_dir }}/api-server-key.pem"
+  etcd_client: "{{ kubernetes_certificates_dir }}/etcd-client.pem"
+  etcd_client_key: "{{ kubernetes_certificates_dir }}/etcd-client-key.pem"
+  controller_manager: "{{ kubernetes_certificates_dir }}/controller-manager.pem"
+  controller_manager_key: "{{ kubernetes_certificates_dir }}/controller-manager-key.pem"
+  scheduler: "{{ kubernetes_certificates_dir }}/scheduler.pem"
+  scheduler_key: "{{ kubernetes_certificates_dir }}/scheduler-key.pem"
+  kubelet: "{{ kubernetes_certificates_dir }}/kubelet.pem"
+  kubelet_key: "{{ kubernetes_certificates_dir }}/kubelet-key.pem"
+  kube_proxy: "{{ kubernetes_certificates_dir }}/kube-proxy.pem"
+  kube_proxy_key: "{{ kubernetes_certificates_dir }}/kube-proxy-key.pem"
+  service_account: "{{ kubernetes_certificates_dir }}/service-account.pem"
+  service_account_key: "{{ kubernetes_certificates_dir }}/service-account-key.pem"
+
 # etcd IPs
 etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_networking_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"

@@ -22,8 +22,8 @@ spec:
       - --cluster-name={{ kubernetes_cluster_name }}
       - --kubeconfig={{ kubernetes_kubeconfig_path }}
       - --leader-elect=true
-      - --root-ca-file={{ kubernetes_certificates_ca_path }}
-      - --service-account-private-key-file={{ kubernetes_certificates_service_account_key_path }}
+      - --root-ca-file={{ kubernetes_certificates.ca }}
+      - --service-account-private-key-file={{ kubernetes_certificates.service_account_key }}
       - --service-cluster-ip-range={{ kubernetes_services_cidr }}
       - --v=2
     livenessProbe:

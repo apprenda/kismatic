@@ -35,9 +35,9 @@ data:
 
   # If you're using TLS enabled etcd uncomment the following.
   # You must also populate the Secret below with these files.
-  etcd_ca: "{{ kubernetes_certificates_ca_path }}"
-  etcd_cert: "{{ kubernetes_certificates_cert_path }}"
-  etcd_key: "{{ kubernetes_certificates_key_path }}"
+  etcd_ca: "{{ kubernetes_certificates.ca }}"
+  etcd_cert: "{{ kubernetes_certificates.etcd_client }}"
+  etcd_key: "{{ kubernetes_certificates.etcd_client_key }}"
 
 ---
 
