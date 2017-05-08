@@ -19,7 +19,7 @@ spec:
       - kube-proxy
       - --cluster-cidr={{ kubernetes_pods_cidr }}
       - --hostname-override={{ inventory_hostname }}
-      - --kubeconfig={{ kubernetes_kubeconfig_path }}
+      - --kubeconfig={{ kubernetes_kubeconfig.kube_proxy }}
       - --proxy-mode=iptables
       - --v=2
     securityContext:
@@ -27,7 +27,7 @@ spec:
     volumeMounts:
       - mountPath: /etc/ssl/certs
         name: "ssl-certs"
-      - mountPath: "{{ kubernetes_kubeconfig_path }}"
+      - mountPath: "{{ kubernetes_kubeconfig.kube_proxy }}"
         name: "kubeconfig"
         readOnly: true
       - mountPath: /etc/kubernetes
@@ -47,7 +47,7 @@ spec:
         path: "/usr/share/ca-certificates"
     - name: "kubeconfig"
       hostPath:
-        path: "{{ kubernetes_kubeconfig_path }}"
+        path: "{{ kubernetes_kubeconfig.kube_proxy }}"
     - name: "etc-kube-ssl"
       hostPath:
         path: "/etc/kubernetes"

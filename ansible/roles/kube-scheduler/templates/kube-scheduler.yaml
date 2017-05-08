@@ -17,11 +17,11 @@ spec:
     imagePullPolicy: IfNotPresent
     command:
       - kube-scheduler
-      - --kubeconfig={{ kubernetes_kubeconfig_path }}
+      - --kubeconfig={{ kubernetes_kubeconfig.scheduler }}
       - --leader-elect=true
       - --v=2
     volumeMounts:
-      - mountPath: "{{ kubernetes_kubeconfig_path }}"
+      - mountPath: "{{ kubernetes_kubeconfig.scheduler }}"
         name: "kubeconfig"
         readOnly: true
       - mountPath: /etc/kubernetes
@@ -38,7 +38,7 @@ spec:
   volumes:
     - name: "kubeconfig"
       hostPath:
-        path: "{{ kubernetes_kubeconfig_path }}"
+        path: "{{ kubernetes_kubeconfig.scheduler }}"
     - hostPath:
         path: /etc/kubernetes
       name: ssl-certs-kubernetes

@@ -20,11 +20,12 @@ spec:
       - --allocate-node-cidrs=true
       - --cluster-cidr={{ kubernetes_pods_cidr }}
       - --cluster-name={{ kubernetes_cluster_name }}
-      - --kubeconfig={{ kubernetes_kubeconfig_path }}
+      - --kubeconfig={{ kubernetes_kubeconfig.controller_manager }}
       - --leader-elect=true
       - --root-ca-file={{ kubernetes_certificates.ca }}
       - --service-account-private-key-file={{ kubernetes_certificates.service_account_key }}
       - --service-cluster-ip-range={{ kubernetes_services_cidr }}
+      - --use-service-account-credentials=true
       - --v=2
     livenessProbe:
       httpGet:
@@ -35,7 +36,7 @@ spec:
       timeoutSeconds: 15
       failureThreshold: 8
     volumeMounts:
-    - mountPath: "{{ kubernetes_kubeconfig_path }}"
+    - mountPath: "{{ kubernetes_kubeconfig.controller_manager }}"
       name: "kubeconfig"
       readOnly: true
     - mountPath: /etc/kubernetes
@@ -47,7 +48,7 @@ spec:
   volumes:
   - name: "kubeconfig"
     hostPath:
-      path: "{{ kubernetes_kubeconfig_path }}"
+      path: "{{ kubernetes_kubeconfig.controller_manager }}"
   - hostPath:
       path: /etc/kubernetes
     name: ssl-certs-kubernetes

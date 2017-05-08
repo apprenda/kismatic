@@ -8,7 +8,6 @@ After=docker.service
 Environment=INTERNAL_IP={{ internal_ipv4 }}
 Environment=CLUSTER_DNS={{ kubernetes_dns_service_ip }}
 Environment=HOSTNAME={{ inventory_hostname }}
-Environment=KUBECONFIG={{ kubernetes_kubeconfig_path }}
 Environment=INFRA_IMG={{ pause_img }}
 Environment=REGISTER_SCHEDULABLE={{ kubernetes_schedulable }}
 Environment=NETWORK_PLUGIN_DIR={{ network_plugin_dir }}
@@ -24,7 +23,7 @@ ExecStart=/usr/bin/kubelet \
   --docker=unix:///var/run/docker.sock \
   --hostname-override=${HOSTNAME} \
   --require-kubeconfig=true \
-  --kubeconfig=${KUBECONFIG} \
+  --kubeconfig={{ kubernetes_kubeconfig.kubelet }} \
   --node-ip=${INTERNAL_IP} \
   --pod-infra-container-image=${INFRA_IMG} \
   --pod-manifest-path=${POD_MANIFEST_PATH} \
