@@ -54,6 +54,34 @@ type certificateSpec struct {
 	organizations         []string
 }
 
+func (s certificateSpec) equal(other certificateSpec) bool {
+	prelimEqual := s.description == other.description &&
+		s.filename == other.filename &&
+		s.commonName == other.commonName &&
+		len(s.subjectAlternateNames) == len(other.subjectAlternateNames) &&
+		len(s.organizations) == len(other.organizations)
+	if !prelimEqual {
+		return false
+	}
+	// Compare subject alt names. Sensitive to ordering.
+	for _, x := range s.subjectAlternateNames {
+		for _, y := range other.subjectAlternateNames {
+			if x != y {
+				return false
+			}
+		}
+	}
+	// Compare organizations. Sensitive to ordering.
+	for _, x := range s.organizations {
+		for _, y := range other.organizations {
+			if x != y {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // returns a list of specs for all the certs that are required for the node
 func certManifestForNode(plan Plan, node Node) ([]certificateSpec, error) {
 	m := []certificateSpec{}
@@ -153,7 +181,14 @@ func certManifestForCluster(plan Plan) ([]certificateSpec, error) {
 		if err != nil {
 			return nil, err
 		}
-		m = append(m, nodeManifest...)
+
+		// Some nodes share common certificates between them. E.g. the kube-proxy client cert.
+		// Before appending to the manifest, we ensure that this cert is not already in it.
+		for _, s := range nodeManifest {
+			if !certSpecInManifest(s, m) {
+				m = append(m, s)
+			}
+		}
 	}
 
 	// Certificate for docker registry
@@ -396,6 +431,15 @@ func contains(x string, xs []string) bool {
 func containsAny(x []string, xs []string) bool {
 	for _, s := range x {
 		if contains(s, xs) {
+			return true
+		}
+	}
+	return false
+}
+
+func certSpecInManifest(spec certificateSpec, manifest []certificateSpec) bool {
+	for _, s := range manifest {
+		if s.equal(spec) {
 			return true
 		}
 	}

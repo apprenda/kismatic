@@ -723,3 +723,209 @@ func TestValidateClusterCertificatesInvalidCerts(t *testing.T) {
 		})
 	}
 }
+
+func TestCertSpecEqual(t *testing.T) {
+	tests := []struct {
+		x     certificateSpec
+		y     certificateSpec
+		equal bool
+	}{
+		{
+			x:     certificateSpec{},
+			y:     certificateSpec{},
+			equal: true,
+		},
+		{
+			x: certificateSpec{
+				description: "foo",
+			},
+			y: certificateSpec{
+				description: "foo",
+			},
+			equal: true,
+		},
+		{
+			x: certificateSpec{
+				description: "foo",
+			},
+			y: certificateSpec{
+				description: "bar",
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				filename: "foo",
+			},
+			y: certificateSpec{
+				filename: "bar",
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				filename: "foo",
+			},
+			y: certificateSpec{
+				filename: "foo",
+			},
+			equal: true,
+		},
+		{
+			x: certificateSpec{
+				commonName: "foo",
+			},
+			y: certificateSpec{
+				commonName: "bar",
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				subjectAlternateNames: []string{"foo"},
+			},
+			y: certificateSpec{
+				subjectAlternateNames: []string{"foo"},
+			},
+			equal: true,
+		},
+		{
+			x: certificateSpec{
+				subjectAlternateNames: []string{"foo"},
+			},
+			y: certificateSpec{
+				subjectAlternateNames: []string{"bar"},
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				organizations: []string{"foo"},
+			},
+			y: certificateSpec{
+				organizations: []string{"foo"},
+			},
+			equal: true,
+		},
+		{
+			x: certificateSpec{
+				organizations: []string{"foo"},
+			},
+			y: certificateSpec{
+				organizations: []string{"bar"},
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			y: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			equal: true,
+		},
+		{
+			x: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			y: certificateSpec{
+				description:           "foo",
+				filename:              "bar",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			y: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "bar",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			y: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"bar"},
+				organizations:         []string{"foo"},
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			y: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"bar"},
+			},
+			equal: false,
+		},
+		{
+			x: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo"},
+				organizations:         []string{"foo"},
+			},
+			y: certificateSpec{
+				description:           "foo",
+				filename:              "foo",
+				commonName:            "foo",
+				subjectAlternateNames: []string{"foo", "bar"},
+				organizations:         []string{"foo"},
+			},
+			equal: false,
+		},
+	}
+
+	for _, test := range tests {
+		if test.x.equal(test.y) != test.equal {
+			t.Errorf("expected equal = %v, but got %v. x = %+v, y = %+v", test.equal, !test.equal, test.x, test.y)
+		}
+		if test.y.equal(test.x) != test.equal {
+			t.Errorf("expected equal = %v, but got %v. x = %+v, y = %+v", test.equal, !test.equal, test.x, test.y)
+		}
+	}
+}
