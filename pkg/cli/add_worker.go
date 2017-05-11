@@ -57,7 +57,6 @@ func doAddWorker(out io.Writer, planFile string, opts *addWorkerOpts, newWorker 
 		RestartServices:          opts.RestartServices,
 		OutputFormat:             opts.OutputFormat,
 		Verbose:                  opts.Verbose,
-		SkipCAGeneration:         true,
 	}
 	executor, err := install.NewExecutor(out, os.Stderr, execOpts)
 	if err != nil {

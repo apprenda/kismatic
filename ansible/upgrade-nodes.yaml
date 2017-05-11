@@ -8,6 +8,8 @@
   - include: _packages-repo.yaml
     when: allow_package_installation|bool == true
 
+  - include: _certs.yaml
+
   # docker
   - include: _docker.yaml play_name="Upgrade Docker" upgrading=true
 
@@ -16,6 +18,7 @@
   - include: _etcd-networking.yaml play_name="Upgrade Network Etcd Cluster" serial_count="1" upgrading=true
 
   # kubernetes
+  - include: _kube-apiserver-stop.yaml 
   - include: _kube-config.yaml upgrading=true
   - include: _kubelet.yaml play_name="Upgrade Kubernetes Kubelet" upgrading=true
   - include: _kube-apiserver.yaml play_name="Upgrade Kubernetes API Server" upgrading=true

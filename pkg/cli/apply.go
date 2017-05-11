@@ -97,7 +97,7 @@ func (c *applyCmd) run() error {
 	}
 
 	// Generate certificates
-	if err := c.executor.GenerateCertificates(plan); err != nil {
+	if err := c.executor.GenerateCertificates(plan, false); err != nil {
 		return fmt.Errorf("error installing: %v", err)
 	}
 

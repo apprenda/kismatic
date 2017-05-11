@@ -35,7 +35,7 @@ func (fe *fakeExecutor) AddWorker(p *install.Plan, newWorker install.Node) (*ins
 	return nil, nil
 }
 
-func (fe *fakeExecutor) GenerateCertificates(p *install.Plan) error {
+func (fe *fakeExecutor) GenerateCertificates(*install.Plan, bool) error {
 	return nil
 }
 
