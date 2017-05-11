@@ -301,7 +301,7 @@ func (f *fakePKI) GenerateClusterCA(p *Plan) (*tls.CA, error) {
 	f.generateCACalled = true
 	return nil, f.err
 }
-func (f *fakePKI) GenerateClusterCertificates(p *Plan, ca *tls.CA, users []string) error { return f.err }
+func (f *fakePKI) GenerateClusterCertificates(p *Plan, ca *tls.CA) error { return f.err }
 
 type fakeRunner struct {
 	eventChan         chan ansible.Event

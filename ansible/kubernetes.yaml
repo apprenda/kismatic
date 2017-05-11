@@ -14,7 +14,7 @@
   # docker
   - include: _docker.yaml
   - include: _docker-registry.yaml
-    when: use_private_docker_registry|bool == true  # configure private registry when either internal of an external is provided
+    when: configure_docker_with_private_registry|bool == true  # configure private registry when either internal of an external is provided
   # kubernetes
   - include: _kubelet.yaml
   - include: _kube-apiserver.yaml
@@ -27,8 +27,7 @@
   - include: _kube-proxy.yaml
   - include: _calico.yaml
   - include: _calico-validate.yaml
-  - include: _addon-network-policy.yaml
-    when: enable_calico_policy|bool == true
+  - include: _calico-network-policy.yaml
   - include: _kube-dns.yaml
   - include: _kube-ingress.yaml
     when: configure_ingress|bool == true

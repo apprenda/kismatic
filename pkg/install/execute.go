@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"time"
 
 	"strings"
@@ -30,6 +29,7 @@ type PreFlightExecutor interface {
 type Executor interface {
 	PreFlightExecutor
 	Install(p *Plan) error
+	GenerateCertificates(p *Plan) error
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunPlay(string, *Plan) error
@@ -242,12 +242,13 @@ func (ae *ansibleExecutor) execute(t task) error {
 	return nil
 }
 
+// GenerateCertificatesprivate generates keys and certificates for the cluster, if needed
+func (ae *ansibleExecutor) GenerateCertificates(p *Plan) error {
+	return ae.generateTLSAssets(p)
+}
+
 // Install the cluster according to the installation plan
 func (ae *ansibleExecutor) Install(p *Plan) error {
-	// Generate private keys and certificates for the cluster
-	if err := ae.generateTLSAssets(p); err != nil {
-		return err
-	}
 	// Build the ansible inventory
 	cc, err := ae.buildClusterCatalog(p)
 	if err != nil {
@@ -373,7 +374,6 @@ func (ae *ansibleExecutor) RunPlay(playName string, p *Plan) error {
 		explainer:      ae.defaultExplainer(),
 		plan:           *p,
 	}
-	util.PrintHeader(ae.stdout, "Running Task", '=')
 	return ae.execute(t)
 }
 
@@ -666,13 +666,19 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		PodCIDR:                   p.Cluster.Networking.PodCIDRBlock,
 		DNSServiceIP:              dnsIP,
 		EnableModifyHosts:         p.Cluster.Networking.UpdateHostsFiles,
-		EnableCalicoPolicy:        p.Cluster.Networking.PolicyEnabled,
 		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
 		PackageRepoURLs:           p.Cluster.PackageRepoURLs,
 		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
-		TargetVersion:             AboutKismatic.String(),
+		TargetVersion:             KismaticVersion.String(),
 	}
+	cc.LocalKubeconfigDirectory = filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig")
+	// absolute path required for ansible
+	generatedDir, err := filepath.Abs(filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to determine absolute path to %s: %v", filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig"), err)
+	}
+	cc.LocalKubeconfigDirectory = generatedDir
 
 	// Setup FQDN or default to first master
 	if p.Master.LoadBalancedFQDN != "" {
@@ -681,21 +687,16 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
 	}
 
-	if p.DockerRegistry.Address != "" {
-		cc.EnableInternalDockerRegistry = false
-		cc.EnablePrivateDockerRegistry = true
+	if p.ConfigureDockerWithPrivateRegistry() {
+		cc.ConfigureDockerWithPrivateRegistry = true
+		cc.DockerRegistryAddress = p.DockerRegistryAddress()
+		cc.DockerRegistryPort = p.DockerRegistryPort()
+		cc.DockerCAPath = filepath.Join(tlsDir, "ca.pem")
+	}
+	if p.DockerRegistry.Address != "" { // Use external registry
 		cc.DockerCAPath = p.DockerRegistry.CAPath
-		cc.DockerRegistryAddress = p.DockerRegistry.Address
-		cc.DockerRegistryPort = strconv.Itoa(p.DockerRegistry.Port)
-	} else if p.DockerRegistry.SetupInternal {
-		cc.EnableInternalDockerRegistry = true
-		cc.EnablePrivateDockerRegistry = true
-		cc.DockerRegistryAddress = p.Master.Nodes[0].IP
-		if p.Master.Nodes[0].InternalIP != "" {
-			cc.DockerRegistryAddress = p.Master.Nodes[0].InternalIP
-		}
-		cc.DockerCAPath = tlsDir + "/ca.pem"
-		cc.DockerRegistryPort = "8443"
+	} else if p.DockerRegistry.SetupInternal { // Use registry on master[0]
+		cc.DeployInternalDockerRegistry = true
 	} // Else just use DockerHub
 
 	// Setup docker options
@@ -747,10 +748,11 @@ func (ae *ansibleExecutor) generateTLSAssets(p *Plan) error {
 	}
 
 	// Generate node and user certificates
-	err = ae.pki.GenerateClusterCertificates(p, ca, []string{"admin"})
+	err = ae.pki.GenerateClusterCertificates(p, ca)
 	if err != nil {
 		return fmt.Errorf("error generating certificates for the cluster: %v", err)
 	}
+
 	util.PrettyPrintOk(ae.stdout, "Cluster certificates can be found in the %q directory", ae.options.GeneratedAssetsDirectory)
 	return nil
 }

@@ -25,7 +25,6 @@ type PlanAWS struct {
 	ModifyHostsFiles             bool
 	UseDirectLVM                 bool
 	ServiceCIDR                  string
-	EnableNetworkPolicy          bool
 }
 
 const planAWSOverlay = `cluster:
@@ -37,7 +36,6 @@ const planAWSOverlay = `cluster:
     type: overlay
     pod_cidr_block: 172.16.0.0/16
     service_cidr_block: {{if .ServiceCIDR}}{{.ServiceCIDR}}{{else}}172.20.0.0/16{{end}}
-    policy_enabled: {{.EnableNetworkPolicy}}
     update_hosts_files: {{.ModifyHostsFiles}}
   certificates:
     expiry: 17520h
@@ -59,6 +57,10 @@ docker_registry:
   address: {{.DockerRegistryIP}}
   port: {{.DockerRegistryPort}}
   CA: {{.DockerRegistryCAPath}}
+features:
+  package_manager:
+    enabled: true
+    provider: helm
 etcd:
   expected_count: {{len .Etcd}}
   nodes:{{range .Etcd}}

@@ -168,7 +168,7 @@ var _ = Describe("kismatic", func() {
 					nodes.worker = allWorkers[0 : len(nodes.worker)-1]
 
 					// install cluster
-					installOpts := installOptions{allowPackageInstallation: true, enableNetworkPolicy: true}
+					installOpts := installOptions{allowPackageInstallation: true}
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 
@@ -191,6 +191,11 @@ var _ = Describe("kismatic", func() {
 
 					sub.It("should respect network policies", func() error {
 						return verifyNetworkPolicy(nodes.master[0], sshKey)
+					})
+
+					sub.It("should allow creating RBAC policy", func() error {
+						// Run on worker because master uses unauth API endpoint (i.e. localhost:8080)
+						return verifyRBAC(nodes.worker[0], sshKey)
 					})
 
 					// This test should always be last

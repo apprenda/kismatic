@@ -109,11 +109,13 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 	p.Cluster.Networking.PodCIDRBlock = "172.16.0.0/16"
 	p.Cluster.Networking.ServiceCIDRBlock = "172.20.0.0/16"
 	p.Cluster.Networking.UpdateHostsFiles = false
-	p.Cluster.Networking.PolicyEnabled = false
 
 	// Set Certificate defaults
 	p.Cluster.Certificates.Expiry = "17520h"
-	p.DockerRegistry.SetupInternal = false
+
+	// Features
+	p.Features.PackageManager.Enabled = true
+	p.Features.PackageManager.Provider = "helm"
 
 	// Set DockerRegistry defaults
 	p.DockerRegistry.Port = 8443
@@ -199,7 +201,6 @@ var commentMap = map[string]string{
 	"type":                     "overlay or routed. Routed pods can be addressed from outside the Kubernetes cluster; Overlay pods can only address each other.",
 	"pod_cidr_block":           "Kubernetes will assign pods IPs in this range. Do not use a range that is already in use on your local network!",
 	"service_cidr_block":       "Kubernetes will assign services IPs in this range. Do not use a range that is already in use by your local network or pod network!",
-	"policy_enabled":           "When true, enables network policy enforcement on the Kubernetes Pod network. This is an advanced feature.",
 	"update_hosts_files":       "When true, the installer will add entries for all nodes to other nodes' hosts files. Use when you don't have access to DNS.",
 	"expiry":                   "Self-signed certificate expiration period in hours; default is 2 years.",
 	"ssh_key":                  "Absolute path to the ssh private key we should use to manage nodes.",

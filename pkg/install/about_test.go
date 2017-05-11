@@ -43,7 +43,7 @@ func TestIsOlderMajorMinorPatchOlder(t *testing.T) {
 
 func TestSetVersion(t *testing.T) {
 	SetVersion("1.2.3")
-	v := AboutKismatic
+	v := KismaticVersion
 	if v.Major != 1 || v.Minor != 2 || v.Patch != 3 {
 		t.Errorf("expected 1.2.3, but got %v", v)
 	}
@@ -60,7 +60,7 @@ func TestSetInvalidVersion(t *testing.T) {
 
 func TestIsOlderVersion(t *testing.T) {
 	SetVersion("1.2.0")
-	if IsOlderVersion(AboutKismatic) {
+	if IsOlderVersion(KismaticVersion) {
 		t.Error("IsOlder returned true for the same version")
 	}
 }

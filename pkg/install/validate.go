@@ -64,7 +64,7 @@ func ValidateSSHConnection(con *SSHConnection, prefix string) (bool, []error) {
 func ValidateCertificates(p *Plan, pki *LocalPKI) (bool, []error) {
 	v := newValidator()
 
-	warn, err := pki.ValidateClusterCertificates(p, []string{"admin"})
+	warn, err := pki.ValidateClusterCertificates(p)
 	if err != nil && len(err) > 0 {
 		v.addError(err...)
 	}
@@ -130,7 +130,8 @@ func (p *Plan) validate() (bool, []error) {
 	v.validate(&p.DockerRegistry)
 	v.validateWithErrPrefix("Docker", p.Docker)
 	// on a disconnected_installation a registry must be provided
-	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.DockerRegistryProvided()})
+	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()})
+	v.validate(&p.Features)
 	v.validateWithErrPrefix("Etcd nodes", &p.Etcd)
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
@@ -212,6 +213,20 @@ func (s *SSHConfig) validate() (bool, []error) {
 	}
 	if s.Port < 1 || s.Port > 65535 {
 		v.addError(fmt.Errorf("SSH port %d is invalid. Port must be in the range 1-65535", s.Port))
+	}
+	return v.valid()
+}
+
+func (f *Features) validate() (bool, []error) {
+	v := newValidator()
+	v.validate(&f.PackageManager)
+	return v.valid()
+}
+
+func (p *PackageManager) validate() (bool, []error) {
+	v := newValidator()
+	if p.Enabled && p.Provider != "helm" {
+		v.addError(fmt.Errorf("Package Manager valid options are: 'helm'"))
 	}
 	return v.valid()
 }
@@ -370,9 +385,6 @@ func (dr *DockerRegistry) validate() (bool, []error) {
 	}
 	if dr.Address != "" && (dr.Port < 1 || dr.Port > 65535) {
 		v.addError(fmt.Errorf("Docker Registry port %d is invalid. Port must be in the range 1-65535", dr.Port))
-	}
-	if dr.Address != "" && (dr.CAPath == "") {
-		v.addError(fmt.Errorf("Docker Registry CA cannot be empty when registry address is provided"))
 	}
 	if _, err := os.Stat(dr.CAPath); dr.CAPath != "" && os.IsNotExist(err) {
 		v.addError(fmt.Errorf("Docker Registry CA file was not found at %q", dr.CAPath))
