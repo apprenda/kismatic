@@ -15,16 +15,15 @@ type ClusterCatalog struct {
 	PodCIDR                                string `yaml:"kubernetes_pods_cidr"`
 	DNSServiceIP                           string `yaml:"kubernetes_dns_service_ip"`
 	EnableModifyHosts                      bool   `yaml:"modify_hosts_file"`
-	EnableCalicoPolicy                     bool   `yaml:"enable_calico_policy"`
 	EnablePackageInstallation              bool   `yaml:"allow_package_installation"`
-	PackageRepoURLs           string `yaml:"package_repository_urls"`
+	PackageRepoURLs                        string `yaml:"package_repository_urls"`
 	DisconnectedInstallation               bool   `yaml:"disconnected_installation"`
 	KuberangPath                           string `yaml:"kuberang_path"`
 	LoadBalancedFQDN                       string `yaml:"kubernetes_load_balanced_fqdn"`
 	APIRuntimeConfig                       string `yaml:"api_runtime_config"`
 
-	EnablePrivateDockerRegistry            bool   `yaml:"use_private_docker_registry"`
-	EnableInternalDockerRegistry           bool   `yaml:"setup_internal_docker_registry"`
+	ConfigureDockerWithPrivateRegistry     bool   `yaml:"configure_docker_with_private_registry"`
+	DeployInternalDockerRegistry           bool   `yaml:"deploy_internal_docker_registry"`
 	DockerCAPath                           string `yaml:"docker_certificates_ca_path"`
 	DockerRegistryAddress                  string `yaml:"docker_registry_address"`
 	DockerRegistryPort                     string `yaml:"docker_registry_port"`
@@ -69,6 +68,8 @@ type ClusterCatalog struct {
 	DockerDirectLVMEnabled                 bool   `yaml:"docker_direct_lvm_enabled"`
 	DockerDirectLVMBlockDevicePath         string `yaml:"docker_direct_lvm_block_device_path"`
 	DockerDirectLVMDeferredDeletionEnabled bool   `yaml:"docker_direct_lvm_deferred_deletion_enabled"`
+
+	LocalKubeconfigDirectory               string `yaml:"local_kubeconfig_directory"`
 }
 
 type NFSVolume struct {

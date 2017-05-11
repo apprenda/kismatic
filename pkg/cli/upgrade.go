@@ -178,7 +178,7 @@ func doUpgrade(out io.Writer, opts *upgradeOpts) error {
 		fmt.Fprintln(out)
 	}
 
-	if plan.ConfigureDockerRegistry() && plan.Cluster.DisconnectedInstallation {
+	if plan.ConfigureDockerWithPrivateRegistry() && plan.Cluster.DisconnectedInstallation {
 		util.PrintHeader(out, "Upgrade: Docker Registry", '=')
 		if err = executor.UpgradeDockerRegistry(*plan); err != nil {
 			return fmt.Errorf("Failed to upgrade docker registry: %v", err)

@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
+	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -89,33 +92,63 @@ func (c *applyCmd) run() error {
 		return fmt.Errorf("error validating plan: %v", err)
 	}
 	plan, err := c.planner.Read()
-
-	// Perform the installation
-	err = c.executor.Install(plan)
 	if err != nil {
+		return fmt.Errorf("error reading plan file: %v", err)
+	}
+
+	// Generate certificates
+	if err := c.executor.GenerateCertificates(plan); err != nil {
 		return fmt.Errorf("error installing: %v", err)
 	}
-
-	if err := c.executor.RunSmokeTest(plan); err != nil {
-		return fmt.Errorf("error during smoke test: %v", err)
-	}
-	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully\n")
 
 	// Generate kubeconfig
 	util.PrintHeader(c.out, "Generating Kubeconfig File", '=')
 	err = install.GenerateKubeconfig(plan, c.generatedAssetsDir)
 	if err != nil {
-		util.PrettyPrintWarn(c.out, "Error generating kubeconfig file: %v\n", err)
+		return fmt.Errorf("error generating kubeconfig file: %v", err)
 	} else {
 		util.PrettyPrintOk(c.out, "Generated kubeconfig file in the %q directory", c.generatedAssetsDir)
-		fmt.Fprintf(c.out, "\n")
-		msg := "To use the generated kubeconfig file with kubectl:" +
-			"\n  * use \"kubectl --kubeconfig %s/kubeconfig\"" +
-			"\n  * or copy the config file \"cp %[1]s/kubeconfig ~/.kube/config\"\n"
-		fmt.Fprintf(c.out, msg, c.generatedAssetsDir)
-		fmt.Fprintf(c.out, "Use \"kismatic dashboard\" command to view the Kubernetes dashboard")
 	}
 
-	fmt.Fprintf(c.out, "\n")
+	// Perform the installation
+	if err := c.executor.Install(plan); err != nil {
+		return fmt.Errorf("error installing: %v", err)
+	}
+
+	// Install Helm
+	if plan.Features.PackageManager.Enabled {
+		util.PrintHeader(c.out, "Installing Helm on the Cluster", '=')
+		home, err := homedir.Dir()
+		if err != nil {
+			return fmt.Errorf("Could not determine helm directory: %v", err)
+		}
+		helmDir := path.Join(home, ".helm")
+		backupDir := fmt.Sprintf("%s.backup-%s", helmDir, time.Now().Format("2006-01-02-15-04-05"))
+		// Backup helm directory if exists
+		if backedup, err := util.BackupDirectory(helmDir, backupDir); err != nil {
+			return fmt.Errorf("error preparing Helm client: %v", err)
+		} else if backedup {
+			util.PrettyPrintOk(c.out, "Backed up %q directory", helmDir)
+		}
+		// Create a new serviceaccount and run helm init
+		if err := c.executor.RunPlay("_helm.yaml", plan); err != nil {
+			return fmt.Errorf("error configuring Helm RBAC: %v", err)
+		}
+	}
+
+	// Run smoketest
+	if err := c.executor.RunSmokeTest(plan); err != nil {
+		return fmt.Errorf("error running smoke test: %v", err)
+	}
+
+	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully!\n\n")
+
+	msg := "- To use the generated kubeconfig file with kubectl:" +
+		"\n    * use \"kubectl --kubeconfig %s/kubeconfig\"" +
+		"\n    * or copy the config file \"cp %[1]s/kubeconfig ~/.kube/config\"\n"
+	util.PrintColor(c.out, util.Blue, msg, c.generatedAssetsDir)
+	util.PrintColor(c.out, util.Blue, "- To view the Kubernetes dashboard: \"./kismatic dashboard\"\n")
+	util.PrintColor(c.out, util.Blue, "- To SSH into a cluster node: \"./kismatic ssh etcd|master|worker|storage|$node.host\"\n")
+
 	return nil
 }

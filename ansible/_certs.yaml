@@ -14,6 +14,6 @@
         etcd_install_dir: "/etc/etcd_networking"
       - kubenode-cert
       - role: docker-registry-container-cert
-        when: setup_internal_docker_registry is defined and setup_internal_docker_registry|bool == true
+        when: deploy_internal_docker_registry is defined and deploy_internal_docker_registry|bool == true
       - role: docker-registry-cert
-        when: use_private_docker_registry is defined and use_private_docker_registry|bool == true
+        when: configure_docker_with_private_registry is defined and configure_docker_with_private_registry|bool == true

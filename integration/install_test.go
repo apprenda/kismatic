@@ -168,7 +168,7 @@ var _ = Describe("kismatic", func() {
 					nodes.worker = allWorkers[0 : len(nodes.worker)-1]
 
 					// install cluster
-					installOpts := installOptions{allowPackageInstallation: true, enableNetworkPolicy: true}
+					installOpts := installOptions{allowPackageInstallation: true}
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 

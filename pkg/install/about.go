@@ -28,8 +28,8 @@ func (n *ListableNode) HasRoles(roles ...string) bool {
 	return util.Intersects(roles, n.Roles)
 }
 
-// AboutKismatic contains the version information of the currently running binary
-var AboutKismatic semver.Version
+// KismaticVersion contains the version information of the currently running binary
+var KismaticVersion semver.Version
 
 // SetVersion parses the given version, and sets it as the global version of the binary
 func SetVersion(v string) {
@@ -37,12 +37,12 @@ func SetVersion(v string) {
 	if err != nil {
 		panic("failed to parse version " + v)
 	}
-	AboutKismatic = ver
+	KismaticVersion = ver
 }
 
 // IsOlderVersion returns true if the provided version is older than the current Kismatic version
 func IsOlderVersion(that semver.Version) bool {
-	this := AboutKismatic
+	this := KismaticVersion
 	return this.GT(that)
 }
 

@@ -7,7 +7,7 @@
     run_once: true
 
     roles:
-      - addon-network-policy
+      - calico-network-policy
 
     post_tasks:
       - name: remove old calico-policy replication controller if exists

@@ -75,7 +75,7 @@ var _ = Describe("Upgrade", func() {
 						nodes.worker = allWorkers[0 : len(nodes.worker)-1]
 
 						// Standup cluster with previous version
-						opts := installOptions{allowPackageInstallation: true, enableNetworkPolicy: true}
+						opts := installOptions{allowPackageInstallation: true}
 						err := installKismatic(nodes, opts, sshKey)
 						FailIfError(err)
 

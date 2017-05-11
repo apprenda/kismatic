@@ -1,0 +1,34 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "{{ play_name | default('Create Required RBAC Role for Helm') }}"
+    remote_user: root
+    become_method: sudo
+    run_once: true
+
+    environment:
+      KUBECONFIG: "{{ local_kubeconfig_directory }}"
+
+    tasks:
+      - name: "create new serviceaccount for tiller"
+        command: "kubectl -n kube-system create sa tiller"
+        register: out
+        failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
+      - name: "attach cluster-admin role to the service account tiller"
+        command: "kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller"
+        register: out
+        failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
+      - name: "run helm init"
+        local_action: command ../../helm init --service-account=tiller -i="{{ helm_img }}"
+        become: no
+      - name: wait until the tiller pod is ready
+        command: kubectl get deployment tiller-deploy -n kube-system -o jsonpath='{.status.availableReplicas}'
+        register: readyReplicas
+        until: readyReplicas.stdout|int == 1
+        retries: 24
+        delay: 10
+        failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+      - name: fail if the tiller pod is not ready
+        fail:
+          msg: "Timed out waiting for the tiller pod to be in the ready state."
+        when: readyReplicas.stdout|int != 1

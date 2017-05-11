@@ -244,7 +244,10 @@ func (lp *LocalPKI) generateDockerRegistryCert(p *Plan, ca *tls.CA) error {
 	// Default registry will be deployed on the first master
 	n := p.Master.Nodes[0]
 	commonName := n.Host
-	SANs := []string{n.Host, n.IP, n.InternalIP}
+	SANs := []string{n.Host, n.IP}
+	if n.InternalIP != "" {
+		SANs = append(SANs, n.InternalIP)
+	}
 
 	// Don't generate if the key pair exists and valid
 	valid, warn, err := tls.CertExistsAndValid(commonName, SANs, []string{}, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
@@ -278,7 +281,10 @@ func (lp *LocalPKI) validateDockerRegistryCert(p *Plan) (valid bool, warn []erro
 	// Default registry will be deployed on the first master
 	n := p.Master.Nodes[0]
 	CN := n.Host
-	SANs := []string{n.Host, n.IP, n.InternalIP}
+	SANs := []string{n.Host, n.IP}
+	if n.InternalIP != "" {
+		SANs = append(SANs, n.InternalIP)
+	}
 
 	return tls.CertExistsAndValid(CN, SANs, []string{}, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
 }
