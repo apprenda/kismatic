@@ -2,7 +2,7 @@
   # setup directories
   - name: create directory for certificates
     file:
-      path: "{{ kubernetes_install_dir }}"
+      path: "{{ kubernetes_certificates_dir }}"
       state: directory
 
   # copy CA certificate

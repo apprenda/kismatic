@@ -138,7 +138,7 @@ spec:
             - mountPath: /var/run/calico
               name: var-run-calico
               readOnly: false
-            - mountPath: {{ kubernetes_install_dir }}
+            - mountPath: {{ kubernetes_certificates_dir }}
               name: etcd-certs
         # This container installs the Calico CNI binaries
         # and CNI network config file on each node.
@@ -166,7 +166,7 @@ spec:
               name: cni-bin-dir
             - mountPath: /host/etc/cni/net.d
               name: cni-net-dir
-            - mountPath: {{ kubernetes_install_dir }}
+            - mountPath: {{ kubernetes_certificates_dir }}
               name: etcd-certs
       volumes:
         # Used by calico/node.
@@ -186,4 +186,4 @@ spec:
         # Mount in the etcd TLS secrets.
         - name: etcd-certs
           hostPath:
-            path: {{ kubernetes_install_dir }}
+            path: {{ kubernetes_certificates_dir }}

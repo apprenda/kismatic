@@ -137,7 +137,7 @@ kube_dns_replicas: "{{ [2, groups['worker'] | length] | min }}"
 
 # kubernetes certificate config
 # TODO: Do we want to change this?
-kubernetes_certificates_dir: "{{ kubernetes_install_dir }}" 
+kubernetes_certificates_dir: "{{ kubernetes_install_dir }}/pki" 
 kubernetes_certificates:
   ca: "{{ kubernetes_certificates_dir }}/ca.pem"
   api_server: "{{ kubernetes_certificates_dir }}/api-server.pem"
