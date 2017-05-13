@@ -25,6 +25,7 @@ type PlanAWS struct {
 	ModifyHostsFiles             bool
 	UseDirectLVM                 bool
 	ServiceCIDR                  string
+	EnableHelm                   bool
 }
 
 const planAWSOverlay = `cluster:
@@ -59,7 +60,7 @@ docker_registry:
   CA: {{.DockerRegistryCAPath}}
 features:
   package_manager:
-    enabled: true
+    enabled: {{.EnableHelm}}
     provider: helm
 etcd:
   expected_count: {{len .Etcd}}
