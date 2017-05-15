@@ -67,3 +67,16 @@
         dest: "{{ kubernetes_certificates.etcd_client }}"
       - src: "etcd-client-key.pem"
         dest: "{{ kubernetes_certificates.etcd_client_key }}"
+
+  # Remove old certificates that were deployed in version <= 1.3.3
+  - name: "remove old certificates"
+    file:
+      path: "/etc/kubernetes/{{ item }}"
+      state: absent
+    when: "upgrading and upgrading|bool == true"
+    with_items:
+      - ca.pem
+      - kubenode-key.pem
+      - kubenode.pem
+      - service-account-key.pem
+      - service-account.pem

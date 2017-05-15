@@ -8,7 +8,7 @@
   - include: _packages-repo.yaml
     when: allow_package_installation|bool == true
 
-  - include: _certs.yaml
+  - include: _certs.yaml upgrading=true
 
   # docker
   - include: _docker.yaml play_name="Upgrade Docker" upgrading=true
