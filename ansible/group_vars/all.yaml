@@ -222,16 +222,16 @@ helm_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/gcr.io/
 helm_img: "{% if load_private_images|bool == true %}{{ helm_priv_img }}{% else %}{{ helm_orig_img }}{% endif %}"
 
 # kismatic packages
-# yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
-# yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
-# deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
-# deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
+yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
+yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
+deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
+deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
 
 # Uncomment below to use test repo
-yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
-yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
-deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
-deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
+# yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
+# yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
+# deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
+# deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
 #===============================================================================
 # PV configs for monitoring and logging
 #pv_monitoring_nfs_server_ip: "192.168.99.20"
