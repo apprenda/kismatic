@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"sort"
 
 	"github.com/apprenda/kismatic/pkg/tls"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -63,17 +64,33 @@ func (s certificateSpec) equal(other certificateSpec) bool {
 	if !prelimEqual {
 		return false
 	}
-	// Compare subject alt names. Sensitive to ordering.
-	for _, x := range s.subjectAlternateNames {
-		for _, y := range other.subjectAlternateNames {
+	// Compare subject alt. names
+	thisSAN := make([]string, len(s.subjectAlternateNames))
+	otherSAN := make([]string, len(other.subjectAlternateNames))
+	// Clone and sort
+	copy(thisSAN, s.subjectAlternateNames)
+	copy(otherSAN, other.subjectAlternateNames)
+	sort.Strings(thisSAN)
+	sort.Strings(otherSAN)
+
+	for _, x := range thisSAN {
+		for _, y := range otherSAN {
 			if x != y {
 				return false
 			}
 		}
 	}
-	// Compare organizations. Sensitive to ordering.
-	for _, x := range s.organizations {
-		for _, y := range other.organizations {
+	// Compare organizations
+	thisOrgs := make([]string, len(s.organizations))
+	otherOrgs := make([]string, len(other.organizations))
+	// clone and sort
+	copy(thisOrgs, s.organizations)
+	copy(otherOrgs, other.organizations)
+	sort.Strings(thisOrgs)
+	sort.Strings(otherOrgs)
+
+	for _, x := range thisOrgs {
+		for _, y := range otherOrgs {
 			if x != y {
 				return false
 			}
