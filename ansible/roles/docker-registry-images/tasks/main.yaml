@@ -27,6 +27,7 @@
      - busybox
      - pause
      - tcp-healthz-amd64
+     - tiller
 
   - name: tag docker images
     command: docker tag {{ item }}
@@ -49,6 +50,7 @@
       - "{{ busybox_orig_img }} {{ busybox_priv_img }}"
       - "{{ pause_orig_img }} {{ pause_priv_img }}"
       - "{{ apprenda_tcp_healthz_orig_img }} {{ apprenda_tcp_healthz_priv_img }}"
+      - "{{ helm_orig_img }} {{ helm_priv_img }}"
 
   - name: push docker image to private registry
     command: docker push {{ item }}
@@ -71,3 +73,4 @@
       - "{{ busybox_priv_img }}"
       - "{{ pause_priv_img }}"
       - "{{ apprenda_tcp_healthz_priv_img }}"
+      - "{{ helm_img }}"

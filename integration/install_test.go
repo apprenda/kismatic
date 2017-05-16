@@ -193,10 +193,10 @@ var _ = Describe("kismatic", func() {
 						return verifyNetworkPolicy(nodes.master[0], sshKey)
 					})
 
-					sub.It("should allow creating RBAC policy", func() error {
-						// Run on worker because master uses unauth API endpoint (i.e. localhost:8080)
-						return verifyRBAC(nodes.worker[0], sshKey)
-					})
+					// sub.It("should allow creating RBAC policy", func() error {
+					// 	// Run on worker because master uses unauth API endpoint (i.e. localhost:8080)
+					// 	return verifyRBAC(nodes.worker[0], sshKey)
+					// })
 
 					// This test should always be last
 					sub.It("should still be a highly available cluster after removing a master node", func() error {
