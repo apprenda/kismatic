@@ -9,3 +9,9 @@
 
     roles:
       - all
+
+  # Force fact gathering once the nodes have been bootstrapped
+  - hosts: all
+    name: "Gather Node Facts"
+    gather_facts: yes
+    tasks: []
