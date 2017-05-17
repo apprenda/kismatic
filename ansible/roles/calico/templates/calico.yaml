@@ -16,9 +16,9 @@ data:
         "name": "k8s-pod-network",
         "type": "calico",
         "etcd_endpoints": "__ETCD_ENDPOINTS__",
-        "etcd_key_file": "{{ kubernetes_certificates_key_path }}",
-        "etcd_cert_file": "{{ kubernetes_certificates_cert_path }}",
-        "etcd_ca_cert_file": "{{ kubernetes_certificates_ca_path }}",
+        "etcd_key_file": "{{ kubernetes_certificates.etcd_client_key }}",
+        "etcd_cert_file": "{{ kubernetes_certificates.etcd_client }}",
+        "etcd_ca_cert_file": "{{ kubernetes_certificates.ca }}",
         "log_level": "info",
         "ipam": {
             "type": "calico-ipam"
