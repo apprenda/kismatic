@@ -73,7 +73,7 @@
     file:
       path: "/etc/kubernetes/{{ item }}"
       state: absent
-    when: "upgrading and upgrading|bool == true"
+    when: "upgrading is defined and upgrading|bool == true"
     with_items:
       - ca.pem
       - kubenode-key.pem
