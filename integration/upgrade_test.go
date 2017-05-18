@@ -11,6 +11,22 @@ import (
 
 var _ = Describe("Upgrade", func() {
 	Describe("Upgrading a cluster using offline mode", func() {
+		Describe("From KET version v1.3.2", func() {
+			BeforeEach(func() {
+				dir := setupTestWorkingDirWithVersion("v1.3.2")
+				os.Chdir(dir)
+			})
+			Context("Using a minikube layout", func() {
+				Context("Using Ubuntu 16.04", func() {
+					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
+						WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
+							installAndUpgradeMinikube(node, sshKey)
+						})
+					})
+				})
+			})
+		})
+
 		Describe("From KET version v1.3.0", func() {
 			BeforeEach(func() {
 				dir := setupTestWorkingDirWithVersion("v1.3.0")
@@ -20,22 +36,6 @@ var _ = Describe("Upgrade", func() {
 				ItOnAWS("should result in an upgraded cluster [slow] [upgrade]", func(aws infrastructureProvisioner) {
 					WithInfrastructureAndDNS(NodeCount{Etcd: 3, Master: 2, Worker: 2, Ingress: 0, Storage: 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 						installAndUpgrade(nodes, sshKey)
-					})
-				})
-			})
-		})
-
-		Describe("From KET version v1.3.1", func() {
-			BeforeEach(func() {
-				dir := setupTestWorkingDirWithVersion("v1.3.1")
-				os.Chdir(dir)
-			})
-			Context("Using a minikube layout", func() {
-				Context("Using Ubuntu 16.04", func() {
-					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
-						WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
-							installAndUpgradeMinikube(node, sshKey)
-						})
 					})
 				})
 			})
@@ -174,39 +174,6 @@ var _ = Describe("Upgrade", func() {
 
 						// Perform upgrade
 						upgradeCluster()
-					})
-				})
-			})
-		})
-
-		Describe("From KET version v1.1.1", func() {
-			BeforeEach(func() {
-				dir := setupTestWorkingDirWithVersion("v1.1.1")
-				os.Chdir(dir)
-			})
-
-			Context("Using a minikube layout", func() {
-				Context("Using CentOS 7", func() {
-					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
-						WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
-							installAndUpgradeMinikube(node, sshKey)
-						})
-					})
-				})
-
-				Context("Using RedHat 7", func() {
-					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
-						WithMiniInfrastructure(RedHat7, aws, func(node NodeDeets, sshKey string) {
-							installAndUpgradeMinikube(node, sshKey)
-						})
-					})
-				})
-
-				Context("Using Ubuntu 16.04", func() {
-					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
-						WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
-							installAndUpgradeMinikube(node, sshKey)
-						})
 					})
 				})
 			})
