@@ -19,18 +19,18 @@ const (
 	installCurlYum            = `sudo yum -y install curl`
 	installEtcdYum            = `sudo yum -y install etcd-3.1.4-1`
 	installTransitionEtcdYum  = `sudo yum -y install transition-etcd`
-	installDockerYum          = `sudo yum -y install docker-engine-1.11.2-1.el7.centos`
+	installDockerYum          = `sudo yum -y install docker-engine-1.12.6-1.el7.centos`
 	installKubeletYum         = `sudo yum -y install kubelet-1.6.3_1-1`
 	installKubectlYum         = `sudo yum -y install kubectl-1.6.3_1-1`
 	installKismaticOfflineYum = `sudo yum -y install kismatic-offline-1.6.3_1-1`
 
-	copyKismaticKeyDeb        = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add - `
+	copyKismaticKeyDeb        = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add -`
 	copyKismaticRepoDeb       = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main"`
 	updateAptGet              = `sudo apt-get update`
 	installCurlApt            = `sudo apt-get -y install curl`
 	installEtcdApt            = `sudo apt-get -y install etcd=3.1.4`
 	installTransitionEtcdApt  = `sudo apt-get -y install transition-etcd`
-	installDockerApt          = `sudo apt-get -y install docker-engine=1.11.2-0~xenial`
+	installDockerApt          = `sudo apt-get -y install docker-engine=1.12.6-0~ubuntu-xenial`
 	installKubeletApt         = `sudo apt-get -y install kubelet=1.6.3-1`
 	installKubectlApt         = `sudo apt-get -y install kubectl=1.6.3-1`
 	installKismaticOfflineApt = `sudo apt-get -y install kismatic-offline=1.6.3-1`

@@ -196,7 +196,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["master","ubuntu", "disconnected"]
   packageName: kismatic-offline
@@ -204,15 +204,15 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubelet
@@ -255,7 +255,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","centos", "disconnected"]
   packageName: kismatic-offline
@@ -263,15 +263,15 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubelet
@@ -313,7 +313,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","rhel", "disconnected"]
   packageName: kismatic-offline
@@ -321,15 +321,15 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","rhel"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["storage","rhel"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubelet
@@ -450,7 +450,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["master","ubuntu", "disconnected"]
   packageName: kismatic-offline
@@ -458,15 +458,15 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: docker-engine
-  packageVersion: 1.11.2-0~xenial
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubelet
@@ -507,7 +507,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","centos", "disconnected"]
   packageName: kismatic-offline
@@ -515,15 +515,15 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubelet
@@ -564,7 +564,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","rhel", "disconnected"]
   packageName: kismatic-offline
@@ -572,15 +572,15 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: docker-engine
-  packageVersion: 1.11.2-1.el7.centos
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubelet

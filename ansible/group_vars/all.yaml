@@ -8,8 +8,8 @@ etcd_yum_version: 3.1.4-1
 etcd_apt_version: 3.1.4
 transition_etcd_yum_version: 3.0.17-1
 transition_etcd_apt_version: 3.0.17
-docker_engine_yum_version: 1.11.2-1.el7.centos
-docker_engine_apt_version: 1.11.2-0~xenial
+docker_engine_yum_version: 1.12.6-1.el7.centos
+docker_engine_apt_version: 1.12.6-0~ubuntu-xenial
 helm_version: v2.4.1
 
 calico_node_version: "v1.2.0"
