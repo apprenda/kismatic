@@ -143,13 +143,8 @@ type Features struct {
 	PackageManager PackageManager `yaml:"package_manager"`
 }
 
-type BaseFeature struct {
-	Enabled  bool
-	Provider string
-}
-
 type PackageManager struct {
-	BaseFeature `yaml:",inline"`
+	Enabled bool
 }
 
 // GetUniqueNodes returns a list of the unique nodes that are listed in the plan file.

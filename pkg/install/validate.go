@@ -219,15 +219,6 @@ func (s *SSHConfig) validate() (bool, []error) {
 
 func (f *Features) validate() (bool, []error) {
 	v := newValidator()
-	v.validate(&f.PackageManager)
-	return v.valid()
-}
-
-func (p *PackageManager) validate() (bool, []error) {
-	v := newValidator()
-	if p.Enabled && p.Provider != "helm" {
-		v.addError(fmt.Errorf("Package Manager valid options are: 'helm'"))
-	}
 	return v.valid()
 }
 
