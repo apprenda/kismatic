@@ -1,4 +1,9 @@
 ---
+  # Force fact gathering
+  - hosts: all
+    name: "Gather Node Facts"
+    gather_facts: yes
+    tasks: []
   # Drain the node before we touch it
   - include: _kube-drain-node.yaml
     when: online_upgrade is defined and online_upgrade|bool == true
