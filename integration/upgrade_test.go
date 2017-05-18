@@ -212,6 +212,13 @@ func extractCurrentKismaticInstaller() {
 	FailIfError(err)
 }
 func upgradeCluster() {
+	// KET v1.3.4 introduced a new cert generation process that invalidated
+	// existing admin certificates. For this reason, we need to delete the
+	// certificate before running the upgrade.
+	err := os.Remove("generated/keys/admin.pem")
+	if err != nil && !os.IsNotExist(err) { // fail if it's an error different than "file doesn't exist"
+		FailIfError(err)
+	}
 	// Perform upgrade
 	cmd := exec.Command("./kismatic", "upgrade", "offline", "-f", "kismatic-testing.yaml")
 	cmd.Stderr = os.Stderr
