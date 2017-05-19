@@ -383,11 +383,11 @@ func (lp *LocalPKI) GenerateNodeCertificate(plan *Plan, node Node, ca *tls.CA) e
 			util.PrettyPrintOk(lp.Log, "Found valid certificate for %s", s.description)
 			continue
 		}
-
 		// Cert doesn't exist. Generate it
 		if err := generateCert(ca, lp.GeneratedCertsDirectory, s); err != nil {
 			return err
 		}
+		util.PrettyPrintOk(lp.Log, "Generated certificate for %s", s.description)
 	}
 	return nil
 }

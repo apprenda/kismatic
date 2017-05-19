@@ -24,7 +24,7 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 	if err != nil {
 		return nil, err
 	}
-	if err = ae.pki.GenerateNodeCertificate(originalPlan, newWorker, ca); err != nil {
+	if err = ae.pki.GenerateNodeCertificate(&updatedPlan, newWorker, ca); err != nil {
 		return nil, fmt.Errorf("error generating certificate for new worker: %v", err)
 	}
 
