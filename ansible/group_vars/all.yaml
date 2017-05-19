@@ -1,8 +1,8 @@
 #===============================================================================
 # VERSIONS
-kubernetes_version: v1.6.3
-kismatic_yum_version: 1.6.3_1-1
-kismatic_deb_version: 1.6.3-1
+kubernetes_version: v1.6.4
+kismatic_yum_version: 1.6.4_1-1
+kismatic_deb_version: 1.6.4-1
 etcd_version: 3.1.4
 etcd_yum_version: 3.1.4-1
 etcd_apt_version: 3.1.4
@@ -12,8 +12,8 @@ docker_engine_yum_version: 1.12.6-1.el7.centos
 docker_engine_apt_version: 1.12.6-0~ubuntu-xenial
 helm_version: v2.4.2
 
-calico_node_version: "v1.2.0"
-calico_ctl_version: "v1.2.0"
+calico_node_version: "v1.2.1"
+calico_ctl_version: "v1.2.1"
 calico_cni_version: "v1.8.3"
 calico_kube_policy_controller_version: "v0.6.0"
 kubedns_version: "1.14.1"
