@@ -3,9 +3,7 @@ package install
 import (
 	"fmt"
 	"net"
-	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
@@ -30,21 +28,17 @@ type SSHConfig struct {
 	Port int    `yaml:"ssh_port"`
 }
 
-type APIServer struct {
-	APIRuntimeConfigOptions map[string]string `yaml:"runtime_config"`
-}
-
 // Cluster describes a Kubernetes cluster
 type Cluster struct {
 	Name                     string
-	AdminPassword            string        `yaml:"admin_password"`
-	AllowPackageInstallation bool          `yaml:"allow_package_installation"`
-	PackageRepoURLs          string        `yaml:"package_repository_urls"`
-	DisconnectedInstallation bool          `yaml:"disconnected_installation"`
+	AdminPassword            string `yaml:"admin_password"`
+	AllowPackageInstallation bool   `yaml:"allow_package_installation"`
+	PackageRepoURLs          string `yaml:"package_repository_urls"`
+	DisconnectedInstallation bool   `yaml:"disconnected_installation"`
 	Networking               NetworkConfig
 	Certificates             CertsConfig
 	SSH                      SSHConfig
-	APIServer                APIServer     `yaml:"api_server"`
+	APIServerConfig          APIServerConfig `yaml:",inline"`
 }
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster
@@ -82,7 +76,7 @@ type MasterNodeGroup struct {
 
 // DockerRegistry details for docker registry, either confgiured by the cli or customer provided
 type DockerRegistry struct {
-	SetupInternal bool   `yaml:"setup_internal"`
+	SetupInternal bool `yaml:"setup_internal"`
 	Address       string
 	Port          int
 	CAPath        string `yaml:"CA"`
@@ -104,18 +98,18 @@ type DockerStorage struct {
 // device mapper in direct-lvm mode
 type DockerStorageDirectLVM struct {
 	// Determines whether direct-lvm mode is enabled
-	Enabled                bool
+	Enabled bool
 	// BlockDevice is the path to the block device that will be used. E.g. /dev/sdb
-	BlockDevice            string `yaml:"block_device"`
+	BlockDevice string `yaml:"block_device"`
 	// EnableDeferredDeletion determines whether deferred deletion should be enabled
-	EnableDeferredDeletion bool   `yaml:"enable_deferred_deletion"`
+	EnableDeferredDeletion bool `yaml:"enable_deferred_deletion"`
 }
 
 // Plan is the installation plan that the user intends to execute
 type Plan struct {
 	Cluster        Cluster
 	Docker         Docker
-	DockerRegistry DockerRegistry    `yaml:"docker_registry"`
+	DockerRegistry DockerRegistry `yaml:"docker_registry"`
 	Features       Features
 	Etcd           NodeGroup
 	Master         MasterNodeGroup
@@ -128,17 +122,17 @@ type Plan struct {
 // StorageVolume managed by Kismatic
 type StorageVolume struct {
 	// Name of the storage volume
-	Name              string
+	Name string
 	// SizeGB is the size of the volume, in gigabytes
-	SizeGB            int
+	SizeGB int
 	// ReplicateCount is the number of replicas
-	ReplicateCount    int
+	ReplicateCount int
 	// DistributionCount is the degree to which data will be distributed across the cluster
 	DistributionCount int
 	// StorageClass is the annotation that will be used when creating the persistent-volume in kubernetes
-	StorageClass      string
+	StorageClass string
 	// AllowAddresses is a list of address wildcards that have access to the volume
-	AllowAddresses    []string
+	AllowAddresses []string
 }
 
 type SSHConnection struct {
@@ -325,47 +319,4 @@ func (p Plan) DockerRegistryPort() string {
 		port = p.DockerRegistry.Port
 	}
 	return strconv.Itoa(port)
-}
-
-func (apiServer APIServer) RuntimeConfig() string {
-	var configOptions = apiServer.APIRuntimeConfigOptions
-
-	if len(configOptions) == 0 {
-		configOptions = make(map[string]string)
-	}
-
-	defaultIfNotSet(configOptions, "extensions/v1beta1", "true");
-	defaultIfNotSet(configOptions, "extensions/v1beta1/networkpolicies", "true")
-
-	sortedList := mapToSortedList(configOptions)
-
-	return strings.Join(sortedList, ",");
-}
-
-func mapToSortedList(input map[string]string) []string {
-	keys := sortedKeyValues(input);
-
-	output := make([]string, len(input))
-	for i, key := range keys {
-		output[i] = fmt.Sprintf("%s=%s", key, input[key])
-	}
-	return output;
-}
-
-func sortedKeyValues(input map[string]string) []string {
-	keys := make([]string, len(input))
-	i := 0
-	for key := range input {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
-	return keys
-}
-
-func defaultIfNotSet(m map[string]string, key string, defaultValue string) {
-	_, ok := m[key]
-	if !ok {
-		m[key] = defaultValue
-	}
 }

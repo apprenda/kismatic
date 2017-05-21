@@ -16,6 +16,4 @@ cluster:
     ssh_key: .ssh/id_rsa
     ssh_port: 22
   api_server:
-    runtime_config:
-      "beta/v2api": "true"
-      "alpha/v1api": "true"
+    "runtime-config": "beta/v2api=true,alpha/v1api=true"

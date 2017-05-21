@@ -161,6 +161,7 @@ func (c *Cluster) validate() (bool, []error) {
 	v.validate(&c.Networking)
 	v.validate(&c.Certificates)
 	v.validate(&c.SSH)
+	v.validate(&c.APIServerConfig)
 
 	return v.valid()
 }
@@ -430,6 +431,7 @@ func (nfs *NFS) validate() (bool, []error) {
 	}
 	return v.valid()
 }
+
 
 func (nfsVol NFSVolume) validate() (bool, []error) {
 	v := newValidator()
