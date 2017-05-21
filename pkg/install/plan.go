@@ -115,7 +115,6 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 
 	// Features
 	p.Features.PackageManager.Enabled = true
-	p.Features.PackageManager.Provider = "helm"
 
 	// Set DockerRegistry defaults
 	p.DockerRegistry.Port = 8443

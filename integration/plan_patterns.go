@@ -61,7 +61,6 @@ docker_registry:
 features:
   package_manager:
     enabled: {{.EnableHelm}}
-    provider: helm
 etcd:
   expected_count: {{len .Etcd}}
   nodes:{{range .Etcd}}

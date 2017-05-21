@@ -794,35 +794,3 @@ func TestRepository(t *testing.T) {
 		}
 	}
 }
-
-func TestPackageManager(t *testing.T) {
-	tests := []struct {
-		pm    PackageManager
-		valid bool
-	}{
-		{
-			pm: PackageManager{
-				BaseFeature{
-					Enabled:  true,
-					Provider: "helm",
-				},
-			},
-			valid: true,
-		},
-		{
-			pm: PackageManager{
-				BaseFeature{
-					Enabled:  true,
-					Provider: "foo",
-				},
-			},
-			valid: false,
-		},
-	}
-	for i, test := range tests {
-		ok, _ := test.pm.validate()
-		if ok != test.valid {
-			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
-		}
-	}
-}
