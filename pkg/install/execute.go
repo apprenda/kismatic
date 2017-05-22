@@ -671,7 +671,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
 		TargetVersion:             KismaticVersion.String(),
-		APIRuntimeConfig:          p.Cluster.APIServerConfig.RuntimeConfig(),
+		APIRuntimeConfig:          p.Cluster.APIServerConfig.ConfigValues()["runtime-config"],
 	}
 	cc.LocalKubeconfigDirectory = filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig")
 	// absolute path required for ansible

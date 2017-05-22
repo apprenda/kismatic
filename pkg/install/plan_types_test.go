@@ -17,7 +17,7 @@ func TestReadPlanFile(t *testing.T) {
 	assertEqual(t, p.Cluster.Name, "my_cluster_name")
 	assertEqual(t, p.Cluster.AdminPassword, "secret_admin_password")
 
-	assertEqual(t, p.Cluster.APIServerConfig.RuntimeConfig(), "alpha/v1api=true,beta/v2api=true,extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true");
+	assertEqual(t, p.Cluster.APIServerConfig.ConfigValues()["runtime-config"], "alpha/v1api=true,beta/v2api=true,extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true");
 }
 
 func TestAPIServerRuntimeConfig(t *testing.T) {
@@ -27,7 +27,7 @@ func TestAPIServerRuntimeConfig(t *testing.T) {
 		},
 	}
 
-	assertEqual(t, apiServer.RuntimeConfig(), "beta/v1Option=true,beta/v2Option=false,extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
+	assertEqual(t, apiServer.ConfigValues()["runtime-config"], "beta/v1Option=true,beta/v2Option=false,extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
 }
 
 func TestAddsDefaultAPIConfigOptions(t *testing.T) {
@@ -35,7 +35,7 @@ func TestAddsDefaultAPIConfigOptions(t *testing.T) {
 		RawData: map[string]string{},
 	}
 
-	assertEqual(t, apiServer.RuntimeConfig(), "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
+	assertEqual(t, apiServer.ConfigValues()["runtime-config"], "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
 }
 
 func TestCanOverrideDefaultAPIConfigOptions(t *testing.T) {
@@ -45,14 +45,14 @@ func TestCanOverrideDefaultAPIConfigOptions(t *testing.T) {
 		},
 	}
 
-	assertEqual(t, apiServer.RuntimeConfig(), "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=false")
+	assertEqual(t, apiServer.ConfigValues()["runtime-config"], "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=false")
 }
 
 func TestAPIServerRuntimeConfigWithNoAPIServer(t *testing.T) {
 
 	cluster := Cluster{}
 
-	assertEqual(t, cluster.APIServerConfig.RuntimeConfig(), "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
+	assertEqual(t, cluster.APIServerConfig.ConfigValues()["runtime-config"], "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
 }
 
 func TestAPIServerRuntimeConfigWithNoAPIServerConfigOptions(t *testing.T) {
@@ -60,7 +60,7 @@ func TestAPIServerRuntimeConfigWithNoAPIServerConfigOptions(t *testing.T) {
 		APIServerConfig: APIServerConfig{},
 	}
 
-	assertEqual(t, cluster.APIServerConfig.RuntimeConfig(), "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
+	assertEqual(t, cluster.APIServerConfig.ConfigValues()["runtime-config"], "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true")
 }
 
 func assertEqual(t *testing.T, a, b interface{}) {

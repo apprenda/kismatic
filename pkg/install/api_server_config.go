@@ -67,7 +67,7 @@ func (config *APIServerConfig) validate() (bool, []error) {
 	for _, protectedItem := range protectedValues {
 		_, found := config.RawData[protectedItem]
 		if found {
-			v.addError(fmt.Errorf("Api config value [%s] should be overriden", protectedItem))
+			v.addError(fmt.Errorf("Api config value [%s] should not be overriden", protectedItem))
 		}
 	}
 	return v.valid();
@@ -82,11 +82,20 @@ func defaultValue(defaultValue string) Transformer {
 			return inputValue;
 		},
 	}
-
 }
 
-func (config *APIServerConfig) RuntimeConfig() string {
-	return transformValues["runtime-config"].transform(config.RawData["runtime-config"]);
+func (config *APIServerConfig) ConfigValues() map[string]string {
+	output := make(map[string]string)
+	keys := util.MapKeys(config.RawData, transformValues)
+	for _, key := range keys {
+		trans, ok := transformValues[key]
+		if ok {
+			output[key] = trans.transform(config.RawData[key])
+		} else {
+			output[key] = config.RawData[key]
+		}
+	}
+	return output
 }
 
 func mapWithDefaults(defaultValue string) Transformer {

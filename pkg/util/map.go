@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"reflect"
 )
 
-func StringToMap (data string) map[string]string {
+func StringToMap(data string) map[string]string {
 	var runtimeConfigOptions = make(map[string]string)
 
 	split := strings.Split(data, ",")
@@ -42,6 +43,21 @@ func MergeMaps(newValues map[string]string, defaults map[string]string) map[stri
 	}
 
 	return mergeOutput;
+}
+
+func MapKeys(input...interface{}) []string {
+	allKeys := make(map[string]string);
+
+	for _, val := range input {
+		aMap := reflect.ValueOf(val)
+		if aMap.Kind() == reflect.Map {
+			for _, key := range aMap.MapKeys() {
+				allKeys[key.String()] = "";
+			}
+		}
+	}
+
+	return sortedKeyValues(allKeys)
 }
 
 func sortedKeyValues(input map[string]string) []string {

@@ -322,15 +322,17 @@ The default expiry period for certificates is **17520h** (2 years). Certificates
 
 ## Kubernetes Api Server Options
 
-Kubernetes api versions and extensions can be enabled or disabled as required in the plan file
+Kubernetes api server options can be set or overridden in the plan file.
 
 ```
 cluster:
 ...
   api_server:
-    runtime_config:
-      "batch/v2alpha1": "true"
-      "extensions/v1beta1/ingress": "false"
+    "audit-log-path": "/var/log/kube-apiserver.log"
+    "event-ttl": "2h0m0s"
+    "runtime-config": "batch/v2alpha1=true"
 ```
 
-By default `extensions/v1beta1` and `extensions/v1beta1/networkpolicies` are enabled and will need to be explicitly disabled if not required. Be aware that invalid extensions will cause the api-server to fail initialisation.
+By default `runtime-config``extensions/v1beta1` and `extensions/v1beta1/networkpolicies` are enabled and will need to be explicitly disabled if not required. Be aware that invalid extensions will cause the api-server to fail initialisation.
+
+Any values under the api_server tag will be passed to the API Server, whether valid or invalid. Kismatic validation will prevent overriding of critical values, but this can be bypassed with the `--skip-preflight` option.

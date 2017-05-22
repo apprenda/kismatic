@@ -28,7 +28,7 @@ func TestMergeMapsAddsValues(t *testing.T) {
 	var input = map[string]string{"ckey1": "value1", "bkey3": "value3"}
 	var defaultValues = map[string]string{"zkey2":"value2"}
 
-	output := MergeMaps(input,defaultValues)
+	output := MergeMaps(input, defaultValues)
 
 	assertEqual(t, expected, output)
 }
@@ -38,7 +38,19 @@ func TestMergeMapsDoesNotOverrideInputValues(t *testing.T) {
 	var input = map[string]string{"ckey1": "value1", "bkey3": "value3", "zkey2":"value2"}
 	var defaultValues = map[string]string{"zkey2":"value7"}
 
-	output := MergeMaps(input,defaultValues)
+	output := MergeMaps(input, defaultValues)
+
+	assertEqual(t, expected, output)
+}
+
+func TestUniqueListOfKeys(t *testing.T) {
+	var map1 = map[string]string{"ckey1": "value1", "zkey2":"value2", "bkey3": "value3"}
+	var map2 = map[string]string{"ckey1": "value1", "zkey2":"value2", "dkey4": "value4"}
+	var map3 = map[string]string{"ckey5": "value5", "zkey2":"value2", "dkey6": "value6"}
+
+	expected := []string{"bkey3", "ckey1", "ckey5", "dkey4", "dkey6", "zkey2"}
+
+	output := MapKeys(map1, map2, map3)
 
 	assertEqual(t, expected, output)
 }
