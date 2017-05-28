@@ -35,14 +35,8 @@
         shell: cp {{ kubelet_pod_manifests_dir }}/kube-apiserver.yaml {{ kubelet_pod_manifests_backup_dir }}/kube-apiserver.yaml && rm -f {{ kubelet_pod_manifests_dir }}/kube-apiserver.yaml
         when: pod_stat is defined and pod_stat.stat.exists
       - name: wait until kube-apiserver is stopped
-        uri: url="https://127.0.0.1:{{ kubernetes_master_insecure_port }}/heatlhz"  # use the local insecure port
-        when: pod_stat is defined and pod_stat.stat.exists
-        register: healthz
-        failed_when: "healthz|success"  # wait until server is down
-        until: "healthz|failed"
-        retries: 30
-        delay: 1
-      - name: fail if kube-apiserver was not stopped
-        fail:
-          msg: "Timed out waiting for kube-apiserver to be stopped."
-        when: pod_stat is defined and pod_stat.stat.exists and healthz|failed
+        wait_for:
+          port: "{{ kubernetes_master_insecure_port }}"
+          state: stopped
+          delay: 1
+          timeout: 30

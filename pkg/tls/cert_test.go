@@ -129,11 +129,13 @@ func TestGenerateNewCertificate(t *testing.T) {
 
 func TestCertValid(t *testing.T) {
 	tests := []struct {
-		expectedCN   string
-		expectedSANs []string
-		certCN       string
-		certSANs     []string
-		valid        bool
+		expectedCN            string
+		expectedSANs          []string
+		expectedOrganizations []string
+		certCN                string
+		certSANs              []string
+		certOrganizations     []string
+		valid                 bool
 	}{
 		{
 			expectedCN:   "node1",
@@ -258,6 +260,21 @@ func TestCertValid(t *testing.T) {
 			certSANs:     []string{"node1", "10.0.0.1", "192.168.99.101"},
 			valid:        true,
 		},
+		{
+			expectedOrganizations: []string{"one", "two"},
+			certOrganizations:     []string{"one", "two"},
+			valid:                 true,
+		},
+		{
+			expectedOrganizations: []string{"one", "two"},
+			certOrganizations:     []string{},
+			valid:                 false,
+		},
+		{
+			expectedOrganizations: []string{"one", "two"},
+			certOrganizations:     []string{"one"},
+			valid:                 false,
+		},
 	}
 
 	tempDir, err := ioutil.TempDir("", "cert-tests")
@@ -277,56 +294,62 @@ func TestCertValid(t *testing.T) {
 		Profile:    "kubernetes",
 	}
 
-	// check if exists
-	valid, warn, err := CertValid(tests[0].expectedCN, tests[0].expectedSANs, "doesnotexist", tempDir)
-	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-	}
-	if valid != false {
-		t.Errorf("Expected to be false, instead got %t with warning: %v\n", valid, warn)
+	// Assert that the method returns an error if the cert does not exist
+	_, err = CertValid(tests[0].expectedCN, tests[0].expectedSANs, tests[0].expectedOrganizations, "doesnotexist", tempDir)
+	if err == nil {
+		t.Errorf("expected an error, as the certificate does not exist.")
 	}
 
 	for i, test := range tests {
-		key, cert, err := NewCert(ca, *buildReq(test.certCN, test.certSANs))
+		key, cert, err := NewCert(ca, *buildReq(test.certCN, test.certSANs, test.certOrganizations))
 		if err != nil {
 			t.Error(err)
 		}
 		name := "cert-test-" + strconv.Itoa(i)
 		certPath := filepath.Join(tempDir, name+".pem")
 		keyPath := filepath.Join(tempDir, name+"-key.pem")
-		fCert, _ := os.Create(certPath)
-		fCert.Write(cert)
-		fKey, _ := os.Create(keyPath)
-		fKey.Write(key)
+		fCert, err := os.Create(certPath)
+		if err != nil {
+			t.Fatalf("failed to create certificate: %v", err)
+		}
+		if _, err := fCert.Write(cert); err != nil {
+			t.Fatalf("failed to write certificate: %v", err)
+		}
+		fKey, err := os.Create(keyPath)
+		if err != nil {
+			t.Fatalf("failed to  create private key file: %v", err)
+		}
+		if _, err := fKey.Write(key); err != nil {
+			t.Fatalf("failed to write certificate: %v", err)
+		}
 
-		valid, warn, err := CertValid(test.expectedCN, test.expectedSANs, name, tempDir)
+		warn, err := CertValid(test.expectedCN, test.expectedSANs, test.expectedOrganizations, name, tempDir)
 		if err != nil {
 			t.Errorf("Unexpected error for %d: %v", i, err)
 		}
-		if test.valid != valid {
-			t.Errorf("Expected to be %t, instead got %t for %d with warning: %v\n", test.valid, valid, i, warn)
+		if test.valid && len(warn) > 0 {
+			t.Errorf("Test %d - Expected a valid certificate, but got validation warnings: %v: \n", i, warn)
+		}
+		if !test.valid && len(warn) == 0 {
+			t.Errorf("Test %d - Expected an invalid certificate, but did not get validation warnings", i)
 		}
 	}
 }
 
-func buildReq(CN string, SANs []string) *csr.CertificateRequest {
-	return &csr.CertificateRequest{
+func buildReq(CN string, SANs []string, organizations []string) *csr.CertificateRequest {
+	req := &csr.CertificateRequest{
 		CN: CN,
 		KeyRequest: &csr.BasicKeyRequest{
 			A: "rsa",
 			S: 2048,
 		},
 		Hosts: SANs,
-		Names: []csr.Name{
-			{
-				C:  "US",
-				L:  "Troy",
-				O:  "Kubernetes",
-				OU: "Cluster",
-				ST: "New York",
-			},
-		},
 	}
+	for _, org := range organizations {
+		req.Names = append(req.Names, csr.Name{O: org})
+	}
+
+	return req
 }
 
 func cleanup(dir string, t *testing.T) {

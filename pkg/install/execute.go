@@ -2,6 +2,7 @@ package install
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/apprenda/kismatic/pkg/ansible"
 	"github.com/apprenda/kismatic/pkg/install/explain"
+	"github.com/apprenda/kismatic/pkg/tls"
 	"github.com/apprenda/kismatic/pkg/util"
 )
 
@@ -29,7 +31,7 @@ type PreFlightExecutor interface {
 type Executor interface {
 	PreFlightExecutor
 	Install(p *Plan) error
-	GenerateCertificates(p *Plan) error
+	GenerateCertificates(p *Plan, useExistingCA bool) error
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunPlay(string, *Plan) error
@@ -49,9 +51,6 @@ type DiagnosticsExecutor interface {
 
 // ExecutorOptions are used to configure the executor
 type ExecutorOptions struct {
-	// SkipCAGeneration determines whether the Certificate Authority should
-	// be generated. If false, an existing CA file must exist.
-	SkipCAGeneration bool
 	// GeneratedAssetsDirectory is the location where generated assets
 	// are to be stored
 	GeneratedAssetsDirectory string
@@ -243,8 +242,44 @@ func (ae *ansibleExecutor) execute(t task) error {
 }
 
 // GenerateCertificatesprivate generates keys and certificates for the cluster, if needed
-func (ae *ansibleExecutor) GenerateCertificates(p *Plan) error {
-	return ae.generateTLSAssets(p)
+func (ae *ansibleExecutor) GenerateCertificates(p *Plan, useExistingCA bool) error {
+	if err := os.MkdirAll(ae.certsDir, 0777); err != nil {
+		return fmt.Errorf("error creating directory %s for storing TLS assets: %v", ae.certsDir, err)
+	}
+
+	// Generate cluster Certificate Authority
+	util.PrintHeader(ae.stdout, "Configuring Certificates", '=')
+
+	var caCert *tls.CA
+	var err error
+	if useExistingCA {
+		exists, err := ae.pki.CertificateAuthorityExists()
+		if err != nil {
+			return fmt.Errorf("error checking if CA exists: %v", err)
+		}
+		if !exists {
+			return errors.New("The Certificate Authority is required, but it was not found.")
+		}
+		caCert, err = ae.pki.GetClusterCA()
+		if err != nil {
+			return fmt.Errorf("error reading CA certificate: %v", err)
+		}
+
+	} else {
+		caCert, err = ae.pki.GenerateClusterCA(p)
+		if err != nil {
+			return fmt.Errorf("error generating CA for the cluster: %v", err)
+		}
+	}
+
+	// Generate node and user certificates
+	err = ae.pki.GenerateClusterCertificates(p, caCert)
+	if err != nil {
+		return fmt.Errorf("error generating certificates for the cluster: %v", err)
+	}
+
+	util.PrettyPrintOk(ae.stdout, "Cluster certificates can be found in the %q directory", ae.options.GeneratedAssetsDirectory)
+	return nil
 }
 
 // Install the cluster according to the installation plan
@@ -733,28 +768,6 @@ func (ae *ansibleExecutor) createRunDirectory(runName string) (string, error) {
 		return "", fmt.Errorf("error creating directory: %v", err)
 	}
 	return runDirectory, nil
-}
-
-func (ae *ansibleExecutor) generateTLSAssets(p *Plan) error {
-	if err := os.MkdirAll(ae.certsDir, 0777); err != nil {
-		return fmt.Errorf("error creating directory %s for storing TLS assets: %v", ae.certsDir, err)
-	}
-
-	// Generate cluster Certificate Authority
-	util.PrintHeader(ae.stdout, "Configuring Certificates", '=')
-	ca, err := ae.pki.GenerateClusterCA(p)
-	if err != nil {
-		return fmt.Errorf("error generating CA for the cluster: %v", err)
-	}
-
-	// Generate node and user certificates
-	err = ae.pki.GenerateClusterCertificates(p, ca)
-	if err != nil {
-		return fmt.Errorf("error generating certificates for the cluster: %v", err)
-	}
-
-	util.PrettyPrintOk(ae.stdout, "Cluster certificates can be found in the %q directory", ae.options.GeneratedAssetsDirectory)
-	return nil
 }
 
 func (ae *ansibleExecutor) ansibleRunnerWithExplainer(explainer explain.AnsibleEventExplainer, ansibleLog io.Writer, runDirectory string) (ansible.Runner, *explain.AnsibleEventStreamExplainer, error) {

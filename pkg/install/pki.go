@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"sort"
 
 	"github.com/apprenda/kismatic/pkg/tls"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -11,11 +12,20 @@ import (
 )
 
 const (
-	adminUser                    = "admin"
-	adminGroup                   = "system:masters"
-	dockerRegistryCertFilename   = "docker"
-	serviceAccountCertFilename   = "service-account"
-	serviceAccountCertCommonName = "kube-service-account"
+	adminUser                           = "admin"
+	adminGroup                          = "system:masters"
+	adminCertFilename                   = "admin"
+	dockerRegistryCertFilename          = "docker-registry"
+	serviceAccountCertFilename          = "service-account"
+	serviceAccountCertCommonName        = "kube-service-account"
+	schedulerCertFilenamePrefix         = "kube-scheduler"
+	schedulerUser                       = "system:kube-scheduler"
+	controllerManagerCertFilenamePrefix = "kube-controller-manager"
+	controllerManagerUser               = "system:kube-controller-manager"
+	kubeProxyCertFilenamePrefix         = "kube-proxy"
+	kubeProxyUser                       = "system:kube-proxy"
+	kubeletUserPrefix                   = "system:node"
+	kubeletGroup                        = "system:nodes"
 )
 
 // The PKI provides a way for generating certificates for the cluster described by the Plan
@@ -35,6 +45,193 @@ type LocalPKI struct {
 	CASigningProfile        string
 	GeneratedCertsDirectory string
 	Log                     io.Writer
+}
+
+type certificateSpec struct {
+	description           string
+	filename              string
+	commonName            string
+	subjectAlternateNames []string
+	organizations         []string
+}
+
+func (s certificateSpec) equal(other certificateSpec) bool {
+	prelimEqual := s.description == other.description &&
+		s.filename == other.filename &&
+		s.commonName == other.commonName &&
+		len(s.subjectAlternateNames) == len(other.subjectAlternateNames) &&
+		len(s.organizations) == len(other.organizations)
+	if !prelimEqual {
+		return false
+	}
+	// Compare subject alt. names
+	thisSAN := make([]string, len(s.subjectAlternateNames))
+	otherSAN := make([]string, len(other.subjectAlternateNames))
+	// Clone and sort
+	copy(thisSAN, s.subjectAlternateNames)
+	copy(otherSAN, other.subjectAlternateNames)
+	sort.Strings(thisSAN)
+	sort.Strings(otherSAN)
+
+	for _, x := range thisSAN {
+		for _, y := range otherSAN {
+			if x != y {
+				return false
+			}
+		}
+	}
+	// Compare organizations
+	thisOrgs := make([]string, len(s.organizations))
+	otherOrgs := make([]string, len(other.organizations))
+	// clone and sort
+	copy(thisOrgs, s.organizations)
+	copy(otherOrgs, other.organizations)
+	sort.Strings(thisOrgs)
+	sort.Strings(otherOrgs)
+
+	for _, x := range thisOrgs {
+		for _, y := range otherOrgs {
+			if x != y {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// returns a list of specs for all the certs that are required for the node
+func certManifestForNode(plan Plan, node Node) ([]certificateSpec, error) {
+	m := []certificateSpec{}
+	roles := plan.GetRolesForIP(node.IP)
+
+	// Certificates for etcd
+	if contains("etcd", roles) {
+		san := []string{node.Host, node.IP, "127.0.0.1"}
+		if node.InternalIP != "" {
+			san = append(san, node.InternalIP)
+		}
+		m = append(m, certificateSpec{
+			description:           fmt.Sprintf("%s etcd server", node.Host),
+			filename:              fmt.Sprintf("%s-etcd", node.Host),
+			commonName:            node.Host,
+			subjectAlternateNames: san,
+		})
+	}
+
+	// Certificates for master
+	if contains("master", roles) {
+		// API Server certificate
+		san, err := clusterCertsSubjectAlternateNames(plan)
+		if err != nil {
+			return nil, err
+		}
+		san = append(san, node.Host, node.IP, "127.0.0.1")
+		if node.InternalIP != "" {
+			san = append(san, node.InternalIP)
+		}
+		if !contains(plan.Master.LoadBalancedFQDN, san) {
+			san = append(san, plan.Master.LoadBalancedFQDN)
+		}
+		if !contains(plan.Master.LoadBalancedShortName, san) {
+			san = append(san, plan.Master.LoadBalancedShortName)
+		}
+		m = append(m, certificateSpec{
+			description:           fmt.Sprintf("%s API server", node.Host),
+			filename:              fmt.Sprintf("%s-apiserver", node.Host),
+			commonName:            node.Host,
+			subjectAlternateNames: san,
+		})
+		// Controller manager certificate
+		m = append(m, certificateSpec{
+			description: "kubernetes controller manager",
+			filename:    controllerManagerCertFilenamePrefix,
+			commonName:  controllerManagerUser,
+		})
+		// Scheduler client certificate
+		m = append(m, certificateSpec{
+			description: "kubernetes scheduler",
+			filename:    schedulerCertFilenamePrefix,
+			commonName:  schedulerUser,
+		})
+		// Certificate for signing service account tokens
+		m = append(m, certificateSpec{
+			description: "service account signing",
+			filename:    serviceAccountCertFilename,
+			commonName:  serviceAccountCertCommonName,
+		})
+	}
+
+	// Kubelet and kube-proxy client certificate
+	if containsAny([]string{"master", "worker", "ingress", "storage"}, roles) {
+		m = append(m, certificateSpec{
+			description:   fmt.Sprintf("%s kubelet", node.Host),
+			filename:      fmt.Sprintf("%s-kubelet", node.Host),
+			commonName:    fmt.Sprintf("%s:%s", kubeletUserPrefix, node.Host),
+			organizations: []string{kubeletGroup},
+		})
+
+		m = append(m, certificateSpec{
+			description: "kube-proxy",
+			filename:    kubeProxyCertFilenamePrefix,
+			commonName:  kubeProxyUser,
+		})
+		// etcd client certificate
+		// all nodes need to be able to talk to etcd b/c of calico
+		m = append(m, certificateSpec{
+			description: "etcd client",
+			filename:    "etcd-client",
+			commonName:  "etcd-client",
+		})
+	}
+
+	return m, nil
+}
+
+// returns a list of cert specs for the cluster described in the plan file
+func certManifestForCluster(plan Plan) ([]certificateSpec, error) {
+	m := []certificateSpec{}
+
+	// Certificate for nodes
+	nodes := plan.GetUniqueNodes()
+	for _, n := range nodes {
+		nodeManifest, err := certManifestForNode(plan, n)
+		if err != nil {
+			return nil, err
+		}
+
+		// Some nodes share common certificates between them. E.g. the kube-proxy client cert.
+		// Before appending to the manifest, we ensure that this cert is not already in it.
+		for _, s := range nodeManifest {
+			if !certSpecInManifest(s, m) {
+				m = append(m, s)
+			}
+		}
+	}
+
+	// Certificate for docker registry
+	if plan.DockerRegistry.SetupInternal {
+		dockerRegistryNode := plan.Master.Nodes[0]
+		san := []string{dockerRegistryNode.Host, dockerRegistryNode.IP}
+		if dockerRegistryNode.InternalIP != "" {
+			san = append(san, dockerRegistryNode.InternalIP)
+		}
+		m = append(m, certificateSpec{
+			description:           "internal private docker registry",
+			filename:              dockerRegistryCertFilename,
+			commonName:            dockerRegistryNode.Host,
+			subjectAlternateNames: san,
+		})
+	}
+
+	// Admin certificate
+	m = append(m, certificateSpec{
+		description:   "admin client",
+		filename:      adminCertFilename,
+		commonName:    adminUser,
+		organizations: []string{adminGroup},
+	})
+
+	return m, nil
 }
 
 // CertificateAuthorityExists returns true if the CA for the cluster exists
@@ -96,295 +293,135 @@ func (lp *LocalPKI) GenerateClusterCertificates(p *Plan, ca *tls.CA) error {
 	if lp.Log == nil {
 		lp.Log = ioutil.Discard
 	}
-	nodes := p.getAllNodes()
-	seenNodes := map[string]bool{}
-	for _, n := range nodes {
-		// Only generate certs once for each node, nodes can be in more than one group
-		if _, ok := seenNodes[n.Host]; ok {
+
+	manifest, err := certManifestForCluster(*p)
+	if err != nil {
+		return err
+	}
+
+	for _, s := range manifest {
+		exists, err := tls.CertKeyPairExists(s.filename, lp.GeneratedCertsDirectory)
+		if err != nil {
+			return err
+		}
+		if exists {
+			warn, err := tls.CertValid(s.commonName, s.subjectAlternateNames, s.organizations, s.filename, lp.GeneratedCertsDirectory)
+			if err != nil {
+				return err
+			}
+			if len(warn) > 0 {
+				util.PrettyPrintErr(lp.Log, "Found certificate for %s, but it is not valid", s.description)
+				util.PrintValidationErrors(lp.Log, warn)
+				return fmt.Errorf("invalid certificate found for %q", s.description)
+			}
+			// This cert is valid, move on
+			util.PrettyPrintOk(lp.Log, "Found valid certificate for %s", s.description)
 			continue
 		}
-		seenNodes[n.Host] = true
-		if err := lp.GenerateNodeCertificate(p, n, ca); err != nil {
+
+		// Cert doesn't exist. Generate it
+		if err := generateCert(ca, lp.GeneratedCertsDirectory, s); err != nil {
 			return err
 		}
-	}
-	// Create certs for docker registry if it's missing
-	if p.DockerRegistry.SetupInternal {
-		if err := lp.generateDockerRegistryCert(p, ca); err != nil {
-			return err
-		}
-	}
-	// Create key for service account signing
-	if err := lp.generateServiceAccountCert(p, ca); err != nil {
-		return err
-	}
-	// Create the admin user's certificate
-	if err := lp.generateUserCert(p, ca, adminUser, []string{adminGroup}); err != nil {
-		return err
+		util.PrettyPrintOk(lp.Log, "Generated certificate for %s", s.description)
 	}
 	return nil
 }
 
-// ValidateClusterCertificates validates all certificates in the cluster
-func (lp *LocalPKI) ValidateClusterCertificates(p *Plan) (warn []error, err []error) {
+// ValidateClusterCertificates validates any certificates that already exist
+// in the expected directory.
+func (lp *LocalPKI) ValidateClusterCertificates(p *Plan) (warns []error, errs []error) {
 	if lp.Log == nil {
 		lp.Log = ioutil.Discard
 	}
-	// Validate node certificates
-	nodes := p.getAllNodes()
-	seenNodes := map[string]bool{}
-	for _, n := range nodes {
-		// Only generate certs once for each node, nodes can be in more than one group
-		if _, ok := seenNodes[n.Host]; ok {
+	manifest, err := certManifestForCluster(*p)
+	if err != nil {
+		return nil, []error{err}
+	}
+	for _, s := range manifest {
+		exists, err := tls.CertKeyPairExists(s.filename, lp.GeneratedCertsDirectory)
+		if err != nil {
+			errs = append(errs, err)
 			continue
 		}
-		seenNodes[n.Host] = true
-		_, nodeWarn, nodeErr := lp.validateNodeCertificate(p, n)
-		warn = append(warn, nodeWarn...)
+		if !exists {
+			continue // nothing to validate... move on
+		}
+		warn, err := tls.CertValid(s.commonName, s.subjectAlternateNames, s.organizations, s.filename, lp.GeneratedCertsDirectory)
 		if err != nil {
-			err = append(err, nodeErr)
+			errs = append(errs, err)
+		}
+		if len(warn) > 0 {
+			warns = append(warns, warn...)
 		}
 	}
-	// Validate docker registry cert
-	if p.DockerRegistry.SetupInternal {
-		_, dockerWarn, dockerErr := lp.validateDockerRegistryCert(p)
-		warn = append(warn, dockerWarn...)
-		if err != nil {
-			err = append(err, dockerErr)
-		}
-	}
-	// Validate service account certificate
-	_, saWarn, saErr := lp.validateServiceAccountCert()
-	warn = append(warn, saWarn...)
-	if err != nil {
-		err = append(err, saErr)
-	}
-	// Validate admin certificate
-	_, userWarn, userErr := lp.validateUserCert(adminUser, []string{adminGroup})
-	warn = append(warn, userWarn...)
-	if err != nil {
-		err = append(err, userErr)
-	}
-	return warn, err
+	return warns, errs
 }
 
 // GenerateNodeCertificate creates a private key and certificate for the given node
 func (lp *LocalPKI) GenerateNodeCertificate(plan *Plan, node Node, ca *tls.CA) error {
-	commonName := node.Host
-	// Build list of SANs
-	clusterSANs, err := clusterCertsSubjectAlternateNames(plan)
+	m, err := certManifestForNode(*plan, node)
 	if err != nil {
 		return err
 	}
-	nodeSANs := append(clusterSANs, node.Host, node.IP)
-	if node.InternalIP != "" {
-		nodeSANs = append(nodeSANs, node.InternalIP)
-	}
-	if isMasterNode(*plan, node) {
-		if plan.Master.LoadBalancedFQDN != "" {
-			nodeSANs = append(nodeSANs, plan.Master.LoadBalancedFQDN)
+	for _, s := range m {
+		exists, err := tls.CertKeyPairExists(s.filename, lp.GeneratedCertsDirectory)
+		if err != nil {
+			return err
 		}
-		if plan.Master.LoadBalancedShortName != "" {
-			nodeSANs = append(nodeSANs, plan.Master.LoadBalancedShortName)
+		if exists {
+			warn, err := tls.CertValid(s.commonName, s.subjectAlternateNames, s.organizations, s.filename, lp.GeneratedCertsDirectory)
+			if err != nil {
+				return err
+			}
+			if len(warn) > 0 {
+				util.PrettyPrintErr(lp.Log, "Found certificate for %s, but it is not valid", s.description)
+				util.PrintValidationErrors(lp.Log, warn)
+				return fmt.Errorf("invalid certificate found for %q", s.description)
+			}
+			// This cert is valid, move on
+			util.PrettyPrintOk(lp.Log, "Found valid certificate for %s", s.description)
+			continue
 		}
-	}
-
-	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(commonName, nodeSANs, []string{}, node.Host, lp.GeneratedCertsDirectory)
-	if err != nil {
-		return err
-	}
-	if warn != nil && len(warn) > 0 {
-		util.PrettyPrintErr(lp.Log, "Found key and certificate for node %q but it is not valid", node.Host)
-		util.PrintValidationErrors(lp.Log, warn)
-		return fmt.Errorf("error verifying certificates for node %q", node.Host)
-	}
-	if valid {
-		util.PrettyPrintOk(lp.Log, "Found valid key and certificate for node %q", node.Host)
-		return nil
-	}
-
-	util.PrettyPrintOk(lp.Log, "Generating certificates for host %q", node.Host)
-
-	key, cert, err := generateCert(ca, commonName, nodeSANs)
-	if err != nil {
-		return fmt.Errorf("error during cluster cert generation: %v", err)
-	}
-	err = tls.WriteCert(key, cert, node.Host, lp.GeneratedCertsDirectory)
-	if err != nil {
-		return fmt.Errorf("error writing cert files for host %q: %v", node.Host, err)
+		// Cert doesn't exist. Generate it
+		if err := generateCert(ca, lp.GeneratedCertsDirectory, s); err != nil {
+			return err
+		}
+		util.PrettyPrintOk(lp.Log, "Generated certificate for %s", s.description)
 	}
 	return nil
 }
 
-func (lp *LocalPKI) validateNodeCertificate(p *Plan, node Node) (valid bool, warn []error, err error) {
-	CN := node.Host
-	// Build list of SANs
-	clusterSANs, err := clusterCertsSubjectAlternateNames(p)
-	if err != nil {
-		return false, nil, err
-	}
-	nodeSANs := append(clusterSANs, node.Host, node.IP)
-	if node.InternalIP != "" {
-		nodeSANs = append(nodeSANs, node.InternalIP)
-	}
-	if isMasterNode(*p, node) {
-		if p.Master.LoadBalancedFQDN != "" {
-			nodeSANs = append(nodeSANs, p.Master.LoadBalancedFQDN)
-		}
-		if p.Master.LoadBalancedShortName != "" {
-			nodeSANs = append(nodeSANs, p.Master.LoadBalancedShortName)
-		}
-	}
-
-	return tls.CertExistsAndValid(CN, nodeSANs, []string{}, node.Host, lp.GeneratedCertsDirectory)
-}
-
-func (lp *LocalPKI) generateDockerRegistryCert(p *Plan, ca *tls.CA) error {
-	// Default registry will be deployed on the first master
-	n := p.Master.Nodes[0]
-	commonName := n.Host
-	SANs := []string{n.Host, n.IP}
-	if n.InternalIP != "" {
-		SANs = append(SANs, n.InternalIP)
-	}
-
-	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(commonName, SANs, []string{}, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
-	if err != nil {
-		return err
-	}
-	if warn != nil && len(warn) > 0 {
-		util.PrettyPrintErr(lp.Log, "Found key and certificate for docker registry but it is not valid")
-		util.PrintValidationErrors(lp.Log, warn)
-		return fmt.Errorf("error verifying certificates for docker registry")
-	}
-	if valid {
-		util.PrettyPrintOk(lp.Log, "Found certificate for docker registry")
-		return nil
-	}
-
-	util.PrettyPrintOk(lp.Log, "Generating certificates for docker registry")
-
-	dockerKey, dockerCert, err := generateCert(ca, commonName, SANs)
-	if err != nil {
-		return fmt.Errorf("error during user cert generation: %v", err)
-	}
-	err = tls.WriteCert(dockerKey, dockerCert, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
-	if err != nil {
-		return fmt.Errorf("error writing cert files for docker registry")
-	}
-	return nil
-}
-
-func (lp *LocalPKI) validateDockerRegistryCert(p *Plan) (valid bool, warn []error, err error) {
-	// Default registry will be deployed on the first master
-	n := p.Master.Nodes[0]
-	CN := n.Host
-	SANs := []string{n.Host, n.IP}
-	if n.InternalIP != "" {
-		SANs = append(SANs, n.InternalIP)
-	}
-
-	return tls.CertExistsAndValid(CN, SANs, []string{}, dockerRegistryCertFilename, lp.GeneratedCertsDirectory)
-}
-
-func (lp *LocalPKI) generateServiceAccountCert(p *Plan, ca *tls.CA) error {
-	SANs := []string{}
-	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(serviceAccountCertCommonName, SANs, []string{}, serviceAccountCertFilename, lp.GeneratedCertsDirectory)
-	if err != nil {
-		return err
-	}
-	if warn != nil && len(warn) > 0 {
-		util.PrettyPrintErr(lp.Log, "Found key and certificate for service account but it is not valid")
-		util.PrintValidationErrors(lp.Log, warn)
-		return fmt.Errorf("error verifying certificates for service account")
-	}
-	if valid {
-		util.PrettyPrintOk(lp.Log, "Found key and certificate for service accounts")
-		return nil
-	}
-	util.PrettyPrintOk(lp.Log, "Generating certificates for service accounts")
-
-	key, cert, err := generateCert(ca, serviceAccountCertCommonName, SANs)
-	if err != nil {
-		return fmt.Errorf("error generating service account certs: %v", err)
-	}
-	if err = tls.WriteCert(key, cert, serviceAccountCertFilename, lp.GeneratedCertsDirectory); err != nil {
-		return fmt.Errorf("error writing generated service account cert: %v", err)
-	}
-	return nil
-}
-
-func (lp *LocalPKI) validateServiceAccountCert() (valid bool, warn []error, err error) {
-	SANs := []string{}
-	return tls.CertExistsAndValid(serviceAccountCertCommonName, SANs, []string{}, serviceAccountCertFilename, lp.GeneratedCertsDirectory)
-}
-
-func (lp *LocalPKI) generateUserCert(p *Plan, ca *tls.CA, user string, groups []string) error {
-	SANs := []string{user}
-
-	// Don't generate if the key pair exists and valid
-	valid, warn, err := tls.CertExistsAndValid(user, SANs, groups, user, lp.GeneratedCertsDirectory)
-	if err != nil {
-		return err
-	}
-	if warn != nil && len(warn) > 0 {
-		util.PrettyPrintErr(lp.Log, "Found key and certificate for user %q but it is not valid", user)
-		util.PrintValidationErrors(lp.Log, warn)
-		return fmt.Errorf("error verifying certificates for user %q", user)
-	}
-	if valid {
-		util.PrettyPrintOk(lp.Log, "Found key and certificate for user %q", user)
-		return nil
-	}
-
-	util.PrettyPrintOk(lp.Log, "Generating certificates for user %q", user)
-
-	adminKey, adminCert, err := generateCert(ca, user, SANs, groups...)
-	if err != nil {
-		return fmt.Errorf("error during user cert generation: %v", err)
-	}
-	err = tls.WriteCert(adminKey, adminCert, user, lp.GeneratedCertsDirectory)
-	if err != nil {
-		return fmt.Errorf("error writing cert files for user %q: %v", user, err)
-	}
-	return nil
-}
-
-func (lp *LocalPKI) validateUserCert(user string, groups []string) (valid bool, warn []error, err error) {
-	SANs := []string{user}
-	return tls.CertExistsAndValid(user, SANs, groups, user, lp.GeneratedCertsDirectory)
-}
-
-func generateCert(ca *tls.CA, commonName string, hostList []string, organizations ...string) (key, cert []byte, err error) {
+func generateCert(ca *tls.CA, certDir string, spec certificateSpec) error {
 	req := csr.CertificateRequest{
-		CN: commonName,
+		CN: spec.commonName,
 		KeyRequest: &csr.BasicKeyRequest{
 			A: "rsa",
 			S: 2048,
 		},
 	}
 
-	if len(hostList) > 0 {
-		req.Hosts = hostList
+	if len(spec.subjectAlternateNames) > 0 {
+		req.Hosts = spec.subjectAlternateNames
 	}
 
-	for _, org := range organizations {
+	for _, org := range spec.organizations {
 		name := csr.Name{O: org}
 		req.Names = append(req.Names, name)
 	}
 
-	key, cert, err = tls.NewCert(ca, req)
+	key, cert, err := tls.NewCert(ca, req)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error generating certs for %q: %v", commonName, err)
+		return fmt.Errorf("error generating certs for %q: %v", spec.description, err)
 	}
-	return key, cert, err
+	if err = tls.WriteCert(key, cert, spec.filename, certDir); err != nil {
+		return fmt.Errorf("error writing cert for %q: %v", spec.description, err)
+	}
+	return nil
 }
 
-func clusterCertsSubjectAlternateNames(plan *Plan) ([]string, error) {
-	kubeServiceIP, err := getKubernetesServiceIP(plan)
+func clusterCertsSubjectAlternateNames(plan Plan) ([]string, error) {
+	kubeServiceIP, err := getKubernetesServiceIP(&plan)
 	if err != nil {
 		return nil, fmt.Errorf("Error getting kubernetes service IP: %v", err)
 	}
@@ -399,9 +436,27 @@ func clusterCertsSubjectAlternateNames(plan *Plan) ([]string, error) {
 	return defaultCertHosts, nil
 }
 
-func isMasterNode(plan Plan, node Node) bool {
-	for _, master := range plan.Master.Nodes {
-		if node == master {
+func contains(x string, xs []string) bool {
+	for _, s := range xs {
+		if x == s {
+			return true
+		}
+	}
+	return false
+}
+
+func containsAny(x []string, xs []string) bool {
+	for _, s := range x {
+		if contains(s, xs) {
+			return true
+		}
+	}
+	return false
+}
+
+func certSpecInManifest(spec certificateSpec, manifest []certificateSpec) bool {
+	for _, s := range manifest {
+		if s.equal(spec) {
 			return true
 		}
 	}

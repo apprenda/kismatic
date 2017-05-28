@@ -29,6 +29,7 @@ type updatingExplainer struct {
 	currentPlayName string
 	currentTask     string
 	failureOccurred bool
+	taskRan         bool
 }
 
 func (e *updatingExplainer) ExplainEvent(ansibleEvent ansible.Event) {
@@ -37,8 +38,14 @@ func (e *updatingExplainer) ExplainEvent(ansibleEvent ansible.Event) {
 
 	case *ansible.PlayStartEvent:
 		if e.currentPlayName != "" {
-			util.PrettyPrintOk(e.out.Bypass(), "%s", e.currentPlayName)
+			// If tasks ran, print OK. Otherwise, print SKIPPED
+			if e.taskRan {
+				util.PrettyPrintOk(e.out.Bypass(), "%s", e.currentPlayName)
+			} else {
+				util.PrettyPrintSkipped(e.out.Bypass(), "%s", e.currentPlayName)
+			}
 		}
+		e.taskRan = false
 		e.currentPlayName = event.Name
 		fmt.Fprintln(e.out, e.currentPlayName)
 
@@ -67,6 +74,7 @@ func (e *updatingExplainer) ExplainEvent(ansibleEvent ansible.Event) {
 		}
 
 	case *ansible.RunnerOKEvent:
+		e.taskRan = true
 		buf := &bytes.Buffer{}
 		fmt.Fprintln(buf, e.currentPlayName)
 		util.PrettyPrintOk(buf, "- %s %s", event.Host, e.currentTask)

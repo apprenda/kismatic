@@ -4,10 +4,6 @@
     file:
       path: "{{ network_plugin_dir }}"
       state: directory
-  - name: copy 10-calico.conf to remote
-    template:
-      src: 10-calico.conf
-      dest: "{{ network_plugin_dir }}/10-calico.conf"
 
   - name: copy kubelet.service to remote
     template:
@@ -19,6 +15,14 @@
     notify:
       - reload services
       - restart kubelet service
+
+  - name: copy kubelet kubeconfig
+    template:
+      src: kubeconfig.j2
+      dest: "{{ kubernetes_kubeconfig.kubelet }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
 
   - name: create static pod manifests directory
     file:

@@ -6,6 +6,7 @@
     until: podVersion.stdout == kismatic_short_version
     retries: 20
     delay: 6
+
   - name: wait until {{ item }} pod is running
     command: kubectl get pods {{ item }} --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
     register: phase
@@ -16,7 +17,7 @@
 
   - name: get docker container ID for {{ item }}
     command: docker ps -a -f name={{ item }} --format {%raw%}"{{.ID}}"{%endraw%} -l
-    register: container_ID
+    register: containerID
     when: phase|failure or "Running" not in phase.stdout
 
     #failed_when: true to always print stderr and stdout
@@ -24,7 +25,7 @@
     command: docker logs {{ container_ID.stdout }}
     register: docker_logs
     failed_when: true
-    when: container_ID is defined and container_ID|success and container_ID.stdout != ""
+    when: containerID is defined and containerID|success and containerID.stdout is defined and containerID.stdout != ""
 
   - name: fail if {{ item }} pod is not running
     fail:

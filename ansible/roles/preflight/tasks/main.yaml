@@ -104,14 +104,6 @@
         local_action: command '{{ kismatic_preflight_checker_local | default(kismatic_preflight_checker) }}' client {{ ansible_host }}:8888 -o json --node-roles {{ ",".join(group_names) }}
         register: out
         become: no
-    rescue: # Need to repeat because of Ansible bug https://github.com/ansible/ansible/issues/18602
-      - name: stop kismatic-inspector service
-        service:
-          name: kismatic-inspector.service
-          state: stopped
-      - name: verify Kismatic Inspector succeeded
-        command: /bin/true
-        failed_when: "out.rc != 0"
     always:
       - name: stop kismatic-inspector service
         service:

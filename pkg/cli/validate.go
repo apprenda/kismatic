@@ -58,22 +58,14 @@ func doValidate(out io.Writer, planner install.Planner, opts *validateOpts) erro
 	util.PrettyPrintOk(out, "Reading installation plan file %q", opts.planFile)
 
 	// Validate plan file
-	ok, errs := install.ValidatePlan(plan)
-	if !ok {
-		util.PrettyPrintErr(out, "Validating installation plan file")
-		util.PrintValidationErrors(out, errs)
-		return fmt.Errorf("Plan file validation error prevents installation from proceeding")
+	if err := validatePlan(out, plan); err != nil {
+		return err
 	}
-	util.PrettyPrintOk(out, "Validating installation plan file")
 
 	// Validate SSH connections
-	ok, errs = install.ValidatePlanSSHConnections(plan)
-	if !ok {
-		util.PrettyPrintErr(out, "Validating SSH connectivity to nodes")
-		util.PrintValidationErrors(out, errs)
-		return fmt.Errorf("SSH connectivity validation error prevents installation from proceeding")
+	if err := validateSSHConnectivity(out, plan); err != nil {
+		return err
 	}
-	util.PrettyPrintOk(out, "Validating SSH connectivity to nodes")
 
 	// get a new pki
 	pki, err := newPKI(out, opts)
@@ -81,7 +73,7 @@ func doValidate(out io.Writer, planner install.Planner, opts *validateOpts) erro
 		return err
 	}
 	// Validate Certificates
-	ok, errs = install.ValidateCertificates(plan, pki)
+	ok, errs := install.ValidateCertificates(plan, pki)
 	if !ok {
 		util.PrettyPrintErr(out, "Validating cluster certificates")
 		util.PrintValidationErrors(out, errs)
@@ -122,4 +114,26 @@ func newPKI(stdout io.Writer, options *validateOpts) (*install.LocalPKI, error) 
 	}
 
 	return pki, nil
+}
+
+func validatePlan(out io.Writer, plan *install.Plan) error {
+	ok, errs := install.ValidatePlan(plan)
+	if !ok {
+		util.PrettyPrintErr(out, "Validating installation plan file")
+		util.PrintValidationErrors(out, errs)
+		return fmt.Errorf("Plan file validation error prevents installation from proceeding")
+	}
+	util.PrettyPrintOk(out, "Validating installation plan file")
+	return nil
+}
+
+func validateSSHConnectivity(out io.Writer, plan *install.Plan) error {
+	ok, errs := install.ValidatePlanSSHConnections(plan)
+	if !ok {
+		util.PrettyPrintErr(out, "Validating SSH connectivity to nodes")
+		util.PrintValidationErrors(out, errs)
+		return fmt.Errorf("SSH connectivity validation error prevents installation from proceeding")
+	}
+	util.PrettyPrintOk(out, "Validating SSH connectivity to nodes")
+	return nil
 }
