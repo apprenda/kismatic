@@ -333,6 +333,4 @@ cluster:
     "runtime-config": "batch/v2alpha1=true"
 ```
 
-By default `runtime-config``extensions/v1beta1` and `extensions/v1beta1/networkpolicies` are enabled and will need to be explicitly disabled if not required. Be aware that invalid extensions will cause the api-server to fail initialisation.
-
-Any values under the api_server tag will be passed to the API Server, whether valid or invalid. Kismatic validation will prevent overriding of critical values, but this can be bypassed with the `--skip-preflight` option.
+Any values under the api_server tag will be passed to the API Server, whether valid or invalid. Kismatic validation will prevent overriding of critical values.

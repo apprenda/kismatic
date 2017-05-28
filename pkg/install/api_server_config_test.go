@@ -3,6 +3,7 @@ package install
 import (
 	"testing"
 	"fmt"
+	"reflect"
 )
 
 func TestValidateFailsForOverridingProtectedValue(t *testing.T) {
@@ -30,7 +31,6 @@ func TestValidatePassesForNoValues(t *testing.T) {
 }
 
 func TestValidatePassesForUnprotectedValues(t *testing.T) {
-
 	config := APIServerConfig{
 		map[string]string{"foobar":"baz"},
 	}
@@ -38,4 +38,10 @@ func TestValidatePassesForUnprotectedValues(t *testing.T) {
 	ok, _ := config.validate()
 
 	assertEqual(t, ok, true)
+}
+
+func assertEqual(t *testing.T, a, b interface{}) {
+	if !reflect.DeepEqual(a, b) {
+		t.Errorf("%v != %v", a, b)
+	}
 }
