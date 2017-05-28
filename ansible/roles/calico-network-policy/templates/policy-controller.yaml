@@ -27,22 +27,22 @@ spec:
       volumes:
         - name: "ca"
           hostPath:
-            path: "{{kubernetes_certificates_ca_path}}"
+            path: "{{ kubernetes_certificates.ca }}"
         - name: "cert"
           hostPath:
-            path: "{{kubernetes_certificates_cert_path}}"
+            path: "{{ kubernetes_certificates.etcd_client }}"
         - name: "key"
           hostPath:
-            path: "{{kubernetes_certificates_key_path}}"
+            path: "{{ kubernetes_certificates.etcd_client_key }}"
       containers:
         - name: calico-policy-controller
-          image: {{ calico_kube_policy_controller_img }}
+          image: "{{ calico_kube_policy_controller_img }}"
           volumeMounts:
-            - mountPath: "{{kubernetes_certificates_ca_path}}"
+            - mountPath: "{{ kubernetes_certificates.ca }}"
               name: "ca"
-            - mountPath: "{{kubernetes_certificates_cert_path}}"
+            - mountPath: "{{ kubernetes_certificates.etcd_client }}"
               name: "cert"
-            - mountPath: "{{kubernetes_certificates_key_path}}"
+            - mountPath: "{{ kubernetes_certificates.etcd_client_key }}"
               name: "key"
           env:
             # The location of the Calico etcd cluster.

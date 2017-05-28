@@ -68,7 +68,7 @@ spec:
           path: "{{ kubernetes_services_kubeconfig_path }}"
       - name: "ssl-certs"
         hostPath:
-          path: "{{ kubernetes_certificates_ca_path }}"
+          path: "{{ kubernetes_certificates.ca }}"
       - name: kube-dns-config
         configMap:
           name: kube-dns
@@ -124,7 +124,7 @@ spec:
         #   name: metrics
         #   protocol: TCP
         volumeMounts:
-        - mountPath: {{ kubernetes_certificates_ca_path }}
+        - mountPath: {{ kubernetes_certificates.ca }}
           name: "ssl-certs"
         - mountPath: /root/.kube/config
           name: "worker-kubeconfig"
@@ -166,7 +166,7 @@ spec:
             cpu: 150m
             memory: 20Mi
         volumeMounts:
-        - mountPath: {{ kubernetes_certificates_ca_path }}
+        - mountPath: {{ kubernetes_certificates.ca }}
           name: "ssl-certs"
         - mountPath: /root/.kube/config
           name: "worker-kubeconfig"

@@ -117,7 +117,7 @@
 5. Add a load balanced endpoint for the master nodes
    * If you have an internal load balancer that offers Virtual IP based load balancing, use that to balance between master nodes
    * If you have access to a DNS, use a CNAME with both master nodes  
-6. Open up [network rules](docs/PLAN.md#firewall-rules) for your machines
+6. Open up [network rules](PLAN.md#firewall-rules) for your machines
 
 ### Cluster Administrator
 1. Download the [latest Kismatic](PROVISION.md#get) for Linux and unpack it to `/opt/kismatic` on the **install machine**.
@@ -191,7 +191,7 @@
 3. Add a load balanced endpoint for the master nodes
    * If you have an internal load balancer that offers Virtual IP based load balancing, use that to balance between master nodes
    * If you have access to a DNS, use a CNAME with both master nodes  
-4. Open up [network rules](docs/PLAN.md#firewall-rules) for all machines
+4. Open up [network rules](PLAN.md#firewall-rules) for all machines
 5. Make sure that the CIDR blocks that will be managed by Kubernetes are not available to DHCP or in use by any other IP address manager. This could cause IP collisions.
 
 ### Cluster Administrator

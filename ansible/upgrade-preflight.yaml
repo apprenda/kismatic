@@ -1,4 +1,10 @@
 ---
+  # Force fact gathering
+  - hosts: all
+    name: "Gather Node Facts"
+    gather_facts: yes
+    tasks: []
+
   # make sure repos cache is updated
   - include: _packages-repo.yaml
     when: allow_package_installation|bool == true

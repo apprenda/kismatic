@@ -146,13 +146,19 @@ func doUpgrade(out io.Writer, opts *upgradeOpts) error {
 		return fmt.Errorf("error reading plan file %q: %v", planFile, err)
 	}
 
-	// Validate SSH connectivity to nodes
-	if ok, errs := install.ValidatePlanSSHConnections(plan); !ok {
-		util.PrettyPrintErr(out, "Validate SSH connectivity to nodes")
-		util.PrintValidationErrors(out, errs)
-		return fmt.Errorf("SSH connectivity validation errors found")
+	// Validate the plan file before we do anything
+	if err = validatePlan(out, plan); err != nil {
+		return err
 	}
-	util.PrettyPrintOk(out, "Validate SSH connectivity to nodes")
+
+	if err = validateSSHConnectivity(out, plan); err != nil {
+		return err
+	}
+
+	// Generate new certs, or use existing ones. Always ensure that the CA exists.
+	if err = executor.GenerateCertificates(plan, true); err != nil {
+		return err
+	}
 
 	// Figure out which nodes to upgrade
 	cv, err := install.ListVersions(plan)
@@ -316,7 +322,7 @@ func upgradeNodes(out io.Writer, plan install.Plan, opts upgradeOpts, nodesNeedU
 	}
 
 	// Get all etcd nodes
-	// Nodes >=v1.3.0-alpha.0 do not need to be upgraded from Calico etcd v2 
+	// Nodes >=v1.3.0-alpha.0 do not need to be upgraded from Calico etcd v2
 	// If any of the nodes fail during the Calico etcd v2 upgrade its safe to rerun on all nodes
 	// Plays are idempotent and check etcd version, will skip if are at target
 	etcdToUpgrade := make([]install.ListableNode, 0)
