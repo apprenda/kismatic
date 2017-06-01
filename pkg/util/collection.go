@@ -32,3 +32,14 @@ func Intersects(first, second []string) bool {
 	}
 	return false
 }
+
+func Contains(find string, list []string) bool {
+	var found bool
+	for _, s := range list {
+		if find == s {
+			found = true
+			break
+		}
+	}
+	return found
+}

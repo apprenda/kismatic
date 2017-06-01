@@ -26,6 +26,9 @@ type PlanAWS struct {
 	UseDirectLVM                 bool
 	ServiceCIDR                  string
 	EnableHelm                   bool
+	AlertManagerPVC              string
+	PrometheusPVC                string
+	GrafanaPVC                   string
 }
 
 const planAWSOverlay = `cluster:
@@ -58,9 +61,21 @@ docker_registry:
   address: {{.DockerRegistryIP}}
   port: {{.DockerRegistryPort}}
   CA: {{.DockerRegistryCAPath}}
-features:
+add_ons:
   package_manager:
     enabled: {{.EnableHelm}}
+    provider: helm
+features:
+  monitoring:
+  - provider: prometheus
+    name: cluster-monitoring
+    namespace: monitoring
+    options:
+      prometheus_config_file: ""
+      grafana_config_file: ""
+      prometheus_pvc_name: {{.PrometheusPVC}}
+      alertmanager_pvc_name: {{.AlertManagerPVC}}
+      grafana_pvc_name: {{.GrafanaPVC}}
 etcd:
   expected_count: {{len .Etcd}}
   nodes:{{range .Etcd}}

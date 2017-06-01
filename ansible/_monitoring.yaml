@@ -1,0 +1,15 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "Configure Cluster Monitoring"
+    remote_user: root
+    become_method: sudo
+    run_once: true
+    vars_files:
+      - group_vars/all.yaml
+
+    environment:
+      KUBECONFIG: "{{ local_kubeconfig_directory }}"
+
+    roles:
+      - role: monitoring

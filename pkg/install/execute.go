@@ -34,7 +34,7 @@ type Executor interface {
 	GenerateCertificates(p *Plan, useExistingCA bool) error
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
-	RunPlay(string, *Plan) error
+	RunPlay(string, *Plan, map[string]string) error
 	AddVolume(*Plan, StorageVolume) error
 	UpgradeEtcd2Nodes(plan Plan, nodesToUpgrade []ListableNode) error
 	UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode, onlineUpgrade bool, maxParallelWorkers int) error
@@ -396,10 +396,16 @@ func setPreflightOptions(p Plan, cc ansible.ClusterCatalog) (*ansible.ClusterCat
 	return &cc, nil
 }
 
-func (ae *ansibleExecutor) RunPlay(playName string, p *Plan) error {
+func (ae *ansibleExecutor) RunPlay(playName string, p *Plan, additionalOpts map[string]string) error {
 	cc, err := ae.buildClusterCatalog(p)
 	if err != nil {
 		return err
+	}
+	if additionalOpts != nil {
+		cc.AdditionalOptions = make(map[string]string)
+		for k, v := range additionalOpts {
+			cc.AdditionalOptions[k] = v
+		}
 	}
 	t := task{
 		name:           "step",

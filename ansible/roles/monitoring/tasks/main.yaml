@@ -1,0 +1,59 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+
+  - name: "determine if prometheus is already running"
+    local_action: command ../../helm list prometheus
+    become: no
+    register: out
+  
+  - name: copy prometheys kismatic.yaml file
+    template: src=prometheus.yaml dest=../../charts/monitoring/prometheus/kismatic.yaml
+    delegate_to: localhost
+    become: no
+    when: '"prometheus" not in out.stdout'
+
+  - name: run helm install prometheus
+    local_action: >
+        command ../../helm install ../../charts/monitoring/prometheus
+        --namespace={{ feature_namespace }}
+        --name={{ feature_name }}-prometheus
+        -f {{ prometheus_config_file }}
+        -f ../../charts/monitoring/prometheus/kismatic.yaml
+    become: no
+    when: '"prometheus" not in out.stdout'
+
+  - name: determine if grafana is already running
+    local_action: command ../../helm list grafana
+    become: no
+    register: out
+
+  - name: copy grafana kismatic.yaml file
+    template: src=grafana.yaml dest=../../charts/monitoring/grafana/kismatic.yaml
+    delegate_to: localhost
+    become: no
+    when: '"grafana" not in out.stdout'
+
+  - name: copy grafana dashboards.yaml file
+    copy:
+      src: dashboards.yaml
+      dest: ../../charts/monitoring/grafana/dashboards.yaml
+    delegate_to: localhost
+    become: no
+    when: '"grafana" not in out.stdout'
+
+  - name: run helm install grafana
+    local_action: >
+        command ../../helm install ../../charts/monitoring/grafana
+        --namespace={{ feature_namespace }}
+        --name={{ feature_name }}-grafana
+        -f ../../charts/monitoring/grafana/dashboards.yaml
+        -f {{ grafana_config_file }}
+        -f ../../charts/monitoring/grafana/kismatic.yaml
+    become: no
+    when: '"grafana" not in out.stdout'
+
+  - name: validate monitoring pods  # don't verify if user is going to create their own PVC/PV
+    include: validate.yaml

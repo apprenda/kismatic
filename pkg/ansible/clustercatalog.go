@@ -69,6 +69,9 @@ type ClusterCatalog struct {
 	DockerDirectLVMDeferredDeletionEnabled bool   `yaml:"docker_direct_lvm_deferred_deletion_enabled"`
 
 	LocalKubeconfigDirectory string `yaml:"local_kubeconfig_directory"`
+
+	// additional options
+	AdditionalOptions map[string]string `yaml:",inline"`
 }
 
 type NFSVolume struct {

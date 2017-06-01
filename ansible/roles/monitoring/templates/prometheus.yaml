@@ -1,0 +1,72 @@
+alertmanager:
+
+  ## alertmanager container image
+  ##
+  image:
+    repository: prom/alertmanager
+    tag: v0.5.1
+    pullPolicy: IfNotPresent
+
+  persistentVolume:
+    ## If true, alertmanager will create/use a Persistent Volume Claim
+    ## If false, use emptyDir
+    ##
+    enabled: {% if alertmanager_pvc_name is defined and alertmanager_pvc_name != "" %}true{% else %}false{% endif %}
+    
+    ## alertmanager data Persistent Volume existing claim name
+    ## Requires alertmanager.persistentVolume.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    existingClaim: {% if alertmanager_pvc_name is defined and alertmanager_pvc_name != "" %}{{ alertmanager_pvc_name }}{% else %}""{% endif %}
+  
+  service:
+    type: NodePort
+
+configmapReload:
+
+  ## configmap-reload container image
+  ##
+  image:
+    repository: jimmidyson/configmap-reload
+    tag: v0.1
+    pullPolicy: IfNotPresent
+
+nodeExporter:
+
+  ## node-exporter container image
+  ##
+  image:
+    repository: prom/node-exporter
+    tag: v0.13.0
+    pullPolicy: IfNotPresent
+
+kubeStateMetrics:
+
+  ## kube-state-metrics container image
+  ##
+  image:
+    repository: gcr.io/google_containers/kube-state-metrics
+    tag: v0.4.1
+    pullPolicy: IfNotPresent
+
+server:
+
+  ## Prometheus server container image
+  ##
+  image:
+    repository: prom/prometheus
+    tag: v1.5.2
+    pullPolicy: IfNotPresent
+
+  persistentVolume:
+    ## If true, alertmanager will create/use a Persistent Volume Claim
+    ## If false, use emptyDir
+    ##
+    enabled: {% if prometheus_pvc_name is defined and prometheus_pvc_name != "" %}true{% else %}false{% endif %}  
+    
+    ## alertmanager data Persistent Volume existing claim name
+    ## Requires alertmanager.persistentVolume.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    existingClaim: {% if prometheus_pvc_name is defined and prometheus_pvc_name != "" %}{{ prometheus_pvc_name }}{% else %}""{% endif %}
+
+  service:
+    type: NodePort

@@ -27,6 +27,16 @@ nginx_version: "stable-alpine"
 busybox_version: "latest"
 pause_version: "3.0"
 apprenda_tcp_healthz_version: "v1.0.0"
+# montiroing
+curl_version: "latest"
+grafana_version: "4.2.0" 
+grafana_watcher_version: "v0.0.4" 
+prom_alertmanager_orig_img: "v0.5.1"
+prom_configmap_reload_version: "v0.1"
+prom_node_exporter_version: "v0.13.0"
+prom_kube_metrics_version: "v0.4.1"
+prometheus_version: "v1.5.2"
+
 glusterfs_server_version_rhel: "3.8.7-1.el7"
 glusterfs_server_version_ubuntu: "3.8.7-ubuntu1~xenial1"
 # RHEL needs dash between name-version, Ubuntu needs equals sign between name=version
@@ -239,6 +249,38 @@ helm_orig_img: gcr.io/kubernetes-helm/tiller:{{ helm_version }}
 helm_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/gcr.io/kubernetes-helm/tiller:{{ helm_version }}"
 helm_img: "{% if load_private_images|bool == true %}{{ helm_priv_img }}{% else %}{{ helm_orig_img }}{% endif %}"
 
+curl_orig_img: appropriate/curl:{{ curl_version }}
+curl_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ curl_orig_img }}"
+curl_img: "{% if load_private_images|bool == true %}{{ curl_priv_img }}{% else %}{{ curl_orig_img }}{% endif %}"
+
+grafana_orig_img: grafana/grafana:{{ grafana_version }}
+grafana_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ grafana_orig_img }}"
+grafana_img: "{% if load_private_images|bool == true %}{{ grafana_priv_img }}{% else %}{{ grafana_orig_img }}{% endif %}"
+
+grafana_watcher_orig_img: quay.io/coreos/grafana-watcher:{{ grafana_watcher_version }}
+grafana_watcher_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ grafana_watcher_orig_img }}"
+grafana_watcher_img: "{% if load_private_images|bool == true %}{{ grafana_watcher_priv_img }}{% else %}{{ grafana_watcher_orig_img }}{% endif %}"
+
+prom_alertmanager_orig_img: prom/alertmanager:{{ prom_alertmanager_version }}
+prom_alertmanager_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ prom_alertmanager_orig_img }}"
+prom_alertmanager_img: "{% if load_private_images|bool == true %}{{ prom_alertmanager_priv_img }}{% else %}{{ prom_alertmanager_orig_img }}{% endif %}"
+
+prom_configmap_reload_orig_img: jimmidyson/configmap-reload:{{ prom_configmap_reload_version }}
+prom_configmap_reload_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ prom_configmap_reload_orig_img }}"
+prom_configmap_reload_img: "{% if load_private_images|bool == true %}{{ prom_configmap_reload_priv_img }}{% else %}{{ prom_configmap_reload_orig_img }}{% endif %}"
+
+prom_node_exporter_orig_img: prom/node-exporter:{{ prom_node_exporter_version }}
+prom_node_exporter_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ prom_node_exporter_orig_img }}"
+prom_node_exporter_img: "{% if load_private_images|bool == true %}{{ prom_node_exporter_priv_img }}{% else %}{{ prom_node_exporter_orig_img }}{% endif %}"
+
+prom_kube_metrics_orig_img: gcr.io/google_containers/kube-state-metrics:{{ prom_kube_metrics_version }}
+prom_kube_metrics_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ prom_kube_metrics_orig_img }}"
+prom_kube_metrics_img: "{% if load_private_images|bool == true %}{{ prom_kube_metrics_priv_img }}{% else %}{{ prom_kube_metrics_orig_img }}{% endif %}"
+
+prometheus_orig_img: prom/prometheus:{{ prometheus_version }}
+prometheus_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/{{ prometheus_orig_img }}"
+prometheus_img: "{% if load_private_images|bool == true %}{{ prometheus_priv_img }}{% else %}{{ prometheus_orig_img }}{% endif %}"
+
 # kismatic packages
 yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
 yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
@@ -269,3 +311,7 @@ volume_base_dir: data/
 volume_mode: 0777
 volume_replica_count: 2
 volume_distribution_count: 1
+
+# Features
+prometheus_config_file: "../../charts/prometheus.yaml"
+grafana_config_file: "../../charts/grafana.yaml"

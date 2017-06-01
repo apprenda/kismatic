@@ -116,23 +116,43 @@ func (c *applyCmd) run() error {
 	}
 
 	// Install Helm
-	if plan.Features.PackageManager.Enabled {
-		util.PrintHeader(c.out, "Installing Helm on the Cluster", '=')
-		home, err := homedir.Dir()
-		if err != nil {
-			return fmt.Errorf("Could not determine helm directory: %v", err)
+	if plan.AddOns.PackageManager.Enabled {
+		switch provider := plan.AddOns.PackageManager.Provider; provider {
+		case "helm":
+			util.PrintHeader(c.out, "Installing Helm on the Cluster", '=')
+			home, err := homedir.Dir()
+			if err != nil {
+				return fmt.Errorf("Could not determine helm directory: %v", err)
+			}
+			helmDir := path.Join(home, ".helm")
+			backupDir := fmt.Sprintf("%s.backup-%s", helmDir, time.Now().Format("2006-01-02-15-04-05"))
+			// Backup helm directory if exists
+			if backedup, err := util.BackupDirectory(helmDir, backupDir); err != nil {
+				return fmt.Errorf("error preparing Helm client: %v", err)
+			} else if backedup {
+				util.PrettyPrintOk(c.out, "Backed up %q directory", helmDir)
+			}
+			// Create a new serviceaccount and run helm init
+			if err := c.executor.RunPlay("_helm.yaml", plan, nil); err != nil {
+				return fmt.Errorf("error configuring Helm RBAC: %v", err)
+			}
 		}
-		helmDir := path.Join(home, ".helm")
-		backupDir := fmt.Sprintf("%s.backup-%s", helmDir, time.Now().Format("2006-01-02-15-04-05"))
-		// Backup helm directory if exists
-		if backedup, err := util.BackupDirectory(helmDir, backupDir); err != nil {
-			return fmt.Errorf("error preparing Helm client: %v", err)
-		} else if backedup {
-			util.PrettyPrintOk(c.out, "Backed up %q directory", helmDir)
-		}
-		// Create a new serviceaccount and run helm init
-		if err := c.executor.RunPlay("_helm.yaml", plan); err != nil {
-			return fmt.Errorf("error configuring Helm RBAC: %v", err)
+	}
+
+	//Monitoring
+	for _, f := range plan.Features.Monitoring {
+		switch provider := f.Provider; provider {
+		case "prometheus":
+			util.PrintHeader(c.out, "Installing Prometheus/Grafana Monitoring on the Cluster", '=')
+			additionalOpts := make(map[string]string)
+			additionalOpts["feature_name"] = f.Name
+			additionalOpts["feature_namespace"] = f.Namespace
+			for k, v := range f.Options {
+				additionalOpts[k] = v
+			}
+			if err := c.executor.RunPlay("_monitoring.yaml", plan, additionalOpts); err != nil {
+				return fmt.Errorf("error installing monitoring: %v", err)
+			}
 		}
 	}
 

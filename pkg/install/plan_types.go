@@ -8,6 +8,22 @@ import (
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
 
+func PackageManagerProviders() []string {
+	return []string{"helm"}
+}
+
+func DefaultPackageManagerProvider() string {
+	return "helm"
+}
+
+func MonitoringProviders() []string {
+	return []string{"prometheus"}
+}
+
+func DefaultMonitoringProvider() string {
+	return "prometheus"
+}
+
 // NetworkConfig describes the cluster's networking configuration
 type NetworkConfig struct {
 	Type             string
@@ -109,6 +125,7 @@ type Plan struct {
 	Cluster        Cluster
 	Docker         Docker
 	DockerRegistry DockerRegistry `yaml:"docker_registry"`
+	AddOns         AddOns         `yaml:"add_ons"`
 	Features       Features
 	Etcd           NodeGroup
 	Master         MasterNodeGroup
@@ -139,12 +156,40 @@ type SSHConnection struct {
 	Node      *Node
 }
 
-type Features struct {
+type AddOns struct {
 	PackageManager PackageManager `yaml:"package_manager"`
 }
 
+type Features struct {
+	Monitoring     []Feature
+	PackageManager *PackageManager `yaml:"package_manager,omitempty"`
+}
+
+type Feature struct {
+	Provider  string
+	Name      string
+	Namespace string
+	Options   map[string]string
+}
+
 type PackageManager struct {
-	Enabled bool
+	Enabled  bool
+	Provider string
+}
+
+type Prometheus struct {
+	ConfigFile          string  `yaml:"config_file"`
+	AlertmanagerStorage Storage `yaml:"alertmanager_storage"`
+	ServerStorage       Storage `yaml:"server_storage"`
+}
+
+type Grafana struct {
+	ConfigFile string `yaml:"config_file"`
+	Storage    Storage
+}
+
+type Storage struct {
+	PersistentVolumeClaim string `yaml:"persistent_volume_claim"`
 }
 
 // GetUniqueNodes returns a list of the unique nodes that are listed in the plan file.

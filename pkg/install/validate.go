@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
+	"github.com/apprenda/kismatic/pkg/util"
 )
 
 // TODO: There is need to run validation against anything that is validatable.
@@ -131,6 +132,13 @@ func (p *Plan) validate() (bool, []error) {
 	v.validateWithErrPrefix("Docker", p.Docker)
 	// on a disconnected_installation a registry must be provided
 	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()})
+	v.validate(&p.AddOns)
+	// Monitroing features require a package manager to install
+	if len(p.Features.Monitoring) > 0 {
+		if p.AddOns.PackageManager.Provider == "" || p.AddOns.PackageManager.Provider == "none" {
+			v.addError(fmt.Errorf("A package manager must be selected when installing cluste monitoring"))
+		}
+	}
 	v.validate(&p.Features)
 	v.validateWithErrPrefix("Etcd nodes", &p.Etcd)
 	v.validateWithErrPrefix("Master nodes", &p.Master)
@@ -217,8 +225,51 @@ func (s *SSHConfig) validate() (bool, []error) {
 	return v.valid()
 }
 
-func (f *Features) validate() (bool, []error) {
+func (f *AddOns) validate() (bool, []error) {
 	v := newValidator()
+	v.validate(&f.PackageManager)
+	return v.valid()
+}
+
+func (p *PackageManager) validate() (bool, []error) {
+	v := newValidator()
+	if p.Enabled {
+		if !util.Contains(p.Provider, PackageManagerProviders()) {
+			v.addError(fmt.Errorf("Package Manager %q is not a valid option %v", p.Provider, PackageManagerProviders()))
+		}
+	}
+	return v.valid()
+}
+
+func (fs *Features) validate() (bool, []error) {
+	v := newValidator()
+	for _, f := range fs.Monitoring {
+		v.validate(f)
+	}
+
+	return v.valid()
+}
+
+func (f Feature) validate() (bool, []error) {
+	v := newValidator()
+	if f.Provider == "" {
+		return v.valid()
+	}
+	if !util.Contains(f.Provider, MonitoringProviders()) {
+		v.addError(fmt.Errorf("Monitoring %q is not a valid option %v", f.Provider, MonitoringProviders()))
+	}
+	if f.Name == "" {
+		v.addError(fmt.Errorf("Monitoring %q name cannot be empty", f.Name))
+	}
+	if f.Namespace == "" {
+		v.addError(fmt.Errorf("Monitoring %q namespace cannot be empty", f.Namespace))
+	}
+	if f.Options["prometheus_config_file"] != "" && !filepath.IsAbs(f.Options["prometheus_config_file"]) {
+		v.addError(fmt.Errorf("Path %q to config file must be absolute", f.Options["prometheus_config_file"]))
+	}
+	if f.Options["grafana_config_file"] != "" && !filepath.IsAbs(f.Options["grafana_config_file"]) {
+		v.addError(fmt.Errorf("Path %q to config file must be absolute", f.Options["grafana_config_file"]))
+	}
 	return v.valid()
 }
 

@@ -38,6 +38,9 @@ type installOptions struct {
 	modifyHostsFiles            bool
 	useDirectLVM                bool
 	serviceCIDR                 string
+	alertManagerPVC             string
+	prometheusPVC               string
+	grafanaPVC                  string
 }
 
 func installKismaticMini(node NodeDeets, sshKey string) error {
@@ -91,6 +94,9 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		UseDirectLVM:                 installOpts.useDirectLVM,
 		ServiceCIDR:                  installOpts.serviceCIDR,
 		EnableHelm:                   enableHelm,
+		AlertManagerPVC:              installOpts.alertManagerPVC,
+		PrometheusPVC:                installOpts.prometheusPVC,
+		GrafanaPVC:                   installOpts.grafanaPVC,
 	}
 	return plan
 }

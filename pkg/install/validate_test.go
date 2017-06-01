@@ -794,3 +794,142 @@ func TestRepository(t *testing.T) {
 		}
 	}
 }
+
+func TestPackageManagerAddOn(t *testing.T) {
+	tests := []struct {
+		p     PackageManager
+		valid bool
+	}{
+		{
+			p: PackageManager{
+				Enabled:  true,
+				Provider: "helm",
+			},
+			valid: true,
+		},
+		{
+			p: PackageManager{
+				Enabled:  false,
+				Provider: "",
+			},
+			valid: true,
+		},
+		{
+			p: PackageManager{
+				Enabled:  false,
+				Provider: "foo",
+			},
+			valid: true,
+		},
+		{
+			p: PackageManager{
+				Enabled:  true,
+				Provider: "",
+			},
+			valid: false,
+		},
+		{
+			p: PackageManager{
+				Enabled:  true,
+				Provider: "foo",
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.p.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
+func TestMonitoringFeature(t *testing.T) {
+	tests := []struct {
+		m     Feature
+		valid bool
+	}{
+		{
+			m: Feature{
+				Provider:  "prometheus",
+				Name:      "cluster-monitoring",
+				Namespace: "monitoring",
+			},
+			valid: true,
+		},
+		{
+			m: Feature{
+				Provider:  "",
+				Name:      "",
+				Namespace: "",
+			},
+			valid: true,
+		},
+		{
+			m: Feature{
+				Provider:  "foo",
+				Name:      "cluster-monitoring",
+				Namespace: "monitoring",
+			},
+			valid: false,
+		},
+		{
+			m: Feature{
+				Provider:  "prometheus",
+				Name:      "",
+				Namespace: "monitoring",
+			},
+			valid: false,
+		},
+		{
+			m: Feature{
+				Provider:  "prometheus",
+				Name:      "cluster-monitoring",
+				Namespace: "",
+			},
+			valid: false,
+		},
+		{
+			m: Feature{
+				Provider:  "prometheus",
+				Name:      "cluster-monitoring",
+				Namespace: "monitoring",
+				Options: map[string]string{
+					"prometheus_config_file": "/absolute",
+					"grafana_config_file":    "/absolute",
+				},
+			},
+			valid: true,
+		},
+		{
+			m: Feature{
+				Provider:  "prometheus",
+				Name:      "cluster-monitoring",
+				Namespace: "monitoring",
+				Options: map[string]string{
+					"prometheus_config_file": "absolute",
+					"grafana_config_file":    "/absolute",
+				},
+			},
+			valid: false,
+		},
+		{
+			m: Feature{
+				Provider:  "prometheus",
+				Name:      "cluster-monitoring",
+				Namespace: "monitoring",
+				Options: map[string]string{
+					"prometheus_config_file": "/absolute",
+					"grafana_config_file":    "absolute",
+				},
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.m.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}

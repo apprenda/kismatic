@@ -77,7 +77,7 @@ func (c stepCmd) run() error {
 		return fmt.Errorf("error reading plan file: %v", err)
 	}
 	util.PrintHeader(c.out, "Running Task", '=')
-	if err := c.executor.RunPlay(c.task, plan); err != nil {
+	if err := c.executor.RunPlay(c.task, plan, nil); err != nil {
 		return err
 	}
 	util.PrintColor(c.out, util.Green, "\nTask completed successfully\n\n")

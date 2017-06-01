@@ -9,12 +9,18 @@ import (
 
 func TestPlanCmdPlanNotFound(t *testing.T) {
 	tests := []struct {
-		in              io.Reader
-		shouldError     bool
-		expectedEtcd    int
-		expectedMaster  int
-		expectedWorker  int
-		expectedIngress int
+		in                     io.Reader
+		shouldError            bool
+		expectedEtcd           int
+		expectedMaster         int
+		expectedWorker         int
+		expectedIngress        int
+		packageManagerEnabled  bool
+		packageManagerProvider string
+		monitoringEnabled      bool
+		monitoringProvider     string
+		monitoringName         string
+		monitoringNamespace    string
 	}{
 		{
 			// User accepts default node counts
@@ -72,6 +78,16 @@ func TestPlanCmdPlanNotFound(t *testing.T) {
 			// User enters invalid input
 			in:          strings.NewReader("badInput\nother\nfail\n\n"),
 			shouldError: true,
+		},
+		{
+			// User accepts default node counts
+			in:                    strings.NewReader("\n\n\n\n\n\n\n\n"),
+			expectedEtcd:          3,
+			expectedMaster:        2,
+			expectedWorker:        3,
+			expectedIngress:       2,
+			packageManagerEnabled: true,
+			monitoringEnabled:     true,
 		},
 	}
 	for _, test := range tests {

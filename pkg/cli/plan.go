@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -77,6 +78,18 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 		return fmt.Errorf("The number of nfs volumes must be greater than or equal to zero")
 	}
 
+	fmt.Fprintln(out, "Cluster Add-Ons:")
+	packageManagerChoice, err := util.PromptForString(in, out, "Enable package manager (set to 'none' if not required)", install.DefaultPackageManagerProvider(), append(install.PackageManagerProviders(), "none"))
+	if err != nil {
+		return fmt.Errorf("Error reading cluster package manager choice: %v", err)
+	}
+
+	fmt.Fprintln(out, "Cluster Features:")
+	monitoringChoice, err := util.PromptForString(in, out, "Enable cluster monitoring (set to 'none' if not required)", install.DefaultMonitoringProvider(), append(install.MonitoringProviders(), "none"))
+	if err != nil {
+		return fmt.Errorf("Error reading cluster monitoring choice: %v", err)
+	}
+
 	fmt.Fprintln(out)
 	fmt.Fprintf(out, "Generating installation plan file template with: \n")
 	fmt.Fprintf(out, "- %d etcd nodes\n", etcdNodes)
@@ -85,15 +98,27 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	fmt.Fprintf(out, "- %d ingress nodes\n", ingressNodes)
 	fmt.Fprintf(out, "- %d storage nodes\n", storageNodes)
 	fmt.Fprintf(out, "- %d nfs volumes\n", nfsVolumes)
+	packageManagerEnabled := "enabled"
+	if strings.ToLower(packageManagerChoice) == "none" {
+		packageManagerEnabled = "disabled"
+	}
+	fmt.Fprintf(out, "- %s cluster package manager: %s\n", packageManagerEnabled, packageManagerChoice)
+	monitoringEnabled := "enabled"
+	if strings.ToLower(monitoringChoice) == "none" {
+		monitoringEnabled = "disabled"
+	}
+	fmt.Fprintf(out, "- %s cluster monitoring: %s\n", monitoringEnabled, monitoringChoice)
 	fmt.Fprintln(out)
 
 	template := planTemplate{
-		etcdNodes:    etcdNodes,
-		masterNodes:  masterNodes,
-		workerNodes:  workerNodes,
-		ingressNodes: ingressNodes,
-		storageNodes: storageNodes,
-		nfsVolumes:   nfsVolumes,
+		etcdNodes:              etcdNodes,
+		masterNodes:            masterNodes,
+		workerNodes:            workerNodes,
+		ingressNodes:           ingressNodes,
+		storageNodes:           storageNodes,
+		nfsVolumes:             nfsVolumes,
+		packageManagerProvider: packageManagerChoice,
+		monitoringProvider:     monitoringChoice,
 	}
 
 	plan := buildPlan(template)
@@ -107,12 +132,14 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 }
 
 type planTemplate struct {
-	etcdNodes    int
-	masterNodes  int
-	workerNodes  int
-	ingressNodes int
-	storageNodes int
-	nfsVolumes   int
+	etcdNodes              int
+	masterNodes            int
+	workerNodes            int
+	ingressNodes           int
+	storageNodes           int
+	nfsVolumes             int
+	packageManagerProvider string
+	monitoringProvider     string
 }
 
 func buildPlan(template planTemplate) *install.Plan {
@@ -127,6 +154,27 @@ func buildPlan(template planTemplate) *install.Plan {
 		Worker: install.NodeGroup{
 			ExpectedCount: template.workerNodes,
 		},
+	}
+	// Add-Ons
+	if template.packageManagerProvider != "none" {
+		plan.AddOns.PackageManager.Enabled = true
+		plan.AddOns.PackageManager.Provider = template.packageManagerProvider
+	}
+	// Features
+	if template.monitoringProvider != "none" {
+		monitoringOptions := make(map[string]string)
+		monitoringOptions["prometheus_config_file"] = ""
+		monitoringOptions["grafana_config_file"] = ""
+		monitoringOptions["prometheus_pvc_name"] = ""
+		monitoringOptions["alertmanager_pvc_name"] = ""
+		monitoringOptions["grafana_pvc_name"] = ""
+		monitoringFeature := install.Feature{
+			Provider:  template.monitoringProvider,
+			Name:      "cluster-monitoring",
+			Namespace: "monitoring",
+			Options:   monitoringOptions,
+		}
+		plan.Features.Monitoring = []install.Feature{monitoringFeature}
 	}
 
 	if template.ingressNodes > 0 {

@@ -1,0 +1,79 @@
+server:
+
+  adminUser: "admin"
+  adminPassword: "{{ kubernetes_admin_password }}"
+
+  image: "{{ grafana_img }}"
+  imagePullPolicy: IfNotPresent
+
+  persistentVolume:
+    ## If true, Grafana will create a Persistent Volume Claim
+    ## If false, use emptyDir
+    ##   
+    enabled: {% if grafana_pvc_name is defined and grafana_pvc_name != "" %}true{% else %}false{% endif %}  
+
+    ## Grafana data Persistent Volume existing claim name
+    ## Requires server.persistentVolume.enabled: true
+    ## If defined, PVC must be created manually before volume will be bound
+    existingClaim: {% if grafana_pvc_name is defined and grafana_pvc_name != "" %}{{ grafana_pvc_name }}{% else %}""{% endif %}
+
+  serviceType: NodePort
+
+  setDatasource:
+    ## If true, an initial Grafana Datasource will be set
+    ## Default: false
+    ##
+    enabled: true
+
+    ## How long should it take to commit failure
+    ## Default: 300
+    ##
+    # activeDeadlineSeconds: 300
+
+    ## Curl Docker image
+    ## Default: appropriate/curl:latest
+    ##
+    image: "{{ curl_img }}"
+
+    ## This assembles how curl post into Grafana
+    ## Ref1: http://docs.grafana.org/reference/http_api/#create-data-source
+    ## Ref2: https://github.com/grafana/grafana/issues/1789
+    ##
+    datasource:
+      ## The datasource name.
+      ## Default: default
+      name: prometheus
+
+      ## Type of datasource
+      ## Default: prometheus
+      ##
+      type: prometheus
+
+      ## The url of the datasource. To set correctly you need to know
+      ## the right datasource name and its port ahead. Check kubernetes
+      ## dashboard or describe the service should fulfill the requirements.
+      ## Synatx like `http://<release name>-<server name>:<port number>
+      ## Default: "http://limping-tiger-server"
+      ##
+      url: "http://prometheus-prometheus-server"
+
+      ## Specify if Grafana has to go thru proxy to reach datasource
+      ## Default: proxy
+      ##
+      access: proxy
+
+      ## Specify should Grafana use this datasource as default
+      ## Default: true
+      ##
+      isDefault: true
+
+    ## Specify the job policy
+    ## Default: OnFailure
+    ##
+    restartPolicy: Never
+
+watcher:
+
+  image: "{{ grafana_watcher_img }}"
+  imagePullPolicy: IfNotPresent
+

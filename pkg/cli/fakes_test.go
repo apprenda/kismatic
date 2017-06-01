@@ -84,7 +84,7 @@ func (fe *fakeExecutor) RunSmokeTest(p *install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) RunPlay(string, *install.Plan) error {
+func (fe *fakeExecutor) RunPlay(string, *install.Plan, map[string]string) error {
 	return nil
 }
 

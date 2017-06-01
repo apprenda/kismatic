@@ -157,18 +157,43 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
+		Context("when deploying an HA cluster", func() {
+			ItOnAWS("should still be a highly available cluster after removing a master node [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructureAndDNS(NodeCount{1, 2, 1, 0, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+					// install cluster
+					installOpts := installOptions{allowPackageInstallation: true}
+					err := installKismatic(nodes, installOpts, sshKey)
+					Expect(err).ToNot(HaveOccurred())
+
+					By("Removing a Kubernetes master node")
+					if err = aws.TerminateNode(nodes.master[0]); err != nil {
+						FailIfError(err, "could not remove node")
+					}
+					By("Re-running Kuberang")
+					if err = runViaSSH([]string{"sudo kuberang"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
+						FailIfError(err, "kuberang error")
+					}
+				})
+			})
+		})
+
 		// This spec will be used for testing non-destructive kismatic features on
 		// a new cluster.
 		// This spec is open to modification when new assertions have to be made
 		Context("when deploying a skunkworks cluster", func() {
 			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-				WithInfrastructureAndDNS(NodeCount{3, 2, 3, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+				WithInfrastructure(NodeCount{3, 2, 3, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 					// reserve one of the workers for the add-worker test
 					allWorkers := nodes.worker
 					nodes.worker = allWorkers[0 : len(nodes.worker)-1]
 
 					// install cluster
-					installOpts := installOptions{allowPackageInstallation: true}
+					installOpts := installOptions{
+						allowPackageInstallation: true,
+						alertManagerPVC:          "alertmanager",
+						prometheusPVC:            "prometheus",
+						grafanaPVC:               "grafana",
+					}
 					err := installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 
@@ -198,17 +223,8 @@ var _ = Describe("kismatic", func() {
 					// 	return verifyRBAC(nodes.worker[0], sshKey)
 					// })
 
-					// This test should always be last
-					sub.It("should still be a highly available cluster after removing a master node", func() error {
-						By("Removing a Kubernetes master node")
-						if err = aws.TerminateNode(nodes.master[0]); err != nil {
-							return fmt.Errorf("could not remove node: %v", err)
-						}
-						By("Re-running Kuberang")
-						if err = runViaSSH([]string{"sudo kuberang"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
-							return err
-						}
-						return nil
+					sub.It("should support monitoring with persistent storage", func() error {
+						return verifyMonitoringStack(nodes.master[0], sshKey)
 					})
 				})
 			})
