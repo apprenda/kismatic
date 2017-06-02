@@ -14,8 +14,8 @@ By default, Kismatic will install its own repos onto machines and use them to do
 
 2. Install the RPMs for the type of node you want to create
 
-| Product | Install Command |
-| --- | --- | --- |
+| Component | Install Command |
+| ---- | ---- |
 | Etcd | `sudo yum -y install etcd-3.1.4-1` |
 | Kubernetes Node | `sudo yum -y install docker-engine-1.12.6-1.el7.centos kubelet-1.6.4_1-1 kubectl-1.6.4_1-1` |
 
@@ -40,8 +40,8 @@ EOF
 
 3. Install the RPMs for the type of node you want to create
 
-| Product | Install Command |
-| --- | --- | --- |
+| Component | Install Command |
+| ---- | ---- |
 | Etcd | `sudo apt-get -y -t=kismatic-xenial  install etcd=3.1.4` |
 | Kubernetes Node | `sudo apt-get -y -t=kismatic-xenial install docker-engine=1.12.6-0~ubuntu-xenial kubelet=1.6.4-1 kubectl=1.6.4-1` |
 
