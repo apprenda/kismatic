@@ -8,9 +8,7 @@ import (
 
 func TestValidateFailsForOverridingProtectedValue(t *testing.T) {
 	config := APIServerConfig{
-		map[string]string{
 			"advertise-address": "1.2.3.4",
-		},
 	}
 
 	ok, err := config.validate()
@@ -22,7 +20,6 @@ func TestValidateFailsForOverridingProtectedValue(t *testing.T) {
 func TestValidatePassesForNoValues(t *testing.T) {
 
 	config := APIServerConfig{
-		map[string]string{},
 	}
 
 	ok, _ := config.validate()
@@ -32,7 +29,7 @@ func TestValidatePassesForNoValues(t *testing.T) {
 
 func TestValidatePassesForUnprotectedValues(t *testing.T) {
 	config := APIServerConfig{
-		map[string]string{"foobar":"baz"},
+		"foobar":"baz",
 	}
 
 	ok, _ := config.validate()

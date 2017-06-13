@@ -35,10 +35,11 @@ type Cluster struct {
 	AllowPackageInstallation bool   `yaml:"allow_package_installation"`
 	PackageRepoURLs          string `yaml:"package_repository_urls"`
 	DisconnectedInstallation bool   `yaml:"disconnected_installation"`
+
 	Networking               NetworkConfig
 	Certificates             CertsConfig
 	SSH                      SSHConfig
-	APIServerConfig          APIServerConfig `yaml:",inline"`
+	APIServerConfig          APIServerConfig `yaml:"api_server"`
 }
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster

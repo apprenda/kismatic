@@ -4,9 +4,7 @@ import (
 	"fmt"
 )
 
-type APIServerConfig struct {
-	RawData map[string]string `yaml:"api_server"`
-}
+type APIServerConfig map[string]string
 
 var protectedValues = []string{
 	"advertise-address",
@@ -25,14 +23,10 @@ var protectedValues = []string{
 	"v",
 }
 
-func (config *APIServerConfig) ConfigValues() map[string]string {
-  	return config.RawData
-}
-
 func (config *APIServerConfig) validate() (bool, []error) {
 	v := newValidator()
 	for _, protectedItem := range protectedValues {
-		_, found := config.RawData[protectedItem]
+		_, found := (*config)[protectedItem]
 		if found {
 			v.addError(fmt.Errorf("Api config value [%s] should not be overriden", protectedItem))
 		}
