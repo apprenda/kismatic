@@ -11,4 +11,5 @@
   - include: _kube-proxy.yaml
   - include: _calico.yaml
   - include: _calico-validate.yaml
+  - include: _update-version.yaml
   - include: _worker-smoke-test.yaml

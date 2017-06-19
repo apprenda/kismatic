@@ -58,9 +58,10 @@ docker_registry:
   address: {{.DockerRegistryIP}}
   port: {{.DockerRegistryPort}}
   CA: {{.DockerRegistryCAPath}}
-features:
+add_ons:
   package_manager:
     enabled: {{.EnableHelm}}
+    provider: helm
 etcd:
   expected_count: {{len .Etcd}}
   nodes:{{range .Etcd}}

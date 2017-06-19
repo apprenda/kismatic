@@ -33,7 +33,7 @@
 
   - name: rename /etc/apt/sources.list
     command: mv /etc/apt/sources.list /etc/apt/sources.list.backup
-    when: apt_sources.stat.exists and ansible_os_family == 'Debian'
+    when: ansible_os_family == 'Debian' and apt_sources.stat.exists
 
   - name: stat /etc/apt/sources.list.d/
     stat: path=/etc/apt/sources.list.d/
@@ -42,7 +42,7 @@
 
   - name: rename /etc/apt/sources.list.d/
     command: mv /etc/apt/sources.list.d/ /etc/apt/sources.list.d.backup
-    when: apt_sources_d.stat.exists and ansible_os_family == 'Debian
+    when: ansible_os_family == 'Debian' and apt_sources_d.stat.exists
 
   - name: create /etc/apt/sources.list.d/ directory
     file:

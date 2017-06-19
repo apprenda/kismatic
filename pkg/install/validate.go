@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
+	"github.com/apprenda/kismatic/pkg/util"
 )
 
 // TODO: There is need to run validation against anything that is validatable.
@@ -131,7 +132,7 @@ func (p *Plan) validate() (bool, []error) {
 	v.validateWithErrPrefix("Docker", p.Docker)
 	// on a disconnected_installation a registry must be provided
 	v.validate(disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()})
-	v.validate(&p.Features)
+	v.validate(&p.AddOns)
 	v.validateWithErrPrefix("Etcd nodes", &p.Etcd)
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
@@ -218,8 +219,19 @@ func (s *SSHConfig) validate() (bool, []error) {
 	return v.valid()
 }
 
-func (f *Features) validate() (bool, []error) {
+func (f *AddOns) validate() (bool, []error) {
 	v := newValidator()
+	v.validate(&f.PackageManager)
+	return v.valid()
+}
+
+func (p *PackageManager) validate() (bool, []error) {
+	v := newValidator()
+	if p.Enabled {
+		if !util.Contains(p.Provider, PackageManagerProviders()) {
+			v.addError(fmt.Errorf("Package Manager %q is not a valid option %v", p.Provider, PackageManagerProviders()))
+		}
+	}
 	return v.valid()
 }
 

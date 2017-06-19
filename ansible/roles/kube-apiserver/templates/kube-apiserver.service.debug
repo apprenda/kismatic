@@ -21,6 +21,9 @@ ExecStart={{ bin_dir }}/kube-apiserver \
   --etcd-servers={{ etcd_k8s_cluster_ip_list }} \
   --insecure-bind-address=127.0.0.1 \
   --insecure-port=8080 \
+{% if modify_hosts_file is defined and modify_hosts_file|bool == true %}
+  --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \
+{% endif %}
   --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true \
   --secure-port=6443 \
   --service-account-key-file={{ kubernetes_certificates.service_account_key }} \

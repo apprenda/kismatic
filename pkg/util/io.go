@@ -31,6 +31,24 @@ func PromptForInt(in io.Reader, out io.Writer, prompt string, defaultValue int) 
 	return i, nil
 }
 
+func PromptForString(in io.Reader, out io.Writer, prompt string, defaultValue string, choices []string) (string, error) {
+	fmt.Fprintf(out, "=> %s (options %s, set to 'none' if not required), default [%v]: ", prompt, choices, defaultValue)
+	s := bufio.NewScanner(in)
+	// Scan the first token
+	s.Scan()
+	if s.Err() != nil {
+		return defaultValue, fmt.Errorf("error reading string: %v", s.Err())
+	}
+	ans := s.Text()
+	if ans == "" {
+		return defaultValue, nil
+	}
+	if !Contains(ans, choices) {
+		return defaultValue, fmt.Errorf("error, %s is not a valid option %v", ans, choices)
+	}
+	return ans, nil
+}
+
 // CreateDir check if directory exists and create it
 func CreateDir(dir string, perm os.FileMode) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {

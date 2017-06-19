@@ -173,6 +173,8 @@ kubernetes_api_server_config_defaults:
   "etcd-servers":  "{{ etcd_k8s_cluster_ip_list }}"
   "insecure-bind-address": "127.0.0.1"
   "insecure-port": "{{ kubernetes_master_insecure_port }}"
+  "insecure-port": "{{ kubernetes_master_insecure_port }}"
+  "kubelet-preferred-address-types": "{% if modify_hosts_file is defined and modify_hosts_file|bool == true %}InternalIP,ExternalIP,Hostname{% endif %}"
   "runtime-config": "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true"
   "secure-port": "{{ kubernetes_master_secure_port }}"
   "service-account-key-file":  "{{ kubernetes_certificates.service_account_key }}"

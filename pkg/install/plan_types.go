@@ -8,6 +8,12 @@ import (
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
 
+const DefaultPackageManagerProvider = "helm"
+
+func PackageManagerProviders() []string {
+	return []string{"helm"}
+}
+
 // NetworkConfig describes the cluster's networking configuration
 type NetworkConfig struct {
 	Type             string
@@ -111,7 +117,8 @@ type Plan struct {
 	Cluster        Cluster
 	Docker         Docker
 	DockerRegistry DockerRegistry `yaml:"docker_registry"`
-	Features       Features
+	AddOns         AddOns         `yaml:"add_ons"`
+	Features       *Features      `yaml:"features,omitempty"`
 	Etcd           NodeGroup
 	Master         MasterNodeGroup
 	Worker         NodeGroup
@@ -141,12 +148,19 @@ type SSHConnection struct {
 	Node      *Node
 }
 
-type Features struct {
+type AddOns struct {
 	PackageManager PackageManager `yaml:"package_manager"`
 }
 
+// Features is deprecated, required to support KET v1.3.3
+// When writing out a new plan file, this will be nil and will not appear
+type Features struct {
+	PackageManager *PackageManager `yaml:"package_manager,omitempty"`
+}
+
 type PackageManager struct {
-	Enabled bool
+	Enabled  bool
+	Provider string
 }
 
 // GetUniqueNodes returns a list of the unique nodes that are listed in the plan file.

@@ -4,8 +4,8 @@
     yum:
       name: transition-etcd-{{ transition_etcd_yum_version }}
       state: present
-      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% end %}'
-      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% end %}'
+      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
+      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     register: etcd_installation_rpm
     until: etcd_installation_rpm|success
     retries: 3

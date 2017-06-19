@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
-	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 )
 
@@ -113,27 +110,6 @@ func (c *applyCmd) run() error {
 	// Perform the installation
 	if err := c.executor.Install(plan); err != nil {
 		return fmt.Errorf("error installing: %v", err)
-	}
-
-	// Install Helm
-	if plan.Features.PackageManager.Enabled {
-		util.PrintHeader(c.out, "Installing Helm on the Cluster", '=')
-		home, err := homedir.Dir()
-		if err != nil {
-			return fmt.Errorf("Could not determine helm directory: %v", err)
-		}
-		helmDir := path.Join(home, ".helm")
-		backupDir := fmt.Sprintf("%s.backup-%s", helmDir, time.Now().Format("2006-01-02-15-04-05"))
-		// Backup helm directory if exists
-		if backedup, err := util.BackupDirectory(helmDir, backupDir); err != nil {
-			return fmt.Errorf("error preparing Helm client: %v", err)
-		} else if backedup {
-			util.PrettyPrintOk(c.out, "Backed up %q directory", helmDir)
-		}
-		// Create a new serviceaccount and run helm init
-		if err := c.executor.RunPlay("_helm.yaml", plan); err != nil {
-			return fmt.Errorf("error configuring Helm RBAC: %v", err)
-		}
 	}
 
 	// Run smoketest

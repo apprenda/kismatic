@@ -6,7 +6,7 @@
       state: directory
 
   # copy CA certificate
-  - name: copy {{ kubernetes_certificates_ca_file_name }}
+  - name: copy ca.pem
     copy:
       src: "{{ tls_directory }}/ca.pem"
       dest: "{{ kubernetes_certificates.ca }}"
@@ -46,7 +46,7 @@
         dest: "{{ kubernetes_certificates.service_account_key }}"
 
   # copy kubelet and kube-proxy certificates
-  - name: deploy kubernetes node client certificates
+  - name: copy kubernetes node client certificates
     copy:
       src: "{{ tls_directory }}/{{ item.src }}"
       dest: "{{ item.dest }}"

@@ -4,11 +4,11 @@ import (
 	"os"
 	"os/exec"
 
-	g "github.com/onsi/ginkgo"
+	. "github.com/onsi/ginkgo"
 )
 
 func addWorkerToCluster(newWorker NodeDeets) error {
-	g.By("Adding new worker")
+	By("Adding new worker")
 	cmd := exec.Command("./kismatic", "install", "add-worker", "-f", "kismatic-testing.yaml", newWorker.Hostname, newWorker.PublicIP, newWorker.PrivateIP)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

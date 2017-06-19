@@ -758,6 +758,13 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		})
 	}
 	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
+	// add_ons.package_manager
+	if p.AddOns.PackageManager.Enabled {
+		switch p.AddOns.PackageManager.Provider {
+		case "helm":
+			cc.EnableHelm = true
+		}
+	}
 
 	return &cc, nil
 }

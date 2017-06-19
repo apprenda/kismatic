@@ -1,7 +1,7 @@
 ---
   - hosts: master[0]
     any_errors_fatal: true
-    name: "{{ play_name | default('Create Required RBAC Role for Helm') }}"
+    name: "{{ play_name | default('Initialize Helm and Start Tiller') }}"
     remote_user: root
     become_method: sudo
     run_once: true
@@ -18,6 +18,10 @@
         command: "kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller"
         register: out
         failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
+      - name: "add kismatic helm repo"
+        local_action: command ../../helm repo add kismatic https://apprenda.github.io/kismatic-charts/
+        become: no
+        when: disconnected_installation|bool != true
       - name: "run helm init"
         local_action: command ../../helm init --service-account=tiller -i="{{ helm_img }}"
         become: no

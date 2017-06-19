@@ -29,9 +29,11 @@
   - include: _calico-validate.yaml
   - include: _calico-network-policy.yaml
   - include: _kube-dns.yaml
+  - include: _kube-dashboard.yaml
+  - include: _helm.yaml
+    when: enable_helm|bool == true
   - include: _kube-ingress.yaml
     when: configure_ingress|bool == true
-  - include: _kube-dashboard.yaml
   - include: _storage.yaml
     when: configure_storage|bool == true
   - include: _nfs-volumes.yaml

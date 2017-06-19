@@ -23,11 +23,10 @@
 
   # Due to 1-node -> 1-disk mapping, we need, at least, replica_count * distribution_count storage nodes
   - name: verify we have enough storage nodes for the requested volume
-    assert:
-      that:
-        - "groups['available_storage_nodes'] is defined"
-        - "groups['available_storage_nodes']|length >= volume_replica_count * volume_distribution_count"
+    fail:
+      msg: "Not enough nodes with sufficient disk space for the requested volume. Required: {{ volume_replica_count * volume_distribution_count }} Available: {% if groups['available_storage_nodes'] is defined %}{{groups['available_storage_nodes']|length}}{% else %}0{% endif %}."
     run_once: true
+    when: "groups['available_storage_nodes'] is not defined or groups['available_storage_nodes']|length < volume_replica_count * volume_distribution_count"
 
   - name: create brick directory
     file:

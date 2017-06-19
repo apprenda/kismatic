@@ -1,6 +1,6 @@
 # Provision
 
-## <a name="get"></a>Get the distribution
+## <a name="get"></a>Get the installer
 
 You will need to run the installer either from a Linux machine or from a Darwin (OSX) machine. This machine will need to be able to access via SSH all the machines that will become nodes of the Kubernetes cluster.
 
@@ -8,19 +8,7 @@ The installer can run from a machine that will become a node on the cluster, but
 
 The machine the installer is run from should be available for future modifications to the cluster (adding and removing nodes, upgrading Kubernetes).
 
-## Download the installer
-
-### To unpack the installer from Linux
-
-From an ssh session, type:
-
-`curl -L https://github.com/apprenda/kismatic/releases/download/v1.3.0/kismatic-v1.3.0-linux-amd64.tar.gz | tar -zx`
-
-### To unpack from Darwin (Mac OSX)
-
-From a terminal window, type
-
-`wget -O - https://github.com/apprenda/kismatic/releases/download/v1.3.0/kismatic-v1.3.0-darwin-amd64.tar.gz | tar -zx`
+The binaries are published to the repository's [releases page](https://github.com/apprenda/kismatic/releases). Once downloaded, you may use `tar` or any other archive extraction utility.
 
 ## Generate A Plan File
 
