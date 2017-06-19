@@ -423,7 +423,6 @@ func (nfs *NFS) validate() (bool, []error) {
 	return v.valid()
 }
 
-
 func (nfsVol NFSVolume) validate() (bool, []error) {
 	v := newValidator()
 	if nfsVol.Host == "" {
