@@ -174,7 +174,7 @@ kubernetes_api_server_config_defaults:
   "insecure-bind-address": "127.0.0.1"
   "insecure-port": "8080"
   "runtime-config": "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true"
-  "secure-port": "6443"
+  "secure-port": "{{ kubernetes_master_secure_port }}"
   "service-account-key-file":  "{{ kubernetes_certificates.service_account_key }}"
   "service-cluster-ip-range":  "{{ kubernetes_services_cidr }}"
   "tls-cert-file":  "{{ kubernetes_certificates.api_server }}"

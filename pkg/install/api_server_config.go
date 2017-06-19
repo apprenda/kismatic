@@ -20,7 +20,6 @@ var protectedValues = []string{
 	"service-cluster-ip-range",
 	"tls-cert-file",
 	"tls-private-key-file",
-	"v",
 }
 
 func (config *APIServerConfig) validate() (bool, []error) {
