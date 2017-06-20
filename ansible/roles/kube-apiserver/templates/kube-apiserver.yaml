@@ -17,18 +17,18 @@ spec:
     imagePullPolicy: IfNotPresent
     command:
       - kube-apiserver
-{% set combined_config = kubernetes_api_server_config_defaults | combine(kubernetes_api_server_config_overrides) -%}
-{% for config_item in combined_config | dictsort %}
-{% if config_item[1] is defined and config_item[1] | length > 0 %}
-      - --{{ config_item[0] }}={{ config_item[1] }}
+{% set combined_options = kubernetes_api_server_option_defaults | combine(kubernetes_api_server_option_overrides) -%}
+{% for option in combined_options | dictsort %}
+{% if option[1] is defined and option[1] | length > 0 %}
+      - --{{ option[0] }}={{ option[1] }}
 {% endif %}
 {% endfor -%}
     ports:
-    - containerPort: "{{ kubernetes_master_secure_port }}"
-      hostPort: "{{ kubernetes_master_secure_port }}"
+    - containerPort: {{ kubernetes_master_secure_port }}
+      hostPort: {{ kubernetes_master_secure_port }}
       name: https
-    - containerPort: "{{ kubernetes_master_insecure_port }}"
-      hostPort: "{{ kubernetes_master_insecure_port }}"
+    - containerPort: {{ kubernetes_master_insecure_port }}
+      hostPort: {{ kubernetes_master_insecure_port }}
       name: local
     volumeMounts:
     - mountPath: /etc/kubernetes
@@ -41,7 +41,7 @@ spec:
       httpGet:
         host: 127.0.0.1
         path: /healthz
-        port: 8080
+        port: {{ kubernetes_master_insecure_port }}
       initialDelaySeconds: 15
       timeoutSeconds: 15
       failureThreshold: 8

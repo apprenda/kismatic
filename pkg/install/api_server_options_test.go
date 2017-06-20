@@ -7,32 +7,32 @@ import (
 )
 
 func TestValidateFailsForOverridingProtectedValue(t *testing.T) {
-	config := APIServerConfig{
+	options := APIServerOptions{
 			"advertise-address": "1.2.3.4",
 	}
 
-	ok, err := config.validate()
+	ok, err := options.validate()
 
 	assertEqual(t, ok, false)
-	assertEqual(t, err, []error{fmt.Errorf("Api config value [%s] should not be overriden", "advertise-address")})
+	assertEqual(t, err, []error{fmt.Errorf("APIServer option [%s] should not be overriden", "advertise-address")})
 }
 
 func TestValidatePassesForNoValues(t *testing.T) {
 
-	config := APIServerConfig{
+	options := APIServerOptions{
 	}
 
-	ok, _ := config.validate()
+	ok, _ := options.validate()
 
 	assertEqual(t, ok, true)
 }
 
 func TestValidatePassesForUnprotectedValues(t *testing.T) {
-	config := APIServerConfig{
+	options := APIServerOptions{
 		"foobar":"baz",
 	}
 
-	ok, _ := config.validate()
+	ok, _ := options.validate()
 
 	assertEqual(t, ok, true)
 }

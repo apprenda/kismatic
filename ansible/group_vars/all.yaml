@@ -155,7 +155,7 @@ kubernetes_certificates:
   service_account: "{{ kubernetes_certificates_dir }}/service-account.pem"
   service_account_key: "{{ kubernetes_certificates_dir }}/service-account-key.pem"
 
-kubernetes_api_server_config_defaults:
+kubernetes_api_server_option_defaults:
   "admission-control": "NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota"
   "advertise-address":  "{{ internal_ipv4 }}"
   "allow-privileged": "true"
@@ -172,7 +172,6 @@ kubernetes_api_server_config_defaults:
   "etcd-keyfile":  "{{ kubernetes_certificates.etcd_client_key }}"
   "etcd-servers":  "{{ etcd_k8s_cluster_ip_list }}"
   "insecure-bind-address": "127.0.0.1"
-  "insecure-port": "{{ kubernetes_master_insecure_port }}"
   "insecure-port": "{{ kubernetes_master_insecure_port }}"
   "kubelet-preferred-address-types": "{% if modify_hosts_file is defined and modify_hosts_file|bool == true %}InternalIP,ExternalIP,Hostname{% endif %}"
   "runtime-config": "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true"

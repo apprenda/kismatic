@@ -45,7 +45,7 @@ type Cluster struct {
 	Networking               NetworkConfig
 	Certificates             CertsConfig
 	SSH                      SSHConfig
-	APIServerConfig          APIServerConfig `yaml:"api_server"`
+	APIServerOptions         APIServerOptions `yaml:"api_server"`
 }
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster

@@ -162,7 +162,7 @@ func (c *Cluster) validate() (bool, []error) {
 	v.validate(&c.Networking)
 	v.validate(&c.Certificates)
 	v.validate(&c.SSH)
-	v.validate(&c.APIServerConfig)
+	v.validate(&c.APIServerOptions)
 
 	return v.valid()
 }
