@@ -4,7 +4,9 @@ import (
 	"fmt"
 )
 
-type APIServerOptions map[string]string
+type APIServerOptions struct {
+  Overrides  map[string]string `yaml:"option_overrides"`
+}
 
 var protectedOptions = []string{
 	"advertise-address",
@@ -25,7 +27,7 @@ var protectedOptions = []string{
 func (options *APIServerOptions) validate() (bool, []error) {
 	v := newValidator()
 	for _, protectedOption := range protectedOptions {
-		_, found := (*options)[protectedOption]
+		_, found := options.Overrides[protectedOption]
 		if found {
 			v.addError(fmt.Errorf("APIServer option [%s] should not be overriden", protectedOption))
 		}

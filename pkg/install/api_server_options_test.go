@@ -8,7 +8,9 @@ import (
 
 func TestValidateFailsForOverridingProtectedValue(t *testing.T) {
 	options := APIServerOptions{
+		Overrides: map[string]string{
 			"advertise-address": "1.2.3.4",
+		},
 	}
 
 	ok, err := options.validate()
@@ -29,7 +31,9 @@ func TestValidatePassesForNoValues(t *testing.T) {
 
 func TestValidatePassesForUnprotectedValues(t *testing.T) {
 	options := APIServerOptions{
-		"foobar":"baz",
+		Overrides: map[string]string{
+			"foobar":"baz",
+		},
 	}
 
 	ok, _ := options.validate()
