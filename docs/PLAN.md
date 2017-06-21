@@ -327,10 +327,11 @@ Kubernetes api server options can be set or overridden in the plan file.
 ```
 cluster:
 ...
-  api_server:
-    "audit-log-path": "/var/log/kube-apiserver.log"
-    "event-ttl": "2h0m0s"
-    "runtime-config": "batch/v2alpha1=true"
+  kube_apiserver:
+    option_overrides:
+      "audit-log-path": "/var/log/kube-apiserver.log"
+      "event-ttl": "2h0m0s"
+      "runtime-config": "batch/v2alpha1=true"
 ```
 
 Any values under the api_server tag will be passed to the API Server, whether valid or invalid. Kismatic validation will prevent overriding of critical values.

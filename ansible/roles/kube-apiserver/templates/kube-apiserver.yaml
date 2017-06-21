@@ -19,7 +19,7 @@ spec:
       - kube-apiserver
 {% set combined_options = kubernetes_api_server_option_defaults | combine(kubernetes_api_server_option_overrides) -%}
 {% for option in combined_options | dictsort %}
-{% if option[1] is defined and option[1] | length > 0 %}
+{% if option[1] is defined and option[1] | string | length > 0 %}
       - --{{ option[0] }}={{ option[1] }}
 {% endif %}
 {% endfor -%}
