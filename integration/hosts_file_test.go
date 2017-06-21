@@ -31,7 +31,6 @@ var _ = Describe("hosts file modification feature", func() {
 				}
 
 				plan := PlanAWS{
-					AllowPackageInstallation: true,
 					Etcd:                nodes.etcd,
 					Master:              nodes.master,
 					MasterNodeFQDN:      loadBalancedFQDN,

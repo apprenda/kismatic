@@ -3,6 +3,7 @@ package integration
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -15,7 +16,7 @@ var _ = Describe("disconnected install feature", func() {
 		os.Chdir(dir)
 	})
 
-	Describe("Installing on machines with no internet access", func() {
+	Describe("installing on machines with no internet access", func() {
 		Context("with kismatic packages installed", func() {
 			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
 				WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
@@ -42,7 +43,7 @@ var _ = Describe("disconnected install feature", func() {
 
 					By("Running kismatic install apply")
 					installOpts := installOptions{
-						allowPackageInstallation:    false,
+						disablePackageInstallation:  true,
 						disconnectedInstallation:    true,
 						modifyHostsFiles:            true,
 						autoConfigureDockerRegistry: true,
@@ -50,6 +51,55 @@ var _ = Describe("disconnected install feature", func() {
 					err = installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 				})
+			})
+		})
+	})
+
+	Describe("using an existing private docker registry with images pre-seeded", func() {
+		ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+			WithInfrastructure(NodeCount{1, 1, 1, 0, 0}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+				dockerRegistryPort := 8443
+				By("Configuring an insecure registry on the master")
+				cmds := []string{
+					"sudo mkdir /etc/docker/",
+					"sudo touch /etc/docker/daemon.json",
+					fmt.Sprintf("printf '{\n  \"insecure-registries\" : [\"%s:%d\"]\n}\n' | sudo tee --append /etc/docker/daemon.json", nodes.etcd[0].PrivateIP, dockerRegistryPort),
+				}
+				err := runViaSSH(cmds, []NodeDeets{nodes.master[0]}, sshKey, 10*time.Minute)
+				FailIfError(err, "Failed to allow insecure registries")
+
+				By("Installing the RPMs on the node")
+				InstallKismaticPackages(nodes, CentOS7, sshKey, true)
+
+				By("Installing an external Docker registry on one of the nodes")
+				caFile, err := deployDockerRegistry(nodes.etcd[0], dockerRegistryPort, sshKey)
+				Expect(err).ToNot(HaveOccurred())
+
+				By("Disabling internet access")
+				err = disableInternetAccess(nodes.allNodes(), sshKey)
+				FailIfError(err, "Failed to create iptable rule")
+
+				// disableRegistrySeeding = false, run step to seed
+				installOpts := installOptions{
+					disablePackageInstallation: true,
+					disconnectedInstallation:   true,
+					modifyHostsFiles:           true,
+					dockerRegistryCAPath:       caFile,
+					dockerRegistryIP:           nodes.etcd[0].PrivateIP,
+					dockerRegistryPort:         dockerRegistryPort,
+				}
+				By("Seeding images")
+				writePlanFile(buildPlan(nodes, installOpts, sshKey))
+				c := exec.Command("./kismatic", "install", "step", "_docker-registry.yaml", "-f", "kismatic-testing.yaml")
+				c.Stdout = os.Stdout
+				c.Stderr = os.Stderr
+				err = c.Run()
+				Expect(err).ToNot(HaveOccurred())
+
+				installOpts.disableRegistrySeeding = true
+				By("Running kismatic install apply")
+				err = installKismatic(nodes, installOpts, sshKey)
+				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 	})

@@ -392,7 +392,7 @@ func setPreflightOptions(p Plan, cc ansible.ClusterCatalog) (*ansible.ClusterCat
 	}
 	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
 	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
-	cc.EnablePackageInstallation = p.Cluster.AllowPackageInstallation
+	cc.EnablePackageInstallation = !p.Cluster.DisablePackageInstallation
 	return &cc, nil
 }
 
@@ -701,10 +701,11 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		PodCIDR:                   p.Cluster.Networking.PodCIDRBlock,
 		DNSServiceIP:              dnsIP,
 		EnableModifyHosts:         p.Cluster.Networking.UpdateHostsFiles,
-		EnablePackageInstallation: p.Cluster.AllowPackageInstallation,
+		EnablePackageInstallation: !p.Cluster.DisablePackageInstallation,
 		PackageRepoURLs:           p.Cluster.PackageRepoURLs,
 		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
 		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
+		SeedRegistry:              !p.Cluster.DisableRegistrySeeding,
 		TargetVersion:             KismaticVersion.String(),
 		APIServerOptions:          p.Cluster.APIServerOptions.Overrides,
 	}
@@ -723,7 +724,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
 	}
 
-	if p.ConfigureDockerWithPrivateRegistry() {
+	if p.DockerRegistry.ConfigureDockerWithPrivateRegistry() {
 		cc.ConfigureDockerWithPrivateRegistry = true
 		cc.DockerRegistryAddress = p.DockerRegistryAddress()
 		cc.DockerRegistryPort = p.DockerRegistryPort()
@@ -757,12 +758,24 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 			Host: n.Host,
 		})
 	}
+
 	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
-	// add_ons.package_manager
-	if p.AddOns.PackageManager.Enabled {
+
+	// add_ons
+	// heapster
+	if !p.AddOns.HeapsterMonitoring.Disabled {
+		cc.Heapster.Enabled = true
+		cc.Heapster.Options.HeapsterReplicas = p.AddOns.HeapsterMonitoring.Options.HeapsterReplicas
+		cc.Heapster.Options.InfluxDBPVCName = p.AddOns.HeapsterMonitoring.Options.InfluxDBPVCName
+	}
+	// package_manager
+	if !p.AddOns.PackageManager.Disabled {
+		// Currently only helm is supported
 		switch p.AddOns.PackageManager.Provider {
 		case "helm":
-			cc.EnableHelm = true
+			cc.Helm.Enabled = true
+		default:
+			cc.Helm.Enabled = true
 		}
 	}
 

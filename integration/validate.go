@@ -62,14 +62,13 @@ func ValidateKismaticMini(node NodeDeets, user, sshKey string) PlanAWS {
 	log.Printf("Created single node for Kismatic Mini: %s (%s)", node.id, node.PublicIP)
 	By("Building a plan to set up an overlay network cluster on this hardware")
 	plan := PlanAWS{
-		Etcd:                     []NodeDeets{node},
-		Master:                   []NodeDeets{node},
-		Worker:                   []NodeDeets{node},
-		MasterNodeFQDN:           node.Hostname,
-		MasterNodeShortName:      node.Hostname,
-		SSHUser:                  user,
-		SSHKeyFile:               sshKey,
-		AllowPackageInstallation: true,
+		Etcd:                []NodeDeets{node},
+		Master:              []NodeDeets{node},
+		Worker:              []NodeDeets{node},
+		MasterNodeFQDN:      node.Hostname,
+		MasterNodeShortName: node.Hostname,
+		SSHUser:             user,
+		SSHKeyFile:          sshKey,
 	}
 
 	// Create template file
@@ -99,7 +98,7 @@ func ValidateKismaticMiniDenyPkgInstallation(node NodeDeets, sshUser, sshKey str
 	log.Printf("Created single node for Kismatic Mini: %s (%s)", node.id, node.PublicIP)
 	By("Building a plan to set up an overlay network cluster on this hardware")
 	plan := PlanAWS{
-		AllowPackageInstallation: false,
+		DisablePackageInstallation: true,
 		Etcd:                []NodeDeets{node},
 		Master:              []NodeDeets{node},
 		Worker:              []NodeDeets{node},
@@ -134,14 +133,13 @@ func ValidateKismaticMiniWithBadSSH(node NodeDeets, user, sshKey string) PlanAWS
 	log.Printf("Created single node for Kismatic Mini: %s (%s)", node.id, node.PublicIP)
 	By("Building a plan to set up an overlay network cluster on this hardware")
 	plan := PlanAWS{
-		Etcd:                     []NodeDeets{node},
-		Master:                   []NodeDeets{node},
-		Worker:                   []NodeDeets{node},
-		MasterNodeFQDN:           node.Hostname,
-		MasterNodeShortName:      node.Hostname,
-		SSHUser:                  user,
-		SSHKeyFile:               sshKey,
-		AllowPackageInstallation: true,
+		Etcd:                []NodeDeets{node},
+		Master:              []NodeDeets{node},
+		Worker:              []NodeDeets{node},
+		MasterNodeFQDN:      node.Hostname,
+		MasterNodeShortName: node.Hostname,
+		SSHUser:             user,
+		SSHKeyFile:          sshKey,
 	}
 
 	// Create template file

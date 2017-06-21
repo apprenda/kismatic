@@ -18,6 +18,7 @@ type ClusterCatalog struct {
 	EnablePackageInstallation bool   `yaml:"allow_package_installation"`
 	PackageRepoURLs           string `yaml:"package_repository_urls"`
 	DisconnectedInstallation  bool   `yaml:"disconnected_installation"`
+	SeedRegistry              bool   `yaml:"seed_registry"`
 	KuberangPath              string `yaml:"kuberang_path"`
 	LoadBalancedFQDN          string `yaml:"kubernetes_load_balanced_fqdn"`
 
@@ -72,7 +73,17 @@ type ClusterCatalog struct {
 
 	LocalKubeconfigDirectory string `yaml:"local_kubeconfig_directory"`
 
-	EnableHelm bool `yaml:"enable_helm"`
+	Helm struct {
+		Enabled bool
+	}
+
+	Heapster struct {
+		Enabled bool
+		Options struct {
+			HeapsterReplicas int    `yaml:"heapster_replicas"`
+			InfluxDBPVCName  string `yaml:"influxdb_pvc_name"`
+		}
+	}
 }
 
 type NFSVolume struct {

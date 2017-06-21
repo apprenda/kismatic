@@ -2,10 +2,10 @@ package integration
 
 type ClusterPlan struct {
 	Cluster struct {
-		Name                     string
-		AdminPassword            string `yaml:"admin_password"`
-		AllowPackageInstallation string `yaml:"allow_package_installation"`
-		Networking               struct {
+		Name                       string
+		AdminPassword              string `yaml:"admin_password"`
+		DisablePackageInstallation string `yaml:"disable_package_installation"`
+		Networking                 struct {
 			Type             string
 			PodCIDRBlock     string `yaml:"pod_cidr_block"`
 			ServiceCIDRBlock string `yaml:"service_cidr_block"`

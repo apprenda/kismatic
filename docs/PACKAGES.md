@@ -59,7 +59,7 @@ One way to ensure you've correctly synchronized your repo is to install a test c
 1. Provision 1 node of each role
 2. Install the Kismatic packages
 3. Run `kismatic plan` to generate a new Plan file
-4. Update the Plan file to identify your nodes and using the configuration `allow_package_installation=false`.
+4. Update the Plan file to identify your nodes and using the configuration `disable_package_installation=true`.
 5. Run `kismatic validate`
 6. During validation, the Kismatic inspector will check your packages to be sure they installed correctly and will fail if any of them are missing.
 

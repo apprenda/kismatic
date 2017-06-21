@@ -17,7 +17,6 @@ var _ = Describe("kismatic docker registry feature", func() {
 		ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
 			WithInfrastructure(NodeCount{1, 1, 1, 0, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 				opts := installOptions{
-					allowPackageInstallation:    true,
 					autoConfigureDockerRegistry: true,
 				}
 				err := installKismatic(nodes, opts, sshKey)
@@ -34,10 +33,9 @@ var _ = Describe("kismatic docker registry feature", func() {
 				caFile, err := deployDockerRegistry(nodes.etcd[0], dockerRegistryPort, sshKey)
 				Expect(err).ToNot(HaveOccurred())
 				installOpts := installOptions{
-					allowPackageInstallation: true,
-					dockerRegistryCAPath:     caFile,
-					dockerRegistryIP:         nodes.etcd[0].PrivateIP,
-					dockerRegistryPort:       dockerRegistryPort,
+					dockerRegistryCAPath: caFile,
+					dockerRegistryIP:     nodes.etcd[0].PrivateIP,
+					dockerRegistryPort:   dockerRegistryPort,
 				}
 				err = installKismatic(nodes, installOpts, sshKey)
 				Expect(err).ToNot(HaveOccurred())

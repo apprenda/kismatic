@@ -1,0 +1,25 @@
+  - name: wait until the influxdb pods are ready
+    command: kubectl get deployment heapster-influxdb -n kube-system -o jsonpath='{.status.availableReplicas}'
+    register: readyReplicas
+    until: readyReplicas.stdout|int == 1
+    retries: 24
+    delay: 10
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+
+  - name: fail if the influxdb pod is not ready
+    fail:
+      msg: "Timed out waiting for the influxdb pods to be in the ready state."
+    when: readyReplicas.stdout|int != 1
+
+  - name: wait until the heapster pods are ready
+    command: kubectl get deployment heapster -n kube-system -o jsonpath='{.status.availableReplicas}'
+    register: readyReplicas
+    until: readyReplicas.stdout|int == {{ heapster.options.heapster_replicas }}
+    retries: 24
+    delay: 10
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+
+  - name: fail if the heapster pod is not ready
+    fail:
+      msg: "Timed out waiting for the heapster pods to be in the ready state."
+    when: readyReplicas.stdout|int != {{ heapster.options.heapster_replicas }}

@@ -29,8 +29,9 @@ func GetSSHKeyFile() (string, error) {
 }
 
 type installOptions struct {
-	allowPackageInstallation    bool
+	disablePackageInstallation  bool
 	disconnectedInstallation    bool
+	disableRegistrySeeding      bool
 	autoConfigureDockerRegistry bool
 	dockerRegistryIP            string
 	dockerRegistryPort          int
@@ -38,22 +39,22 @@ type installOptions struct {
 	modifyHostsFiles            bool
 	useDirectLVM                bool
 	serviceCIDR                 string
+	heapsterReplicas            int
+	heapsterInfluxdbPVC         string
 }
 
 func installKismaticMini(node NodeDeets, sshKey string) error {
 	sshUser := node.SSHUser
 	plan := PlanAWS{
-		Etcd:                     []NodeDeets{node},
-		Master:                   []NodeDeets{node},
-		Worker:                   []NodeDeets{node},
-		Ingress:                  []NodeDeets{node},
-		Storage:                  []NodeDeets{node},
-		MasterNodeFQDN:           node.PublicIP,
-		MasterNodeShortName:      node.PublicIP,
-		SSHKeyFile:               sshKey,
-		SSHUser:                  sshUser,
-		AllowPackageInstallation: true,
-		EnableHelm:               true,
+		Etcd:                []NodeDeets{node},
+		Master:              []NodeDeets{node},
+		Worker:              []NodeDeets{node},
+		Ingress:             []NodeDeets{node},
+		Storage:             []NodeDeets{node},
+		MasterNodeFQDN:      node.PublicIP,
+		MasterNodeShortName: node.PublicIP,
+		SSHKeyFile:          sshKey,
+		SSHUser:             sshUser,
 	}
 	return installKismaticWithPlan(plan, sshKey)
 }
@@ -65,15 +66,16 @@ func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey 
 func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string) PlanAWS {
 	sshUser := nodes.master[0].SSHUser
 	masterDNS := nodes.master[0].PublicIP
-	enableHelm := true
+	disableHelm := false
 	if nodes.dnsRecord != nil && nodes.dnsRecord.Name != "" {
 		masterDNS = nodes.dnsRecord.Name
 		// disable helm if using Route53
-		enableHelm = false
+		disableHelm = true
 	}
 	plan := PlanAWS{
-		AllowPackageInstallation: installOpts.allowPackageInstallation,
-		DisconnectedInstallation: installOpts.disconnectedInstallation,
+		DisablePackageInstallation: installOpts.disablePackageInstallation,
+		DisconnectedInstallation:   installOpts.disconnectedInstallation,
+		DisableRegistrySeeding:     installOpts.disableRegistrySeeding,
 		Etcd:                nodes.etcd,
 		Master:              nodes.master,
 		Worker:              nodes.worker,
@@ -90,7 +92,9 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		ModifyHostsFiles:             installOpts.modifyHostsFiles,
 		UseDirectLVM:                 installOpts.useDirectLVM,
 		ServiceCIDR:                  installOpts.serviceCIDR,
-		EnableHelm:                   enableHelm,
+		DisableHelm:                  disableHelm,
+		HeapsterReplicas:             installOpts.heapsterReplicas,
+		HeapsterInfluxdbPVC:          installOpts.heapsterInfluxdbPVC,
 	}
 	return plan
 }

@@ -11,7 +11,7 @@ import (
 const DefaultPackageManagerProvider = "helm"
 
 func PackageManagerProviders() []string {
-	return []string{"helm"}
+	return []string{"helm", ""}
 }
 
 // NetworkConfig describes the cluster's networking configuration
@@ -36,16 +36,17 @@ type SSHConfig struct {
 
 // Cluster describes a Kubernetes cluster
 type Cluster struct {
-	Name                     string
-	AdminPassword            string `yaml:"admin_password"`
-	AllowPackageInstallation bool   `yaml:"allow_package_installation"`
-	PackageRepoURLs          string `yaml:"package_repository_urls"`
-	DisconnectedInstallation bool   `yaml:"disconnected_installation"`
-
-	Networking               NetworkConfig
-	Certificates             CertsConfig
-	SSH                      SSHConfig
-	APIServerOptions         APIServerOptions `yaml:"kube_apiserver"`
+	Name                       string
+	AdminPassword              string `yaml:"admin_password"`
+	DisablePackageInstallation bool   `yaml:"disable_package_installation"`
+	AllowPackageInstallation   *bool  `yaml:"allow_package_installation,omitempty"`
+	PackageRepoURLs            string `yaml:"package_repository_urls"`
+	DisconnectedInstallation   bool   `yaml:"disconnected_installation"`
+	DisableRegistrySeeding     bool   `yaml:"disable_registry_seeding"`
+	Networking                 NetworkConfig
+	Certificates               CertsConfig
+	SSH                        SSHConfig
+	APIServerOptions           APIServerOptions `yaml:"kube_apiserver"`
 }
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster
@@ -149,18 +150,33 @@ type SSHConnection struct {
 }
 
 type AddOns struct {
-	PackageManager PackageManager `yaml:"package_manager"`
+	HeapsterMonitoring HeapsterMonitoring `yaml:"heapster"`
+	PackageManager     PackageManager     `yaml:"package_manager"`
 }
 
 // Features is deprecated, required to support KET v1.3.3
 // When writing out a new plan file, this will be nil and will not appear
 type Features struct {
-	PackageManager *PackageManager `yaml:"package_manager,omitempty"`
+	PackageManager *DeprecatedPackageManager `yaml:"package_manager,omitempty"`
+}
+
+type HeapsterMonitoring struct {
+	Disabled bool
+	Options  HeapsterOptions `yaml:"options"`
+}
+
+type HeapsterOptions struct {
+	HeapsterReplicas int    `yaml:"heapster_replicas"`
+	InfluxDBPVCName  string `yaml:"influxdb_pvc_name"`
 }
 
 type PackageManager struct {
-	Enabled  bool
+	Disabled bool
 	Provider string
+}
+
+type DeprecatedPackageManager struct {
+	Enabled bool
 }
 
 // GetUniqueNodes returns a list of the unique nodes that are listed in the plan file.
@@ -306,8 +322,8 @@ func hasIP(nodes *[]Node, ip string) bool {
 }
 
 // ConfigureDockerWithPrivateRegistry returns true when confgiuring an external or on cluster registry is required
-func (p Plan) ConfigureDockerWithPrivateRegistry() bool {
-	return p.DockerRegistry.Address != "" || p.DockerRegistry.SetupInternal
+func (r DockerRegistry) ConfigureDockerWithPrivateRegistry() bool {
+	return r.Address != "" || r.SetupInternal
 }
 
 func (p Plan) DockerRegistryAddress() string {

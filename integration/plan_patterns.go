@@ -16,8 +16,9 @@ type PlanAWS struct {
 	SSHUser                      string
 	SSHKeyFile                   string
 	HomeDirectory                string
-	AllowPackageInstallation     bool
+	DisablePackageInstallation   bool
 	DisconnectedInstallation     bool
+	DisableRegistrySeeding       bool
 	AutoConfiguredDockerRegistry bool
 	DockerRegistryIP             string
 	DockerRegistryPort           int
@@ -25,14 +26,17 @@ type PlanAWS struct {
 	ModifyHostsFiles             bool
 	UseDirectLVM                 bool
 	ServiceCIDR                  string
-	EnableHelm                   bool
+	DisableHelm                  bool
+	HeapsterReplicas             int
+	HeapsterInfluxdbPVC          string
 }
 
 const planAWSOverlay = `cluster:
   name: kubernetes
   admin_password: abbazabba
-  allow_package_installation: {{.AllowPackageInstallation}}
+  disable_package_installation: {{.DisablePackageInstallation}}
   disconnected_installation: {{.DisconnectedInstallation}}
+  disable_registry_seeding: {{.DisableRegistrySeeding}}
   networking:
     type: overlay
     pod_cidr_block: 172.16.0.0/16
@@ -59,8 +63,13 @@ docker_registry:
   port: {{.DockerRegistryPort}}
   CA: {{.DockerRegistryCAPath}}
 add_ons:
+  heapster:
+    disabled: false
+    options:
+      heapster_replicas: {{if eq .HeapsterReplicas 0}}2{{else}}{{.HeapsterReplicas}}{{end}}
+      influxdb_pvc_name: {{.HeapsterInfluxdbPVC}}
   package_manager:
-    enabled: {{.EnableHelm}}
+    disabled: {{.DisableHelm}}
     provider: helm
 etcd:
   expected_count: {{len .Etcd}}

@@ -27,6 +27,8 @@ nginx_version: "stable-alpine"
 busybox_version: "latest"
 pause_version: "3.0"
 apprenda_tcp_healthz_version: "v1.0.0"
+heapster_version: "v1.3.0"
+influxdb_version: "v1.1.1"
 glusterfs_server_version_rhel: "3.8.7-1.el7"
 glusterfs_server_version_ubuntu: "3.8.7-ubuntu1~xenial1"
 # RHEL needs dash between name-version, Ubuntu needs equals sign between name=version
@@ -192,80 +194,88 @@ docker_registry_full_url: "{{ docker_registry_address }}:{{ docker_registry_port
 load_private_images: "{{ configure_docker_with_private_registry is defined and configure_docker_with_private_registry|bool == true and disconnected_installation is defined and disconnected_installation|bool == true }}"
 
 kube_proxy_orig_img: gcr.io/google-containers/kube-proxy-amd64:{{kubernetes_version}}
-kube_proxy_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-proxy-amd64:{{kubernetes_version}}"
+kube_proxy_priv_img: "{{ docker_registry_full_url }}/{{ kube_proxy_orig_img }}"
 kube_proxy_img: '{% if load_private_images|bool == true %}{{ kube_proxy_priv_img }}{% else %}{{ kube_proxy_orig_img }}{% endif %}'
 
 kube_controller_manager_orig_img: gcr.io/google-containers/kube-controller-manager-amd64:{{kubernetes_version}}
-kube_controller_manager_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-controller-manager-amd64:{{kubernetes_version}}"
+kube_controller_manager_priv_img: "{{ docker_registry_full_url }}/{{ kube_controller_manager_orig_img }}"
 kube_controller_manager_img: '{% if load_private_images|bool == true %}{{ kube_controller_manager_priv_img }}{% else %}{{ kube_controller_manager_orig_img }}{% endif %}'
 
 kube_scheduler_orig_img: gcr.io/google-containers/kube-scheduler-amd64:{{kubernetes_version}}
-kube_scheduler_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-scheduler-amd64:{{kubernetes_version}}"
+kube_scheduler_priv_img: "{{ docker_registry_full_url }}/{{ kube_scheduler_orig_img }}"
 kube_scheduler_img: '{% if load_private_images|bool == true %}{{ kube_scheduler_priv_img }}{% else %}{{ kube_scheduler_orig_img }}{% endif %}'
 
 kube_apiserver_orig_img: gcr.io/google-containers/kube-apiserver-amd64:{{kubernetes_version}}
-kube_apiserver_priv_img: "{{ docker_registry_full_url }}/gcr.io/google-containers/kube-apiserver-amd64:{{kubernetes_version}}"
+kube_apiserver_priv_img: "{{ docker_registry_full_url }}/{{ kube_apiserver_orig_img }}"
 kube_apiserver_img: '{% if load_private_images|bool == true %}{{ kube_apiserver_priv_img }}{% else %}{{ kube_apiserver_orig_img }}{% endif %}'
 
 calico_node_orig_img: calico/node:{{calico_node_version}}
-calico_node_priv_img: "{{ docker_registry_full_url }}/calico/node:{{calico_node_version}}"
+calico_node_priv_img: "{{ docker_registry_full_url }}/{{ calico_node_orig_img }}"
 calico_node_img: '{% if load_private_images|bool == true %}{{ calico_node_priv_img }}{% else %}{{ calico_node_orig_img }}{% endif %}'
 
 calico_ctl_orig_img: calico/ctl:{{calico_ctl_version}}
-calico_ctl_priv_img: "{{ docker_registry_full_url }}/calico/ctl:{{calico_ctl_version}}"
+calico_ctl_priv_img: "{{ docker_registry_full_url }}/{{ calico_ctl_orig_img }}"
 calico_ctl_img: '{% if load_private_images|bool == true %}{{ calico_ctl_priv_img }}{% else %}{{ calico_ctl_orig_img }}{% endif %}'
 
 calico_cni_orig_img: calico/cni:{{calico_cni_version}}
-calico_cni_priv_img: "{{ docker_registry_full_url }}/calico/cni:{{calico_cni_version}}"
+calico_cni_priv_img: "{{ docker_registry_full_url }}/{{ calico_cni_orig_img }}"
 calico_cni_img: '{% if load_private_images|bool == true %}{{ calico_cni_priv_img }}{% else %}{{ calico_cni_orig_img }}{% endif %}'
 
 calico_kube_policy_controller_orig_img: calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}
-calico_kube_policy_controller_priv_img: "{{ docker_registry_full_url }}/calico/kube-policy-controller:{{ calico_kube_policy_controller_version }}"
+calico_kube_policy_controller_priv_img: "{{ docker_registry_full_url }}/{{ calico_kube_policy_controller_orig_img }}"
 calico_kube_policy_controller_img: '{% if load_private_images|bool == true %}{{ calico_kube_policy_controller_priv_img }}{% else %}{{ calico_kube_policy_controller_orig_img }}{% endif %}'
 
 defaultbackend_orig_img: gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}
-defaultbackend_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/defaultbackend:{{ defaultbackend_version }}"
+defaultbackend_priv_img: "{{ docker_registry_full_url }}/{{ defaultbackend_orig_img }}"
 defaultbackend_img: '{% if load_private_images|bool == true %}{{ defaultbackend_priv_img }}{% else %}{{ defaultbackend_orig_img }}{% endif %}'
 
 nginx_ingress_controller_orig_img: gcr.io/google_containers/nginx-ingress-controller:{{ nginx_ingress_controller_version }}
-nginx_ingress_controller_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/nginx-ingress-controller:{{ nginx_ingress_controller_version }}"
+nginx_ingress_controller_priv_img: "{{ docker_registry_full_url }}/{{ nginx_ingress_controller_orig_img }}"
 nginx_ingress_controller_img: '{% if load_private_images|bool == true %}{{ nginx_ingress_controller_priv_img }}{% else %}{{ nginx_ingress_controller_orig_img }}{% endif %}'
 
 nginx_orig_img: nginx:{{ nginx_version }}
-nginx_priv_img: "{{ docker_registry_full_url }}/nginx:{{ nginx_version }}"
+nginx_priv_img: "{{ docker_registry_full_url }}/{{ nginx_orig_img }}"
 nginx_img: '{% if load_private_images|bool == true %}{{ nginx_priv_img }}{% else %}{{ nginx_orig_img }}{% endif %}'
 
 busybox_orig_img: busybox:{{ busybox_version }}
-busybox_priv_img: "{{ docker_registry_full_url }}/busybox:{{ busybox_version }}"
+busybox_priv_img: "{{ docker_registry_full_url }}/{{ busybox_orig_img }}"
 busybox_img: '{% if load_private_images|bool == true %}{{ busybox_priv_img }}{% else %}{{ busybox_orig_img }}{% endif %}'
 
 pause_orig_img: gcr.io/google_containers/pause-amd64:{{ pause_version }}
-pause_priv_img: "{{ docker_registry_full_url }}/gcr.io/google_containers/pause-amd64:{{ pause_version }}"
+pause_priv_img: "{{ docker_registry_full_url }}/{{ pause_orig_img }}"
 pause_img: '{% if load_private_images|bool == true %}{{ pause_priv_img }}{% else %}{{ pause_orig_img }}{% endif %}'
 
 kubedns_orig_img: gcr.io/google_containers/k8s-dns-kube-dns-amd64:{{ kubedns_version }}
-kubedns_priv_img: "{{ docker_registry_full_url }}/k8s-dns-kube-dns-amd64:{{ kubedns_version }}"
+kubedns_priv_img: "{{ docker_registry_full_url }}/{{ kubedns_orig_img }}"
 kubedns_img: '{% if load_private_images|bool == true %}{{ kubedns_priv_img }}{% else %}{{ kubedns_orig_img }}{% endif %}'
 
 kube_dnsmasq_orig_img: gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:{{ kube_dnsmasq_version }}
-kube_dnsmasq_priv_img: "{{ docker_registry_full_url }}/k8s-dns-dnsmasq-nanny-amd64:{{ kube_dnsmasq_version }}"
+kube_dnsmasq_priv_img: "{{ docker_registry_full_url }}/{{ kube_dnsmasq_orig_img }}"
 kube_dnsmasq_img: '{% if load_private_images|bool == true %}{{ kube_dnsmasq_priv_img }}{% else %}{{ kube_dnsmasq_orig_img }}{% endif %}'
 
 kubedns_sidecar_orig_img: gcr.io/google_containers/k8s-dns-sidecar-amd64:{{ kubedns_sidecar_version }}
-kubedns_sidecar_priv_img: "{{ docker_registry_full_url }}/exechealthz-amd64:{{ kubedns_sidecar_version }}"
+kubedns_sidecar_priv_img: "{{ docker_registry_full_url }}/{{ kubedns_sidecar_orig_img }}"
 kubedns_sidecar_img: '{% if load_private_images|bool == true %}{{ kubedns_sidecar_priv_img }}{% else %}{{ kubedns_sidecar_orig_img }}{% endif %}'
 
 kubernetes_dashboard_orig_img: gcr.io/google_containers/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}
-kubernetes_dashboard_priv_img: "{{ docker_registry_full_url }}/kubernetes-dashboard-amd64:{{ kubernetes_dashboard_version }}"
+kubernetes_dashboard_priv_img: "{{ docker_registry_full_url }}/{{ kubernetes_dashboard_orig_img }}"
 kubernetes_dashboard_img: '{% if load_private_images|bool == true %}{{ kubernetes_dashboard_priv_img }}{% else %}{{ kubernetes_dashboard_orig_img }}{% endif %}'
 
 apprenda_tcp_healthz_orig_img: apprenda/tcp-healthz-amd64:{{ apprenda_tcp_healthz_version }}
-apprenda_tcp_healthz_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/tcp-healthz-amd64:{{ apprenda_tcp_healthz_version }}"
+apprenda_tcp_healthz_priv_img: "{{ docker_registry_full_url }}/{{ apprenda_tcp_healthz_orig_img }}"
 apprenda_tcp_healthz_img: "{% if load_private_images|bool == true %}{{ apprenda_tcp_healthz_priv_img }}{% else %}{{ apprenda_tcp_healthz_orig_img }}{% endif %}"
 
 helm_orig_img: gcr.io/kubernetes-helm/tiller:{{ helm_version }}
-helm_priv_img: "{{ docker_registry_address }}:{{ docker_registry_port }}/gcr.io/kubernetes-helm/tiller:{{ helm_version }}"
+helm_priv_img: "{{ docker_registry_full_url }}/{{ helm_orig_img }}"
 helm_img: "{% if load_private_images|bool == true %}{{ helm_priv_img }}{% else %}{{ helm_orig_img }}{% endif %}"
+
+heapster_orig_img: gcr.io/google_containers/heapster-amd64:{{ heapster_version }}
+heapster_priv_img: "{{ docker_registry_full_url }}/{{ heapster_orig_img }}"
+heapster_img: "{% if load_private_images|bool == true %}{{ heapster_priv_img }}{% else %}{{ heapster_orig_img }}{% endif %}"
+
+influxdb_orig_img: gcr.io/google_containers/heapster-influxdb-amd64:{{ influxdb_version }}
+influxdb_priv_img: "{{ docker_registry_full_url }}/{{ influxdb_orig_img }}"
+influxdb_img: "{% if load_private_images|bool == true %}{{ influxdb_priv_img }}{% else %}{{ influxdb_orig_img }}{% endif %}"
 
 # kismatic packages
 yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com

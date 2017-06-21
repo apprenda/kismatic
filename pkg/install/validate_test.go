@@ -23,6 +23,13 @@ var validPlan = Plan{
 			Port: 22,
 		},
 	},
+	AddOns: AddOns{
+		HeapsterMonitoring: HeapsterMonitoring{
+			Options: HeapsterOptions{
+				HeapsterReplicas: 2,
+			},
+		},
+	},
 	Etcd: NodeGroup{
 		ExpectedCount: 1,
 		Nodes: []Node{
@@ -639,61 +646,92 @@ func TestValidateNodeGroupDuplicateInternalIPs(t *testing.T) {
 }
 
 func TestDisconnectedInstallationPrereq(t *testing.T) {
-	p := &validPlan
-
-	p.Cluster.DisconnectedInstallation = true
-	valid, _ := disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()}.validate()
-	if valid {
-		t.Errorf("expected invalid, but got valid")
+	tests := []struct {
+		cluster  Cluster
+		registry DockerRegistry
+		valid    bool
+	}{
+		{
+			cluster: Cluster{
+				DisconnectedInstallation: true,
+			},
+			valid: false,
+		},
+		{
+			cluster: Cluster{
+				DisconnectedInstallation: true,
+			},
+			registry: DockerRegistry{
+				SetupInternal: true,
+				Address:       "",
+			},
+			valid: true,
+		},
+		{
+			cluster: Cluster{
+				DisconnectedInstallation: true,
+			},
+			registry: DockerRegistry{
+				SetupInternal: false,
+				Address:       "10.0.0.1",
+			},
+			valid: true,
+		},
+		{
+			registry: DockerRegistry{
+				SetupInternal: true,
+			},
+			valid: true,
+		},
+		{
+			registry: DockerRegistry{
+				Address: "10.0.0.1",
+			},
+			valid: true,
+		},
+		{
+			registry: DockerRegistry{},
+			valid:    true,
+		},
+		{
+			cluster: Cluster{
+				DisconnectedInstallation: true,
+				DisableRegistrySeeding:   true,
+			},
+			registry: DockerRegistry{
+				SetupInternal: true,
+				Address:       "",
+			},
+			valid: false,
+		},
+		{
+			cluster: Cluster{
+				DisconnectedInstallation: true,
+				DisableRegistrySeeding:   true,
+			},
+			registry: DockerRegistry{
+				SetupInternal: false,
+				Address:       "10.0.0.1",
+			},
+			valid: true,
+		},
+		{
+			cluster: Cluster{
+				DisconnectedInstallation: false,
+				DisableRegistrySeeding:   true,
+			},
+			registry: DockerRegistry{
+				SetupInternal: true,
+				Address:       "",
+			},
+			valid: true,
+		},
 	}
-
-	p.DockerRegistry.SetupInternal = true
-	valid, errs := disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()}.validate()
-	if !valid {
-		t.Errorf("expected valid, but got invalid")
-		fmt.Println(errs)
-	}
-
-	p.DockerRegistry.SetupInternal = false
-	p.DockerRegistry.Address = "10.0.0.1"
-	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()}.validate()
-	if !valid {
-		t.Errorf("expected valid, but got invalid")
-		fmt.Println(errs)
-	}
-
-	p.DockerRegistry.SetupInternal = true
-	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()}.validate()
-	if !valid {
-		t.Errorf("expected valid, but got invalid")
-		fmt.Println(errs)
-	}
-
-	p.Cluster.DisconnectedInstallation = false
-	p.DockerRegistry.SetupInternal = true
-	p.DockerRegistry.Address = ""
-	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()}.validate()
-	if !valid {
-		t.Errorf("expected valid, but got invalid")
-		fmt.Println(errs)
-	}
-
-	p.Cluster.DisconnectedInstallation = false
-	p.DockerRegistry.Address = "10.0.0.1"
-	p.DockerRegistry.SetupInternal = false
-	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()}.validate()
-	if !valid {
-		t.Errorf("expected valid, but got invalid")
-		fmt.Println(errs)
-	}
-
-	p.Cluster.DisconnectedInstallation = false
-	p.DockerRegistry.Address = ""
-	p.DockerRegistry.SetupInternal = false
-	valid, errs = disconnectedInstallation{cluster: p.Cluster, registryProvided: p.ConfigureDockerWithPrivateRegistry()}.validate()
-	if !valid {
-		t.Errorf("expected valid, but got invalid")
-		fmt.Println(errs)
+	for i, test := range tests {
+		ok, _ := disconnectedInstallation{cluster: test.cluster, registry: test.registry}.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
 	}
 }
 
@@ -795,6 +833,44 @@ func TestRepository(t *testing.T) {
 	}
 }
 
+func TestHeapsterAddOn(t *testing.T) {
+	tests := []struct {
+		h     HeapsterMonitoring
+		valid bool
+	}{
+		{
+			h: HeapsterMonitoring{
+				Options: HeapsterOptions{
+					HeapsterReplicas: 0,
+				},
+			},
+			valid: false,
+		},
+		{
+			h: HeapsterMonitoring{
+				Options: HeapsterOptions{
+					HeapsterReplicas: -1,
+				},
+			},
+			valid: false,
+		},
+		{
+			h: HeapsterMonitoring{
+				Options: HeapsterOptions{
+					HeapsterReplicas: 1,
+				},
+			},
+			valid: true,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.h.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
 func TestPackageManagerAddOn(t *testing.T) {
 	tests := []struct {
 		p     PackageManager
@@ -802,35 +878,35 @@ func TestPackageManagerAddOn(t *testing.T) {
 	}{
 		{
 			p: PackageManager{
-				Enabled:  true,
+				Disabled: false,
 				Provider: "helm",
 			},
 			valid: true,
 		},
 		{
 			p: PackageManager{
-				Enabled:  false,
+				Disabled: true,
 				Provider: "",
 			},
 			valid: true,
 		},
 		{
 			p: PackageManager{
-				Enabled:  false,
+				Disabled: true,
 				Provider: "foo",
 			},
 			valid: true,
 		},
 		{
 			p: PackageManager{
-				Enabled:  true,
+				Disabled: false,
 				Provider: "",
 			},
-			valid: false,
+			valid: true,
 		},
 		{
 			p: PackageManager{
-				Enabled:  true,
+				Disabled: false,
 				Provider: "foo",
 			},
 			valid: false,

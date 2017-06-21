@@ -3,4 +3,8 @@
   - include: _kube-dns.yaml play_name="Upgrade Kubernetes DNS" upgrading=true
   - include: _kube-ingress.yaml play_name="Upgrade Kubernetes Ingress" upgrading=true
     when: configure_ingress|bool == true
+  - include: _heapster.yaml play_name="Upgrade Heapster Cluster Monitoring" upgrading=true
+    when: heapster is defined and heapster.enabled is defined and heapster.enabled|bool == true
   - include: _kube-dashboard.yaml play_name="Upgrade Kubernetes Dashboard" upgrading=true
+  - include: _helm.yaml play_name="Upgrade Helm and Tiller" upgrading=true
+    when: helm is defined and helm.enabled is defined and helm.enabled|bool == true

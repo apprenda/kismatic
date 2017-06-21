@@ -1,0 +1,12 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "Configure Heapster Cluster Monitoring"
+    remote_user: root
+    become_method: sudo
+    run_once: true
+    vars_files:
+      - group_vars/all.yaml
+
+    roles:
+      - role: heapster

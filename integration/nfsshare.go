@@ -9,14 +9,13 @@ func testNFSShare(aws infrastructureProvisioner, distro linuxDistro) {
 	WithMiniInfrastructure(distro, aws, func(node NodeDeets, sshKey string) {
 		By("Setting up a plan file with NFS Shares and no storage")
 		plan := PlanAWS{
-			Etcd:                     []NodeDeets{node},
-			Master:                   []NodeDeets{node},
-			Worker:                   []NodeDeets{node},
-			MasterNodeFQDN:           node.Hostname,
-			MasterNodeShortName:      node.Hostname,
-			AllowPackageInstallation: true,
-			SSHKeyFile:               sshKey,
-			SSHUser:                  node.SSHUser,
+			Etcd:                []NodeDeets{node},
+			Master:              []NodeDeets{node},
+			Worker:              []NodeDeets{node},
+			MasterNodeFQDN:      node.Hostname,
+			MasterNodeShortName: node.Hostname,
+			SSHKeyFile:          sshKey,
+			SSHUser:             node.SSHUser,
 			NFSVolume: []NFSVolume{
 				{Host: nfsServers[0].IpAddress},
 			},

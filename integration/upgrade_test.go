@@ -75,7 +75,7 @@ var _ = Describe("Upgrade", func() {
 						nodes.worker = allWorkers[0 : len(nodes.worker)-1]
 
 						// Standup cluster with previous version
-						opts := installOptions{allowPackageInstallation: true}
+						opts := installOptions{}
 						err := installKismatic(nodes, opts, sshKey)
 						FailIfError(err)
 
@@ -131,9 +131,8 @@ var _ = Describe("Upgrade", func() {
 					distro := CentOS7
 					WithInfrastructure(NodeCount{Etcd: 3, Master: 1, Worker: 1}, distro, aws, func(nodes provisionedNodes, sshKey string) {
 						// Standup cluster with previous version
-						// Need to allowPackageInstallation=true to install old versions of packages
+						// Need to disablePackageInstallation=false to install old versions of packages
 						opts := installOptions{
-							allowPackageInstallation:    true,
 							disconnectedInstallation:    true,
 							modifyHostsFiles:            true,
 							autoConfigureDockerRegistry: true,
@@ -161,7 +160,7 @@ var _ = Describe("Upgrade", func() {
 						err = os.Remove("kismatic-testing.yaml")
 						FailIfError(err)
 						opts = installOptions{
-							allowPackageInstallation:    false,
+							disablePackageInstallation:  true,
 							disconnectedInstallation:    true,
 							modifyHostsFiles:            true,
 							autoConfigureDockerRegistry: true,
@@ -201,7 +200,9 @@ func installAndUpgrade(nodes provisionedNodes, sshKey string) {
 	// Standup cluster with previous version
 	// Using CIDR to pass tests on KET v1.3.x
 	// These versions used a version of kuberang with a bad test
-	opts := installOptions{allowPackageInstallation: true, serviceCIDR: "172.17.0.0/16"}
+	opts := installOptions{
+		serviceCIDR: "172.17.0.0/16",
+	}
 	err := installKismatic(nodes, opts, sshKey)
 	FailIfError(err)
 

@@ -6,10 +6,10 @@
     become_method: sudo
     run_once: true
 
+    pre_tasks:
+      - name: remove old calico-policy-controller replication controller if exists
+        command: kubectl delete rc calico-policy-controller -n kube-system --now --ignore-not-found
+        when: upgrading is defined and upgrading|bool == true
+
     roles:
       - calico-network-policy
-
-    post_tasks:
-      - name: remove old calico-policy replication controller if exists
-        command: kubectl delete rc calico-policy -n kube-system --now --ignore-not-found
-        when: upgrading is defined and upgrading|bool == true

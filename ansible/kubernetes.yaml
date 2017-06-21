@@ -29,9 +29,11 @@
   - include: _calico-validate.yaml
   - include: _calico-network-policy.yaml
   - include: _kube-dns.yaml
+  - include: _heapster.yaml
+    when: heapster is defined and heapster.enabled is defined and heapster.enabled|bool == true
   - include: _kube-dashboard.yaml
   - include: _helm.yaml
-    when: enable_helm|bool == true
+    when: helm is defined and helm.enabled is defined and helm.enabled|bool == true
   - include: _kube-ingress.yaml
     when: configure_ingress|bool == true
   - include: _storage.yaml

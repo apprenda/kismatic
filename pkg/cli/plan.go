@@ -3,7 +3,6 @@ package cli
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -78,12 +77,6 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 		return fmt.Errorf("The number of nfs volumes must be greater than or equal to zero")
 	}
 
-	fmt.Fprintln(out, "\nSelect Add-Ons:")
-	packageManagerChoice, err := util.PromptForString(in, out, "Enable package manager", install.DefaultPackageManagerProvider, append(install.PackageManagerProviders(), "none"))
-	if err != nil {
-		return fmt.Errorf("Error reading cluster package manager choice: %v", err)
-	}
-
 	fmt.Fprintln(out)
 	fmt.Fprintf(out, "Generating installation plan file template with: \n")
 	fmt.Fprintf(out, "- %d etcd nodes\n", etcdNodes)
@@ -92,21 +85,15 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	fmt.Fprintf(out, "- %d ingress nodes\n", ingressNodes)
 	fmt.Fprintf(out, "- %d storage nodes\n", storageNodes)
 	fmt.Fprintf(out, "- %d nfs volumes\n", nfsVolumes)
-	packageManagerEnabled := "enabled"
-	if strings.ToLower(packageManagerChoice) == "none" {
-		packageManagerEnabled = "disabled"
-	}
-	fmt.Fprintf(out, "- %s cluster package manager with %q\n", packageManagerEnabled, packageManagerChoice)
 	fmt.Fprintln(out)
 
 	template := planTemplate{
-		etcdNodes:              etcdNodes,
-		masterNodes:            masterNodes,
-		workerNodes:            workerNodes,
-		ingressNodes:           ingressNodes,
-		storageNodes:           storageNodes,
-		nfsVolumes:             nfsVolumes,
-		packageManagerProvider: packageManagerChoice,
+		etcdNodes:    etcdNodes,
+		masterNodes:  masterNodes,
+		workerNodes:  workerNodes,
+		ingressNodes: ingressNodes,
+		storageNodes: storageNodes,
+		nfsVolumes:   nfsVolumes,
 	}
 
 	plan := buildPlan(template)
@@ -120,13 +107,12 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 }
 
 type planTemplate struct {
-	etcdNodes              int
-	masterNodes            int
-	workerNodes            int
-	ingressNodes           int
-	storageNodes           int
-	nfsVolumes             int
-	packageManagerProvider string
+	etcdNodes    int
+	masterNodes  int
+	workerNodes  int
+	ingressNodes int
+	storageNodes int
+	nfsVolumes   int
 }
 
 func buildPlan(template planTemplate) *install.Plan {
@@ -141,11 +127,6 @@ func buildPlan(template planTemplate) *install.Plan {
 		Worker: install.NodeGroup{
 			ExpectedCount: template.workerNodes,
 		},
-	}
-
-	if template.packageManagerProvider != "none" {
-		plan.AddOns.PackageManager.Enabled = true
-		plan.AddOns.PackageManager.Provider = template.packageManagerProvider
 	}
 
 	if template.ingressNodes > 0 {

@@ -23,7 +23,7 @@
         become: no
         when: disconnected_installation|bool != true
       - name: "run helm init"
-        local_action: command ../../helm init --service-account=tiller -i="{{ helm_img }}"
+        local_action: command ../../helm init --service-account=tiller -i="{{ helm_img }}" --upgrade
         become: no
       - name: wait until the tiller pod is ready
         command: kubectl get deployment tiller-deploy -n kube-system -o jsonpath='{.status.availableReplicas}'

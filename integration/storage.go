@@ -115,15 +115,14 @@ func createVolume(planFile *os.File, name string, replicationCount int, distribu
 func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, distro linuxDistro) {
 	By("Setting up a plan file with storage nodes")
 	plan := PlanAWS{
-		Etcd:                     nodes,
-		Master:                   nodes,
-		Worker:                   nodes,
-		Storage:                  nodes,
-		MasterNodeFQDN:           nodes[0].Hostname,
-		MasterNodeShortName:      nodes[0].Hostname,
-		AllowPackageInstallation: true,
-		SSHKeyFile:               sshKey,
-		SSHUser:                  nodes[0].SSHUser,
+		Etcd:                nodes,
+		Master:              nodes,
+		Worker:              nodes,
+		Storage:             nodes,
+		MasterNodeFQDN:      nodes[0].Hostname,
+		MasterNodeShortName: nodes[0].Hostname,
+		SSHKeyFile:          sshKey,
+		SSHUser:             nodes[0].SSHUser,
 	}
 	By("Writing plan file out to disk")
 	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)

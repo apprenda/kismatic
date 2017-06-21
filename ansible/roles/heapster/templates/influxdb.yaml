@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    task: monitoring
+    kubernetes.io/name: heapster-influxdb
+  name: heapster-influxdb
+  namespace: kube-system
+spec:
+  ports:
+  - port: 8086
+    targetPort: 8086
+  selector:
+    k8s-app: influxdb
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: heapster-influxdb
+  namespace: kube-system
+  annotations:
+    kismatic/version: "{{ kismatic_short_version }}"
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        task: monitoring
+        k8s-app: influxdb
+    spec:
+      containers:
+      - name: influxdb
+        image: "{{ influxdb_img }}"
+        volumeMounts:
+        - mountPath: /data
+          name: influxdb-storage
+      volumes:
+      - name: influxdb-storage
+{% if heapster.options.influxdb_pvc_name is defined and heapster.options.influxdb_pvc_name != "" %}
+        persistentVolumeClaim:
+          claimName: "{{ heapster.options.influxdb_pvc_name }}"
+{% else %}
+        emptyDir: {}
+{% endif %}

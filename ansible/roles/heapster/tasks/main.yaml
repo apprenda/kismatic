@@ -1,0 +1,29 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+
+  - name: copy heapster-rbac.yaml to remote
+    template:
+      src: heapster-rbac.yaml
+      dest: "{{ kubernetes_spec_dir }}/heapster-rbac.yaml"
+  - name: copy influxdb.yaml to remote
+    template:
+      src: influxdb.yaml
+      dest: "{{ kubernetes_spec_dir }}/influxdb.yaml"
+  - name: copy heapster.yaml to remote
+    template:
+      src: heapster.yaml
+      dest: "{{ kubernetes_spec_dir }}/heapster.yaml"
+
+  - name: create heapster rolebinding
+    command: kubectl apply -f {{ kubernetes_spec_dir }}/heapster-rbac.yaml
+  - name: start influxdb controller
+    command: kubectl apply -f {{ kubernetes_spec_dir }}/influxdb.yaml
+  - name: start heapster controller
+    command: kubectl apply -f {{ kubernetes_spec_dir }}/heapster.yaml
+
+  - name: validate heapster pods  # don't verify if user is going to create their own PVC/PV
+    include: validate.yaml
+    when: heapster.options.influxdb_pvc_name is not defined or heapster.options.influxdb_pvc_name == ''
