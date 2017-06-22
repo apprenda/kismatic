@@ -120,7 +120,7 @@ func (c *applyCmd) run() error {
 	util.PrintColor(c.out, util.Green, "\nThe cluster was installed successfully!\n\n")
 
 	msg := "- To use the generated kubeconfig file with kubectl:" +
-		"\n    * use \"kubectl --kubeconfig %s/kubeconfig\"" +
+		"\n    * use \"./kubectl --kubeconfig %s/kubeconfig\"" +
 		"\n    * or copy the config file \"cp %[1]s/kubeconfig ~/.kube/config\"\n"
 	util.PrintColor(c.out, util.Blue, msg, c.generatedAssetsDir)
 	util.PrintColor(c.out, util.Blue, "- To view the Kubernetes dashboard: \"./kismatic dashboard\"\n")
