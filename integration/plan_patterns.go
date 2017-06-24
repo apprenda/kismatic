@@ -64,12 +64,12 @@ docker_registry:
   CA: {{.DockerRegistryCAPath}}
 add_ons:
   heapster:
-    disabled: false
+    disable: false
     options:
       heapster_replicas: {{if eq .HeapsterReplicas 0}}2{{else}}{{.HeapsterReplicas}}{{end}}
       influxdb_pvc_name: {{.HeapsterInfluxdbPVC}}
   package_manager:
-    disabled: {{.DisableHelm}}
+    disable: {{.DisableHelm}}
     provider: helm
 etcd:
   expected_count: {{len .Etcd}}

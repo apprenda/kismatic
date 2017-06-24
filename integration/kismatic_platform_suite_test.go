@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 
 	"testing"
@@ -181,7 +182,9 @@ func uploadTestLogs() {
 		return
 	}
 	for _, t := range tests {
-		uploadKismaticLogs(filepath.Join(testWorkingDirs, t.Name()))
+		if strings.Contains(t.Name(), "test-") {
+			uploadKismaticLogs(filepath.Join(testWorkingDirs, t.Name()))
+		}
 	}
 }
 
@@ -226,8 +229,8 @@ func uploadKismaticLogs(path string) {
 	}
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err = cmd.Run(); err != nil {
-		fmt.Printf("failed to tar artifacts")
+	if err := cmd.Run(); err != nil {
+		fmt.Println("failed to tar artifacts")
 		return
 	}
 

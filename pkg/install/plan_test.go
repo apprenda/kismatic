@@ -22,7 +22,7 @@ func TestReadWithDeprecated(t *testing.T) {
 	readDeprecatedFields(p)
 
 	// features.package_manager should be set to add_ons.package_manager
-	if p.AddOns.PackageManager.Disabled || p.AddOns.PackageManager.Provider != "helm" {
+	if p.AddOns.PackageManager.Disable || p.AddOns.PackageManager.Provider != "helm" {
 		t.Errorf("Expected add_ons.package_manager to be read from features.package_manager")
 	}
 	// cluster.disable_package_installation shoule be set to cluster.allow_package_installation

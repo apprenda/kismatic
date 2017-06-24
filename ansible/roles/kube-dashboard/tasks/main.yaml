@@ -10,5 +10,16 @@
   - name: start kubernetes-dashboard service
     command: kubectl apply -f {{ kubernetes_spec_dir }}/kubernetes-dashboard.yaml
     register: out
+  - name: wait until kubernetes-dashboard pods are ready
+    command: kubectl get deployment kubernetes-dashboard -n kube-system -o jsonpath='{.status.availableReplicas}'
+    register: readyReplicas
+    until: readyReplicas.stdout|int == [2, groups['worker'] | length] | min
+    retries: 24
+    delay: 10
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+  - name: fail if any kubernetes-dashboard pods are not ready
+    fail:
+      msg: "Timed out waiting for kubernetes-dashboard pods to be in the ready state."
+    when: readyReplicas.stdout|int != [2, groups['worker'] | length] | min
 
   - debug: var=out.stdout_lines

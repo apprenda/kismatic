@@ -89,7 +89,7 @@ func readDeprecatedFields(p *Plan) {
 	// only set if not already being set by the user
 	// package_manager moved from features: to add_ons: after KET v1.3.3
 	if p.Features != nil && p.Features.PackageManager != nil {
-		p.AddOns.PackageManager.Disabled = !p.Features.PackageManager.Enabled
+		p.AddOns.PackageManager.Disable = !p.Features.PackageManager.Enabled
 		// KET v1.3.3 did not have a provider field
 		p.AddOns.PackageManager.Provider = ket133PackageManagerProvider
 	}
