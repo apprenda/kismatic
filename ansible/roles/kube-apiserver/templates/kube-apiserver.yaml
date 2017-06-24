@@ -22,7 +22,7 @@ spec:
 {% if option[1] is defined and option[1] | string | length > 0 %}
       - --{{ option[0] }}={{ option[1] }}
 {% endif %}
-{% endfor -%}
+{% endfor %}
     ports:
     - containerPort: {{ kubernetes_master_secure_port }}
       hostPort: {{ kubernetes_master_secure_port }}

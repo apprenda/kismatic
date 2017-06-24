@@ -2,6 +2,7 @@ package install
 
 import (
 	"fmt"
+	"strings"
 )
 
 type APIServerOptions struct {
@@ -26,11 +27,17 @@ var protectedOptions = []string{
 
 func (options *APIServerOptions) validate() (bool, []error) {
 	v := newValidator()
+	overrides := make([]string, 0)
 	for _, protectedOption := range protectedOptions {
 		_, found := options.Overrides[protectedOption]
 		if found {
-			v.addError(fmt.Errorf("APIServer option [%s] should not be overriden", protectedOption))
+			overrides = append(overrides, protectedOption)
 		}
 	}
+
+	if len(overrides) > 0  {
+		v.addError(fmt.Errorf("Kube ApiServer Option(s) [%v] should not be overridden", strings.Join(overrides, ", ")))
+	}
+
 	return v.valid();
 }

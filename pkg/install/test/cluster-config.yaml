@@ -1,13 +1,12 @@
 cluster:
   name: my_cluster_name
   admin_password: secret_admin_password
-  allow_package_installation: true
+  disable_package_installation: false
   disconnected_installation: false
   networking:
     type: overlay
     pod_cidr_block: 172.16.0.0/16
     service_cidr_block: 172.17.0.0/16
-    policy_enabled: false
     update_hosts_files: false
   certificates:
     expiry: 17520h
