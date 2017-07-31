@@ -65,3 +65,20 @@ The following is a list of the interactions that happen between all the componen
 
 ### Can I bring my own CA?
 Yes. Kismatic allows you to provide your own Certificate Authority for generating certificates. Simply place the CA's private key (`ca-key.pem`) and certificate (`ca.pem`) in the `generated/keys` directory beside the `kismatic` binary.
+
+### Certificate generation command
+In Kubernetes, client certificates are used for authenticating with the Kubernetes API server. KET facilitates
+the generation of certificates with the `certificates generate` subcommand. 
+
+The `certificates generate` subcommand can be used to generate certificates using the 
+same technique that is employed by KET. The main use case for this subcommand is to 
+create client certificates when new team members join, or when you need to grant
+access to the cluster to another system such as a CI/CD tool.
+
+Example usage:
+```
+# Generate a certificate for username = alice, and groups = [dev, ops]
+./kismatic certificates generate alice --organizations dev,ops
+```
+
+Full documentation on the CLI command can be found [here](./kismatic-cli/kismatic_certificates.md)
