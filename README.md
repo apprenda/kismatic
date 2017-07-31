@@ -53,7 +53,9 @@ KET operational tools include:
 
 [Cluster Examples](docs/INTENT.md) -- Examples for various ways you can use Kismatic in your organization.
 
-[Using KET with Calico](docs/NETWORKING.md) -- Instructions on how to use KET with the built-in SDN controller Project Calico.
+[CNI Providers](docs/NETWORKING.md) -- Information about the supported CNI providers by KET.
+
+[Add Ons](docs/ADD-ONS.md) -- Information about the Add-Ons supported by KET.
 
 [Cert Generation](docs/CERT_GENERATION.md) -- Information on how KET handles certificates.
 
