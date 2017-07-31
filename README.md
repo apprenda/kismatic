@@ -14,13 +14,13 @@ KET is a set of production-ready defaults and best practice tools for creating e
 
 KET operational tools include:
 
-1. [`Kismatic CLI`](docs/INSTALL.md)
+1. [`Kismatic CLI`](docs/install.md)
    * Command-line control plane and lifecycle tool for installing and configuring Kubernetes on provisioned infrastructure.
 2. [`Kismatic Inspector`](cmd/kismatic-inspector/README.md)
    * Cluster health and validation utility for assuring that software and network configurations of cluster nodes are correct when installing Kubernetes.
 3. [`Kuberang`](https://github.com/apprenda/kuberang)
    * Cluster build verification to ensure networking and scaling work as intended. This tool is used to smoke-test a newly built cluster.
-4. [Kismatic RPM & DEB Packages](docs/PACKAGES.md)
+4. [Kismatic RPM & DEB Packages](docs/packages.md)
    * Packages for installing Kubernetes and its dependencies, focused on specific roles in an HA cluster.
    * With these packages installed on a local repo, it is possible to use Kismatic to install Kubernetes on nodes that do not have access to the public internet.
 5. [`Kismatic Provision`](https://github.com/apprenda/kismatic-provision)
@@ -47,17 +47,17 @@ KET operational tools include:
 
 # Usage Documentation
 
-[Installation Overview](docs/INSTALL.md) -- Instructions on using KET to install a Kubernetes cluster.
+[Installation Overview](docs/install.md) -- Instructions on using KET to install a Kubernetes cluster.
 
-[Upgrade a Kubernetes cluster](docs/UPGRADE.md) -- Instructions on using KET to upgrade your Kubernetes cluster.
+[Upgrade a Kubernetes cluster](docs/upgrade.md) -- Instructions on using KET to upgrade your Kubernetes cluster.
 
-[Cluster Examples](docs/INTENT.md) -- Examples for various ways you can use Kismatic in your organization.
+[Cluster Examples](docs/intent.md) -- Examples for various ways you can use Kismatic in your organization.
 
-[CNI Providers](docs/NETWORKING.md) -- Information about the supported CNI providers by KET.
+[CNI Providers](docs/networking.md) -- Information about the supported CNI providers by KET.
 
-[Add Ons](docs/ADD-ONS.md) -- Information about the Add-Ons supported by KET.
+[Add Ons](docs/add_ons.md) -- Information about the Add-Ons supported by KET.
 
-[Cert Generation](docs/CERT_GENERATION.md) -- Information on how KET handles certificates.
+[Cert Generation](docs/certificates.md) -- Information on how KET handles certificates.
 
 [Kismatic CLI](https://github.com/apprenda/kismatic/tree/master/docs/kismatic-cli) -- Dynamically generated documentation for the Kismatic CLI.
 
