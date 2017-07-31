@@ -62,7 +62,10 @@ Plan file options:
 |---------------|-------------|
 | `add_ons.heapster.disable` | Set to true if heapster should not be deployed during installation |
 | `add_ons.heapster.options.heapster.replicas`  | Number of replicas for the heapster deployment |
+| `add_ons.heapster.options.heapster.serviceType` | Set the service type for the Heapster service |
+| `add_ons.heapster.options.heapster.sink` | The location where Heapster will store it's data |
 | `add_ons.heapster.options.influxdb.pvc_name` | Name of a persistent volume claim that will be used by the influxdb databse for persistence. This PVC must be manually created after installation. |
+
 
 ## Dashboard
 The [Kubernetes dashboard](https://github.com/kubernetes/dashboard) is a web-based UI for managing Kubernetes clusters.
