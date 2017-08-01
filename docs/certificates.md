@@ -75,10 +75,17 @@ same technique that is employed by KET. The main use case for this subcommand is
 create client certificates when new team members join, or when you need to grant
 access to the cluster to another system such as a CI/CD tool.
 
-Example usage:
+The Kubernetes API server derives username and group information from client certificates when they
+are used for authentication purposes. More specifically, the username is derived
+from the certificate's Common Name field, and the groups are derived from the certificate's
+organization fields. The X509 Client Cert authentication strategy is documented 
+[here](https://kubernetes.io/docs/admin/authentication/#x509-client-certs).
+
+With that said, you can use the following command to generate a client certificate
+for a new team member `alice` that belongs to the `dev` and `ops` groups:
 ```
-# Generate a certificate for username = alice, and groups = [dev, ops]
 ./kismatic certificates generate alice --organizations dev,ops
 ```
+
 
 Full documentation on the CLI command can be found [here](./kismatic-cli/kismatic_certificates.md)
