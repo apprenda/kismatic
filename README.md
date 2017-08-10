@@ -1,6 +1,6 @@
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](LICENSE)
 [![CircleCI](https://circleci.com/gh/apprenda/kismatic.svg?style=svg)](https://circleci.com/gh/apprenda/kismatic)
-[![Slackin](http://54.242.94.98/badge.svg)](http://54.242.94.98/)
+[![Slackin](http://slack-signup.kismatic.com/badge.svg)](http://slack-signup.kismatic.com/)
 
 # Kismatic Enterprise Toolkit (KET): Design, Deployment and Operations System for Production Kubernetes Clusters
 
