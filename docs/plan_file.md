@@ -84,174 +84,26 @@
 
 ## Cluster
 
-#### cluster.name
-
-This property indicates the name of the cluster. It is used when generating assets
-that require a cluster name, such as kubeconfig files and certificates.
-
-| Required | Yes |
-|----------|-----|
-| **Default** | ` ` |
-
-#### cluster.admin_password
-
-This property sets the password for the admin user.
-
-| Required | Yes |
-|----------|-----|
-| **Default** | ` ` |
-
-#### cluster.disable_package_installation
-
-This property disables the package installation process on the cluster nodes. When set to true, KET will not install the required packages. Instead, it will verify that the packages have been installed by the operator.
-
-| Required | No |
-|----------|-----|
-| **Default** | `false` |
-| **Options** | `true`, `false`
-
-#### cluster.package_repository_urls
-
-This property contains a comma-separated list of URLs of repositories that will be used for fetching the required packages.
-This is mainly used during a disconnected installation. In this scenario, internal package repositories that contain the KET packages and all their transitive dependencies should be listed here.
-
-| Required | No |
-|----------|-----|
-| **Default** | ` ` |
-| **Format** | Comma-separated list of URLs |
-| **Example** | `http://rpm.apprenda.local:8080` |
-
-#### cluster.disconnected_installation
-
-This property indicates whether the cluster nodes are disconnected from the internet. When set to `true`, internal package repositories and container image registries are required for installation.
-See the [disconnected installation](./disconnected_install.md) documentation for more information.
-
-| Required | No |
-|----------|-----|
-| **Default** | `false` |
-| **Options** | `true`, `false` |
-
-#### cluster.disable_registry_seeding
-
-This property disables the seeding of an internal container image registry during the installation. This is mainly used during a disconnected installation. When set to `true`, the internal container image registry must be seeded before performing the installation.
-
-| Required | No |
-|----------|-----|
-| **Default** | `false` |
-| **Options** | `true`, `false` |
-
-#### cluster.networking.pod_cidr_block
-
-This property indicates the pod network's CIDR block.
-
-| Required | Yes |
-|----------|-----|
-| **Default** |  |
-| **Options** | Network subnet in CIDR notation |
-| **Example** | `172.16.0.0/16` |
-
-#### cluster.networking.service_cidr_block
-
-This property indicates the Kubernetes service network's CIDR block.
-
-| Required | Yes |
-|----------|-----|
-| **Default** |  |
-| **Options** | Network subnet in CIDR notation |
-| **Example** | `172.20.0.0/16` |
-
-#### cluster.networking.update_hosts_files
-
-This property controls whether the `/etc/hosts` file should be updated on the cluster nodes. When set to `true`, KET will updated the hosts file on all nodes to include entries for all other nodes in the cluster.
-
-| Required | No |
-|----------|-----|
-| **Default** | `false` |
-| **Options** | `true`, `false` |
-
-#### cluster.networking.http_proxy
-
-This property indicates the URL of the proxy that should be used for HTTP connections.
-
-| Required | No |
-|----------|-----|
-| **Default** |  |
-| **Options** | URL |
-| **Example** | `http://secure.apprenda.local:3128` |
-
-#### cluster.networking.https_proxy
-
-This property indicates the URL of the proxy that should be used for HTTPS connections.
-
-| Required | No |
-|----------|-----|
-| **Default** |  |
-| **Options** | URL |
-| **Example** | `https://secure.apprenda.local:3128` |
-
-#### cluster.networking.no_proxy
-
-This property contains a comma-separated list of host names and/or IPs for which connections will not go through a proxy.
-
-| Required | No |
-|----------|-----|
-| **Default** |  |
-| **Options** | Comma-separated list of hostnames and/or IPs |
-| **Example** | `ignore-proxy.com,8.8.8.8,8.8.4.4` |
-
-#### cluster.certificates.expiry
-
-This property indicates the length of time that generated certificates should be valid for.
-
-| Required | Yes |
-|----------|-----|
-| **Default** | ` ` |
-| **Format** | Integer followed by unit of time (`h`,`m`, or `s`) |
-| **Example** | `17520h` (2 years) |
-
-#### cluster.certificates.ca_expiry
-
-This property indicates the length of time that the generated Certificate Authority should be valid for.
-
-| Required | Yes |
-|----------|-----|
-| **Default** | ` ` |
-| **Format** | Integer followed by unit of time (`h`,`m`, or `s`) |
-| **Example** | `17520h` (2 years) |
-
-#### cluster.ssh.user
-
-This property indicates the user for accessing the cluster nodes via SSH. This user requires sudo elevation privileges on the cluster nodes.
-
-| Required | Yes |
-|----------|-----|
-| **Default** | ` ` |
-
-#### cluster.ssh.ssh_key
-
-This property indicates the absolute path of the SSH key that should be used for accessing the cluster nodes.
-
-| Required | Yes |
-|----------|-----|
-| **Default** | ` ` |
-
-#### cluster.ssh.ssh_port
-
-This property indicates the port number on which cluster nodes are listening for SSH connections.
-
-| Required | Yes |
-|----------|-----|
-| **Default** | ` ` |
-
-#### cluster.kube_apiserver.option_overrides
-
-This property contains a listing of option overrides that should be applied to the Kubernetes API server configuration. This is an advanced feature that can prevent the API server from starting up if invalid configuration is provided.
-
-| Required | No |
-|----------|-----|
-| **Default** | ` ` |
-| **Format** | Map with string keys and string values |
-| **Example** | `{"event_ttl": "2h0m0s"}` | 
+| Property | Required | Default Value | Allowed Value | Description |
+|----------|----------|---------|----------------|-------------|
+| `name`   | Yes | ` ` | _custom_ | This property indicates the name of the cluster. It is used when generating assets that require a cluster name, such as kubeconfig files and certificates. |
+| `admin_password` | Yes | ` ` | _custom_ | This property sets the password for the admin user. |
+| `disable_package_installation` | No | `false` | `true`, `false` | This property disables the package installation process on the cluster nodes. When set to true, KET will not install the required packages. Instead, it will verify that the packages have been installed by the operator. |
+| `package_repository_urls` | No | ` ` | _Comma-separated list of URLs_ | This property contains a comma-separated list of URLs of repositories that will be used for fetching the required packages. This is mainly used during a disconnected installation. In this scenario, internal package repositories that contain the KET packages and all their transitive dependencies should be listed here. Example: `http://rpm.apprenda.local:8080` | 
+| `disconnected_installation` | No | `false` | `true`, `false` | This property indicates whether the cluster nodes are disconnected from the internet. When set to `true`, internal package repositories and container image registries are required for installation. See the [disconnected installation](./disconnected_install.md) documentation for more information. |
+| `disable_registry_seeding` | No | `false` | `true`, `false` | This property disables the seeding of an internal container image registry during the installation. This is mainly used during a disconnected installation. When set to `true`, the internal container image registry must be seeded before performing the installation. |
+| `networking.pod_cidr_block` | Yes | ` ` | _Network CIDR_ | This property indicates the pod network's CIDR block. For example: `172.16.0.0/16` |
+| `networking.service_cidr_block` | Yes | ` ` | _Network CIDR_ | This property indicates the Kubernetes service network's CIDR block. For example: `172.20.0.0/16` |
+| `networking.update_hosts_files` | No | `false` | `true`, `false` | This property controls whether the `/etc/hosts` file should be updated on the cluster nodes. When set to `true`, KET will updated the hosts file on all nodes to include entries for all other nodes in the cluster. |
+| <a id="clusternetworkinghttp_proxy"></a> `networking.http_proxy` | No | ` ` | _URL_ | This property indicates the URL of the proxy that should be used for HTTP connections. For example: `http://secure.apprenda.local:3128` |
+| `networking.https_proxy` | No | ` ` | _URL_ | This property indicates the URL of the proxy that should be used for HTTPS connections. For example: `https://secure.apprenda.local:3128` |
+| `networking.no_proxy` | No | ` ` | _Comma-separated list_ | This property contains a comma-separated list of host names and/or IPs for which connections will not go through a proxy. For example: `ignore-proxy.com,8.8.8.8,8.8.4.4` |
+| `certificates.expiry` | Yes | ` ` | _Integer followed by unit of time (`h`,`m`, or `s`)_ | This property indicates the length of time that generated certificates should be valid for. For example: `17520h` for 2 years. |
+| `certificates.ca_expiry` | Yes | ` ` | _Integer followed by unit of time (`h`,`m`, or `s`)_ | This property indicates the length of time that the generated Certificate Authority should be valid for. For example: `17520h` for 2 years. |
+| `ssh.user` | Yes | ` ` | _custom_ | This property indicates the user for accessing the cluster nodes via SSH. This user requires sudo elevation privileges on the cluster nodes. |
+| `ssh.ssh_key` | Yes | ` ` | _custom_ | This property indicates the absolute path of the SSH key that should be used for accessing the cluster nodes.
+| `ssh.ssh_port` | Yes | ` ` | _integer_ | This property indicates the port number on which cluster nodes are listening for SSH connections.
+| `kube_apiserver.option_overrides` | No | ` ` | _Map with string keys and string values_ | This property contains a listing of option overrides that should be applied to the Kubernetes API server configuration. This is an advanced feature that can prevent the API server from starting up if invalid configuration is provided. For example: `{"event_ttl": "2h0m0s"}` |
 
 ## Docker
 
