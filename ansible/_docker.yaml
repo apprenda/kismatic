@@ -1,5 +1,5 @@
 ---
-  - hosts: master:worker:ingress:storage
+  - hosts: all
     any_errors_fatal: true
     name: "{{ play_name | default('Install Docker') }}"
     serial: "{{ serial_count | default('100%') }}"

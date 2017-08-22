@@ -1,8 +1,7 @@
 # etcd_networking
 # etcd-install
 etcd_install_dir: /etc/etcd_networking
-etcd_install_bin_name: etcd_networking
-etcdctl_install_bin_name: etcdctl
+etcd_name: etcd_networking
 # etcd-install:etcd.service.j2
 etcd_service_name: etcd_networking.service
 etcd_service_data_dir: /var/lib/etcd_networking

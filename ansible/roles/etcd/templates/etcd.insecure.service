@@ -1,26 +1,37 @@
 [Unit]
 Description=etcd key-value store
 Documentation=https://github.com/coreos/etcd
+After=docker.service
+Requires=docker.service
 
 [Service]
 User=root
-Type=notify
-ExecStart={{ bin_dir }}/{{ etcd_install_bin_name }} \
+ExecStartPre=-{{ bin_dir }}/docker stop {{ etcd_name }}
+ExecStartPre=-{{ bin_dir }}/docker rm -f {{ etcd_name }}
+ExecStart={{ bin_dir }}/docker run \
+  -p {{ etcd_service_peer_port }}:{{ etcd_service_peer_port }} \
+  -p {{ etcd_service_client_port }}:{{ etcd_service_client_port }} \
+  --volume={{ etcd_service_data_dir }}:/etcd-data \
+  --volume={{ etcd_install_dir }}:{{ etcd_install_dir }}:ro \
+  --volume=/etc/ssl/certs/:/etc/ssl/certs/:ro \
+  --name {{ etcd_name }} {{ etcd_img }} \
   --name={{ inventory_hostname }} \
-  --data-dir={{ etcd_service_data_dir }} \
+  --data-dir=/etcd-data \
   --peer-client-cert-auth \
   --peer-cert-file={{ etcd_certificates.etcd }} \
   --peer-key-file={{ etcd_certificates.etcd_key }} \
   --peer-trusted-ca-file={{ etcd_certificates.ca }} \
   --initial-advertise-peer-urls=https://{{ internal_ipv4 }}:{{ etcd_service_peer_port }} \
-  --listen-peer-urls=https://{{ internal_ipv4 }}:{{ etcd_service_peer_port }} \
-  --listen-client-urls=http://{{ internal_ipv4 }}:{{ etcd_service_client_port }},http://127.0.0.1:{{ etcd_service_client_port }} \
+  --listen-peer-urls=https://0.0.0.0:{{ etcd_service_peer_port }} \
+  --listen-client-urls=http://0.0.0.0:{{ etcd_service_client_port }} \
   --advertise-client-urls=http://{{ internal_ipv4 }}:{{ etcd_service_client_port }} \
   --initial-cluster-token={{ etcd_service_cluster_token }} \
   --initial-cluster={{ etcd_service_cluster_string }} \
   --initial-cluster-state=new
 Restart=on-failure
 RestartSec=3
+
+ExecStop=-{{ bin_dir }}/docker stop {{ etcd_name }}
 
 [Install]
 WantedBy=multi-user.target

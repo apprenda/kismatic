@@ -16,9 +16,6 @@ import (
 
 const (
 	copyKismaticYumRepo       = `sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
-	installCurlYum            = `sudo yum -y install curl`
-	installEtcdYum            = `sudo yum -y install etcd-3.1.10-1`
-	installTransitionEtcdYum  = `sudo yum -y install transition-etcd`
 	installDockerYum          = `sudo yum -y install docker-engine-1.12.6-1.el7.centos`
 	installKubeletYum         = `sudo yum -y install kubelet-1.7.4_1-1`
 	installKubectlYum         = `sudo yum -y install kubectl-1.7.4_1-1`
@@ -27,9 +24,6 @@ const (
 	copyKismaticKeyDeb        = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add -`
 	copyKismaticRepoDeb       = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main"`
 	updateAptGet              = `sudo apt-get update`
-	installCurlApt            = `sudo apt-get -y install curl`
-	installEtcdApt            = `sudo apt-get -y install etcd=3.1.10`
-	installTransitionEtcdApt  = `sudo apt-get -y install transition-etcd`
 	installDockerApt          = `sudo apt-get -y install docker-engine=1.12.6-0~ubuntu-xenial`
 	installKubeletApt         = `sudo apt-get -y install kubelet=1.7.4-1`
 	installKubectlApt         = `sudo apt-get -y install kubectl=1.7.4-1`
@@ -47,7 +41,7 @@ type nodePrep struct {
 
 var ubuntu1604Prep = nodePrep{
 	CommandsToPrepRepo:         []string{copyKismaticKeyDeb, copyKismaticRepoDeb, updateAptGet},
-	CommandsToInstallEtcd:      []string{installCurlApt, installEtcdApt, installTransitionEtcdApt},
+	CommandsToInstallEtcd:      []string{installDockerApt},
 	CommandsToInstallDocker:    []string{installDockerApt},
 	CommandsToInstallK8sMaster: []string{installDockerApt, installKubeletApt, installKubectlApt},
 	CommandsToInstallK8s:       []string{installDockerApt, installKubeletApt, installKubectlApt},
@@ -56,7 +50,7 @@ var ubuntu1604Prep = nodePrep{
 
 var rhel7FamilyPrep = nodePrep{
 	CommandsToPrepRepo:         []string{copyKismaticYumRepo},
-	CommandsToInstallEtcd:      []string{installCurlYum, installEtcdYum, installTransitionEtcdYum},
+	CommandsToInstallEtcd:      []string{installDockerYum},
 	CommandsToInstallDocker:    []string{installDockerYum},
 	CommandsToInstallK8sMaster: []string{installDockerYum, installKubeletYum, installKubectlYum},
 	CommandsToInstallK8s:       []string{installDockerYum, installKubeletYum, installKubectlYum},

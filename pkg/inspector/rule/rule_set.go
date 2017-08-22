@@ -168,23 +168,11 @@ const defaultRuleSet = `---
   port: 10254
   timeout: 5s
 
-- kind: PackageDependency
-  when: ["etcd", "ubuntu"]
-  packageName: curl
-  anyVersion: true
-- kind: PackageDependency
-  when: ["etcd", "centos"]
-  packageName: curl
-  anyVersion: true
-- kind: PackageDependency
-  when: ["etcd", "rhel"]
-  packageName: curl
-  anyVersion: true
 
 - kind: PackageDependency
-  when: ["etcd", "ubuntu"]
-  packageName: etcd
-  packageVersion: 3.1.10
+  when: ["etcd","ubuntu"]
+  packageName: docker-engine
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
@@ -239,11 +227,10 @@ const defaultRuleSet = `---
   packageVersion: 1.7.4-1
 
 
-
 - kind: PackageDependency
-  when: ["etcd", "centos"]
-  packageName: etcd
-  packageVersion: 3.1.10-1
+  when: ["etcd","centos"]
+  packageName: docker-engine
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
@@ -299,9 +286,9 @@ const defaultRuleSet = `---
 
 
 - kind: PackageDependency
-  when: ["etcd", "rhel"]
-  packageName: etcd
-  packageVersion: 3.1.10-1
+  when: ["etcd","rhel"]
+  packageName: docker-engine
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet
@@ -424,22 +411,9 @@ const upgradeRuleSet = `---
   minimumBytes: 1000000000
 
 - kind: PackageDependency
-  when: ["etcd", "ubuntu"]
-  packageName: curl
-  anyVersion: true
-- kind: PackageDependency
-  when: ["etcd", "centos"]
-  packageName: curl
-  anyVersion: true
-- kind: PackageDependency
-  when: ["etcd", "rhel"]
-  packageName: curl
-  anyVersion: true
-
-- kind: PackageDependency
-  when: ["etcd", "ubuntu"]
-  packageName: etcd
-  packageVersion: 3.1.10
+  when: ["etcd","ubuntu"]
+  packageName: docker-engine
+  packageVersion: 1.12.6-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
@@ -494,9 +468,9 @@ const upgradeRuleSet = `---
   packageVersion: 1.7.4-1
 
 - kind: PackageDependency
-  when: ["etcd", "centos"]
-  packageName: etcd
-  packageVersion: 3.1.10-1
+  when: ["etcd","centos"]
+  packageName: docker-engine
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
@@ -551,9 +525,9 @@ const upgradeRuleSet = `---
   packageVersion: 1.7.4_1-1
 
 - kind: PackageDependency
-  when: ["etcd", "rhel"]
-  packageName: etcd
-  packageVersion: 3.1.10-1
+  when: ["etcd","rhel"]
+  packageName: docker-engine
+  packageVersion: 1.12.6-1.el7.centos
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet

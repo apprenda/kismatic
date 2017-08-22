@@ -371,42 +371,6 @@ func upgradeNodes(in io.Reader, out io.Writer, plan install.Plan, opts upgradeOp
 		}
 	}
 
-	// Get all etcd nodes
-	// Nodes >=v1.3.0-alpha.0 do not need to be upgraded from Calico etcd v2
-	// If any of the nodes fail during the Calico etcd v2 upgrade its safe to rerun on all nodes
-	// Plays are idempotent and check etcd version, will skip if are at target
-	etcdToUpgrade := make([]install.ListableNode, 0)
-	for _, n := range install.NodesWithRoles(toUpgrade, "etcd") {
-		// only transition nodes that are not 1.3.0...
-		if install.IsLessThanVersion(n.Version, "v1.3.0-alpha.0") {
-			etcdToUpgrade = append(etcdToUpgrade, n)
-		}
-	}
-	if len(etcdToUpgrade) > 1 {
-		// Run the upgrade on the nodes to Etcd v3.0.x
-		if err := executor.UpgradeEtcd2Nodes(plan, etcdToUpgrade); err != nil {
-			return fmt.Errorf("Failed to upgrade etcd2 nodes: %v", err)
-		}
-	}
-
-	// Nodes >=v1.3.0 with k8s v1.6+ do not need to be migrated
-	// Keep trying untill all etcd nodes have been migrated
-	// This will rerun the migration on all nodes
-	// Plays are idempotent and its safe to rerun `etcdctl migrate`
-	var migrationNeeded bool
-	for _, n := range install.NodesWithRoles(toUpgrade, "master") {
-		if install.IsLessThanVersion(n.Version, "v1.3.0") {
-			migrationNeeded = true
-			break
-		}
-	}
-	if migrationNeeded {
-		util.PrintHeader(out, "Migrate: Kubernetes Etcd Cluster", '=')
-		if err := executor.MigrateEtcdCluster(plan); err != nil {
-			return fmt.Errorf("Failed to migrate kubernetes etcd cluster: %v", err)
-		}
-	}
-
 	// Run the upgrade on the nodes that need it
 	if err := executor.UpgradeNodes(plan, toUpgrade, opts.online, opts.maxParallelWorkers); err != nil {
 		return fmt.Errorf("Failed to upgrade nodes: %v", err)
