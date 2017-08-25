@@ -1,8 +1,8 @@
 #===============================================================================
 # VERSIONS
 kubernetes_version: v1.7.4
-kismatic_yum_version: 1.7.4_1-1
-kismatic_deb_version: 1.7.4-1
+kubernetes_yum_version: 1.7.4-0
+kubernetes_deb_version: 1.7.4-00
 docker_engine_yum_version: 1.12.6-1.el7.centos
 docker_engine_apt_version: 1.12.6-0~ubuntu-xenial
 
@@ -314,25 +314,19 @@ influxdb_orig_img: gcr.io/google_containers/heapster-influxdb-amd64:{{ influxdb_
 influxdb_priv_img: "{{ docker_registry_full_url }}/{{ influxdb_orig_img }}"
 influxdb_img: "{% if load_private_images|bool == true %}{{ influxdb_priv_img }}{% else %}{{ influxdb_orig_img }}{% endif %}"
 
-# kismatic packages
-yum_repository_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com
-yum_gpg_key_url: https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/public.key
-deb_repository_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com
-deb_gpg_key_url: https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key
-
-# Uncomment below to use test repo
-# yum_repository_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com
-# yum_gpg_key_url: https://kismatic-packages-rpm-test.s3-accelerate.amazonaws.com/public.key
-# deb_repository_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com
-# deb_gpg_key_url: https://kismatic-packages-deb-test.s3-accelerate.amazonaws.com/public.key
 #===============================================================================
-# PV configs for monitoring and logging
-#pv_monitoring_nfs_server_ip: "192.168.99.20"
-#pv_monitoring_nfs_dir: "/kubernetes/monitoring"
-#pv_monitoring_storage_size: "10Gi"
-#pv_logging_nfs_server_ip: "192.168.99.20"
-#pv_logging_nfs_dir: "/kubernetes/logging"
-#pv_logging_storage_size: "10Gi"
+# docker packages
+docker_yum_repository_url: https://yum.dockerproject.org/repo/main/centos/7/
+docker_yum_gpg_key_url: https://yum.dockerproject.org/gpg
+docker_deb_repository_url: https://apt.dockerproject.org/repo/
+docker_deb_gpg_key_url: https://apt.dockerproject.org/gpg
+
+# kubernetes packages
+kubernetes_yum_repository_url: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"
+kubernetes_yum_gpg_key_url: "https://packages.cloud.google.com/yum/doc/yum-key.gpg\nhttps://packages.cloud.google.com/yum/doc/rpm-package-key.gpg" # \n is used to provide 2 keys
+kubernetes_deb_repository_url: "https://packages.cloud.google.com/apt/"
+kubernetes_deb_gpg_key_url: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
+
 #===============================================================================
 
 # Preflight check variables
