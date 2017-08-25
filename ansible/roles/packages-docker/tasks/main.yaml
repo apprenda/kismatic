@@ -19,7 +19,7 @@
       name: docker-engine={{ docker_engine_apt_version }}
       state: present
       allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
-      default_release: kismatic-xenial
+      default_release: ubuntu-xenial
     register: docker_installation_deb
     until: docker_installation_deb|success
     retries: 3

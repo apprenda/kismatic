@@ -2,7 +2,7 @@
   # YUM
   - name: install kubelet yum package
     yum:
-      name: kubelet-{{ kismatic_yum_version }}
+      name: kubelet-{{ kubernetes_yum_version }}
       state: present
       disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
       enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
@@ -15,7 +15,7 @@
 
   - name: install kubectl yum package
     yum:
-      name: kubectl-{{ kismatic_yum_version }}
+      name: kubectl-{{ kubernetes_yum_version }}
       state: present
       disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
       enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
@@ -30,10 +30,10 @@
   # DEB
   - name: install kubelet deb package
     apt:
-      name: kubelet={{ kismatic_deb_version }}
+      name: kubelet={{ kubernetes_deb_version }}
       state: present
       allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
-      default_release: kismatic-xenial
+      default_release: kubernetes-xenial
     register: kubelet_installation_deb
     until: kubelet_installation_deb|success
     retries: 3
@@ -43,10 +43,10 @@
 
   - name: install kubectl deb package
     apt:
-      name: kubectl={{ kismatic_deb_version }}
+      name: kubectl={{ kubernetes_deb_version }}
       state: present
       allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
-      default_release: kismatic-xenial
+      default_release: kubernetes-xenial
     register: result
     until: result|success
     retries: 3

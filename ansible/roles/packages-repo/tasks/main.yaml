@@ -1,11 +1,20 @@
 ---
   # YUM
-  - name: add Kismatic yum repository
+  - name: add Docker yum repository
     yum_repository:
-      name: kismatic
-      description: Kismatic Packages
-      baseurl: "{{ yum_repository_url }}"
-      gpgkey: "{{ yum_gpg_key_url }}"
+      name: docker
+      description: Docker Repository
+      baseurl: "{{ docker_yum_repository_url }}"
+      gpgkey: "{{ docker_yum_gpg_key_url }}"
+      gpgcheck: yes
+    when: ansible_os_family == 'RedHat'
+
+  - name: add Kubernetes yum repository
+    yum_repository:
+      name: kubernetes
+      description: Kubernetes Repository
+      baseurl: "{{ kubernetes_yum_repository_url }}"
+      gpgkey: "{{ kubernetes_yum_gpg_key_url }}"
       gpgcheck: yes
     when: ansible_os_family == 'RedHat'
     environment: "{{proxy_env}}"
@@ -20,8 +29,8 @@
     when: ansible_os_family == 'RedHat' and 'storage' in group_names
     environment: "{{proxy_env}}"
 
-  - name: clean kismatic yum cache
-    command: 'yum --disablerepo="*" --enablerepo="kismatic,gluster" makecache'
+  - name: clean yum cache
+    command: 'yum --disablerepo="*" --enablerepo="docker,kubernetes,gluster" makecache'
     when: ansible_os_family == 'RedHat'
     environment: "{{proxy_env}}"
 
@@ -34,17 +43,23 @@
     when: ansible_os_family == 'Debian'
     environment: "{{proxy_env}}"
 
-  - name: add Kismatic deb key
+  - name: add Docker deb key
     apt_key:
-      url: "{{ deb_gpg_key_url }}"
-      validate_certs: no
+      url: "{{ docker_deb_gpg_key_url }}"
+    when: ansible_os_family == 'Debian'
+  - name: add Kubernetes deb key
+    apt_key:
+      url: "{{ kubernetes_deb_gpg_key_url }}"
     when: ansible_os_family == 'Debian'
     environment: "{{proxy_env}}"
 
-  - name: add Kismatic deb repository
+  - name: add Docker deb repository
     apt_repository:
-      repo: 'deb {{ deb_repository_url }} kismatic-xenial main'
-      validate_certs: no
+      repo: 'deb {{ docker_deb_repository_url }} ubuntu-xenial main'
+    when: ansible_os_family == 'Debian'
+  - name: add Kubernetes deb repository
+    apt_repository:
+      repo: 'deb {{ kubernetes_deb_repository_url }} kubernetes-xenial main'
     when: ansible_os_family == 'Debian'
     environment: "{{proxy_env}}"
 

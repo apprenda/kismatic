@@ -9,8 +9,6 @@
   - include: _docker.yaml
   - include: _kubelet.yaml
   - include: _kube-proxy.yaml
-  - include: _cni.yaml
-    when: cni.enabled|bool == true
   - include: _calico.yaml
     when: cni.enabled|bool == true and cni.provider == "calico"
   - include: _calico-validate.yaml
