@@ -16,6 +16,9 @@ jobs:
           name: Verify gofmt
           command: diff -u <(echo -n) <(gofmt -d ./pkg ./cmd)
       - run:
+          name: Verify reference documentation is up to date
+          command: diff -u <(cat docs/plan-file-reference.md) <(make docs/generate-plan-file-reference.md)
+      - run:
           name: Linux dist
           command: GOOS=linux make bare-dist
       - store_artifacts:

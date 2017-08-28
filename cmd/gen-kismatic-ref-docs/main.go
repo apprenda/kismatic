@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var output = flag.String("o", "", "the output mode")
+
 type doc struct {
 	property     string
 	propertyType string
@@ -21,9 +23,6 @@ type doc struct {
 	required     bool
 	deprecated   bool
 }
-
-var output = flag.String("o", "", "the output mode")
-var enforceDocs = flag.Bool("e", false, "enforce documentation of all fields")
 
 func main() {
 	flag.Parse()
@@ -37,9 +36,9 @@ func main() {
 
 	var r renderer
 	switch *output {
-	case "md":
+	case "markdown":
 		r = markdown{}
-	case "md-table":
+	case "markdown-table":
 		r = markdownTable{}
 	default:
 		fmt.Fprintf(os.Stderr, "unknown output type: %s\n", *output)
@@ -62,12 +61,11 @@ func main() {
 	for _, t := range pkgDoc.Types {
 		if t.Name == typeName {
 			docs := docForType(typeName, pkgDoc.Types, "")
-			if *enforceDocs {
-				for _, d := range docs {
-					if strings.TrimSpace(d.description) == "" {
-						fmt.Fprintf(os.Stderr, "property %s does not have documentation\n", d.property)
-						os.Exit(1)
-					}
+			// Enforce non-empty documentation on all fields
+			for _, d := range docs {
+				if strings.TrimSpace(d.description) == "" {
+					fmt.Fprintf(os.Stderr, "property %s does not have documentation\n", d.property)
+					os.Exit(1)
 				}
 			}
 			r.render(docs)
@@ -88,7 +86,7 @@ func docForType(typeName string, allTypes []*godoc.Type, parentFieldName string)
 			typeSpec := t.Decl.Specs[0].(*ast.TypeSpec)
 			switch tt := typeSpec.Type.(type) {
 			default:
-				fmt.Println("unhandled typespec type %s", typeSpec.Type)
+				panic(fmt.Sprintf("unhandled typespec type %s", typeSpec.Type))
 			case *ast.Ident:
 				// This case handles the type alias used for OptionalNodeGroup.
 				// Recurse to get the docs for NodeGroup
@@ -127,7 +125,7 @@ func docForType(typeName string, allTypes []*godoc.Type, parentFieldName string)
 							docs = append(docs, docForType(typeName, allTypes, fieldName)...)
 						}
 					default:
-						fmt.Println(reflect.TypeOf(x).Name())
+						panic(fmt.Sprintf("unhandled typespec type: %q", reflect.TypeOf(x).Name()))
 					}
 				}
 			}
@@ -154,7 +152,6 @@ func fieldName(parentFieldName string, field *ast.Field) string {
 		return parentFieldName + "." + yamlTag
 	}
 	return yamlTag
-
 }
 
 func parseDoc(propertyName string, propertyType string, typeDocs string) doc {

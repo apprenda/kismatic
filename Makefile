@@ -192,6 +192,9 @@ docs/generate-kismatic-cli:
 	go run cmd/kismatic-docs/main.go
 	cp docs/kismatic-cli/kismatic.md docs/kismatic-cli/README.md
 
+docs/generate-plan-file-reference.md:
+	@go run cmd/gen-kismatic-ref-docs/*.go -o markdown pkg/install/plan_types.go Plan
+
 version: FORCE
 	@echo VERSION=$(VERSION)
 	@echo GLIDE_VERSION=$(GLIDE_VERSION)

@@ -10,35 +10,36 @@ type markdown struct{}
 func (markdown) render(docs []doc) {
 	fmt.Println("# Plan File Reference")
 	fmt.Println("## Index")
-	fmt.Println("| Property | Kind | Options |")
-	fmt.Println("|----------|------|---------|")
 	for _, d := range docs {
-		if isStruct(d.propertyType) {
-			continue
+		props := strings.Split(d.property, ".")
+		spaces := strings.Repeat("  ", len(props)-1)
+		link := strings.Replace(d.property, ".", "", -1)
+		prop := props[len(props)-1]
+		if d.deprecated {
+			prop = prop + " _(deprecated)_"
+			link = link + "-deprecated"
 		}
-		fmt.Printf("| %s | %s | %s |\n", d.property, d.propertyType, strings.Join(d.options, ","))
+		fmt.Printf("%s* [%s](#%s)\n", spaces, prop, link)
 	}
-	// for _, d := range docs {
-	// 	props := strings.Split(d.property, ".")
-	// 	spaces := strings.Repeat("  ", len(props)-1)
-	// 	link := strings.Replace(d.property, ".", "", -1)
-	// 	prop := props[len(props)-1]
-	// 	if d.deprecated {
-	// 		prop = prop + " _(deprecated)_"
-	// 		link = link + "-deprecated"
-	// 	}
-	// 	fmt.Printf("%s* [%s](#%s)\n", spaces, prop, link)
-	// }
 
 	for _, d := range docs {
+		propName := d.property
 		if d.deprecated {
-			fmt.Println("###", d.property, "_(deprecated)_")
-		} else {
-			fmt.Println("###", d.property)
+			propName = propName + " _(deprecated)_"
 		}
+		// Check if this is a top-level property
+		if !strings.Contains(propName, ".") {
+			fmt.Println("## ", propName)
+		} else {
+			fmt.Println("### ", propName)
+		}
+
 		fmt.Println()
 		fmt.Println(d.description)
 		fmt.Println()
+		if isStruct(d.propertyType) {
+			continue
+		}
 		fmt.Println("| | |")
 		fmt.Println("|----------|-----------------|")
 		fmt.Println("| **Kind** | ", d.propertyType, "|")
