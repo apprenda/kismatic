@@ -117,7 +117,7 @@
 
 ###  cluster.admin_password
 
- The password for the admin user. 
+ The password for the admin user. This is mainly used to access the Kubernetes Dashboard. 
 
 | | |
 |----------|-----------------|
@@ -157,7 +157,7 @@
 
 ###  cluster.disconnected_installation
 
- Whether the cluster nodes are disconnected from the internet. When set to `true`, internal package repositories and container image registries are required for installation. 
+ Whether the cluster nodes are disconnected from the internet. When set to `true`, internal package repositories and a container image registry are required for installation. 
 
 | | |
 |----------|-----------------|
@@ -197,7 +197,7 @@
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  cluster.networking.service_cidr_block
@@ -207,7 +207,7 @@
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  cluster.networking.update_hosts_files
@@ -256,27 +256,27 @@
 
 ###  cluster.certificates.expiry
 
- The length of time that generated certificates should be valid for. 
+ The length of time that the generated certificates should be valid for. For example: "17520h" for 2 years. 
 
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  cluster.certificates.ca_expiry
 
- The length of time that the generated Certificate Authority should be valid for. 
+ The length of time that the generated Certificate Authority should be valid for. For example: "17520h" for 2 years. 
 
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  cluster.ssh
 
- The SSH configuration for the cluster. 
+ The SSH configuration for the cluster nodes. 
 
 ###  cluster.ssh.user
 
@@ -285,7 +285,7 @@
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  cluster.ssh.ssh_key
@@ -295,7 +295,7 @@
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  cluster.ssh.ssh_port
@@ -305,7 +305,7 @@
 | | |
 |----------|-----------------|
 | **Kind** |  int |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  cluster.kube_apiserver
@@ -390,7 +390,7 @@
 
 ###  docker_registry.CA
 
- The absolute path of the Certificate Authority that should be installed on  all cluster nodes that have a docker daemon. This is required to establish trust between the daemons and the private registry when the registry is using a self-signed certificate. 
+ The absolute path of the Certificate Authority that should be installed on all cluster nodes that have a docker daemon. This is required to establish trust between the daemons and the private registry when the registry is using a self-signed certificate. 
 
 | | |
 |----------|-----------------|
@@ -404,7 +404,7 @@
 
 ###  add_ons.cni
 
- The CNI add-on configuration. 
+ The Container Networking Interface (CNI) add-on configuration. 
 
 ###  add_ons.cni.disable
 
@@ -462,7 +462,7 @@
 
 ###  add_ons.heapster
 
- The HeapsterMonitoring add-on configuration. 
+ The Heapster Monitoring add-on configuration. 
 
 ###  add_ons.heapster.disable
 
@@ -490,7 +490,7 @@
 |----------|-----------------|
 | **Kind** |  int |
 | **Required** |  No |
-| **Default** | ` ` | 
+| **Default** | `2` | 
 
 ###  add_ons.heapster.options.heapster.service_type
 
@@ -500,7 +500,7 @@
 |----------|-----------------|
 | **Kind** |  string |
 | **Required** |  No |
-| **Default** | ` ` | 
+| **Default** | `ClusterIP` | 
 | **Options** |  `ClusterIP`, `NodePort`, `LoadBalancer`, `ExternalName`
 
 ###  add_ons.heapster.options.heapster.sink
@@ -511,7 +511,7 @@
 |----------|-----------------|
 | **Kind** |  string |
 | **Required** |  No |
-| **Default** | ` ` | 
+| **Default** | `influxdb:http://heapster-influxdb.kube-system.svc:8086` | 
 
 ###  add_ons.heapster.options.influxdb
 
@@ -596,7 +596,7 @@
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 | **Options** |  `helm`
 
@@ -893,7 +893,7 @@
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
 ###  nfs.nfs_volume.mount_path
@@ -903,6 +903,6 @@
 | | |
 |----------|-----------------|
 | **Kind** |  string |
-| **Required** |  No |
+| **Required** |  Yes |
 | **Default** | ` ` | 
 
