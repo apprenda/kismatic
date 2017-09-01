@@ -14,16 +14,17 @@
 - [Distribution Packages](packages.md)
 
 ## Reference
-- [Plan File](plan_file.md)
+- [Plan File](plan-file-reference.md)
 - [Certificate Generation](certificates.md)
 - [Docker Configuration](docker.md)
 - [Troubleshooting](troubleshooting.md)
 - [Troubleshooting Calico](troubleshooting-calico.md)
 
 ## Upgrade Notes
-### v1.3.0
-- [Etcd Migration](upgrade/v1.3.0/etcd.md)
-- [Migration To Static Pods](upgrade/v1.3.0/static-pods.md)
 
 ### v1.4.0
 - [Certificate Generation Changes](upgrade/v1.4.0/certificates.md)
+
+### v1.3.0
+- [Etcd Migration](upgrade/v1.3.0/etcd.md)
+- [Migration To Static Pods](upgrade/v1.3.0/static-pods.md)
