@@ -101,7 +101,10 @@ func docForType(typeName string, allTypes []*godoc.Type, parentFieldName string)
 					switch x := f.Type.(type) {
 					case *ast.StarExpr:
 						typeName = x.X.(*ast.Ident).Name
-						d := parseDoc(fieldName, typeName, f.Doc.Text())
+						d, err := parseDoc(fieldName, typeName, f.Doc.Text())
+						if err != nil {
+							panic(err)
+						}
 						docs = append(docs, d)
 						if isStruct(typeName) {
 							docs = append(docs, docForType(typeName, allTypes, fieldName)...)
@@ -109,7 +112,10 @@ func docForType(typeName string, allTypes []*godoc.Type, parentFieldName string)
 
 					case *ast.Ident:
 						typeName = x.Name
-						d := parseDoc(fieldName, typeName, f.Doc.Text())
+						d, err := parseDoc(fieldName, typeName, f.Doc.Text())
+						if err != nil {
+							panic(err)
+						}
 						docs = append(docs, d)
 						if isStruct(typeName) {
 							docs = append(docs, docForType(typeName, allTypes, fieldName)...)
@@ -119,7 +125,10 @@ func docForType(typeName string, allTypes []*godoc.Type, parentFieldName string)
 					// Recurse if it is an array of non-basic types.
 					case *ast.ArrayType:
 						typeName = x.Elt.(*ast.Ident).Name
-						d := parseDoc(fieldName, "[]"+typeName, f.Doc.Text())
+						d, err := parseDoc(fieldName, "[]"+typeName, f.Doc.Text())
+						if err != nil {
+							panic(err)
+						}
 						docs = append(docs, d)
 						if isStruct(typeName) {
 							docs = append(docs, docForType(typeName, allTypes, fieldName)...)
@@ -154,7 +163,7 @@ func fieldName(parentFieldName string, field *ast.Field) string {
 	return yamlTag
 }
 
-func parseDoc(propertyName string, propertyType string, typeDocs string) doc {
+func parseDoc(propertyName string, propertyType string, typeDocs string) (doc, error) {
 	d := doc{property: propertyName, propertyType: propertyType}
 	lines := strings.Split(typeDocs, "\n")
 	for _, l := range lines {
@@ -175,9 +184,12 @@ func parseDoc(propertyName string, propertyType string, typeDocs string) doc {
 			d.deprecated = true
 			continue
 		}
+		if strings.HasPrefix(l, "+") {
+			return d, fmt.Errorf("unknown special marker found in documentation of %q. line was: %q", propertyName, l)
+		}
 		d.description = d.description + " " + l
 	}
-	return d
+	return d, nil
 }
 
 func isStruct(s string) bool {
