@@ -22,31 +22,51 @@ func validateMiniPkgInstallationDisabled(provisioner infrastructureProvisioner, 
 			Fail("Missing dependencies, but still passed")
 		}
 
-		By("Prepping nodes for the test")
+		By("Adding docker repository")
 		prep := getPrepForDistro(distro)
-		prepNode := []NodeDeets{node}
-		err := runViaSSH(prep.CommandsToPrepRepo, prepNode, sshKey, 5*time.Minute)
-		FailIfError(err, "Failed to prep repo on the node")
-
-		By("Installing etcd on the node")
-		err = runViaSSH(prep.CommandsToInstallEtcd, prepNode, sshKey, 10*time.Minute)
-		FailIfError(err, "Failed to install etcd on the node")
+		theNode := []NodeDeets{node}
+		err := runViaSSH(prep.CommandsToPrepDockerRepo, theNode, sshKey, 5*time.Minute)
+		FailIfError(err, "failed to add docker repository")
 
 		if err = ValidateKismaticMiniDenyPkgInstallation(node, sshUser, sshKey); err == nil {
 			Fail("Missing dependencies, but still passed")
 		}
 
 		By("Installing Docker")
-		err = runViaSSH(prep.CommandsToInstallDocker, prepNode, sshKey, 10*time.Minute)
-		FailIfError(err, "failed to install docker over SSH")
+		err = runViaSSH(prep.CommandsToInstallDocker, theNode, sshKey, 5*time.Minute)
+		FailIfError(err, "failed to install docker")
 
 		if err = ValidateKismaticMiniDenyPkgInstallation(node, sshUser, sshKey); err == nil {
 			Fail("Missing dependencies, but still passed")
 		}
 
-		By("Installing Master")
-		err = runViaSSH(prep.CommandsToInstallK8sMaster, prepNode, sshKey, 15*time.Minute)
-		FailIfError(err, "Failed to install master on node via SSH")
+		By("Adding kubernetes repository")
+		err = runViaSSH(prep.CommandsToPrepKubernetesRepo, theNode, sshKey, 5*time.Minute)
+		FailIfError(err, "failed to add kubernetes repository")
+
+		if err = ValidateKismaticMiniDenyPkgInstallation(node, sshUser, sshKey); err == nil {
+			Fail("Missing dependencies, but still passed")
+		}
+
+		By("Installing Kubelet")
+		err = runViaSSH(prep.CommandsToInstallKubelet, theNode, sshKey, 5*time.Minute)
+		FailIfError(err, "failed to install the kubelet package")
+
+		if err = ValidateKismaticMiniDenyPkgInstallation(node, sshUser, sshKey); err == nil {
+			Fail("Missing dependencies, but still passed")
+		}
+
+		By("Installing Kubectl")
+		err = runViaSSH(prep.CommandsToInstallKubectl, theNode, sshKey, 5*time.Minute)
+		FailIfError(err, "failed to install the kubectl package")
+
+		if err = ValidateKismaticMiniDenyPkgInstallation(node, sshUser, sshKey); err == nil {
+			Fail("Missing dependencies, but still passed")
+		}
+
+		By("Installing Glusterfs Server")
+		err = runViaSSH(prep.CommandsToInstallGlusterfs, theNode, sshKey, 5*time.Minute)
+		FailIfError(err, "failed to install the glusterfs package")
 
 		err = ValidateKismaticMiniDenyPkgInstallation(node, sshUser, sshKey)
 		Expect(err).To(BeNil())
@@ -102,6 +122,8 @@ func ValidateKismaticMiniDenyPkgInstallation(node NodeDeets, sshUser, sshKey str
 		Etcd:                []NodeDeets{node},
 		Master:              []NodeDeets{node},
 		Worker:              []NodeDeets{node},
+		Ingress:             []NodeDeets{node},
+		Storage:             []NodeDeets{node},
 		MasterNodeFQDN:      node.Hostname,
 		MasterNodeShortName: node.Hostname,
 		SSHUser:             sshUser,

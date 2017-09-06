@@ -15,87 +15,135 @@ import (
 )
 
 const (
-	copyKismaticYumRepo       = `sudo curl https://kismatic-packages-rpm.s3-accelerate.amazonaws.com/kismatic.repo -o /etc/yum.repos.d/kismatic.repo`
-	installDockerYum          = `sudo yum -y install docker-engine-1.12.6-1.el7.centos`
-	installKubeletYum         = `sudo yum -y install kubelet-1.7.4_1-1`
-	installKubectlYum         = `sudo yum -y install kubectl-1.7.4_1-1`
-	installKismaticOfflineYum = `sudo yum -y install kismatic-offline-1.7.4_1-1`
+	createKubernetesRepoFileYum = `cat <<EOF > /tmp/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+	https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+`
 
-	copyKismaticKeyDeb        = `wget -qO - https://kismatic-packages-deb.s3-accelerate.amazonaws.com/public.key | sudo apt-key add -`
-	copyKismaticRepoDeb       = `sudo add-apt-repository "deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main"`
-	updateAptGet              = `sudo apt-get update`
-	installDockerApt          = `sudo apt-get -y install docker-engine=1.12.6-0~ubuntu-xenial`
-	installKubeletApt         = `sudo apt-get -y install kubelet=1.7.4-1`
-	installKubectlApt         = `sudo apt-get -y install kubectl=1.7.4-1`
-	installKismaticOfflineApt = `sudo apt-get -y install kismatic-offline=1.7.4-1`
+	createDockerRepoFileYum = `cat <<EOF > /tmp/docker.repo
+[docker]
+name=Docker
+baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://yum.dockerproject.org/gpg
+EOF
+`
+
+	createGlusterRepoFileYum = `cat <<EOF > /tmp/gluster.repo
+[gluster]
+name=Gluster
+baseurl=http://buildlogs.centos.org/centos/7/storage/x86_64/gluster-3.8/
+enabled=1
+gpgcheck=1
+repo_gpgcheck=0
+gpgkey=https://download.gluster.org/pub/gluster/glusterfs/3.8/3.8.7/rsa.pub
+EOF`
+
+	moveKubernetesRepoFileYum = `sudo mv /tmp/kubernetes.repo /etc/yum.repos.d`
+	moveDockerRepoFileYum     = `sudo mv /tmp/docker.repo /etc/yum.repos.d`
+	moveGlusterRepoFileYum    = `sudo mv /tmp/gluster.repo /etc/yum.repos.d`
+
+	installDockerYum          = `sudo yum -y install docker-engine-1.12.6-1.el7.centos`
+	installKubeletYum         = `sudo yum -y install kubelet-1.7.4-0`
+	installKubectlYum         = `sudo yum -y install kubectl-1.7.4-0`
+	installGlusterfsServerYum = `sudo yum -y install --nogpgcheck glusterfs-server-3.8.7-1.el7`
+
+	updateAptGet        = `sudo apt-get update`
+	addDockerRepoKeyApt = `wget -qO - https://apt.dockerproject.org/gpg | sudo apt-key add -`
+	addDockerRepoApt    = `sudo add-apt-repository "deb https://apt.dockerproject.org/repo/ ubuntu-xenial main"`
+	installDockerApt    = `sudo apt-get -y install docker-engine=1.12.6-0~ubuntu-xenial`
+
+	addKubernetesRepoKeyApt = `wget -qO - https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`
+	addKubernetesRepoApt    = `sudo add-apt-repository "deb https://packages.cloud.google.com/apt/ kubernetes-xenial main"`
+	installKubeletApt       = `sudo apt-get -y install kubelet=1.7.4-00`
+	installKubectlApt       = `sudo apt-get -y install kubectl=1.7.4-00`
+
+	addGlusterRepoApt         = `sudo add-apt-repository -y ppa:gluster/glusterfs-3.8`
+	installGlusterfsServerApt = `sudo apt-get -y install glusterfs-server=3.8.7-ubuntu1~xenial1`
 )
 
 type nodePrep struct {
-	CommandsToPrepRepo         []string
-	CommandsToInstallEtcd      []string
-	CommandsToInstallDocker    []string
-	CommandsToInstallK8sMaster []string
-	CommandsToInstallK8s       []string
-	CommandsToInstallOffline   []string
+	CommandsToPrepDockerRepo     []string
+	CommandsToInstallDocker      []string
+	CommandsToPrepKubernetesRepo []string
+	CommandsToInstallKubelet     []string
+	CommandsToInstallKubectl     []string
+	CommandsToInstallGlusterfs   []string
 }
 
 var ubuntu1604Prep = nodePrep{
-	CommandsToPrepRepo:         []string{copyKismaticKeyDeb, copyKismaticRepoDeb, updateAptGet},
-	CommandsToInstallEtcd:      []string{installDockerApt},
-	CommandsToInstallDocker:    []string{installDockerApt},
-	CommandsToInstallK8sMaster: []string{installDockerApt, installKubeletApt, installKubectlApt},
-	CommandsToInstallK8s:       []string{installDockerApt, installKubeletApt, installKubectlApt},
-	CommandsToInstallOffline:   []string{installKismaticOfflineApt},
+	CommandsToPrepDockerRepo:     []string{addDockerRepoKeyApt, addDockerRepoApt, updateAptGet},
+	CommandsToInstallDocker:      []string{installDockerApt},
+	CommandsToPrepKubernetesRepo: []string{addKubernetesRepoKeyApt, addKubernetesRepoApt, updateAptGet},
+	CommandsToInstallKubelet:     []string{installKubeletApt},
+	CommandsToInstallKubectl:     []string{installKubectlApt},
+	CommandsToInstallGlusterfs:   []string{addGlusterRepoApt, updateAptGet, installGlusterfsServerApt},
 }
 
 var rhel7FamilyPrep = nodePrep{
-	CommandsToPrepRepo:         []string{copyKismaticYumRepo},
-	CommandsToInstallEtcd:      []string{installDockerYum},
-	CommandsToInstallDocker:    []string{installDockerYum},
-	CommandsToInstallK8sMaster: []string{installDockerYum, installKubeletYum, installKubectlYum},
-	CommandsToInstallK8s:       []string{installDockerYum, installKubeletYum, installKubectlYum},
-	CommandsToInstallOffline:   []string{installKismaticOfflineYum},
+	CommandsToPrepDockerRepo:     []string{createDockerRepoFileYum, moveDockerRepoFileYum},
+	CommandsToInstallDocker:      []string{installDockerYum},
+	CommandsToPrepKubernetesRepo: []string{createKubernetesRepoFileYum, moveKubernetesRepoFileYum},
+	CommandsToInstallKubelet:     []string{installKubeletYum},
+	CommandsToInstallKubectl:     []string{installKubectlYum},
+	CommandsToInstallGlusterfs:   []string{createGlusterRepoFileYum, moveGlusterRepoFileYum, installGlusterfsServerYum},
 }
 
 func InstallKismaticPackages(nodes provisionedNodes, distro linuxDistro, sshKey string, disconnected bool) {
 	prep := getPrepForDistro(distro)
-	By("Configuring package repository")
+	dockerNodes := append(nodes.etcd, nodes.master...)
+	dockerNodes = append(dockerNodes, nodes.worker...)
+	dockerNodes = append(dockerNodes, nodes.ingress...)
+	dockerNodes = append(dockerNodes, nodes.storage...)
+	By("Configuring docker repository")
 	err := retry.WithBackoff(func() error {
-		return runViaSSH(prep.CommandsToPrepRepo, append(append(nodes.etcd, nodes.master...), nodes.worker...), sshKey, 5*time.Minute)
+		return runViaSSH(prep.CommandsToPrepDockerRepo, dockerNodes, sshKey, 5*time.Minute)
 	}, 3)
 	FailIfError(err, "failed to configure package repository over SSH")
 
-	By("Installing Etcd")
-	err = retry.WithBackoff(func() error {
-		return runViaSSH(prep.CommandsToInstallEtcd, nodes.etcd, sshKey, 10*time.Minute)
-	}, 3)
-	FailIfError(err, "failed to install Etcd over SSH")
-
 	By("Installing Docker")
-	dockerNodes := append(nodes.master, nodes.worker...)
 	err = retry.WithBackoff(func() error {
 		return runViaSSH(prep.CommandsToInstallDocker, dockerNodes, sshKey, 10*time.Minute)
 	}, 3)
-	FailIfError(err, "failed to install docker over SSH")
+	FailIfError(err, "failed to install docker")
 
-	By("Installing Master:")
+	kubeNodes := append(nodes.master, nodes.worker...)
+	kubeNodes = append(kubeNodes, nodes.ingress...)
+	kubeNodes = append(kubeNodes, nodes.storage...)
+
+	By("Configuring kubernetes repository")
 	err = retry.WithBackoff(func() error {
-		return runViaSSH(prep.CommandsToInstallK8sMaster, nodes.master, sshKey, 15*time.Minute)
+		return runViaSSH(prep.CommandsToPrepKubernetesRepo, kubeNodes, sshKey, 5*time.Minute)
 	}, 3)
-	FailIfError(err, "failed to install the master over SSH")
+	FailIfError(err, "failed to configure package repository")
 
-	By("Installing Worker:")
+	By("Installing Kubelet package")
 	err = retry.WithBackoff(func() error {
-		return runViaSSH(prep.CommandsToInstallK8s, nodes.worker, sshKey, 10*time.Minute)
+		return runViaSSH(prep.CommandsToInstallKubelet, kubeNodes, sshKey, 15*time.Minute)
 	}, 3)
-	FailIfError(err, "failed to install the worker over SSH")
+	FailIfError(err, "failed to install the kubelet package")
 
-	if disconnected {
-		By("Installing Offline:")
+	By("Installing Kubectl")
+	err = retry.WithBackoff(func() error {
+		return runViaSSH(prep.CommandsToInstallKubectl, kubeNodes, sshKey, 10*time.Minute)
+	}, 3)
+	FailIfError(err, "failed to install the kubectl package")
+
+	if len(nodes.storage) > 0 {
+		By("Installing Glusterfs:")
 		err = retry.WithBackoff(func() error {
-			return runViaSSH(prep.CommandsToInstallOffline, []NodeDeets{nodes.master[0]}, sshKey, 10*time.Minute)
+			return runViaSSH(prep.CommandsToInstallGlusterfs, nodes.storage, sshKey, 10*time.Minute)
 		}, 3)
-		FailIfError(err, "failed to install the worker over SSH")
+		FailIfError(err, "failed to install glustefs")
 	}
 }
 
