@@ -60,10 +60,6 @@ func (fe *fakeExecutor) UpgradeNodes(install.Plan, []install.ListableNode, bool,
 	return nil
 }
 
-func (fe *fakeExecutor) UpgradeEtcd2Nodes(install.Plan, []install.ListableNode) error {
-	return nil
-}
-
 func (fe *fakeExecutor) ValidateControlPlane(install.Plan) error {
 	return nil
 }
@@ -73,10 +69,6 @@ func (fe *fakeExecutor) UpgradeDockerRegistry(install.Plan) error {
 }
 
 func (fe *fakeExecutor) UpgradeClusterServices(install.Plan) error {
-	return nil
-}
-
-func (fe *fakeExecutor) MigrateEtcdCluster(install.Plan) error {
 	return nil
 }
 

@@ -1,8 +1,7 @@
 # etcd-k8s
 # etcd-install
 etcd_install_dir: /etc/etcd_k8s
-etcd_install_bin_name: etcd_k8s
-etcdctl_install_bin_name: etcdctl
+etcd_name: etcd_k8s
 # etcd-install:etcd.service.j2
 etcd_service_name: etcd_k8s.service
 etcd_service_data_dir: /var/lib/etcd_k8s

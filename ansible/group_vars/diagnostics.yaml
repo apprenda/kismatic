@@ -43,9 +43,9 @@ diagnostics:
     - {msg: "Dumping iptables (IPv6)", command: "ip6tables-save", file: "ipv6_tables.log"}
     - {msg: "Dumping ipsets", command: "ipset list", file: "ipsets.log"}
   etcd_diagnostics:
-    - {msg: "Dumping etcd_k8s.service status", command: "systemctl status etcd_k8s", file: "systemd_etcd_k8s.log"}
+    - {msg: "Getting etcd_k8s.service status", command: "systemctl status etcd_k8s", file: "systemd_etcd_k8s.log"}
     - {msg: "Dumping journal for etcd_k8s.service", command: "journalctl -u etcd_k8s.service --no-pager", file: "journalctl_etcd_k8s.log"}
-    - {msg: "Getting etcd_k8s health", command: "/usr/bin/etcdctl --endpoint='https://127.0.0.1:2379/' --cert-file=/etc/etcd_networking/etcd.pem --key-file=/etc/etcd_networking/etcd-key.pem --ca-file=/etc/etcd_networking/ca.pem cluster-health", file: "etcd_k8s_health.log"}
-    - {msg: "Dumping etcd_networking.service status", command: "systemctl status etcd_networking", file: "systemd_etcd_networking.log"}
+    - {msg: "Getting etcd_k8s health", command: "docker run --net=host --volume=/etc/etcd_k8s/:/etc/etcd_k8s/:ro {{ etcd_img }} /usr/local/bin/etcdctl --endpoint='https://127.0.0.1:2379/' --cert-file=/etc/etcd_k8s/etcd.pem --key-file=/etc/etcd_k8s/etcd-key.pem --ca-file=/etc/etcd_k8s/ca.pem cluster-health", file: "etcd_k8s_health.log"}
+    - {msg: "Getting etcd_networking.service status", command: "systemctl status etcd_networking", file: "systemd_etcd_networking.log"}
     - {msg: "Dumping journal for etcd_networking.service", command: "journalctl -u etcd_networking.service --no-pager", file: "journalctl_etcd_networking.log"}
-    - {msg: "Getting etcd_networking health", command: "/usr/bin/etcdctl --endpoint='https://127.0.0.1:6666/' --cert-file=/etc/etcd_networking/etcd.pem --key-file=/etc/etcd_networking/etcd-key.pem --ca-file=/etc/etcd_networking/ca.pem cluster-health", file: "etcd_networking_health.log"}
+    - {msg: "Getting etcd_networking health", command: "docker run --net=host --volume=/etc/etcd_networking/:/etc/etcd_networking/:ro {{ etcd_img }} /usr/local/bin/etcdctl --endpoint='https://127.0.0.1:6666/' --cert-file=/etc/etcd_networking/etcd.pem --key-file=/etc/etcd_networking/etcd-key.pem --ca-file=/etc/etcd_networking/ca.pem cluster-health", file: "etcd_networking_health.log"}

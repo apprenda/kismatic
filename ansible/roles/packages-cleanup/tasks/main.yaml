@@ -32,8 +32,8 @@
     retries: 1
     delay: 1
 
-  - name: remove transition-etcd package
-    package: name=transition-etcd state=absent
+  - name: remove etcd package
+    package: name=etcd state=absent
     when: "'etcd' in group_names"
     register: result
     until: result|success

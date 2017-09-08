@@ -8,6 +8,10 @@
       - group_vars/all.yaml
       - group_vars/etcd-networking.yaml
 
+    pre_tasks:
+      - name: download etcd image
+        command: docker pull {{ etcd_img }}
+
     roles:
       - role: etcd-backup
         when: upgrading is defined and upgrading|bool == true

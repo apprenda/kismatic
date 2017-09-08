@@ -12,30 +12,24 @@
       - restart etcd service
 
   # force_etcd_restart=true to force restart
-  - name: force restart {{etcd_install_bin_name }} service
+  - name: force restart {{etcd_name }} service
     command: /bin/true
     notify:
       - restart etcd service
     when: >
       (force_etcd_restart is defined and force_etcd_restart|bool == true) or
-      ((upgrading is defined and upgrading|bool == true) and
-      (allow_package_installation|bool == false or
-      ((etcd_installation_rpm is defined and etcd_installation_rpm.changed == true) or
-      (etcd_installation_deb is defined and etcd_installation_deb.changed == true))))
+      (upgrading is defined and upgrading|bool == true)
 
   - meta: flush_handlers  #Run handlers
 
     #TODO don't use a timeout
-  - name: wait for {{ etcd_install_bin_name }} node to be ready
+  - name: wait for {{ etcd_name }} node to be ready
     pause: seconds=60
     when: >
       (force_etcd_restart is defined and force_etcd_restart|bool == true) or
-      ((upgrading is defined and upgrading|bool == true) and
-      (allow_package_installation|bool == false or
-      ((etcd_installation_rpm is defined and etcd_installation_rpm.changed == true) or
-      (etcd_installation_deb is defined and etcd_installation_deb.changed == true))))
+      (upgrading is defined and upgrading|bool == true)
 
-  - name: verify {{ etcd_install_bin_name }} is running
+  - name: verify {{ etcd_name }} is running
     command: systemctl status {{ etcd_service_name }}
     register: running
     until: running|success
@@ -43,16 +37,16 @@
     delay: 5
 
   # test etcd
-  - name: verify {{ etcd_install_bin_name }} cluster health
-    command: "{{ bin_dir }}/{{ etcdctl_install_bin_name }} --endpoint='https://127.0.0.1:{{ etcd_service_client_port }}/' --cert-file={{ etcd_certificates.etcd_client }} --key-file={{ etcd_certificates.etcd_client_key }} --ca-file={{ etcd_certificates.ca }} cluster-health"
+  - name: verify {{ etcd_name }} cluster health
+    command: "docker run --net=host --volume=/etc/ssl/certs/:/etc/ssl/certs/:ro --volume={{etcd_install_dir}}:{{etcd_install_dir}}:ro {{ etcd_img }} /usr/local/bin/etcdctl --endpoint='https://127.0.0.1:{{ etcd_service_client_port }}/' --cert-file={{ etcd_certificates.etcd_client }} --key-file={{ etcd_certificates.etcd_client_key }} --ca-file={{ etcd_certificates.ca }} cluster-health"
     register: result
     until: result|success
     retries: 3
     delay: 5
     when: "{{ etcd_insecure_validate|default('false')|bool == false }}"
 
-  - name: verify insecure {{ etcd_install_bin_name }} cluster health
-    command: "{{ bin_dir }}/{{ etcdctl_install_bin_name }} --endpoint='http://127.0.0.1:{{ etcd_service_client_port }}/' cluster-health"
+  - name: verify {{ etcd_name }} cluster health
+    command: "docker run --net=host --volume=/etc/ssl/certs/:/etc/ssl/certs/:ro /usr/local/bin/etcdctl --endpoint='http://127.0.0.1:{{ etcd_service_client_port }}/' cluster-health"
     register: result
     until: result|success
     retries: 3

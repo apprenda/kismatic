@@ -8,14 +8,14 @@
   - include: _certs-etcd.yaml
   - include: _packages-repo.yaml
     when: allow_package_installation|bool == true
-  # etcd
-  - include: _etcd-k8s.yaml
-  - include: _etcd-networking.yaml
-    when: cni.enabled|bool == true and (cni.provider == "calico" or cni.provider == "contiv")
   # docker
   - include: _docker.yaml
   - include: _docker-registry.yaml
     when: configure_docker_with_private_registry|bool == true  # configure private registry when either internal of an external is provided
+  # etcd
+  - include: _etcd-k8s.yaml
+  - include: _etcd-networking.yaml
+    when: cni.enabled|bool == true and (cni.provider == "calico" or cni.provider == "contiv")
   # kubernetes
   - include: _kubelet.yaml
   - include: _kube-apiserver.yaml
