@@ -4,12 +4,10 @@
   * [name](#clustername)
   * [admin_password](#clusteradmin_password)
   * [disable_package_installation](#clusterdisable_package_installation)
-  * [allow_package_installation _(deprecated)_](#clusterallow_package_installation-deprecated)
   * [package_repository_urls](#clusterpackage_repository_urls)
   * [disconnected_installation](#clusterdisconnected_installation)
   * [disable_registry_seeding](#clusterdisable_registry_seeding)
   * [networking](#clusternetworking)
-    * [type _(deprecated)_](#clusternetworkingtype-deprecated)
     * [pod_cidr_block](#clusternetworkingpod_cidr_block)
     * [service_cidr_block](#clusternetworkingservice_cidr_block)
     * [update_hosts_files](#clusternetworkingupdate_hosts_files)
@@ -53,18 +51,11 @@
         * [sink](#add_onsheapsteroptionsheapstersink)
       * [influxdb](#add_onsheapsteroptionsinfluxdb)
         * [pvc_name](#add_onsheapsteroptionsinfluxdbpvc_name)
-      * [heapster_replicas _(deprecated)_](#add_onsheapsteroptionsheapster_replicas-deprecated)
-      * [influxdb_pvc_name _(deprecated)_](#add_onsheapsteroptionsinfluxdb_pvc_name-deprecated)
   * [dashboard](#add_onsdashboard)
     * [disable](#add_onsdashboarddisable)
-  * [dashbard _(deprecated)_](#add_onsdashbard-deprecated)
-    * [disable](#add_onsdashbarddisable)
   * [package_manager](#add_onspackage_manager)
     * [disable](#add_onspackage_managerdisable)
     * [provider](#add_onspackage_managerprovider)
-* [features _(deprecated)_](#features-deprecated)
-  * [package_manager _(deprecated)_](#featurespackage_manager-deprecated)
-    * [enabled _(deprecated)_](#featurespackage_managerenabled-deprecated)
 * [etcd](#etcd)
   * [expected_count](#etcdexpected_count)
   * [nodes](#etcdnodes)
@@ -135,16 +126,6 @@
 | **Required** |  No |
 | **Default** | `false` | 
 
-###  cluster.allow_package_installation _(deprecated)_
-
- Whether KET should install the packages on the cluster nodes. Use DisablePackageInstallation instead. 
-
-| | |
-|----------|-----------------|
-| **Kind** |  bool |
-| **Required** |  No |
-| **Default** | `false` | 
-
 ###  cluster.package_repository_urls
 
  Comma-separated list of URLs of repositories that will be used for fetching the required packages. This is mainly used during a disconnected installation. In this scenario, internal package repositories that contain the KET packages and all their transitive dependencies should be listed here. Example: `http://rpm.apprenda.local:8080` 
@@ -178,17 +159,6 @@
 ###  cluster.networking
 
  The Networking configuration for the cluster. 
-
-###  cluster.networking.type _(deprecated)_
-
- The datapath technique that should be configured in Calico. 
-
-| | |
-|----------|-----------------|
-| **Kind** |  string |
-| **Required** |  No |
-| **Default** | `overlay` | 
-| **Options** |  `overlay`, `routed`
 
 ###  cluster.networking.pod_cidr_block
 
@@ -527,45 +497,11 @@
 | **Required** |  No |
 | **Default** | ` ` | 
 
-###  add_ons.heapster.options.heapster_replicas _(deprecated)_
-
- Number of Heapster replicas that should be scheduled on the cluster. 
-
-| | |
-|----------|-----------------|
-| **Kind** |  int |
-| **Required** |  No |
-| **Default** | ` ` | 
-
-###  add_ons.heapster.options.influxdb_pvc_name _(deprecated)_
-
- Name of the Persistent Volume Claim that will be used by InfluxDB. When set, this PVC must be created after the installation. If not set, InfluxDB will be configured with ephemeral storage. 
-
-| | |
-|----------|-----------------|
-| **Kind** |  string |
-| **Required** |  No |
-| **Default** | ` ` | 
-
 ###  add_ons.dashboard
 
  The Dashboard add-on configuration. 
 
 ###  add_ons.dashboard.disable
-
- Whether the dashboard add-on should be disabled. When set to true, the Kubernetes Dashboard will not be installed on the cluster. 
-
-| | |
-|----------|-----------------|
-| **Kind** |  bool |
-| **Required** |  No |
-| **Default** | `false` | 
-
-###  add_ons.dashbard _(deprecated)_
-
- The Dashboard add-on configuration. 
-
-###  add_ons.dashbard.disable
 
  Whether the dashboard add-on should be disabled. When set to true, the Kubernetes Dashboard will not be installed on the cluster. 
 
@@ -599,24 +535,6 @@
 | **Required** |  Yes |
 | **Default** | ` ` | 
 | **Options** |  `helm`
-
-##  features _(deprecated)_
-
- Feature configuration 
-
-###  features.package_manager _(deprecated)_
-
- The PackageManager feature configuration. 
-
-###  features.package_manager.enabled _(deprecated)_
-
- Whether the package manager add-on should be enabled. 
-
-| | |
-|----------|-----------------|
-| **Kind** |  bool |
-| **Required** |  No |
-| **Default** | `false` | 
 
 ##  etcd
 

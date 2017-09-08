@@ -243,7 +243,7 @@ func (h *HeapsterMonitoring) validate() (bool, []error) {
 	v := newValidator()
 	if h != nil && !h.Disable {
 		if h.Options.Heapster.Replicas <= 0 {
-			v.addError(fmt.Errorf("Heapster replicas %d is not valid, must be greater than 0", h.Options.HeapsterReplicas))
+			v.addError(fmt.Errorf("Heapster replicas %d is not valid, must be greater than 0", h.Options.Heapster.Replicas))
 		}
 		if !util.Contains(h.Options.Heapster.ServiceType, serviceTypes()) {
 			v.addError(fmt.Errorf("Heapster Service Type %q is not a valid option %v", h.Options.Heapster.ServiceType, serviceTypes()))

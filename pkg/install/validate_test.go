@@ -10,7 +10,6 @@ var validPlan = Plan{
 		Name:          "test",
 		AdminPassword: "password",
 		Networking: NetworkConfig{
-			Type:             "overlay",
 			PodCIDRBlock:     "172.16.0.0/16",
 			ServiceCIDRBlock: "172.20.0.0/16",
 		},

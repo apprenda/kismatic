@@ -60,12 +60,9 @@ func (fp *FilePlanner) Read() (*Plan, error) {
 	}
 
 	p := &Plan{}
-	if err = yaml.Unmarshal(d, p); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal plan: %v", err)
+	if err = yaml.UnmarshalStrict(d, p); err != nil {
+		return nil, fmt.Errorf("error reading plan file: %v", err)
 	}
-
-	// read deprecated fields and set it the new version of the cluster file
-	readDeprecatedFields(p)
 
 	// set nil values to defaults
 	setDefaults(p)
@@ -73,36 +70,11 @@ func (fp *FilePlanner) Read() (*Plan, error) {
 	return p, nil
 }
 
-func readDeprecatedFields(p *Plan) {
-	// only set if not already being set by the user
-	// package_manager moved from features: to add_ons: after KET v1.3.3
-	if p.Features != nil && p.Features.PackageManager != nil {
-		p.AddOns.PackageManager.Disable = !p.Features.PackageManager.Enabled
-		// KET v1.3.3 did not have a provider field
-		p.AddOns.PackageManager.Provider = ket133PackageManagerProvider
-	}
-	// allow_package_installation renamed to disable_package_installation after KET v1.4.0
-	if p.Cluster.AllowPackageInstallation != nil {
-		p.Cluster.DisablePackageInstallation = !*p.Cluster.AllowPackageInstallation
-	}
-
-	// Only read the deprecated dashboard field if the new one is not set
-	if p.AddOns.DashboardDeprecated != nil && p.AddOns.Dashboard == nil {
-		p.AddOns.Dashboard = &Dashboard{
-			Disable: p.AddOns.DashboardDeprecated.Disable,
-		}
-	}
-}
-
 func setDefaults(p *Plan) {
 	if p.AddOns.CNI == nil {
 		p.AddOns.CNI = &CNI{}
 		p.AddOns.CNI.Provider = cniProviderCalico
 		p.AddOns.CNI.Options.Calico.Mode = "overlay"
-		// read KET <v1.5.0 plan option
-		if p.Cluster.Networking.Type != "" {
-			p.AddOns.CNI.Options.Calico.Mode = p.Cluster.Networking.Type
-		}
 	}
 	if p.AddOns.HeapsterMonitoring == nil {
 		p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
@@ -110,18 +82,11 @@ func setDefaults(p *Plan) {
 	if p.AddOns.HeapsterMonitoring.Options.Heapster.Replicas == 0 {
 		p.AddOns.HeapsterMonitoring.Options.Heapster.Replicas = 2
 	}
-	// read field from KET < v1.5.0
-	if p.AddOns.HeapsterMonitoring.Options.HeapsterReplicas != 0 {
-		p.AddOns.HeapsterMonitoring.Options.Heapster.Replicas = p.AddOns.HeapsterMonitoring.Options.HeapsterReplicas
-	}
 	if p.AddOns.HeapsterMonitoring.Options.Heapster.Sink == "" {
 		p.AddOns.HeapsterMonitoring.Options.Heapster.Sink = "influxdb:http://heapster-influxdb.kube-system.svc:8086"
 	}
 	if p.AddOns.HeapsterMonitoring.Options.Heapster.ServiceType == "" {
 		p.AddOns.HeapsterMonitoring.Options.Heapster.ServiceType = "ClusterIP"
-	}
-	if p.AddOns.HeapsterMonitoring.Options.InfluxDBPVCName != "" {
-		p.AddOns.HeapsterMonitoring.Options.InfluxDB.PVCName = p.AddOns.HeapsterMonitoring.Options.InfluxDBPVCName
 	}
 
 	if p.Cluster.Certificates.CAExpiry == "" {

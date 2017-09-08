@@ -42,9 +42,6 @@ type Plan struct {
 	DockerRegistry DockerRegistry `yaml:"docker_registry"`
 	// Add on configuration
 	AddOns AddOns `yaml:"add_ons"`
-	// Feature configuration
-	// +deprecated
-	Features *Features `yaml:"features,omitempty"`
 	// Etcd nodes of the cluster
 	// +required
 	Etcd NodeGroup
@@ -75,10 +72,6 @@ type Cluster struct {
 	// When true, KET will not install the required packages.
 	// Instead, it will verify that the packages have been installed by the operator.
 	DisablePackageInstallation bool `yaml:"disable_package_installation"`
-	// Whether KET should install the packages on the cluster nodes.
-	// Use DisablePackageInstallation instead.
-	// +deprecated
-	AllowPackageInstallation *bool `yaml:"allow_package_installation,omitempty"`
 	// Comma-separated list of URLs of repositories that will
 	// be used for fetching the required packages. This is mainly used during a
 	// disconnected installation. In this scenario, internal package repositories
@@ -109,11 +102,6 @@ type Cluster struct {
 
 // NetworkConfig describes the cluster's networking configuration
 type NetworkConfig struct {
-	// The datapath technique that should be configured in Calico.
-	// +default=overlay
-	// +options=overlay,routed
-	// +deprecated
-	Type string `yaml:"type,omitempty"`
 	// The pod network's CIDR block. For example: `172.16.0.0/16`
 	// +required
 	PodCIDRBlock string `yaml:"pod_cidr_block"`
@@ -217,19 +205,8 @@ type AddOns struct {
 	HeapsterMonitoring *HeapsterMonitoring `yaml:"heapster"`
 	// The Dashboard add-on configuration.
 	Dashboard *Dashboard `yaml:"dashboard"`
-	// The Dashboard add-on configuration.
-	// +deprecated
-	DashboardDeprecated *Dashboard `yaml:"dashbard,omitempty"`
 	// The PackageManager add-on configuration.
 	PackageManager PackageManager `yaml:"package_manager"`
-}
-
-// Features configuration
-// +deprecated
-type Features struct {
-	// The PackageManager feature configuration.
-	// +deprecated
-	PackageManager *DeprecatedPackageManager `yaml:"package_manager,omitempty"`
 }
 
 // CNI add-on configuration
@@ -284,14 +261,6 @@ type HeapsterOptions struct {
 	Heapster Heapster `yaml:"heapster"`
 	// The InfluxDB configuration options.
 	InfluxDB InfluxDB `yaml:"influxdb"`
-	// Number of Heapster replicas that should be scheduled on the cluster.
-	// +deprecated
-	HeapsterReplicas int `yaml:"heapster_replicas,omitempty"`
-	// Name of the Persistent Volume Claim that will be used by InfluxDB.
-	// When set, this PVC must be created after the installation.
-	// If not set, InfluxDB will be configured with ephemeral storage.
-	// +deprecated
-	InfluxDBPVCName string `yaml:"influxdb_pvc_name,omitempty"`
 }
 
 // Heapster configuration options for the Heapster add-on
@@ -334,12 +303,6 @@ type PackageManager struct {
 	// +required
 	// +options=helm
 	Provider string
-}
-
-type DeprecatedPackageManager struct {
-	// Whether the package manager add-on should be enabled.
-	// +deprecated
-	Enabled bool
 }
 
 // MasterNodeGroup is the collection of master nodes
