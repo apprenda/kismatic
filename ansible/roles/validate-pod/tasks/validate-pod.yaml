@@ -1,14 +1,14 @@
 ---
     # kubeconfig is required because this task can be triggered from any k8s node
-  - name: wait up to 5 min until pod '{{ item }}' has the desired version
-    command: kubectl get pods {{ item }} --namespace kube-system -o jsonpath='{.metadata.annotations.kismatic/version}' --kubeconfig {{ kubernetes_kubeconfig_path }}
+  - name: wait up to 5 min until pod '{{ name }}' has the desired version
+    command: kubectl get pods --selector {{ selector }} --namespace kube-system -o jsonpath='{.items[0].metadata.annotations.kismatic/version}' --kubeconfig {{ kubernetes_kubeconfig_path }}
     register: podVersion
     until: podVersion.stdout == kismatic_short_version
     retries: 60
     delay: 5
     failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
 
-  - name: fail if pod '{{ item }}' does not have the desired version
+  - name: fail if pod '{{ name }}' does not have the desired version
     fail:
       msg: |
         An error occurred getting the pod's version using kubectl.
@@ -16,33 +16,33 @@
         {{ podVersion.stderr }}
     when: podVersion.stderr != ""
 
-  - name: fail if pod '{{ item }}' does not have the desired version
+  - name: fail if pod '{{ name }}' does not have the desired version
     fail:
-      msg: "The pod '{{ item }}' is expected to have version '{{ kismatic_short_version }}', but it has version '{{ podVersion.stdout }}'."
+      msg: The pod '{{ name }}' is expected to have version '{{ kismatic_short_version }}', but it has version '{{ podVersion.stdout }}'.
     when: podVersion.stdout != kismatic_short_version
 
-  - name: wait up to 5 min until pod '{{ item }}' is running
-    command: kubectl get pods {{ item }} --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+  - name: wait up to 5 min until pod '{{ name }}' is running
+    command: kubectl get pods --selector {{ selector }} --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
     register: phase
     until: phase|success and "Running" in phase.stdout
     retries: 60
     delay: 5
     failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
 
-  - name: get docker container ID for {{ item }}
+  - name: get docker container ID for pod '{{ name }}'
     command: docker ps -a -f name={{ item }} --format {%raw%}"{{.ID}}"{%endraw%} -l
     register: containerID
     when: phase|failure or "Running" not in phase.stdout
 
-  - name: get docker logs for {{ item }}
+  - name: get docker logs for pod '{{ name }}'
     command: docker logs {{ containerID.stdout }} --tail 15
     register: docker_logs
     when: containerID is defined and containerID|success and containerID.stdout is defined and containerID.stdout != ""
 
-  - name: fail if {{ item }} pod is not running
+  - name: fail if pod '{{ name }}'
     fail:
       msg: |
-        Waited for pod '{{ item }}' to be running, but it did not start up in time.
+        Waited for pod '{{ name }}' to be running, but it did not start up in time.
 
         The pod's latest logs may indicate why it failed to start up:
 

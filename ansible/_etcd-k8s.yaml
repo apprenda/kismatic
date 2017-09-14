@@ -7,11 +7,6 @@
     vars_files:
       - group_vars/all.yaml
       - group_vars/etcd-k8s.yaml
-
-    environment:
-      https_proxy: "{{ https_proxy }}"
-      http_proxy: "{{ http_proxy }}"
-      no_proxy: "{{ no_proxy }}"
       
     pre_tasks:
       - name: download etcd image

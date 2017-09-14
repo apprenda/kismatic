@@ -4,6 +4,7 @@ metadata:
   labels:
     tier: control-plane
     component: kube-controller-manager
+    kismatic/host: {{ inventory_hostname }}
   annotations:
     version: "{{ kubernetes_version }}"
     kismatic/version: "{{ kismatic_short_version }}"
@@ -18,6 +19,8 @@ spec:
     command:
       - kube-controller-manager
       - --allocate-node-cidrs=true
+      - --cloud-provider={{ cloud_provider }}
+      - --cloud-config={{ cloud_config }}
       - --cluster-cidr={{ kubernetes_pods_cidr }}
       - --cluster-name={{ kubernetes_cluster_name }}
       - --kubeconfig={{ kubernetes_kubeconfig.controller_manager }}
@@ -45,6 +48,14 @@ spec:
     - mountPath: /etc/ssl/certs
       name: ssl-certs-host
       readOnly: true
+    - name: usr-ca-certs-host
+      mountPath: /usr/share/ca-certificates
+      readOnly: true
+{% if cloud_provider is defined and cloud_provider == 'aws' and ansible_os_family == 'RedHat' %}
+    - mountPath: /etc/ssl/certs/ca-bundle.crt
+      name: rhel-ca-bundle
+      readOnly: true
+{% endif %}
   volumes:
   - name: "kubeconfig"
     hostPath:
@@ -53,5 +64,13 @@ spec:
       path: /etc/kubernetes
     name: ssl-certs-kubernetes
   - hostPath:
-      path: /usr/share/ca-certificates
+      path: /etc/ssl/certs/
     name: ssl-certs-host
+  - hostPath:
+      path: /usr/share/ca-certificates
+    name: usr-ca-certs-host
+{% if cloud_provider is defined and cloud_provider == 'aws' and ansible_os_family == 'RedHat' %}
+  - hostPath:
+      path: /etc/ssl/certs/ca-bundle.crt
+    name: rhel-ca-bundle
+{% endif %}

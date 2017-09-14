@@ -28,17 +28,6 @@
     register: calico_pod_name
     when: upgrading is defined and upgrading|bool == true
 
-    # remove old label
-  - name: remove old calico CNI provider labels
-    command: kubectl label nodes {% for host in play_hosts %}{{ host|lower }} {% endfor %} kismatic/calico- --overwrite --kubeconfig {{ kubernetes_kubeconfig_path }}
-    run_once: true
-    when: upgrading is defined and upgrading|bool == true
-
-    # label nodes that will have have calico isntalled
-  - name: label nodes with calico CNI provider
-    command: kubectl label nodes {% for host in play_hosts %}{{ host|lower }} {% endfor %} kismatic/cni-provider=calico --overwrite --kubeconfig {{ kubernetes_kubeconfig_path }}
-    run_once: true
-
   - name: start calico containers
     command: kubectl apply -f /etc/calico/calico.yaml --kubeconfig {{ kubernetes_kubeconfig_path }}
     run_once: true

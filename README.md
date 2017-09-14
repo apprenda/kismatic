@@ -51,7 +51,9 @@ KET operational tools include:
 
 [Upgrade a Kubernetes cluster](docs/upgrade.md) -- Instructions on using KET to upgrade your Kubernetes cluster.
 
-[Cluster Examples](docs/intent.md) -- Examples for various ways you can use Kismatic in your organization.
+[Plan File Reference](docs/plan-file-reference.md) -- Reference documentaion for the KET plan file.
+
+[Cluster Examples](docs/intent.md) -- Examples for various ways you can use KET in your organization.
 
 [CNI Providers](docs/networking.md) -- Information about the supported CNI providers by KET.
 
@@ -60,8 +62,6 @@ KET operational tools include:
 [Cert Generation](docs/certificates.md) -- Information on how KET handles certificates.
 
 [Kismatic CLI](https://github.com/apprenda/kismatic/tree/master/docs/kismatic-cli) -- Dynamically generated documentation for the Kismatic CLI.
-
-[Roadmap](ROADMAP.md) -- The feature roadmap for the next few releases of KET.
 
 # Development Documentation
 

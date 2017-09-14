@@ -1172,3 +1172,56 @@ func TestPackageManagerAddOn(t *testing.T) {
 		}
 	}
 }
+
+func TestCloudProvider(t *testing.T) {
+	tests := []struct {
+		c     CloudProvider
+		valid bool
+	}{
+		{
+			c: CloudProvider{
+				Provider: "",
+			},
+			valid: true,
+		},
+		{
+			c: CloudProvider{
+				Provider: "aws",
+			},
+			valid: true,
+		},
+		{
+			c: CloudProvider{
+				Provider: "awss",
+			},
+			valid: false,
+		},
+		{
+			c: CloudProvider{
+				Provider: "gce",
+				Config:   "/bin/sh",
+			},
+			valid: true,
+		},
+		{
+			c: CloudProvider{
+				Provider: "gce",
+				Config:   "/bin/foo",
+			},
+			valid: false,
+		},
+		{
+			c: CloudProvider{
+				Provider: "gce",
+				Config:   "foo",
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.c.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}

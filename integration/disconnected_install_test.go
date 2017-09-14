@@ -144,17 +144,12 @@ var _ = Describe("disconnected install feature", func() {
 
 				By("Running kismatic install apply")
 				// don't use the proxy for cluster communication
-				var ips string
-				delimiter := ","
-				for _, n := range clusterNodes.allNodes() {
-					ips = ips + n.Hostname + delimiter + n.PrivateIP + delimiter + n.PublicIP + delimiter
-				}
 
 				installOpts := installOptions{
 					modifyHostsFiles: true,
 					httpProxy:        fmt.Sprintf("%s:%d", proxyNode.PrivateIP, proxyPort),
 					httpsProxy:       fmt.Sprintf("%s:%d", proxyNode.PrivateIP, proxyPort),
-					noProxy:          ips,
+					noProxy:          fmt.Sprintf("%s,%s", "kubernetes-charts.storage.googleapis.com", "apprenda.github.io"),
 				}
 				err = installKismatic(clusterNodes, installOpts, sshKey)
 				Expect(err).ToNot(HaveOccurred())
@@ -166,17 +161,24 @@ var _ = Describe("disconnected install feature", func() {
 func disableInternetAccess(nodes []NodeDeets, sshKey string) error {
 	By("Blocking all outbound connections")
 	allowSourcePorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10249,10250,10251,10252,10254" // ports needed/checked by inspector
-	allowDestPorts := "8888,2379,6666,2380,6660,6443,8443,10250"
+	allowDestPorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10249,10250,10251,10252,10254"
+	allowedStorgePorts := "8081,111,2049,38465,38466,38467"
 	cmd := []string{
-		"sudo iptables -A OUTPUT -o lo -j ACCEPT",                                                               // allow loopback
-		"sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT",                      // allow SSH
-		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowSourcePorts), // allow inspector
-		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --dports %s -j ACCEPT", allowDestPorts),   // allow internal traffic for: inspector, etcd, docker registry
+		"sudo iptables -A OUTPUT -o lo -j ACCEPT",                                                                 // allow loopback
+		"sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT",                        // allow SSH
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowSourcePorts),   // allow inspector
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --dports %s -j ACCEPT", allowDestPorts),     // allow internal traffic for: inspector, etcd, docker registry
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowedStorgePorts), // storage
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --dports %s -j ACCEPT", allowedStorgePorts), // storage
 		"sudo iptables -A OUTPUT -s 172.16.0.0/16 -j ACCEPT",
 		"sudo iptables -A OUTPUT -d 172.16.0.0/16 -j ACCEPT", // Allow pod network
 		"sudo iptables -A OUTPUT -s 172.20.0.0/16 -j ACCEPT",
-		"sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT", // Allow pod service network
-		"sudo iptables -P OUTPUT DROP",                       // drop everything else
+		"sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT",                 // Allow pod service network
+		"sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT",  // ping outside to inside
+		"sudo iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT",   // ping outside to inside
+		"sudo iptables -A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT", // ping inside to outside
+		"sudo iptables -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT",    // ping inside to outside
+		"sudo iptables -P OUTPUT DROP",                                       // drop everything else
 	}
 	return runViaSSH(cmd, nodes, sshKey, 1*time.Minute)
 }

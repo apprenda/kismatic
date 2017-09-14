@@ -17,6 +17,7 @@
       gpgkey: "{{ kubernetes_yum_gpg_key_url }}"
       gpgcheck: yes
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
 
   - name: add Gluster yum repository
     yum_repository:
@@ -26,10 +27,12 @@
       gpgkey: "https://download.gluster.org/pub/gluster/glusterfs/3.8/3.8.7/rsa.pub"
       gpgcheck: yes
     when: ansible_os_family == 'RedHat' and 'storage' in group_names
+    environment: "{{proxy_env}}"
 
   - name: clean yum cache
     command: 'yum --disablerepo="*" --enablerepo="docker,kubernetes,gluster" makecache'
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
 
   # DEB
   - name: install apt-transport-https package
@@ -38,6 +41,7 @@
       state: latest
       update_cache: yes
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
 
   - name: add Docker deb key
     apt_key:
@@ -47,6 +51,7 @@
     apt_key:
       url: "{{ kubernetes_deb_gpg_key_url }}"
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
 
   - name: add Docker deb repository
     apt_repository:
@@ -56,13 +61,17 @@
     apt_repository:
       repo: 'deb {{ kubernetes_deb_repository_url }} kubernetes-xenial main'
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
+
   - name: add Gluster deb repository
     apt_repository:
       repo: ppa:gluster/glusterfs-3.8
       update_cache: yes
     when: ansible_os_family == 'Debian' and 'storage' in group_names
+    environment: "{{proxy_env}}"
 
   - name: apt-get update
     apt:
       update_cache: yes
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"

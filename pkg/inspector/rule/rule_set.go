@@ -347,15 +347,15 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["storage", "centos"]
   packageName: glusterfs-server
-  packageVersion: 3.8.7-1.el7
+  packageVersion: 3.8.15-2.el7
 - kind: PackageDependency
   when: ["storage", "rhel"]
   packageName: glusterfs-server
-  packageVersion: 3.8.7-1.el7
+  packageVersion: 3.8.15-2.el7
 - kind: PackageDependency
   when: ["storage", "ubuntu"]
   packageName: glusterfs-server
-  packageVersion: 3.8.7-ubuntu1~xenial1
+  packageVersion: 3.8.15-ubuntu1~xenial1
 
 # Port required for gluster-healthz
 - kind: TCPPortAvailable
@@ -367,13 +367,14 @@ const defaultRuleSet = `---
   timeout: 5s
 
 # Ports required for NFS
-- kind: TCPPortAvailable
-  when: ["storage"]
-  port: 111
-- kind: TCPPortAccessible
-  when: ["storage"]
-  port: 111
-  timeout: 5s
+# Removed due to https://github.com/apprenda/kismatic/issues/784
+#- kind: TCPPortAvailable
+#  when: ["storage"]
+#  port: 111
+#- kind: TCPPortAccessible
+#  when: ["storage"]
+#  port: 111
+#  timeout: 5s
 - kind: TCPPortAvailable
   when: ["storage"]
   port: 2049
@@ -584,15 +585,15 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["storage", "centos"]
   packageName: glusterfs-server
-  packageVersion: 3.8.7-1.el7
+  packageVersion: 3.8.15-2.el7
 - kind: PackageDependency
   when: ["storage", "rhel"]
   packageName: glusterfs-server
-  packageVersion: 3.8.7-1.el7
+  packageVersion: 3.8.15-2.el7
 - kind: PackageDependency
   when: ["storage", "ubuntu"]
   packageName: glusterfs-server
-  packageVersion: 3.8.7-ubuntu1~xenial1
+  packageVersion: 3.8.15-ubuntu1~xenial1
 `
 
 // DefaultRules returns the list of rules that are built into the inspector

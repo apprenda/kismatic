@@ -14,14 +14,16 @@
         command: "kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller"
         register: out
         failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
+        
       - name: "run helm init"
-        local_action: command ../../helm init --service-account=tiller -i="{{ helm_img }}" --upgrade
+        local_action: command ../../helm init --service-account=tiller -i="{{ helm_img }}" --upgrade {% if disconnected_installation|bool == true %}--skip-refresh{% endif %}
         become: no
         environment:
           KUBECONFIG: "{{ local_kubeconfig_directory }}"
           https_proxy: "{{ https_proxy }}"
           http_proxy: "{{ http_proxy }}"
           no_proxy: "{{ no_proxy }}"
+          
       - name: "add kismatic helm repo"
         local_action: command ../../helm repo add kismatic https://apprenda.github.io/kismatic-charts/
         become: no

@@ -46,6 +46,7 @@ type installOptions struct {
 	cniProvider                 string
 	heapsterReplicas            int
 	heapsterInfluxdbPVC         string
+	cloudProvider               string
 }
 
 func installKismaticMini(node NodeDeets, sshKey string) error {
@@ -105,6 +106,7 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		DisableHelm:                  disableHelm,
 		HeapsterReplicas:             installOpts.heapsterReplicas,
 		HeapsterInfluxdbPVC:          installOpts.heapsterInfluxdbPVC,
+		CloudProvider:                installOpts.cloudProvider,
 	}
 	return plan
 }
@@ -113,7 +115,7 @@ func installKismaticWithPlan(plan PlanAWS, sshKey string) error {
 	writePlanFile(plan)
 
 	By("Punch it Chewie!")
-	cmd := exec.Command("./kismatic", "install", "apply", "-f", "kismatic-testing.yaml", "--skip-preflight")
+	cmd := exec.Command("./kismatic", "install", "apply", "-f", "kismatic-testing.yaml")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

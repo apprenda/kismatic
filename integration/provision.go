@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/apprenda/kismatic/integration/aws"
@@ -247,15 +246,7 @@ func (p awsProvisioner) updateNodeWithDeets(nodeID string, node *NodeDeets) erro
 		node.PublicIP = awsNode.PublicIP
 		node.PrivateIP = awsNode.PrivateIP
 		node.SSHUser = awsNode.SSHUser
-
-		// Get the hostname from the DNS name
-		re := regexp.MustCompile("[^.]*")
-		hostname := re.FindString(awsNode.PrivateDNSName)
-		// RedHat uses FQDN as the hostname
-		if awsNode.ImageID == string(aws.RedHat7East) {
-			hostname = awsNode.PrivateDNSName
-		}
-		node.Hostname = hostname
+		node.Hostname = awsNode.PrivateDNSName
 		if node.PublicIP != "" && node.Hostname != "" && node.PrivateIP != "" {
 			return nil
 		}

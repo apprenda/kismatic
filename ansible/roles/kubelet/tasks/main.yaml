@@ -1,5 +1,19 @@
 ---
   # kubelet
+  - name: create {{ kubernetes_install_dir }} directory
+    file:
+      path: "{{ kubernetes_install_dir }}"
+      state: directory
+
+  - name: copy cloud-provider.conf to remote
+    copy:
+      src: "{{ cloud_config_local }}"
+      dest: "{{ cloud_config }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
+    when: cloud_config != ''
+
   - name: create {{ network_plugin_dir }} directory
     file:
       path: "{{ network_plugin_dir }}"

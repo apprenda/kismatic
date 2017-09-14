@@ -2,6 +2,7 @@ package install
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -10,65 +11,63 @@ import (
 )
 
 func TestWritePlanTemplate(t *testing.T) {
-	plan := &Plan{
-		Cluster: Cluster{
-			AdminPassword: "password",
+	tests := []struct {
+		golden   string
+		template PlanTemplateOptions
+	}{
+		{
+			golden: "./test/plan-template.golden.yaml",
+			template: PlanTemplateOptions{
+				EtcdNodes:     3,
+				MasterNodes:   2,
+				WorkerNodes:   3,
+				IngressNodes:  2,
+				StorageNodes:  0,
+				NFSVolumes:    0,
+				AdminPassword: "password",
+			},
 		},
-		Etcd: NodeGroup{
-			ExpectedCount: 3,
-		},
-		Master: MasterNodeGroup{
-			ExpectedCount: 2,
-		},
-		Worker: NodeGroup{
-			ExpectedCount: 3,
-		},
-		Ingress: OptionalNodeGroup{
-			ExpectedCount: 2,
-		},
-		Storage: OptionalNodeGroup{
-			ExpectedCount: 2,
-		},
-		NFS: NFS{
-			Volumes: []NFSVolume{
-				NFSVolume{Host: "", Path: "/"},
-				NFSVolume{Host: "", Path: "/"},
+		{
+			golden: "./test/plan-template-with-storage.golden.yaml",
+			template: PlanTemplateOptions{
+				EtcdNodes:     3,
+				MasterNodes:   2,
+				WorkerNodes:   3,
+				IngressNodes:  2,
+				StorageNodes:  2,
+				NFSVolumes:    3,
+				AdminPassword: "password",
 			},
 		},
 	}
-
-	tmpDir, err := ioutil.TempDir("", "test-write-plan-template")
-	if err != nil {
-		t.Fatalf("error creating tmp dir: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	filename := filepath.Join(tmpDir, "kismatic-cluster.yaml")
-	planner := &FilePlanner{filename}
-	if err := WritePlanTemplate(plan, planner); err != nil {
-		t.Fatalf("error writing plan file template: %v", err)
-	}
-
-	goldenFile := "./test/plan-template-with-storage.golden.yaml"
-	expected, err := ioutil.ReadFile(goldenFile)
-	if err != nil {
-		t.Fatalf("error reading golden file: %v", err)
-	}
-
-	got, err := ioutil.ReadFile(filename)
-	if err != nil {
-		t.Fatalf("error reading generated plan file template: %v", err)
-	}
-
-	if !bytes.Equal(expected, got) {
-		t.Error("generated plan file template does not match expected")
-		if _, err := exec.LookPath("diff"); err == nil {
-			cmd := exec.Command("diff", goldenFile, filename)
-			cmd.Stdout = os.Stdout
-			cmd.Run()
+	for _, test := range tests {
+		expected, err := ioutil.ReadFile(test.golden)
+		if err != nil {
+			t.Fatalf("error reading golden file: %v", err)
+		}
+		tmp, err := ioutil.TempDir("", "ket-test-write-plan-template")
+		if err != nil {
+			t.Fatalf("error creating temp dir: %v", err)
+		}
+		file := filepath.Join(tmp, "kismatic-cluster.yaml")
+		fp := &FilePlanner{file}
+		if err = WritePlanTemplate(test.template, fp); err != nil {
+			t.Fatalf("error writing plan template: %v", err)
+		}
+		wrote, err := ioutil.ReadFile(file)
+		if err != nil {
+			t.Fatalf("error reading plan file template: %v", err)
+		}
+		if !bytes.Equal(wrote, expected) {
+			t.Errorf("the resulting plan file did not equal the expected plan file (%s)", test.golden)
+			if _, err := exec.LookPath("diff"); err == nil {
+				cmd := exec.Command("diff", test.golden, file)
+				fmt.Println(file)
+				cmd.Stdout = os.Stdout
+				cmd.Run()
+			}
 		}
 	}
-
 }
 
 func TestGenerateAlphaNumericPassword(t *testing.T) {

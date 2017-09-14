@@ -4,6 +4,7 @@ metadata:
   labels:
     tier: control-plane
     component: kube-proxy
+    kismatic/host: {{ inventory_hostname }}
   annotations:
     version: "{{ kubernetes_version }}"
     kismatic/version: "{{ kismatic_short_version }}"

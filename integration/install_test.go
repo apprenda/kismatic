@@ -90,6 +90,30 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
+		Context("when deploying a cluster with all node roles and cloud-provider on CentOS", func() {
+			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+					testCloudProvider(nodes, sshKey)
+				})
+			})
+		})
+
+		Context("when deploying a cluster with all node roles and cloud-provider on RHEL", func() {
+			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, RedHat7, aws, func(nodes provisionedNodes, sshKey string) {
+					testCloudProvider(nodes, sshKey)
+				})
+			})
+		})
+
+		Context("when deploying a cluster with all node roles and cloud-provider on Ubuntu", func() {
+			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+					testCloudProvider(nodes, sshKey)
+				})
+			})
+		})
+
 		Context("when deploying a cluster with all node roles and disabled CNI", func() {
 			installOpts := installOptions{
 				disableCNI: true,
@@ -349,3 +373,15 @@ var _ = Describe("kismatic", func() {
 		})
 	})
 })
+
+func testCloudProvider(nodes provisionedNodes, sshKey string) {
+	installOpts := installOptions{cloudProvider: "aws"}
+
+	By("installing the cluster")
+	err := installKismatic(nodes, installOpts, sshKey)
+	Expect(err).ToNot(HaveOccurred())
+
+	By("test the cloud provider integration")
+	err = testAWSCloudProvider(nodes.master[0], sshKey)
+	Expect(err).ToNot(HaveOccurred())
+}

@@ -128,6 +128,9 @@ func (c Client) CreateNode(ami AMI, instanceType InstanceType, addBlockDevice bo
 		SubnetId:         aws.String(c.Config.SubnetID),
 		KeyName:          aws.String(c.Config.Keyname),
 		SecurityGroupIds: []*string{aws.String(c.Config.SecurityGroupID)},
+		IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
+			Arn: aws.String("arn:aws:iam::633668368853:instance-profile/ket-cloud-provider"),
+		},
 	}
 	if addBlockDevice {
 		ebs := ec2.BlockDeviceMapping{

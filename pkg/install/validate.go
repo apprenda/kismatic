@@ -163,6 +163,7 @@ func (c *Cluster) validate() (bool, []error) {
 	v.validate(&c.Certificates)
 	v.validate(&c.SSH)
 	v.validate(&c.APIServerOptions)
+	v.validate(&c.CloudProvider)
 
 	return v.valid()
 }
@@ -216,6 +217,21 @@ func (s *SSHConfig) validate() (bool, []error) {
 	return v.valid()
 }
 
+func (c *CloudProvider) validate() (bool, []error) {
+	v := newValidator()
+	if c.Provider != "" {
+		if !util.Contains(c.Provider, cloudProviders()) {
+			v.addError(fmt.Errorf("%q is not a valid cloud provider. Options are %v", c.Provider, cloudProviders()))
+		}
+		if c.Config != "" {
+			if _, err := os.Stat(c.Config); os.IsNotExist(err) {
+				v.addError(fmt.Errorf("cloud config file was not found at %q", c.Config))
+			}
+		}
+	}
+	return v.valid()
+}
+
 func (f *AddOns) validate() (bool, []error) {
 	v := newValidator()
 	v.validate(f.CNI)
@@ -228,7 +244,7 @@ func (n *CNI) validate() (bool, []error) {
 	v := newValidator()
 	if n != nil && !n.Disable {
 		if !util.Contains(n.Provider, cniProviders()) {
-			v.addError(fmt.Errorf("%q is not a valid CNI provider. Optins are %v", n.Provider, cniProviders()))
+			v.addError(fmt.Errorf("%q is not a valid CNI provider. Options are %v", n.Provider, cniProviders()))
 		}
 		if n.Provider == "calico" {
 			if !util.Contains(n.Options.Calico.Mode, calicoMode()) {

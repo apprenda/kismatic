@@ -1,3 +1,23 @@
 ---
-  - name: verify {{ worker_node|lower }} registered with API server
-    command: kubectl get nodes {{ worker_node|lower }} --kubeconfig {{ kubernetes_kubeconfig_path }}
+  - name: wait for node '{{ worker_node|lower }}' to register with the API server and become Ready
+    command: kubectl get nodes --selector kismatic/host={{ worker_node }} --kubeconfig {{ kubernetes_kubeconfig_path }}
+    register: nodeStatus
+    until: nodeStatus|success and "Ready" in nodeStatus.stdout
+    retries: 20
+    delay: 6
+
+  - name: failed getting the status of the node '{{ worker_node|lower }}'
+    fail:
+      msg: |
+        An error occurred trying to get the status of the node
+        
+        {{ nodeStatus.stderr }}
+    when: nodeStatus|failure
+
+  - name: fail if node '{{ worker_node|lower }}' is not Ready
+    fail:
+      msg: |
+        Node is not in the Ready state
+
+        {{ nodeStatus.stdout }}
+    when: nodeStatus|success and "Ready" not in nodeStatus.stdout

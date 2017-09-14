@@ -41,7 +41,6 @@ type ClusterCatalog struct {
 	EnableConfigureIngress bool `yaml:"configure_ingress"`
 
 	KismaticPreflightCheckerLinux string `yaml:"kismatic_preflight_checker"`
-	KismaticPreflightCheckerLocal string `yaml:"kismatic_preflight_checker_local"`
 
 	WorkerNode string `yaml:"worker_node"`
 
@@ -73,6 +72,9 @@ type ClusterCatalog struct {
 	DockerDirectLVMDeferredDeletionEnabled bool   `yaml:"docker_direct_lvm_deferred_deletion_enabled"`
 
 	LocalKubeconfigDirectory string `yaml:"local_kubeconfig_directory"`
+
+	CloudProvider string `yaml:"cloud_provider"`
+	CloudConfig   string `yaml:"cloud_config_local"`
 
 	DNS struct {
 		Enabled bool

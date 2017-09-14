@@ -25,18 +25,14 @@
 
   # Run the pre-flights checks, and always stop the checker regardless of result
   - block:
-      - name: run pre-flight checks using Kismatic Inspector
-        local_action: command {{ kismatic_preflight_checker_local | default(kismatic_preflight_checker) }} client {{ ansible_host }}:8888 --upgrade -o json --node-roles {{ ",".join(group_names) }}
+      - name: run pre-flight checks using Kismatic Inspector from the master
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }}'
+        delegate_to: "{{ groups['master'][0] }}"
         register: out
-        become: no
-    rescue: # Need to repeat because of Ansible bug https://github.com/ansible/ansible/issues/18602
-      - name: stop kismatic-inspector service
-        service:
-          name: kismatic-inspector.service
-          state: stopped
-      - name: verify Kismatic Inspector succeeded
-        command: /bin/true
-        failed_when: "out.rc != 0"
+      - name: run pre-flight checks using Kismatic Inspector from the worker
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }}'
+        delegate_to: "{{ groups['worker'][0] }}"
+        register: out
     always:
       - name: stop kismatic-inspector service
         service:

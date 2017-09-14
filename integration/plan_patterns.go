@@ -34,6 +34,7 @@ type PlanAWS struct {
 	DisableHelm                  bool
 	HeapsterReplicas             int
 	HeapsterInfluxdbPVC          string
+	CloudProvider                string
 }
 
 // Certain fields are still present for backwards compatabilty when testing upgrades
@@ -57,9 +58,11 @@ const planAWSOverlay = `cluster:
   ssh:
     user: {{.SSHUser}}
     ssh_key: {{.SSHKeyFile}}
-    ssh_port: 22{{if .UseDirectLVM}}
+    ssh_port: 22
   kube_apiserver:
     option_overrides: {}
+  cloud_provider:
+    provider: {{.CloudProvider}}{{if .UseDirectLVM}}
 docker:
   storage:
     direct_lvm:

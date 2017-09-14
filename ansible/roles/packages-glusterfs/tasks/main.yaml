@@ -1,7 +1,7 @@
 ---
   - name: install glusterfs yum package
     yum:
-      name: glusterfs-server{{glusterfs_server_version}}
+      name: glusterfs-server-{{glusterfs_server_version_rhel}}
       state: present
       disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
       enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
@@ -11,10 +11,12 @@
     retries: 3
     delay: 3
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
+
 
   - name: install glusterfs deb package
     apt:
-      name: glusterfs-server{{glusterfs_server_version}}
+      name: glusterfs-server={{glusterfs_server_version_ubuntu}}
       allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       state: present
     register: glusterfs_deb
@@ -22,3 +24,4 @@
     retries: 3
     delay: 3
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"

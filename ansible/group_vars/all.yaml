@@ -29,10 +29,8 @@ apprenda_tcp_healthz_version: "v1.0.0"
 helm_version: v2.5.1
 heapster_version: "v1.4.0"
 influxdb_version: "v1.1.1"
-glusterfs_server_version_rhel: "3.8.7-1.el7"
-glusterfs_server_version_ubuntu: "3.8.7-ubuntu1~xenial1"
-# RHEL needs dash between name-version, Ubuntu needs equals sign between name=version
-glusterfs_server_version: "{% if ansible_os_family == 'RedHat' %}-{{ glusterfs_server_version_rhel }}{% elif ansible_os_family == 'Ubuntu' %}={{ glusterfs_server_version_ubuntu }}{% endif %}"
+glusterfs_server_version_rhel: "3.8.15-2.el7"
+glusterfs_server_version_ubuntu: "3.8.15-ubuntu1~xenial1"
 #===============================================================================
 # common variables for all hosts
 init_system_dir: /etc/systemd/system/
@@ -153,6 +151,8 @@ local_kubernetes_master_ip: https://127.0.0.1:{{ kubernetes_master_secure_port }
 kubernetes_master_ip: https://{{ kubernetes_load_balanced_fqdn }}:{{ kubernetes_master_secure_port }}
 kubernetes_schedulable: "{% if 'worker' in group_names %}true{% else %}false{% endif %}"
 kube_dns_replicas: "{{ [2, groups['worker'] | length] | min }}"
+# cloud provider
+cloud_config: "{% if cloud_config_local is defined and cloud_config_local != '' %}{{ kubernetes_install_dir }}/cloud-provider.conf{% else %}{% endif %}"
 
 # kubernetes certificate config
 # TODO: Do we want to change this?
@@ -185,6 +185,8 @@ kubernetes_api_server_option_defaults:
   "basic-auth-file":  "{{ kubernetes_basic_auth_path }}"
   "bind-address": "0.0.0.0"
   "client-ca-file":  "{{ kubernetes_certificates.ca }}"
+  "cloud-provider": "{{ cloud_provider | quote }}"
+  "cloud-config": "{{ cloud_config }}"
   "enable-swagger-ui": "true"
   "etcd-cafile":  "{{ kubernetes_certificates.ca }}"
   "etcd-certfile":  "{{ kubernetes_certificates.etcd_client }}"
@@ -338,3 +340,8 @@ volume_base_dir: data/
 volume_mode: 0777
 volume_replica_count: 2
 volume_distribution_count: 1
+
+proxy_env:
+  https_proxy: "{{ https_proxy }}"
+  http_proxy: "{{ http_proxy }}"
+  no_proxy: "{{ no_proxy }}"

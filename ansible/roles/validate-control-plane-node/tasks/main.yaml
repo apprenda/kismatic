@@ -1,4 +1,4 @@
 ---
-  - include: ../validate-pod/tasks/validate-pod.yaml item="kube-apiserver-{{ inventory_hostname|lower }}"
-  - include: ../validate-pod/tasks/validate-pod.yaml item="kube-scheduler-{{ inventory_hostname|lower }}"
-  - include: ../validate-pod/tasks/validate-pod.yaml item="kube-controller-manager-{{ inventory_hostname|lower }}"
+  - include: ../validate-pod/tasks/validate-pod.yaml name="kube-apiserver" selector="component=kube-apiserver,kismatic/host={{ inventory_hostname }}" 
+  - include: ../validate-pod/tasks/validate-pod.yaml name="kube-scheduler" selector="component=kube-scheduler,kismatic/host={{ inventory_hostname }}"
+  - include: ../validate-pod/tasks/validate-pod.yaml name="kube-controller-manager" selector="component=kube-controller-manager,kismatic/host={{ inventory_hostname }}"

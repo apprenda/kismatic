@@ -213,27 +213,9 @@ ingress:
     ip: ""
     internalip: ""
 storage:
-  expected_count: 2
-  nodes:
-  - host: ""
-    ip: ""
-    internalip: ""
-  - host: ""
-    ip: ""
-    internalip: ""
+  expected_count: 0
+  nodes: []
 
 # A set of NFS volumes for use by on-cluster persistent workloads
 nfs:
-  nfs_volume:
-
-  # The host name or ip address of an NFS server.
-  - nfs_host: ""
-    mount_path: /
-
-  # The host name or ip address of an NFS server.
-  - nfs_host: ""
-    mount_path: /
-
-  # The host name or ip address of an NFS server.
-  - nfs_host: ""
-    mount_path: /
+  nfs_volume: []

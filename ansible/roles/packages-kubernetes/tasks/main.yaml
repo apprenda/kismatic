@@ -11,6 +11,7 @@
     retries: 3
     delay: 3
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
 
   - name: install kubectl yum package
     yum:
@@ -24,6 +25,7 @@
     retries: 3
     delay: 3
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
 
   # DEB
   - name: install kubelet deb package
@@ -37,6 +39,7 @@
     retries: 3
     delay: 3
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
 
   - name: install kubectl deb package
     apt:
@@ -49,3 +52,4 @@
     retries: 3
     delay: 3
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"

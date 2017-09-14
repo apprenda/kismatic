@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"time"
 
 	"strings"
@@ -381,12 +380,7 @@ func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan, node ListableNode) 
 }
 
 func setPreflightOptions(p Plan, cc ansible.ClusterCatalog) (*ansible.ClusterCatalog, error) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
 	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
-	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
 	cc.EnablePackageInstallation = !p.Cluster.DisablePackageInstallation
 	return &cc, nil
 }
@@ -658,10 +652,15 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		SeedRegistry:              !p.Cluster.DisableRegistrySeeding,
 		HTTPProxy:                 p.Cluster.Networking.HTTPProxy,
 		HTTPSProxy:                p.Cluster.Networking.HTTPSProxy,
-		NoProxy:                   p.Cluster.Networking.NoProxy,
 		TargetVersion:             KismaticVersion.String(),
 		APIServerOptions:          p.Cluster.APIServerOptions.Overrides,
 	}
+
+	cc.NoProxy = p.AllAddresses()
+	if p.Cluster.Networking.NoProxy != "" {
+		cc.NoProxy = cc.NoProxy + "," + p.Cluster.Networking.NoProxy
+	}
+
 	cc.LocalKubeconfigDirectory = filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig")
 	// absolute path required for ansible
 	generatedDir, err := filepath.Abs(filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig"))
@@ -713,6 +712,9 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 	}
 
 	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
+
+	cc.CloudProvider = p.Cluster.CloudProvider.Provider
+	cc.CloudConfig = p.Cluster.CloudProvider.Config
 
 	// add_ons
 	cc.RunPodValidation = p.NetworkConfigured()

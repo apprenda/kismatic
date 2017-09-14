@@ -5,11 +5,6 @@
     name: "Configure Kismatic Package Repos"
     become: yes
 
-    environment:
-      https_proxy: "{{ https_proxy }}"
-      http_proxy: "{{ http_proxy }}"
-      no_proxy: "{{ no_proxy }}"
-
     roles:
       - role: packages-repo
         when: >
