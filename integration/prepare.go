@@ -55,7 +55,7 @@ EOF`
 	installDockerYum          = `sudo yum -y install docker-engine-1.12.6-1.el7.centos`
 	installKubeletYum         = `sudo yum -y install kubelet-1.7.4-0`
 	installKubectlYum         = `sudo yum -y install kubectl-1.7.4-0`
-	installGlusterfsServerYum = `sudo yum -y install --nogpgcheck glusterfs-server-3.8.7-1.el7`
+	installGlusterfsServerYum = `sudo yum -y install --nogpgcheck glusterfs-server-3.8.15-2.el7`
 
 	updateAptGet        = `sudo apt-get update`
 	addDockerRepoKeyApt = `wget -qO - https://apt.dockerproject.org/gpg | sudo apt-key add -`
@@ -68,7 +68,7 @@ EOF`
 	installKubectlApt       = `sudo apt-get -y install kubectl=1.7.4-00`
 
 	addGlusterRepoApt         = `sudo add-apt-repository -y ppa:gluster/glusterfs-3.8`
-	installGlusterfsServerApt = `sudo apt-get -y install glusterfs-server=3.8.7-ubuntu1~xenial1`
+	installGlusterfsServerApt = `sudo apt-get -y install glusterfs-server=3.8.15-ubuntu1~xenial1`
 )
 
 type nodePrep struct {
