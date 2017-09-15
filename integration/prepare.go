@@ -65,6 +65,7 @@ EOF`
 	addKubernetesRepoKeyApt = `wget -qO - https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`
 	addKubernetesRepoApt    = `sudo add-apt-repository "deb https://packages.cloud.google.com/apt/ kubernetes-xenial main"`
 	installKubeletApt       = `sudo apt-get -y install kubelet=1.7.4-00`
+	stopKubeletService      = `sudo systemctl stop kubelet`
 	installKubectlApt       = `sudo apt-get -y install kubectl=1.7.4-00`
 
 	addGlusterRepoApt         = `sudo add-apt-repository -y ppa:gluster/glusterfs-3.8`
@@ -84,7 +85,7 @@ var ubuntu1604Prep = nodePrep{
 	CommandsToPrepDockerRepo:     []string{addDockerRepoKeyApt, addDockerRepoApt, updateAptGet},
 	CommandsToInstallDocker:      []string{installDockerApt},
 	CommandsToPrepKubernetesRepo: []string{addKubernetesRepoKeyApt, addKubernetesRepoApt, updateAptGet},
-	CommandsToInstallKubelet:     []string{installKubeletApt},
+	CommandsToInstallKubelet:     []string{installKubeletApt, stopKubeletService},
 	CommandsToInstallKubectl:     []string{installKubectlApt},
 	CommandsToInstallGlusterfs:   []string{addGlusterRepoApt, updateAptGet, installGlusterfsServerApt},
 }
