@@ -56,7 +56,7 @@ sudo apt-get update && sudo apt-get install -y apt-transport-https curl
 curl -s https://apt.dockerproject.org/gpg | sudo apt-key add -
 ```
 
-3.  Add the Kubernetes repo
+3.  Add the Docker repo
 
 ```
 sudo bash -c 'cat <<EOF >/etc/apt/sources.list.d/docker.list
@@ -65,7 +65,7 @@ EOF'
 ```
 
 #### Add the Kubernetes repo to the machine
-1. Add the Docker public key to apt
+1. Add the Kubernetes public key to apt
 
 ```
 curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
@@ -92,6 +92,11 @@ sudo apt-get update
 | Etcd Node | `sudo apt-get install -y docker-engine=1.12.6-0~ubuntu-xenial` |
 | Kubernetes Node | `sudo apt-get install -y docker-engine=1.12.6-0~ubuntu-xenial kubelet=1.7.4-00 kubectl=1.7.4-00` |
 
+#### Stop the kubelet
+When the Ubuntu kubelet package is installed the service will be started and will bind to ports. This will cause some preflight port checks to fail.
+```
+sudo systemctl stop kubelet
+```
 
 # <a name="synclocal"></a>Synchronizing a local repo
 
