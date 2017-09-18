@@ -11,6 +11,10 @@
     pre_tasks:
       - name: download etcd image
         command: docker pull {{ etcd_img }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
     roles:
       - role: etcd-backup

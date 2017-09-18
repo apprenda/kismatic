@@ -14,6 +14,10 @@
           - "{{ calico_node_img }}"
           - "{{ calico_cni_img }}"
           - "{{ calico_ctl_img }}"
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
       - name: check if calico-node is active
         command: systemctl is-active -q calico-node.service

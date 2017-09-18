@@ -4,7 +4,7 @@
     when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names"
     register: result
     until: result|success
-    retries: 1
+    retries: 2
     delay: 1
 
   - name: remove kubectl package
@@ -12,7 +12,7 @@
     when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names"
     register: result
     until: result|success
-    retries: 1
+    retries: 2
     delay: 1
 
   - name: remove docker-engine package
@@ -20,7 +20,7 @@
     when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names"
     register: result
     until: result|success
-    retries: 1
+    retries: 2
     delay: 1
 
   - name: remove etcd package
@@ -28,7 +28,7 @@
     when: "'etcd' in group_names"
     register: result
     until: result|success
-    retries: 1
+    retries: 2
     delay: 1
 
   - name: remove Kismatic yum repository
