@@ -2,6 +2,10 @@
   # Pre-download contiv images
   - name: download contiv container images
     command: docker pull {{ contiv_netplugin_img }}
+    register: result
+    until: result|succeeded
+    retries: 2
+    delay: 1
 
   # Create a secret that contains the contiv certificates.
   # Runs on the first master node if we find that the secret does 

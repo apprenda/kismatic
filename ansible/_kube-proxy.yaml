@@ -10,6 +10,10 @@
     pre_tasks:
       - name: download kube-proxy image
         command: docker pull {{ kube_proxy_img }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
       - name: check if kube-proxy service is active
         command: systemctl is-active -q kube-proxy.service
