@@ -10,6 +10,10 @@
     pre_tasks:
       - name: download kube-controller-manager image
         command: docker pull {{ kube_controller_manager_img }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
     roles:
       - kube-controller-manager

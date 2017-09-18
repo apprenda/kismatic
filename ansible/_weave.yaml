@@ -13,6 +13,10 @@
         with_items:
           - "{{ weave_img }}"
           - "{{ weave_npc_img }}"
-    
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
+
     roles:
       - weave

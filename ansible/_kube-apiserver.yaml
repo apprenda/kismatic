@@ -10,6 +10,10 @@
     pre_tasks:
       - name: download kube-apiserver image
         command: docker pull {{ kube_apiserver_img }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
     roles:
       - authorization-policy
