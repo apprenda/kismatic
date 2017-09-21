@@ -4,8 +4,6 @@
     yum:
       name: kubelet-{{ kubernetes_yum_version }}
       state: present
-      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
-      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     register: kubelet_installation_rpm
     until: kubelet_installation_rpm|success
     retries: 3
@@ -17,8 +15,6 @@
     yum:
       name: kubectl-{{ kubernetes_yum_version }}
       state: present
-      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
-      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     when: "'master' in group_names"
     register: result
     until: result|success
@@ -32,7 +28,6 @@
     apt:
       name: kubelet={{ kubernetes_deb_version }}
       state: present
-      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kubernetes-xenial
     register: kubelet_installation_deb
     until: kubelet_installation_deb|success
@@ -45,7 +40,6 @@
     apt:
       name: kubectl={{ kubernetes_deb_version }}
       state: present
-      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       default_release: kubernetes-xenial
     register: result
     until: result|success

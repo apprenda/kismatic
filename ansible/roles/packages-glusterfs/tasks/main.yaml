@@ -3,8 +3,6 @@
     yum:
       name: glusterfs-server-{{glusterfs_server_version_rhel}}
       state: present
-      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
-      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
       disable_gpg_check: yes    # does not work on RHEL
     register: glusterfs_rpm
     until: glusterfs_rpm|success
@@ -17,7 +15,6 @@
   - name: install glusterfs deb package
     apt:
       name: glusterfs-server={{glusterfs_server_version_ubuntu}}
-      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
       state: present
     register: glusterfs_deb
     until: glusterfs_deb|success

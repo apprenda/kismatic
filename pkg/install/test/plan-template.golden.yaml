@@ -10,13 +10,7 @@ cluster:
   # packages for you.
   disable_package_installation: false
 
-  # Comma-separated list of URLs of the repositories that should be used during
-  # installation. These repositories must contain the kismatic packages and all
-  # their transitive dependencies.
-  package_repository_urls: ""
-
-  # Set to true if you have already installed the required packages on the nodes
-  # or provided a local URL in package_repository_urls containing those packages.
+  # Set to true if you are performing a disconnected installation.
   disconnected_installation: false
 
   # Set to true if you have seeded your registry with the required images for

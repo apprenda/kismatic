@@ -10,7 +10,9 @@ There are two options in a Plan file that control disconnected installs:
 
 **disable_package_installation**: If you want to install your own packages, set this flag to **true**. Not only will Kismatic NOT install packages for you, it will enforce that they have been installed correctly before attempting to install or upgrade Kubernetes.
 
-**disconnected_install**: If you maintain your own docker registry, setting this flag to **true** will cause Kismatic to load all of the docker images needed to install Kubernetes into the registry. When this flag is set to true, all required kismatic packages must be either already installed or the URLs of cloned yum/deb repositories must be provided in the **package_repository_urls** field. When **package_repository_urls** is set, these repositories will be automatically configured on the nodes and used during the install.
+**disconnected_install**: If you maintain your own docker registry, setting this flag to **true** will cause Kismatic to load all of the docker images needed to install Kubernetes into the registry. When this flag is set to true, all required kismatic packages must be either already installed on the nodes, 
+or the nodes must be pre-configured to pull packages from an internal repository
+that has all the required packages.
 
 ... | connected install | disconnected install
 --- | --- | ---

@@ -15,7 +15,6 @@ type ClusterCatalog struct {
 	DNSServiceIP              string `yaml:"kubernetes_dns_service_ip"`
 	EnableModifyHosts         bool   `yaml:"modify_hosts_file"`
 	EnablePackageInstallation bool   `yaml:"allow_package_installation"`
-	PackageRepoURLs           string `yaml:"package_repository_urls"`
 	DisconnectedInstallation  bool   `yaml:"disconnected_installation"`
 	SeedRegistry              bool   `yaml:"seed_registry"`
 	KuberangPath              string `yaml:"kuberang_path"`

@@ -47,6 +47,7 @@
     apt_key:
       url: "{{ docker_deb_gpg_key_url }}"
     when: ansible_os_family == 'Debian'
+  
   - name: add Kubernetes deb key
     apt_key:
       url: "{{ kubernetes_deb_gpg_key_url }}"
@@ -57,6 +58,7 @@
     apt_repository:
       repo: 'deb {{ docker_deb_repository_url }} ubuntu-xenial main'
     when: ansible_os_family == 'Debian'
+  
   - name: add Kubernetes deb repository
     apt_repository:
       repo: 'deb {{ kubernetes_deb_repository_url }} kubernetes-xenial main'
