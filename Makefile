@@ -15,8 +15,8 @@ HOST_GOARCH = $(shell go env GOARCH)
 # Versions of external dependencies
 GLIDE_VERSION = v0.11.1
 ANSIBLE_VERSION = 2.3.0.0
-PROVISIONER_VERSION = v1.6.0
-KUBERANG_VERSION = v1.2.1
+PROVISIONER_VERSION = v1.6.1
+KUBERANG_VERSION = v1.2.2
 GO_VERSION = 1.8.0
 KUBECTL_VERSION = v1.8.0
 HELM_VERSION = v2.6.1
@@ -84,6 +84,7 @@ clean:
 	rm -rf vendor-kuberang
 	rm -rf vendor-helm
 	rm -rf vendor-kubectl
+
 
 test: vendor
 	@docker run                             \
