@@ -17,5 +17,6 @@
         delay: 1
 
     roles:
-      - authorization-policy
+      - role: authorization-policy
+        when: kubernetes_admin_password is defined and kubernetes_admin_password != '' #TODO remove
       - kube-apiserver

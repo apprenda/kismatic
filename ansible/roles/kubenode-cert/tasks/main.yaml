@@ -55,6 +55,10 @@
       mode: "{{ kubernetes_certificates_mode }}"
     when: "['master','worker','ingress','storage'] | intersect(group_names) | length > 0"
     with_items:
+      - src: "admin.pem"
+        dest: "{{ kubernetes_certificates.admin }}"
+      - src: "admin-key.pem"
+        dest: "{{ kubernetes_certificates.admin_key }}"
       - src: "{{ inventory_hostname }}-kubelet.pem"
         dest: "{{ kubernetes_certificates.kubelet }}"
       - src: "{{ inventory_hostname }}-kubelet-key.pem"
