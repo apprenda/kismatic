@@ -3,6 +3,15 @@
     file:
       path: "{{ kubernetes_spec_dir }}"
       state: directory
+
+  
+  - name: copy nginx-ingress-rbac.yaml to remote
+    template:
+      src: nginx-ingress-rbac.yaml
+      dest: "{{ kubernetes_spec_dir }}/nginx-ingress-rbac.yaml"
+  - name: create nginx-ingress-rbac resources
+    command: kubectl apply -f {{ kubernetes_spec_dir }}/nginx-ingress-rbac.yaml
+
   - name: copy default-backend.yaml to remote
     template:
       src: default-backend.yaml

@@ -54,6 +54,7 @@ spec:
         - --configmap=$(POD_NAMESPACE)/nginx-conf
         - --profiling=false
         - --annotations-prefix=ingress.kubernetes.io
+      serviceAccountName: nginx-ingress-serviceaccount
 ---
 apiVersion: v1
 data:
@@ -68,4 +69,3 @@ kind: ConfigMap
 metadata:
   name: nginx-conf
   namespace: kube-system
-

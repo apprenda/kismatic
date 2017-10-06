@@ -134,6 +134,8 @@ cloud_config: "{% if cloud_config_local is defined and cloud_config_local != '' 
 kubernetes_certificates_dir: "{{ kubernetes_install_dir }}/pki"
 kubernetes_certificates:
   ca: "{{ kubernetes_certificates_dir }}/ca.pem"
+  admin: "{{ kubernetes_certificates_dir }}/admin.pem"
+  admin_key: "{{ kubernetes_certificates_dir }}/admin-key.pem"
   api_server: "{{ kubernetes_certificates_dir }}/api-server.pem"
   api_server_key: "{{ kubernetes_certificates_dir }}/api-server-key.pem"
   etcd_client: "{{ kubernetes_certificates_dir }}/etcd-client.pem"
@@ -153,9 +155,9 @@ kubernetes_api_server_option_defaults:
   "allow-privileged": "true"
   "apiserver-count": "{{ kubernetes_master_apiserver_count }}"
   "anonymous-auth": "false"
-  "authorization-mode": "Node,RBAC,ABAC"
-  "authorization-policy-file": "{{ kubernetes_authorization_policy_path }}"
-  "basic-auth-file": "{{ kubernetes_basic_auth_path }}"
+  "authorization-mode": "Node,RBAC{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %},ABAC{% endif %}" #TODO remove ABAC
+  "authorization-policy-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_authorization_policy_path }}{% endif %}"
+  "basic-auth-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_basic_auth_path }}{% endif %}"
   "bind-address": "0.0.0.0"
   "client-ca-file": "{{ kubernetes_certificates.ca }}"
   "cloud-provider": "{{ cloud_provider }}"

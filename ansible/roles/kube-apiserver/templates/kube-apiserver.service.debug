@@ -4,33 +4,12 @@ Documentation=https://github.com/GoogleCloudPlatform/kubernetes
 
 [Service]
 ExecStart={{ bin_dir }}/kube-apiserver \
-  --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota \
-  --advertise-address={{ internal_ipv4 }} \
-  --allow-privileged=true \
-  --anonymous-auth=false \
-  --apiserver-count={{ kubernetes_master_apiserver_count }} \
-  --authorization-mode=RBAC,ABAC \
-  --authorization-policy-file={{ kubernetes_authorization_policy_path }} \
-  --basic-auth-file={{ kubernetes_basic_auth_path }} \
-  --bind-address=0.0.0.0 \
-  --client-ca-file={{ kubernetes_certificates.ca }} \
-  --enable-swagger-ui=true \
-  --etcd-cafile={{ kubernetes_certificates.ca }} \
-  --etcd-certfile={{ kubernetes_certificates.etcd_client }} \
-  --etcd-keyfile={{ kubernetes_certificates.etcd_client_key }} \
-  --etcd-servers={{ etcd_k8s_cluster_ip_list }} \
-  --insecure-bind-address=127.0.0.1 \
-  --insecure-port=8080 \
-{% if modify_hosts_file is defined and modify_hosts_file|bool == true %}
-  --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname \
+{% set combined_options = kubernetes_api_server_option_defaults | combine(kubernetes_api_server_option_overrides) -%}
+{% for option in combined_options | dictsort %}
+{% if option[1] is defined and option[1] | string | length > 0 %}
+  --{{ option[0] }}={{ option[1] }} \
 {% endif %}
-  --runtime-config=extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true \
-  --secure-port=6443 \
-  --service-account-key-file={{ kubernetes_certificates.service_account_key }} \
-  --service-cluster-ip-range={{ kubernetes_services_cidr }} \
-  --tls-cert-file={{ kubernetes_certificates.api_server }} \
-  --tls-private-key-file={{ kubernetes_certificates.api_server_key }} \
-  --v=2
+{% endfor %}
 Restart=on-failure
 RestartSec=3
 
