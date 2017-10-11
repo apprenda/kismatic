@@ -15,8 +15,7 @@ HOST_GOARCH = $(shell go env GOARCH)
 # Versions of external dependencies
 GLIDE_VERSION = v0.11.1
 ANSIBLE_VERSION = 2.3.0.0
-PROVISIONER_VERSION = v1.6.0
-KUBERANG_VERSION = v1.2.1
+KUBERANG_VERSION = v1.2.2
 GO_VERSION = 1.8.0
 KUBECTL_VERSION = v1.8.0
 HELM_VERSION = v2.6.1
@@ -79,7 +78,6 @@ clean:
 	rm -rf out
 	rm -rf vendor
 	rm -rf vendor-ansible/out
-	rm -rf vendor-provision
 	rm -rf integration/vendor
 	rm -rf vendor-kuberang
 	rm -rf vendor-helm
@@ -117,12 +115,6 @@ vendor-ansible/out:
 	tar -zxf vendor-ansible/out/ansible.tar.gz -C vendor-ansible/out
 	rm vendor-ansible/out/ansible.tar.gz
 
-vendor-provision/out:
-	mkdir -p vendor-provision/out/
-	curl -L https://github.com/apprenda/kismatic-provision/releases/download/$(PROVISIONER_VERSION)/provision-darwin-amd64 -o vendor-provision/out/provision-darwin-amd64
-	curl -L https://github.com/apprenda/kismatic-provision/releases/download/$(PROVISIONER_VERSION)/provision-linux-amd64 -o vendor-provision/out/provision-linux-amd64
-	chmod +x vendor-provision/out/*
-
 vendor-kuberang/$(KUBERANG_VERSION):
 	mkdir -p vendor-kuberang/$(KUBERANG_VERSION)
 	curl -L https://github.com/apprenda/kuberang/releases/download/$(KUBERANG_VERSION)/kuberang-linux-amd64 -o vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-amd64
@@ -153,7 +145,7 @@ dist: vendor
 	    circleci/golang:$(GO_VERSION)          \
 	    make bare-dist
 
-bare-dist: vendor-ansible/out vendor-provision/out vendor-kuberang/$(KUBERANG_VERSION) vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-amd64 vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-amd64 bare-build bare-build-inspector
+bare-dist: vendor-ansible/out vendor-kuberang/$(KUBERANG_VERSION) vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-amd64 vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-amd64 bare-build bare-build-inspector
 	mkdir -p out
 	cp bin/$(GOOS)/kismatic out
 	mkdir -p out/ansible
@@ -164,7 +156,6 @@ bare-dist: vendor-ansible/out vendor-provision/out vendor-kuberang/$(KUBERANG_VE
 	cp -r bin/inspector/* out/ansible/playbooks/inspector
 	mkdir -p out/ansible/playbooks/kuberang/linux/amd64/
 	cp vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-amd64 out/ansible/playbooks/kuberang/linux/amd64/kuberang
-	cp vendor-provision/out/provision-$(GOOS)-amd64 out/provision
 	cp vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-amd64 out/kubectl
 	cp vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-amd64 out/helm
 	rm -f out/kismatic.tar.gz
@@ -202,7 +193,6 @@ version: FORCE
 	@echo VERSION=$(VERSION)
 	@echo GLIDE_VERSION=$(GLIDE_VERSION)
 	@echo ANSIBLE_VERSION=$(ANSIBLE_VERSION)
-	@echo PROVISIONER_VERSION=$(PROVISIONER_VERSION)
 
 CIRCLE_ENDPOINT=
 ifndef CIRCLE_CI_BRANCH

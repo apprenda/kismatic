@@ -31,6 +31,7 @@ more documentation is availble at https://github.com/apprenda/kismatic`,
 	cmd.AddCommand(NewCmdDiagnostic(out))
 	cmd.AddCommand(NewCmdCertificates(out))
 	cmd.AddCommand(NewCmdSeedRegistry(out, stderr))
+	cmd.AddCommand(NewCmdProvision(in, out))
 
 	return cmd, nil
 }
