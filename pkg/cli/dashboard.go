@@ -84,7 +84,7 @@ func verifyDashboardConnectivity(req *http.Request) error {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("response failed with error: %q", err)
+		return fmt.Errorf("request failed with error: %q", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("got %d HTTP status code when trying to reach the dashboard at %q", resp.StatusCode, req.URL)
