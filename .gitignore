@@ -53,3 +53,4 @@ integration/vendor
 vendor-provision/*
 vendor-kuberang/*
 vendor-helm
+.glide

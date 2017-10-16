@@ -78,12 +78,13 @@ clean:
 	rm -rf bin
 	rm -rf out
 	rm -rf vendor
-	rm -rf vendor-ansible/out
+	rm -rf vendor-ansible
 	rm -rf vendor-provision
 	rm -rf integration/vendor
 	rm -rf vendor-kuberang
 	rm -rf vendor-helm
 	rm -rf vendor-kubectl
+	rm -rf tools
 
 test: vendor
 	@docker run                             \
