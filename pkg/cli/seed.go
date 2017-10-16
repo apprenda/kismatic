@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os/exec"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -140,11 +141,20 @@ func doSeedRegistry(stdout, stderr io.Writer, options seedRegistryOptions, image
 	}
 
 	// Seed the registry with the images
+	n := len(im.OfficialImages)
+	i := 1
 	for _, img := range im.OfficialImages {
+		l := fmt.Sprintf("(%d/%d) Seeding %s ", i, n, img)
+		pad := 80 - len(l)
+		if pad < 0 {
+			pad = 0
+		}
+		fmt.Fprintf(stdout, l+strings.Repeat(" ", pad))
 		if err := seedImage(stdout, stderr, img, server, options.verbose); err != nil {
 			return fmt.Errorf("Error seeding image %q: %v", img, err)
 		}
-		util.PrettyPrintOk(stdout, "Pushed %s ", img)
+		util.PrintOkln(stdout)
+		i++
 	}
 
 	util.PrintColor(stdout, util.Green, "\nThe registry %q was seeded successfully.\n", server)

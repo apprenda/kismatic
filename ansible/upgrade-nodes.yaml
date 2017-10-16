@@ -38,7 +38,7 @@
     when: cni.enabled|bool == true and cni.provider == "calico"
   - include: _calico-validate.yaml upgrading=true
     when: cni.enabled|bool == true and cni.provider == "calico"
-  - include: _weave.yaml play_name="Upgrade Wave Cluster Network" upgrading=true
+  - include: _weave.yaml play_name="Upgrade Weave Cluster Network" upgrading=true
     when: cni.enabled|bool == true and cni.provider == "weave"
   - include: _weave-validate.yaml upgrading=true
     when: cni.enabled|bool == true and cni.provider == "weave"

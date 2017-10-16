@@ -37,10 +37,10 @@ official_images:
     version: 1.1.1
   weave:
     name: weaveworks/weave-kube
-    version: 2.0.1
+    version: 2.0.4
   weave_npc:
     name: weaveworks/weave-npc
-    version: 2.0.1
+    version: 2.0.4
   defaultbackend:
     name: gcr.io/google_containers/defaultbackend
     version: 1.0

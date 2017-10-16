@@ -23,8 +23,14 @@
     - name: fail if DNS pod validation command returned an error
       fail:
         msg: |
-          Attempted to validate the DNS pods, but got an error from kubectl: {{ readyReplicas.stderr }}
+          Attempted to validate the DNS pods, but got an error: {{ readyReplicas.stderr }}
       when: readyReplicas.stderr != ""
+
+    - name: fail if DNS pod validation command could not determine if the DNS pods are ready
+      fail:
+        msg: |
+          Waited for all DNS pods to be ready, but they took longer than 5 minutes to be in the ready state.
+      when: readyReplicas.stdout == ""
 
     - name: find the DNS pods that failed to start
       # Get the name and status/phase for all kubedns pods, and then filter out the ones that are not running.
@@ -34,6 +40,12 @@
         --no-headers -o custom-columns=name:{.metadata.name},status:{.status.phase} | grep -v "Running" | head -n 1 | cut -d " " -f 1
       register: failedDNSPodNames
       when: readyReplicas.stdout|int != kube_dns_replicas|int
+
+    - name: fail if DNS pod validation command could not determine the broken pod
+      fail:
+        msg: |
+          Attempted to find the broken DNS pods, got an empty response.
+      when: failedDNSPodNames.stdout is defined and failedDNSPodNames.stdout == ""
 
     - name: get the logs of the first DNS pod that did not start up in time
       command: kubectl logs -c kubedns -n kube-system {{ failedDNSPodNames.stdout_lines[0] }} --tail 15
@@ -50,6 +62,5 @@
           {{ failedDNSPodLogs.stdout }}
 
       when: "'stdout' in failedDNSPodLogs and readyReplicas.stdout|int != kube_dns_replicas|int"
-
 
     when: run_pod_validation|bool == true 

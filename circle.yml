@@ -19,6 +19,18 @@ jobs:
           name: Verify reference documentation is up to date
           command: diff -u <(cat docs/plan-file-reference.md) <(make docs/generate-plan-file-reference.md)
       - run:
+          name: Create release directory # Used for releasing to GH
+          command: mkdir release
+      - run:
+          name: Darwin dist
+          command: GLIDE_GOOS=linux GOOS=darwin make bare-dist
+      - store_artifacts:
+          path: out/kismatic.tar.gz
+          destination: kismatic-darwin-amd64.tar.gz
+      - run:
+          name: Copy darwin pkg to release dir
+          command: mv out/kismatic.tar.gz release/kismatic-${CIRCLE_TAG}-darwin-amd64.tar.gz
+      - run:
           name: Linux dist
           command: GOOS=linux make bare-dist
       - store_artifacts:
@@ -26,7 +38,7 @@ jobs:
           destination: kismatic-linux-amd64.tar.gz
       - run:
           name: Copy linux pkg to release dir # Used for releasing to GH
-          command: mkdir release && cp out/kismatic.tar.gz release/kismatic-${CIRCLE_TAG}-linux-amd64.tar.gz
+          command: cp out/kismatic.tar.gz release/kismatic-${CIRCLE_TAG}-linux-amd64.tar.gz
       - run:
           name: Create dir in tmpfs for ansible inside docker
           command: mkdir -p /run/user/1026 && chown 1026:1026 /run/user/1026
@@ -69,15 +81,6 @@ jobs:
             ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/run/user/1026/ssh-%r-%h-%p"
       - store_test_results:
           path: /tmp/ket-junit-results
-      - run:
-          name: Darwin dist
-          command: GLIDE_GOOS=linux GOOS=darwin make bare-dist
-      - store_artifacts:
-          path: out/kismatic.tar.gz
-          destination: kismatic-darwin-amd64.tar.gz      
-      - run:
-          name: Copy darwin pkg to release dir  # Used for releasing to GH
-          command: mv out/kismatic.tar.gz release/kismatic-${CIRCLE_TAG}-darwin-amd64.tar.gz
       - run:
           name: Create draft release on GitHub
           command: | 
