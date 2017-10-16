@@ -36,7 +36,7 @@ build: vendor # vendor on host because of some permission issues with glide insi
 	    -e GLIDE_GOOS="linux"                  \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                 \
+	    -u $$(id -u):$$(id -g)                 \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"      \
 	    -w /go/src/$(PKG)                      \
 	    circleci/golang:$(GO_VERSION)          \
@@ -52,7 +52,7 @@ build-inspector: vendor
 	    -e GLIDE_GOOS="linux"                  \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                 \
+	    -u $$(id -u):$$(id -g)                 \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w /go/src/$(PKG)                      \
 	    circleci/golang:$(GO_VERSION)          \
@@ -90,7 +90,7 @@ test: vendor
 	@docker run                             \
 	    --rm                                \
 	    -e GLIDE_GOOS="linux"               \
-	    -u root:root              \
+	    -u $$(id -u):$$(id -g)              \
 	    -v "$(shell pwd)":/go/src/$(PKG)    \
 	    -v /tmp:/tmp                        \
 	    -w /go/src/$(PKG)                   \
@@ -148,7 +148,7 @@ dist: vendor
 	    -e GLIDE_GOOS="linux"                  \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                 \
+	    -u $$(id -u):$$(id -g)                 \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w "/go/src/$(PKG)"                    \
 	    circleci/golang:$(GO_VERSION)          \
