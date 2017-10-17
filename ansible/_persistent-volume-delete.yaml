@@ -8,4 +8,4 @@
 
     tasks:
       - name: delete Kubernetes PV
-        command: kubectl delete pv {{ volume_name }} --kubeconfig {{ kubernetes_kubeconfig_path }}
+        command: kubectl delete pv {{ volume_name }} --kubeconfig {{ kubernetes_kubeconfig.kubectl }}

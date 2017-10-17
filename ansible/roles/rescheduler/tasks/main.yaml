@@ -7,7 +7,7 @@
       mode: "{{ kubernetes_service_mode }}"
 
   - name: wait up to 5 min until pod 'rescheduler' is running
-    command: kubectl get pods --selector  k8s-app=rescheduler --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl get pods --selector  k8s-app=rescheduler --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     register: phase
     until: phase|success and "Running" in phase.stdout
     retries: 60

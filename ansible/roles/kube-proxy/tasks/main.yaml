@@ -22,7 +22,7 @@
     when: upgrading is defined and upgrading|bool == true
 
   - name: start kube-proxy
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/kube-proxy.yaml --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl apply -f {{ kubernetes_spec_dir }}/kube-proxy.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     run_once: true
 
   - name: delete kube-proxy pod running on this node
@@ -39,17 +39,17 @@
     when: pod_name is defined and pod_name.stdout is defined and pod_name.stdout != ""
 
   - name: label nodes for kube-proxy
-    command: kubectl label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname }} --kubeconfig {{ kubernetes_kubeconfig_path }} kismatic/kube-proxy=true
+    command: kubectl label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname }} --kubeconfig {{ kubernetes_kubeconfig.kubectl }} kismatic/kube-proxy=true
     
   - name: get desired number of kube-proxy pods
-    command: kubectl get ds kube-proxy -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl get ds kube-proxy -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     register: desiredPods
     until: desiredPods|success and desiredPods.stdout|int > 0
     retries: 20
     delay: 6
     run_once: true
   - name: wait until all kube-proxy pods are ready
-    command: kubectl get ds kube-proxy -o=jsonpath='{.status.numberReady}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl get ds kube-proxy -o=jsonpath='{.status.numberReady}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     register: readyPods
     until: desiredPods.stdout|int == readyPods.stdout|int
     retries: 20

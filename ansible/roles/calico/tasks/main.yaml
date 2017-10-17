@@ -33,7 +33,7 @@
       mode: "{{ network_environment_mode }}"
 
   - name: create calico RBAC roles
-    command: kubectl apply -f /etc/calico/rbac.yaml --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl apply -f /etc/calico/rbac.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     run_once: true
 
   - name: get the name of the calico pod running on this node
@@ -42,7 +42,7 @@
     when: upgrading is defined and upgrading|bool == true
 
   - name: start calico containers
-    command: kubectl apply -f /etc/calico/calico.yaml --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl apply -f /etc/calico/calico.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     run_once: true
 
   - name: delete calico pod running on this node

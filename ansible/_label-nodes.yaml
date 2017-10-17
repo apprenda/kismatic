@@ -9,8 +9,8 @@
       
     tasks:
       - name: label nodes with system labels
-        command: kubectl label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname }} --kubeconfig {{ kubernetes_kubeconfig_path }} kismatic/cni-provider={{ cni.provider| quote }}{% if 'ingress' in group_names%} kismatic/ingress=true{% endif %}{% if 'storage' in group_names%} kismatic/storage=true{% endif %}
+        command: kubectl label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname }} --kubeconfig {{ kubernetes_kubeconfig.kubectl }} kismatic/cni-provider={{ cni.provider| quote }}{% if 'ingress' in group_names%} kismatic/ingress=true{% endif %}{% if 'storage' in group_names%} kismatic/storage=true{% endif %}
         
       - name: label nodes with user defined labels
-        command: kubectl label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname }} --kubeconfig {{ kubernetes_kubeconfig_path }} {{ node_labels[inventory_hostname] | join(" ") }}
+        command: kubectl label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname }} --kubeconfig {{ kubernetes_kubeconfig.kubectl }} {{ node_labels[inventory_hostname] | join(" ") }}
         when: node_labels[inventory_hostname] is defined and node_labels[inventory_hostname]|length > 0

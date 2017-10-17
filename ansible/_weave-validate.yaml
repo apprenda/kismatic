@@ -9,14 +9,14 @@
 
     tasks:
       - name: get desired number of weave pods
-        command: kubectl get ds weave-net -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+        command: kubectl get ds weave-net -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
         register: desiredPods
         until: desiredPods|success
         retries: 20
         delay: 6
         run_once: true
       - name: wait until all weave pods are ready
-        command: kubectl get ds weave-net -o=jsonpath='{.status.numberReady}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+        command: kubectl get ds weave-net -o=jsonpath='{.status.numberReady}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
         register: readyPods
         until: desiredPods.stdout|int == readyPods.stdout|int
         retries: 20
