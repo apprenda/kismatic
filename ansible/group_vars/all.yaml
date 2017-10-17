@@ -99,7 +99,6 @@ kubernetes_kubectl_config_dir: /root/.kube
 kubernetes_basic_auth_path: "{{kubernetes_auth_dir}}/basicauth.csv"
 kubernetes_authorization_policy_path: "{{kubernetes_auth_dir}}/authorization-policy.json"
 kubernetes_services_kubeconfig_path: "{{kubelet_lib_dir}}/kubeconfig"
-kubernetes_kubeconfig_path: "{{kubernetes_kubectl_config_dir}}/config"
 
 kubernetes_kubeconfig:
   kubectl: "{{kubernetes_kubectl_config_dir}}/config"

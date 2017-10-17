@@ -22,7 +22,7 @@
     when: upgrading is defined and upgrading|bool == true
 
   - name: start weave containers
-    command: kubectl apply -f /etc/weave/weave.yaml --kubeconfig {{ kubernetes_kubeconfig_path }}
+    command: kubectl apply -f /etc/weave/weave.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
     run_once: true
 
   - name: delete weave pod running on this node

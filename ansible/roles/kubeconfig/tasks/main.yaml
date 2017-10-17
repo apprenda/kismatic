@@ -4,4 +4,4 @@
     file: path={{ kubernetes_kubectl_config_dir }} state=directory
     
   - name: copy kubectl config to remote
-    template: src=kubeconfig.j2 dest={{ kubernetes_kubeconfig_path }}
+    template: src=kubeconfig.j2 dest={{ kubernetes_kubeconfig.kubectl }}
