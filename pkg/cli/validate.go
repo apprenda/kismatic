@@ -92,10 +92,7 @@ func doValidate(out io.Writer, planner install.Planner, opts *validateOpts) erro
 	if err != nil {
 		return err
 	}
-	if err = e.RunPreFlightCheck(plan); err != nil {
-		return err
-	}
-	return nil
+	return e.RunPreFlightCheck(plan)
 }
 
 // TODO this should really not be here

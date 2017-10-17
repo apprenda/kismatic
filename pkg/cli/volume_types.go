@@ -2,12 +2,12 @@ package cli
 
 import "strings"
 
-// ListResponse
+//ListResponse contains a slice of volumes with corresponding json fields
 type ListResponse struct {
 	Volumes []Volume `json:"items"`
 }
 
-// Volume
+//Volume contains name, storage class, labels, capacity, availability, replicacount, distribution count, bricks, status, claim, and pods
 type Volume struct {
 	Name              string            `json:"name"`
 	StorageClass      string            `json:"storageClass,omitempty"`
@@ -22,32 +22,33 @@ type Volume struct {
 	Pods              []Pod             `json:"pods,omitempty"`
 }
 
-// Brick
+//Brick contains Host and Path information
 type Brick struct {
 	Host string `json:"host"`
 	Path string `json:"path"`
 }
 
-// Claim
+//Claim contains Name and Namespace information
 type Claim struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
 
-// Pod
+//Pod contains Name and Namespace information, as well as associated containers
 type Pod struct {
 	Name       string      `json:"name"`
 	Namespace  string      `json:"namespace"`
 	Containers []Container `json:"containers"`
 }
 
-// Container
+//Container contains Name and mounting information (name and path)
 type Container struct {
 	Name      string `json:"name"`
 	MountName string `json:"mountName"`
 	MountPath string `json:"mountPath"`
 }
 
+//Readable joins a claim's namespace and name in the format "namespace/name"
 func (c *Claim) Readable() string {
 	if c != nil {
 		return strings.Join([]string{c.Namespace, c.Name}, "/")
@@ -55,6 +56,7 @@ func (c *Claim) Readable() string {
 	return ""
 }
 
+//Readable joins a pod's namespace and name in the format "namespace/name"
 func (p *Pod) Readable() string {
 	if p != nil {
 		return strings.Join([]string{p.Namespace, p.Name}, "/")
@@ -62,6 +64,7 @@ func (p *Pod) Readable() string {
 	return ""
 }
 
+//Readable joins a brick's host and path in the format "host:path"
 func (b *Brick) Readable() string {
 	if b != nil {
 		return strings.Join([]string{b.Host, b.Path}, ":")
@@ -69,6 +72,7 @@ func (b *Brick) Readable() string {
 	return ""
 }
 
+//VolumeBrickToString joins the volume bricks into a CSV string
 func VolumeBrickToString(bricks []Brick) string {
 	var vbList []string
 	for _, brick := range bricks {

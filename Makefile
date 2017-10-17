@@ -85,6 +85,7 @@ clean:
 	rm -rf vendor-helm
 	rm -rf vendor-kubectl
 
+
 test: vendor
 	@docker run                             \
 	    --rm                                \
