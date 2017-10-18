@@ -197,8 +197,7 @@ etcd:
   nodes:{{range .Etcd}}
   - host: {{.Host}}
     ip: {{.PublicIPv4}}
-    internalip: {{.PrivateIPv4}}
-    labels: {}{{end}}
+    internalip: {{.PrivateIPv4}}{{end}}
 
 # Master nodes are the ones that run the Kubernetes control plane components.
 master:
