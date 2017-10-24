@@ -1,7 +1,6 @@
 package check
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -20,6 +19,7 @@ func (p PackageQuery) String() string {
 // package is installed.
 type PackageCheck struct {
 	PackageQuery         PackageQuery
+	ShouldNotBeInstalled bool
 	PackageManager       PackageManager
 	InstallationDisabled bool
 }
@@ -29,12 +29,19 @@ type PackageCheck struct {
 // there is no guarantee that the node will have the kismatic package repo configured.
 // For this reason, this check is a no-op when package installation is disabled.
 func (c PackageCheck) Check() (bool, error) {
-	if !c.InstallationDisabled {
-		return true, nil
-	}
 	installed, err := c.PackageManager.IsInstalled(c.PackageQuery)
 	if err != nil {
 		return false, fmt.Errorf("failed to determine if package is installed: %v", err)
+	}
+	if !c.InstallationDisabled {
+		if installed && c.ShouldNotBeInstalled {
+			return false, fmt.Errorf("package should not be installed")
+		}
+		return true, nil
+	}
+	// When installation is disabled, dont check what packages are installed
+	if c.ShouldNotBeInstalled {
+		return true, nil
 	}
 	if installed {
 		return true, nil
@@ -45,7 +52,7 @@ func (c PackageCheck) Check() (bool, error) {
 		return false, fmt.Errorf("failed to determine if package is available for install: %v", err)
 	}
 	if !available {
-		return false, errors.New("package is not installed, and is not available in known package repositories")
+		return false, fmt.Errorf("package is not installed, and is not available in known package repositories")
 	}
-	return false, errors.New("package is not installed, but is available in a package repository")
+	return false, fmt.Errorf("package is not installed, but is available in a package repository")
 }

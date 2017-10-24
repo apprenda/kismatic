@@ -34,19 +34,20 @@ func ReadFromFile(file string) ([]Rule, error) {
 // There might be a better way of doing this, but taking this
 // approach for now...
 type catchAllRule struct {
-	Meta              `yaml:",inline"`
-	PackageName       string   `yaml:"packageName"`
-	PackageVersion    string   `yaml:"packageVersion"`
-	AnyVersion        bool     `yaml:"anyVersion"`
-	Executable        string   `yaml:"executable"`
-	Port              int      `yaml:"port"`
-	ProcName          string   `yaml:"procName"`
-	File              string   `yaml:"file"`
-	ContentRegex      string   `yaml:"contentRegex"`
-	Timeout           string   `yaml:"timeout"`
-	SupportedVersions []string `yaml:"supportedVersions"`
-	Path              string   `yaml:"path"`
-	MinimumBytes      string   `yaml:"minimumBytes"`
+	Meta                 `yaml:",inline"`
+	PackageName          string   `yaml:"packageName"`
+	PackageVersion       string   `yaml:"packageVersion"`
+	AnyVersion           bool     `yaml:"anyVersion"`
+	ShouldNotBeInstalled bool     `yaml:"shouldNotBeInstalled"`
+	Executable           string   `yaml:"executable"`
+	Port                 int      `yaml:"port"`
+	ProcName             string   `yaml:"procName"`
+	File                 string   `yaml:"file"`
+	ContentRegex         string   `yaml:"contentRegex"`
+	Timeout              string   `yaml:"timeout"`
+	SupportedVersions    []string `yaml:"supportedVersions"`
+	Path                 string   `yaml:"path"`
+	MinimumBytes         string   `yaml:"minimumBytes"`
 }
 
 // UnmarshalRulesYAML unmarshals the data into a list of rules
@@ -90,9 +91,10 @@ func buildRule(catchAll catchAllRule) (Rule, error) {
 		return nil, fmt.Errorf("rule with kind %q is not supported", catchAll.Kind)
 	case "packagedependency":
 		r := PackageDependency{
-			PackageName:    catchAll.PackageName,
-			PackageVersion: catchAll.PackageVersion,
-			AnyVersion:     catchAll.AnyVersion,
+			PackageName:          catchAll.PackageName,
+			PackageVersion:       catchAll.PackageVersion,
+			AnyVersion:           catchAll.AnyVersion,
+			ShouldNotBeInstalled: catchAll.ShouldNotBeInstalled,
 		}
 		r.Meta = meta
 		return r, nil
