@@ -5,6 +5,17 @@ import (
 	"strings"
 )
 
+/*
+- kind: __RuleName__
+  when:
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel", "centos"]
+  ...
+
+This rule will be executed when the node has these facts:
+  ("etcd" OR "master" OR "worker" OR "ingress" OR "storage") AND ("rhel" OR "centos")
+*/
+
 // DefaultRuleSet is the list of rules that are built into the inspector
 const defaultRuleSet = `---
 - kind: FreeSpace
@@ -22,432 +33,426 @@ const defaultRuleSet = `---
 
 # Executables required by kubelet
 - kind: ExecutableInPath
-  when: ["master","worker"]
+  when:
+  - ["master", "worker", "ingress", "storage"]
   executable: iptables
 - kind: ExecutableInPath
-  when: ["master","worker"]
+  when:
+  - ["master", "worker", "ingress", "storage"]
   executable: iptables-save
 - kind: ExecutableInPath
-  when: ["master","worker"]
+  when:
+  - ["master", "worker", "ingress", "storage"]
   executable: iptables-restore
 
 # Ports used by etcd are available
 - kind: TCPPortAvailable
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 2379
-  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 6666
-  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 2380
-  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 6660
-  procName: docker-proxy # docker sets up a proxy for the etcd container
 
 # Ports used by etcd are accessible
 - kind: TCPPortAccessible
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 2379
   timeout: 5s
 - kind: TCPPortAccessible
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 6666
   timeout: 5s
 - kind: TCPPortAccessible
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 2380
   timeout: 5s
 - kind: TCPPortAccessible
-  when: ["etcd"]
+  when: 
+  - ["etcd"]
   port: 6660
   timeout: 5s
 
 # Ports used by K8s master are available
 - kind: TCPPortAvailable
-  when: ["master"]
+  when: 
+  - ["master"]
   port: 6443
-  procName: kube-apiserver
 - kind: TCPPortAvailable
-  when: ["master"]
+  when: 
+  - ["master"]
   port: 8080
-  procName: kube-apiserver
 # kube-scheduler
 - kind: TCPPortAvailable
-  when: ["master"]
+  when: 
+  - ["master"]
   port: 10251
-  procName: kube-scheduler
 # kube-controller-manager
 - kind: TCPPortAvailable
-  when: ["master"]
+  when: 
+  - ["master"]
   port: 10252
-  procName: kube-controller
 
 # Ports used by K8s master are accessible
 # Port 8080 is not accessible from outside
 - kind: TCPPortAccessible
-  when: ["master"]
+  when: 
+  - ["master"]
   port: 6443
   timeout: 5s
 # kube-scheduler
 - kind: TCPPortAccessible
-  when: ["master"]
+  when: 
+  - ["master"]
   port: 10251
   timeout: 5s
 # kube-controller-manager
 - kind: TCPPortAccessible
-  when: ["master"]
+  when: 
+  - ["master"]
   port: 10252
   timeout: 5s
 
 # Ports used by K8s worker are available
 # cAdvisor
 - kind: TCPPortAvailable
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 4194
-  procName: kubelet
 # kubelet localhost healthz
 - kind: TCPPortAvailable
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 10248
-  procName: kubelet
 # kube-proxy metrics
 - kind: TCPPortAvailable
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 10249
-  procName: kube-proxy
 # kube-proxy health
 - kind: TCPPortAvailable
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 10256
-  procName: kube-proxy
 # kubelet
 - kind: TCPPortAvailable
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 10250
-  procName: kubelet
 # kubelet no auth
 - kind: TCPPortAvailable
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 10255
-  procName: kubelet
 
 # Ports used by K8s worker are accessible
 # cAdvisor
 - kind: TCPPortAccessible
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 4194
   timeout: 5s
 # kube-proxy
 - kind: TCPPortAccessible
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 10256
   timeout: 5s
 # kubelet
 - kind: TCPPortAccessible
-  when: ["master","worker","ingress","storage"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
   port: 10250
   timeout: 5s
 
 # Port used by Ingress
 - kind: TCPPortAvailable
-  when: ["ingress"]
+  when: 
+  - ["ingress"]
   port: 80
-  procName: nginx
 - kind: TCPPortAccessible
-  when: ["ingress"]
+  when: 
+  - ["ingress"]
   port: 80
   timeout: 5s
 - kind: TCPPortAvailable
-  when: ["ingress"]
+  when: 
+  - ["ingress"]
   port: 443
-  procName: nginx
 - kind: TCPPortAccessible
-  when: ["ingress"]
+  when: 
+  - ["ingress"]
   port: 443
   timeout: 5s
 # healthz
 - kind: TCPPortAvailable
-  when: ["ingress"]
+  when: 
+  - ["ingress"]
   port: 10254
-  procName: nginx-ingress-c
 - kind: TCPPortAccessible
-  when: ["ingress"]
+  when: 
+  - ["ingress"]
   port: 10254
   timeout: 5s
 
-
-- kind: PackageDependency
-  when: ["etcd","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["master","ubuntu"]
-  packageName: kubelet
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["master","ubuntu"]
-  packageName: nfs-common
-  anyVersion: true
-- kind: PackageDependency
-  when: ["master","ubuntu"]
-  packageName: kubectl
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["master","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: kubelet
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: nfs-common
-  anyVersion: true
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: kubelet
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: nfs-common
-  anyVersion: true
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
-  packageName: kubelet
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
-  packageName: nfs-common
-  anyVersion: true
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: kubectl
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: kubectl
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
-  packageName: kubectl
-  packageVersion: 1.9.0-00
-
-
-- kind: PackageDependency
-  when: ["etcd","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["master","centos"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["master","centos"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["master","centos"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["master","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-
-
-- kind: PackageDependency
-  when: ["etcd","rhel"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["master","rhel"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["master","rhel"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["master","rhel"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["master","rhel"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","rhel"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["ingress","rhel"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["storage","rhel"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","rhel"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["worker","rhel"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["ingress","rhel"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","rhel"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["storage","rhel"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","rhel"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["worker","rhel"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","rhel"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","rhel"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-
-
-# Gluster packages
-- kind: PackageDependency
-  when: ["storage", "centos"]
-  packageName: glusterfs-server
-  packageVersion: 3.8.15-2.el7
-- kind: PackageDependency
-  when: ["storage", "rhel"]
-  packageName: glusterfs-server
-  packageVersion: 3.8.15-2.el7
-- kind: PackageDependency
-  when: ["storage", "ubuntu"]
-  packageName: glusterfs-server
-  packageVersion: 3.8.15-ubuntu1~xenial1
-
 # Port required for gluster-healthz
 - kind: TCPPortAvailable
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 8081
-  procName: exechealthz
 - kind: TCPPortAccessible
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 8081
   timeout: 5s
 
 # Ports required for NFS
+# Removed due to https://github.com/apprenda/kismatic/issues/784
+#- kind: TCPPortAvailable
+#  when: 
+#  - ["storage"]
+#  port: 111
+#- kind: TCPPortAccessible
+#  when: 
+#  - ["storage"]
+#  port: 111
+#  timeout: 5s
 - kind: TCPPortAvailable
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 2049
-  procName: glusterfs
 - kind: TCPPortAccessible
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 2049
   timeout: 5s
 - kind: TCPPortAvailable
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 38465
-  procName: glusterfs
 - kind: TCPPortAccessible
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 38465
   timeout: 5s
 - kind: TCPPortAvailable
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 38466
-  procName: glusterfs
 - kind: TCPPortAccessible
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 38466
   timeout: 5s
 - kind: TCPPortAvailable
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 38467
-  procName: glusterfs
 - kind: TCPPortAccessible
-  when: ["storage"]
+  when: 
+  - ["storage"]
   port: 38467
   timeout: 5s
+
+- kind: PackageDependency
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
+- kind: PackageDependency
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: kubelet
+  packageVersion: 1.9.0-00
+- kind: PackageDependency
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: nfs-common
+- kind: PackageDependency
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: kubectl
+  packageVersion: 1.9.0-00
+# https://docs.docker.com/engine/installation/linux/docker-ee/ubuntu/#uninstall-old-versions
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker-engine
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker-ce
+  acceptablePackageVersion: 17.03.2~ce-0~ubuntu-xenial
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker-ee
+
+- kind: PackageDependency
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
+- kind: PackageDependency
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: kubelet
+  packageVersion: 1.9.0-0
+- kind: PackageDependency
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: nfs-utils
+- kind: PackageDependency
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: kubectl
+  packageVersion: 1.9.0-0
+# https://docs.docker.com/engine/installation/linux/docker-ee/centos/
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-common
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-engine-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-engine
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-ce
+  acceptablePackageVersion: 17.03.2.ce-1.el7.centos
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-ee
+
+- kind: PackageDependency
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
+- kind: PackageDependency
+  when: 
+  - [master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: kubelet
+  packageVersion: 1.9.0-0
+- kind: PackageDependency
+  when: 
+  - [master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: nfs-utils
+- kind: PackageDependency
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: kubectl
+  packageVersion: 1.9.0-0
+# https://docs.docker.com/engine/installation/linux/docker-ee/rhel/#os-requirements
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-common
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-engine-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-engine
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-ce
+  acceptablePackageVersion: 17.03.2.ce-1.el7.centos
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-ee
+
+# Gluster packages
+- kind: PackageDependency
+  when: 
+  - ["storage"]
+  - ["centos"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.15-2.el7
+- kind: PackageDependency
+  when: 
+  - ["storage"]
+  - ["rhel"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.15-2.el7
+- kind: PackageDependency
+  when: 
+  - ["storage"] 
+  - ["ubuntu"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.15-ubuntu1~xenial1
 `
 
 const upgradeRuleSet = `---
@@ -456,225 +461,96 @@ const upgradeRuleSet = `---
   minimumBytes: 1000000000
 
 - kind: PackageDependency
-  when: ["etcd","ubuntu"]
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
   packageName: docker-ce
   packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
-  when: ["master","ubuntu"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
   packageName: kubelet
   packageVersion: 1.9.0-00
 - kind: PackageDependency
-  when: ["master","ubuntu"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
   packageName: nfs-common
-  anyVersion: true
 - kind: PackageDependency
-  when: ["master","ubuntu"]
-  packageName: kubectl
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["master","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
-  packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: kubelet
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: nfs-common
-  anyVersion: true
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: kubelet
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: nfs-common
-  anyVersion: true
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
-  packageName: kubelet
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
-  packageName: nfs-common
-  anyVersion: true
-- kind: PackageDependency
-  when: ["worker","ubuntu"]
-  packageName: kubectl
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["ingress","ubuntu"]
-  packageName: kubectl
-  packageVersion: 1.9.0-00
-- kind: PackageDependency
-  when: ["storage","ubuntu"]
+  when: 
+  - ["master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
   packageName: kubectl
   packageVersion: 1.9.0-00
 
 - kind: PackageDependency
-  when: ["etcd","centos"]
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
   packageName: docker-ce
   packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
-  when: ["master","centos"]
+  when: 
+  - ["master", "worker", "ingress, storage"]
+  - ["centos"]
   packageName: kubelet
   packageVersion: 1.9.0-0
 - kind: PackageDependency
-  when: ["master","centos"]
+  when: 
+  - ["master", "worker", "ingress, storage"]
+  - ["centos"]
   packageName: nfs-utils
-  anyVersion: true
 - kind: PackageDependency
-  when: ["master","centos"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["master","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","centos"]
+  when: 
+  - ["master", "worker", "ingress, storage"]
+  - ["centos"]
   packageName: kubectl
   packageVersion: 1.9.0-0
 
 - kind: PackageDependency
-  when: ["etcd","rhel"]
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
   packageName: docker-ce
   packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
-  when: ["master","rhel"]
+  when: 
+  - ["master", "worker", "ingress, storage"]
+  - ["rhel"]
   packageName: kubelet
   packageVersion: 1.9.0-0
 - kind: PackageDependency
-  when: ["master","rhel"]
+  when: 
+  - ["master", "worker", "ingress, storage"]
+  - ["rhel"]
   packageName: nfs-utils
-  anyVersion: true
 - kind: PackageDependency
-  when: ["master","rhel"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["master","rhel"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["ingress","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["storage","centos"]
-  packageName: docker-ce
-  packageVersion: 17.03.2.ce-1.el7.centos
-- kind: PackageDependency
-  when: ["worker","rhel"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["worker","rhel"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["ingress","rhel"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","rhel"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["storage","rhel"]
-  packageName: kubelet
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","rhel"]
-  packageName: nfs-utils
-  anyVersion: true
-- kind: PackageDependency
-  when: ["worker","rhel"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["ingress","rhel"]
-  packageName: kubectl
-  packageVersion: 1.9.0-0
-- kind: PackageDependency
-  when: ["storage","rhel"]
+  when: 
+  - ["master", "worker", "ingress, storage"]
+  - ["rhel"]
   packageName: kubectl
   packageVersion: 1.9.0-0
 
 # Gluster packages
 - kind: PackageDependency
-  when: ["storage", "centos"]
-  packageName: glusterfs-server
-  packageVersion: 3.8.15-2.el7
-- kind: PackageDependency
-  when: ["storage", "rhel"]
-  packageName: glusterfs-server
-  packageVersion: 3.8.15-2.el7
-- kind: PackageDependency
-  when: ["storage", "ubuntu"]
+  when: 
+  - ["storage"] 
+  - ["ubuntu"]
   packageName: glusterfs-server
   packageVersion: 3.8.15-ubuntu1~xenial1
+- kind: PackageDependency
+  when: 
+  - ["storage"] 
+  - ["centos"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.15-2.el7
+- kind: PackageDependency
+  when: 
+  - ["storage"] 
+  - ["rhel"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.15-2.el7
 `
 
 // DefaultRules returns the list of rules that are built into the inspector
