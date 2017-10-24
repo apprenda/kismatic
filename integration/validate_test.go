@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"io"
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -41,6 +42,29 @@ var _ = Describe("kismatic install validate tests", func() {
 						Fail("Unexpected error generating fake SSH key: %v")
 					}
 					ValidateKismaticMiniWithBadSSH(node, node.SSHUser, badSSHKey)
+				})
+			})
+		})
+	})
+
+	Describe("Running validation with relative path key", func() {
+		Context("Using Ubuntu 16.04", func() {
+			ItOnAWS("should result in an ssh validation error", func(aws infrastructureProvisioner) {
+				WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
+					from, err := os.Open(sshKey)
+					if err != nil {
+						Fail("Unexpected error opening SSH key: %v")
+					}
+					to, err := os.OpenFile("./ssh-key.pem", os.O_RDWR|os.O_CREATE, 0600)
+					if err != nil {
+						Fail("Unexpected error creating file for copied SSH key: %v")
+					}
+					defer to.Close()
+					_, err = io.Copy(to, from)
+					if err != nil {
+						Fail("Unexpected error copying SSH key: %v")
+					}
+					ValidateKismaticMini(node, node.SSHUser, "./ssh-key.pem")
 				})
 			})
 		})

@@ -51,7 +51,7 @@ cluster:
     user: kismaticuser
 
     # Absolute path to the ssh private key we should use to manage nodes.
-    ssh_key: kismaticuser.key
+    ssh_key: /root/.ssh/kismaticuser.key
     ssh_port: 22
 
   # Override configuration of Kubernetes components.

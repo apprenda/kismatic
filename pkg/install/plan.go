@@ -9,12 +9,14 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/apprenda/kismatic/pkg/util"
 	garbler "github.com/michaelbironneau/garbler/lib"
+	homedir "github.com/mitchellh/go-homedir"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -420,6 +422,16 @@ func generateAlphaNumericPassword() (string, error) {
 		}
 		attempts++
 	}
+}
+
+func sshKey() string {
+	key := "kismaticuser.key"
+	home, err := homedir.Dir()
+	// fallback to returning just the key
+	if err != nil {
+		return key
+	}
+	return filepath.Join(home, ".ssh", key)
 }
 
 // The comment map contains is keyed by the value that should be commented

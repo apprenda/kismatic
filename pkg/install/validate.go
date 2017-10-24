@@ -281,9 +281,6 @@ func (s *SSHConfig) validate() (bool, []error) {
 	if _, err := os.Stat(s.Key); os.IsNotExist(err) {
 		v.addError(fmt.Errorf("SSH Key file was not found at %q", s.Key))
 	}
-	if !filepath.IsAbs(s.Key) {
-		v.addError(errors.New("SSH Key field must be an absolute path"))
-	}
 	if s.Port < 1 || s.Port > 65535 {
 		v.addError(fmt.Errorf("SSH port %d is invalid. Port must be in the range 1-65535", s.Port))
 	}
