@@ -50,18 +50,22 @@ const defaultRuleSet = `---
   when: 
   - ["etcd"]
   port: 2379
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
   when: 
   - ["etcd"]
   port: 6666
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
   when: 
   - ["etcd"]
   port: 2380
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
   when: 
   - ["etcd"]
   port: 6660
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 
 # Ports used by etcd are accessible
 - kind: TCPPortAccessible
@@ -90,20 +94,24 @@ const defaultRuleSet = `---
   when: 
   - ["master"]
   port: 6443
+  procName: kube-apiserver
 - kind: TCPPortAvailable
   when: 
   - ["master"]
   port: 8080
+  procName: kube-apiserver
 # kube-scheduler
 - kind: TCPPortAvailable
   when: 
   - ["master"]
   port: 10251
+  procName: kube-scheduler
 # kube-controller-manager
 - kind: TCPPortAvailable
   when: 
   - ["master"]
   port: 10252
+  procName: kube-controller
 
 # Ports used by K8s master are accessible
 # Port 8080 is not accessible from outside
@@ -131,31 +139,37 @@ const defaultRuleSet = `---
   when: 
   - ["master", "worker", "ingress", "storage"]
   port: 4194
+  procName: kubelet
 # kubelet localhost healthz
 - kind: TCPPortAvailable
   when: 
   - ["master", "worker", "ingress", "storage"]
   port: 10248
+  procName: kubelet
 # kube-proxy metrics
 - kind: TCPPortAvailable
   when: 
   - ["master", "worker", "ingress", "storage"]
   port: 10249
+  procName: kube-proxy
 # kube-proxy health
 - kind: TCPPortAvailable
   when: 
   - ["master", "worker", "ingress", "storage"]
   port: 10256
+  procName: kube-proxy
 # kubelet
 - kind: TCPPortAvailable
   when: 
   - ["master", "worker", "ingress", "storage"]
   port: 10250
+  procName: kubelet
 # kubelet no auth
 - kind: TCPPortAvailable
   when: 
   - ["master", "worker", "ingress", "storage"]
   port: 10255
+  procName: kubelet
 
 # Ports used by K8s worker are accessible
 # cAdvisor
@@ -182,6 +196,7 @@ const defaultRuleSet = `---
   when: 
   - ["ingress"]
   port: 80
+  procName: nginx
 - kind: TCPPortAccessible
   when: 
   - ["ingress"]
@@ -191,6 +206,7 @@ const defaultRuleSet = `---
   when: 
   - ["ingress"]
   port: 443
+  procName: nginx
 - kind: TCPPortAccessible
   when: 
   - ["ingress"]
@@ -201,6 +217,7 @@ const defaultRuleSet = `---
   when: 
   - ["ingress"]
   port: 10254
+  procName: nginx-ingress-c
 - kind: TCPPortAccessible
   when: 
   - ["ingress"]
@@ -212,6 +229,7 @@ const defaultRuleSet = `---
   when: 
   - ["storage"]
   port: 8081
+  procName: exechealthz
 - kind: TCPPortAccessible
   when: 
   - ["storage"]
@@ -233,6 +251,7 @@ const defaultRuleSet = `---
   when: 
   - ["storage"]
   port: 2049
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: 
   - ["storage"]
@@ -242,6 +261,7 @@ const defaultRuleSet = `---
   when: 
   - ["storage"]
   port: 38465
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: 
   - ["storage"]
@@ -251,6 +271,7 @@ const defaultRuleSet = `---
   when: 
   - ["storage"]
   port: 38466
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: 
   - ["storage"]
@@ -260,6 +281,7 @@ const defaultRuleSet = `---
   when: 
   - ["storage"]
   port: 38467
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: 
   - ["storage"]

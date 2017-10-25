@@ -3,7 +3,7 @@ package rule
 // Meta contains the rule's metadata
 type Meta struct {
 	Kind string
-	When []string
+	When [][]string
 }
 
 // GetRuleMeta returns the rule's metadata

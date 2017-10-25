@@ -67,17 +67,19 @@ func (e *Engine) CloseChecks() error {
 }
 
 func shouldExecuteRule(rule Rule, facts []string) bool {
-	if len(rule.GetRuleMeta().When) == 0 {
-		// No conditions on the rule => always run
-		return true
-	}
 	// Run if and only if the all the conditions on the rule are
 	// satisfied by the facts
-	for _, whenCondition := range rule.GetRuleMeta().When {
+	for _, whenSlice := range rule.GetRuleMeta().When {
 		found := false
-		for _, l := range facts {
-			if whenCondition == l {
-				found = true
+		for _, whenCondition := range whenSlice {
+			for _, l := range facts {
+				if whenCondition == l {
+					found = true
+					break
+				}
+			}
+			if found {
+				break
 			}
 		}
 		if !found {
