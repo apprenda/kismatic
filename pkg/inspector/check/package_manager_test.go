@@ -184,6 +184,26 @@ ii  libc6:amd64                                           2.23-0ubuntu3         
 	}
 }
 
+func TestDebPackageManagerUN(t *testing.T) {
+	out := `Desired=Unknown/Install/Remove/Purge/Hold
+	| Status=Not/Inst/Conf-files/Unpacked/halF-conf/Half-inst/trig-aWait/Trig-pend
+	|/ Err?=(none)/Reinst-required (Status,Err: uppercase=bad)
+	||/ Name                                         Version                     Architecture                Description
+	+++-============================================-===========================-===========================-==============================================================================================
+	un  docker                                       <none>                      <none>                      (no description available)`
+	mock := runMock{
+		dpkgOut: out,
+	}
+	m := debManager{
+		run: mock.run,
+	}
+	p := PackageQuery{"docker", ""}
+	ok, _ := m.IsInstalled(p)
+	if ok {
+		t.Errorf("expected false, but got true")
+	}
+}
+
 func TestDebPackageManagerPackageNotInstalledButAvailable(t *testing.T) {
 	mock := runMock{
 		dpkgOut:   "dpkg-query: no packages found matching libc6a",

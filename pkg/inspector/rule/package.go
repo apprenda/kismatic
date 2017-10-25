@@ -9,9 +9,8 @@ import (
 // that can be installed via an operating system's package manager.
 type PackageDependency struct {
 	Meta
-	PackageName          string
-	PackageVersion       string
-	ShouldNotBeInstalled bool
+	PackageName    string
+	PackageVersion string
 }
 
 // Name returns the name of the rule

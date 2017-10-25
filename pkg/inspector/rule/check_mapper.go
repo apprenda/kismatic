@@ -32,7 +32,10 @@ func (m DefaultCheckMapper) GetCheckForRule(rule Rule) (check.Check, error) {
 		return nil, fmt.Errorf("Rule of type %T is not supported", r)
 	case PackageDependency:
 		pkgQuery := check.PackageQuery{Name: r.PackageName, Version: r.PackageVersion}
-		c = &check.PackageCheck{PackageQuery: pkgQuery, ShouldNotBeInstalled: r.ShouldNotBeInstalled, PackageManager: m.PackageManager, InstallationDisabled: m.PackageInstallationDisabled}
+		c = &check.PackageCheck{PackageQuery: pkgQuery, PackageManager: m.PackageManager, InstallationDisabled: m.PackageInstallationDisabled}
+	case PackageNotInstalled:
+		pkgQuery := check.PackageQuery{Name: r.PackageName, Version: r.PackageVersion}
+		c = check.PackageNotInstalledCheck{PackageQuery: pkgQuery, AcceptablePackageVersion: r.AcceptablePackageVersion, PackageManager: m.PackageManager, InstallationDisabled: m.PackageInstallationDisabled}
 	case ExecutableInPath:
 		c = &check.ExecutableInPathCheck{Name: r.Executable}
 	case FileContentMatches:
