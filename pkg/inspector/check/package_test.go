@@ -88,7 +88,7 @@ func TestPackageCheck(t *testing.T) {
 
 	for i, test := range tests {
 		c := PackageCheck{
-			PackageQuery:         PackageQuery{"somePkg", "someVersion", false},
+			PackageQuery:         PackageQuery{"somePkg", "someVersion"},
 			PackageManager:       stubPkgManager{installed: test.isInstalled, available: test.isAvailable},
 			InstallationDisabled: test.installationDisabled,
 			ShouldNotBeInstalled: test.shouldNotBeInstalled,

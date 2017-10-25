@@ -88,7 +88,7 @@ func (m rpmManager) isPackageListed(p PackageQuery, list []byte) bool {
 		}
 		maybeName := strings.Split(f[0], ".")[0]
 		maybeVersion := f[1]
-		if p.Name == maybeName && (p.AnyVersion || p.Version == maybeVersion) {
+		if p.Name == maybeName && (p.Version == "" || p.Version == maybeVersion) {
 			return true
 		}
 	}
@@ -141,7 +141,7 @@ func (m debManager) isPackageListed(p PackageQuery) (bool, error) {
 		}
 		maybeName := strings.Split(f[1], ".")[0]
 		maybeVersion := f[2]
-		if p.Name == maybeName && (p.AnyVersion || p.Version == maybeVersion) {
+		if p.Name == maybeName && (p.Version == "" || p.Version == maybeVersion) {
 			return true, nil
 		}
 	}
@@ -149,7 +149,7 @@ func (m debManager) isPackageListed(p PackageQuery) (bool, error) {
 }
 
 func packageName(p PackageQuery, delimeter string) string {
-	if p.AnyVersion {
+	if p.Version == "" {
 		return p.Name
 	}
 
