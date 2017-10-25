@@ -11,14 +11,13 @@ type PackageDependency struct {
 	Meta
 	PackageName          string
 	PackageVersion       string
-	AnyVersion           bool
 	ShouldNotBeInstalled bool
 }
 
 // Name returns the name of the rule
 func (p PackageDependency) Name() string {
 	name := fmt.Sprintf(`Package "%s %s"`, p.PackageName, p.PackageVersion)
-	if p.AnyVersion {
+	if p.PackageVersion == "" {
 		name = fmt.Sprintf(`Package "%s"`, p.PackageName)
 	}
 	return name
@@ -32,9 +31,6 @@ func (p PackageDependency) Validate() []error {
 	err := []error{}
 	if p.PackageName == "" {
 		err = append(err, errors.New("PackageName cannot be empty"))
-	}
-	if !p.AnyVersion && p.PackageVersion == "" {
-		err = append(err, errors.New("PackageVersion cannot be empty"))
 	}
 	if len(err) > 0 {
 		return err
