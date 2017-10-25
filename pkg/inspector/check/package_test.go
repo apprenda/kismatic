@@ -20,9 +20,9 @@ func TestPackageCheck(t *testing.T) {
 		installationDisabled bool
 		isInstalled          bool
 		isAvailable          bool
-		shouldNotBeInstalled bool
-		expected             bool
-		errExpected          bool
+
+		expected    bool
+		errExpected bool
 	}{
 		{
 			installationDisabled: true,
@@ -68,22 +68,6 @@ func TestPackageCheck(t *testing.T) {
 			isAvailable:          false,
 			expected:             true,
 		},
-		{
-			installationDisabled: false,
-			isInstalled:          true,
-			isAvailable:          true,
-			shouldNotBeInstalled: true,
-			expected:             false,
-			errExpected:          true,
-		},
-		{
-			installationDisabled: true,
-			isInstalled:          true,
-			isAvailable:          true,
-			shouldNotBeInstalled: true,
-			expected:             true,
-			errExpected:          false,
-		},
 	}
 
 	for i, test := range tests {
@@ -91,7 +75,6 @@ func TestPackageCheck(t *testing.T) {
 			PackageQuery:         PackageQuery{"somePkg", "someVersion"},
 			PackageManager:       stubPkgManager{installed: test.isInstalled, available: test.isAvailable},
 			InstallationDisabled: test.installationDisabled,
-			ShouldNotBeInstalled: test.shouldNotBeInstalled,
 		}
 		ok, err := c.Check()
 		if err != nil && !test.errExpected {
