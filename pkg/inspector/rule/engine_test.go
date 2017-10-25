@@ -41,7 +41,7 @@ func TestEngine(t *testing.T) {
 	tests := []struct {
 		mapper          fakeRuleCheckMapper
 		rule            fakeRule
-		ruleWhen        []string
+		ruleWhen        [][]string
 		facts           []string
 		expectedResults []Result
 		expectErr       bool
@@ -87,8 +87,42 @@ func TestEngine(t *testing.T) {
 			rule: fakeRule{
 				name: "FailRule",
 			},
-			ruleWhen: []string{"ubuntu", "worker"},
+			ruleWhen: [][]string{[]string{"ubuntu"}, []string{"worker"}},
 			facts:    []string{"ubuntu", "worker", "otherFact"},
+			expectedResults: []Result{
+				{
+					Name:    "FailRule",
+					Success: false,
+					Error:   dummyError.Error(),
+				},
+			},
+		},
+		{
+			mapper: fakeRuleCheckMapper{
+				check: fakeCheck{ok: false, err: dummyError},
+			},
+			rule: fakeRule{
+				name: "FailRule",
+			},
+			ruleWhen: [][]string{[]string{"ubuntu"}, []string{"master", "worker"}},
+			facts:    []string{"ubuntu", "worker", "otherFact"},
+			expectedResults: []Result{
+				{
+					Name:    "FailRule",
+					Success: false,
+					Error:   dummyError.Error(),
+				},
+			},
+		},
+		{
+			mapper: fakeRuleCheckMapper{
+				check: fakeCheck{ok: false, err: dummyError},
+			},
+			rule: fakeRule{
+				name: "FailRule",
+			},
+			ruleWhen: [][]string{[]string{"centos", "rhel"}, []string{"worker"}},
+			facts:    []string{"centos", "worker", "otherFact"},
 			expectedResults: []Result{
 				{
 					Name:    "FailRule",
@@ -105,7 +139,7 @@ func TestEngine(t *testing.T) {
 			rule: fakeRule{
 				name: "FailRule",
 			},
-			ruleWhen:        []string{"ubuntu"},
+			ruleWhen:        [][]string{[]string{"ubuntu"}},
 			facts:           []string{"otherFact"},
 			expectedResults: []Result{},
 		},
@@ -117,7 +151,7 @@ func TestEngine(t *testing.T) {
 			rule: fakeRule{
 				name: "FailRule",
 			},
-			ruleWhen: []string{},
+			ruleWhen: [][]string{},
 			facts:    []string{"ubuntu"},
 			expectedResults: []Result{
 				{
