@@ -4,16 +4,16 @@ official_images:
     version: v3.1.10
   kube_proxy:
     name: gcr.io/google-containers/kube-proxy-amd64
-    version: v1.8.1
+    version: v1.8.2
   kube_controller_manager:
     name: gcr.io/google-containers/kube-controller-manager-amd64
-    version: v1.8.1
+    version: v1.8.2
   kube_scheduler:
     name: gcr.io/google-containers/kube-scheduler-amd64
-    version: v1.8.1
+    version: v1.8.2
   kube_apiserver:
     name: gcr.io/google-containers/kube-apiserver-amd64
-    version: v1.8.1
+    version: v1.8.2
   calico_node:
     name: calico/node
     version: v2.6.1

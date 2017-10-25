@@ -1,7 +1,7 @@
 #===============================================================================
 # VERSIONS
-kubernetes_yum_version: 1.8.1-0
-kubernetes_deb_version: 1.8.1-00
+kubernetes_yum_version: 1.8.2-0
+kubernetes_deb_version: 1.8.2-00
 docker_engine_yum_version: 1.12.6-1.el7.centos
 docker_engine_apt_version: 1.12.6-0~ubuntu-xenial
 glusterfs_server_version_rhel: "3.8.15-2.el7"
