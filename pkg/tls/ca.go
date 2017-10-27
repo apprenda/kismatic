@@ -3,6 +3,7 @@ package tls
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -25,7 +26,7 @@ type Subject struct {
 	OrganizationalUnit string
 }
 
-// NewCACert creates a new Certificate Authority and returns it's private key and public certificate.
+// NewCACert creates a new Certificate Authority from a CSR file and returns it's private key and public certificate.
 func NewCACert(csrFile string, commonName string, expiry string) (key, cert []byte, err error) {
 	// Open CSR file
 	f, err := os.Open(csrFile)
@@ -35,12 +36,16 @@ func NewCACert(csrFile string, commonName string, expiry string) (key, cert []by
 	if err != nil {
 		return nil, nil, fmt.Errorf("error opening %q", csrFile)
 	}
+	return NewCACertFromReader(f, commonName, expiry)
+}
+
+// NewCACertFromReader creates a new Certificate Authority from a CSR reader and returns it's private key and public certificate.
+func NewCACertFromReader(csrReader io.Reader, commonName string, expiry string) (key, cert []byte, err error) {
 	// Create CSR struct
 	caCSR := &csr.CertificateRequest{
 		KeyRequest: csr.NewBasicKeyRequest(),
 	}
-	err = json.NewDecoder(f).Decode(caCSR)
-	if err != nil {
+	if err := json.NewDecoder(csrReader).Decode(caCSR); err != nil {
 		return nil, nil, fmt.Errorf("error decoding CSR: %v", err)
 	}
 	caCSR.CN = commonName

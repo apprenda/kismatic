@@ -54,3 +54,4 @@ vendor-provision/*
 vendor-kuberang/*
 vendor-helm
 .glide
+pkg/server/server
