@@ -41,7 +41,8 @@ a working pod network.
 
 ## DNS
 DNS provides service discovery to pods running on the cluster. 
-KET deploys [KubeDNS](https://github.com/kubernetes/dns) as the DNS service on the cluster.
+
+KET deploys [KubeDNS](https://github.com/kubernetes/dns) as the DNS service on the cluster. If you will manage your own DNS solution, you can disable the installation and validation of KubeDNS. 
 
 Plan file options:
 
