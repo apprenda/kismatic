@@ -1,5 +1,5 @@
-hash: 1620bb93ff6fa4082c728cfaf379857bb7dfd179a0f2171d22ef3ac29896b455
-updated: 2017-11-02T12:37:33.266451152-04:00
+hash: 38cc9f8fa9f6dbc1a778dd747bc3aa0f1ed80f6e3ca6a2e2a2cb950a015ffafa
+updated: 2017-11-02T14:08:51.8744464-04:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 40f45e34986ba617a372d1590de273a0ca84a53d
@@ -69,6 +69,8 @@ imports:
   - md2man
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
+- name: github.com/fortytw2/leaktest
+  version: 7dad53304f9614c1c365755c1176a8e876fee3e8
 - name: github.com/go-ini/ini
   version: 3d73f4b845efdf9989fffd4b4e562727744a34ba
 - name: github.com/google/certificate-transparency
