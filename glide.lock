@@ -1,5 +1,5 @@
-hash: 17aa369a37ff61bea9dfb7ff4d5f66d8f86de5612e6a2a424b104a6f878e263e
-updated: 2017-10-31T08:43:18.631038736-04:00
+hash: 1620bb93ff6fa4082c728cfaf379857bb7dfd179a0f2171d22ef3ac29896b455
+updated: 2017-11-02T12:37:33.266451152-04:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 40f45e34986ba617a372d1590de273a0ca84a53d
@@ -38,6 +38,8 @@ imports:
   - service/sts
 - name: github.com/blang/semver
   version: 2ee87856327ba09384cabd113bc6b5d174e9ec0f
+- name: github.com/boltdb/bolt
+  version: 2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8
 - name: github.com/cloudflare/cfssl
   version: db0d0650b6496bfe8061ec56a92edd32d8e75c30
   subpackages:
@@ -158,6 +160,7 @@ imports:
 - name: golang.org/x/net
   version: ab5485076ff3407ad2d02db054635913f017b0ed
   subpackages:
+  - context
   - html
   - html/atom
   - html/charset
