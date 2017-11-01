@@ -7,7 +7,7 @@ metadata:
     scheduler.alpha.kubernetes.io/critical-pod: ''
   labels:
     k8s-app: rescheduler
-    version: {{ official_images.rescheduler.version }}
+    rescheduler_component_version: "{{ official_images.rescheduler.version }}"
     kubernetes.io/cluster-service: "true"
     kubernetes.io/name: "Rescheduler"
 spec:

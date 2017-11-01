@@ -27,6 +27,7 @@ spec:
       labels:
         task: monitoring
         k8s-app: influxdb
+        heapster_influxdb_component_version: "{{official_images.influxdb.version}}"
     spec:
       containers:
       - name: influxdb

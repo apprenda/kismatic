@@ -8,6 +8,7 @@ spec:
     metadata:
       labels:
         name: ingress
+        ingress_nginx_controller_component_version: "{{official_images.nginx_ingress_controller.version}}"
       annotations:
         kismatic/version: "{{ kismatic_short_version }}"
     spec:

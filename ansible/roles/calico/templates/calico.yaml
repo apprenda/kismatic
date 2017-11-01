@@ -72,6 +72,8 @@ spec:
     metadata:
       labels:
         k8s-app: calico-node
+        calico_node_component_version: "{{official_images.calico_node.version}}"
+        calico_cni_component_version: "{{official_images.calico_cni.version}}"
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:

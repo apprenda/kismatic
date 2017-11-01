@@ -34,6 +34,7 @@ spec:
       labels:
         task: monitoring
         k8s-app: heapster
+        heapster_component_version: "{{official_images.heapster.version}}"
     spec:
       serviceAccountName: heapster
       containers:

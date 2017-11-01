@@ -65,6 +65,8 @@ items:
           labels:
             name: weave-net
             k8s-app: weave-net
+            weave_component_version: "{{official_images.weave.version}}"
+            weave_npc_component_version: "{{official_images.weave_npc.version}}"
           annotations:
             scheduler.alpha.kubernetes.io/critical-pod: ''
         spec:

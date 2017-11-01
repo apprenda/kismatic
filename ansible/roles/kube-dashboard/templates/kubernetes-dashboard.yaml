@@ -19,6 +19,7 @@ spec:
     metadata:
       labels:
         k8s-app: kubernetes-dashboard
+        kube_dashboard_component_version: "{{official_images.kubernetes_dashboard.version}}"
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:

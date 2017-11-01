@@ -25,6 +25,7 @@ spec:
       labels:
         tier: control-plane
         k8s-app: calico-kube-controllers
+        calico_kube_controller_component_version: "{{official_images.calico_kube_controller.version}}"
     spec:
       # The controllers must run in the host network namespace so that
       # it isn't governed by policy that would prevent it from working.

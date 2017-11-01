@@ -56,6 +56,7 @@ spec:
     metadata:
       labels:
         k8s-app: contiv-netplugin
+        contiv_netplugin_component_version: "{{official_images.contiv_netplugin.version}}"
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:

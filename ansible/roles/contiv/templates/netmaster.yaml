@@ -54,6 +54,8 @@ spec:
       namespace: kube-system
       labels:
         k8s-app: contiv-netmaster
+        contiv_netplugin_component_version: "{{official_images.contiv_netplugin.version}}"
+        contiv_authproxy_component_version: "{{official_images.contiv_authproxy.version}}"
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:

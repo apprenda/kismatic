@@ -54,6 +54,9 @@ spec:
     metadata:
       labels:
         k8s-app: kube-dns
+        kubedns_component_version: "{{official_images.kubedns.version}}"
+        kubedns_dnsmasq_component_version: "{{official_images.kube_dnsmasq.version}}"
+        kubedns_sidecar_component_version: "{{official_images.kubedns_sidecar.version}}"
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:

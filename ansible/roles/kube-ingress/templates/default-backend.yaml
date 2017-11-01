@@ -9,6 +9,7 @@ spec:
     metadata:
       labels:
         app: default-http-backend
+        ingress_default_backend_component_version: "{{official_images.defaultbackend.version}}"
       annotations:
         kismatic/version: "{{ kismatic_short_version }}"
     spec:
