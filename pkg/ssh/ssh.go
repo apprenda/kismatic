@@ -191,5 +191,4 @@ func NewKeyPair(pubKeyPath, privateKeyPath string) error {
 		return err
 	}
 	return ioutil.WriteFile(pubKeyPath, cryptoSSH.MarshalAuthorizedKey(pub), 0600)
-
 }
