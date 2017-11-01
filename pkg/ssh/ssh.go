@@ -1,6 +1,8 @@
 package ssh
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -9,7 +11,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	"golang.org/x/crypto/ssh"
+	cryptoSSH "golang.org/x/crypto/ssh"
 )
 
 var baseSSHArgs = []string{
@@ -127,7 +129,7 @@ func ValidUnencryptedPrivateKey(file string) error {
 		return fmt.Errorf("Encrypted SSH key is not permitted")
 	}
 
-	_, err = ssh.ParsePrivateKey(buffer)
+	_, err = cryptoSSH.ParsePrivateKey(buffer)
 	if err != nil {
 		return fmt.Errorf("Parse SSH key error: %v", err)
 	}
@@ -157,4 +159,34 @@ func isEncrypted(buffer []byte) (bool, error) {
 	}
 
 	return x509.IsEncryptedPEMBlock(block), nil
+}
+
+// NewKeyPair make a pair of public and private keys for SSH access.
+// Public key is encoded in the format for inclusion in an OpenSSH authorized_keys file.
+// Private Key generated is PEM encoded
+func NewKeyPair(pubKeyPath, privateKeyPath string) error {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		return err
+	}
+
+	// generate and write private key as PEM
+	privateKeyFile, err := os.Create(privateKeyPath)
+	defer privateKeyFile.Close()
+	if err != nil {
+		return err
+	}
+	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
+	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
+		return err
+	}
+	if err := os.Chmod(privateKeyPath, 0600); err != nil {
+		return fmt.Errorf("Unable to chmod file %v to 0600: %v", privateKeyPath, err)
+	}
+	// generate and write public key
+	pub, err := cryptoSSH.NewPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(pubKeyPath, cryptoSSH.MarshalAuthorizedKey(pub), 0600)
 }

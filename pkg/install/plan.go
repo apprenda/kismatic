@@ -26,13 +26,15 @@ const (
 // PlanTemplateOptions contains the options that are desired when generating
 // a plan file template.
 type PlanTemplateOptions struct {
-	EtcdNodes     int
-	MasterNodes   int
-	WorkerNodes   int
-	IngressNodes  int
-	StorageNodes  int
-	NFSVolumes    int
-	AdminPassword string
+	ClusterName               string
+	InfrastructureProvisioner string
+	EtcdNodes                 int
+	MasterNodes               int
+	WorkerNodes               int
+	IngressNodes              int
+	StorageNodes              int
+	NFSVolumes                int
+	AdminPassword             string
 }
 
 // PlanReadWriter is capable of reading/writing a Plan
@@ -251,7 +253,7 @@ func (fp *FilePlanner) PlanExists() bool {
 }
 
 // WritePlanTemplate writes an installation plan with pre-filled defaults.
-func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) error {
+func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, fp FilePlanner) error {
 	if planTemplateOpts.AdminPassword == "" {
 		pw, err := generateAlphaNumericPassword()
 		if err != nil {
@@ -260,7 +262,7 @@ func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) e
 		planTemplateOpts.AdminPassword = pw
 	}
 	p := buildPlanFromTemplateOptions(planTemplateOpts)
-	if err := w.Write(&p); err != nil {
+	if err := fp.Write(&p); err != nil {
 		return fmt.Errorf("error writing installation plan template: %v", err)
 	}
 	return nil
@@ -270,14 +272,21 @@ func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) e
 // template options
 func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p := Plan{}
-	p.Cluster.Name = "kubernetes"
+	p.Provisioner.Provider = templateOpts.InfrastructureProvisioner
+	// set provisioner's provider specific options
+	switch templateOpts.InfrastructureProvisioner {
+	case "aws":
+		p.Provisioner.AWSOptions = &AWSProviderOptions{}
+	}
+
+	p.Cluster.Name = templateOpts.ClusterName
 	p.Cluster.AdminPassword = templateOpts.AdminPassword
 	p.Cluster.DisablePackageInstallation = false
 	p.Cluster.DisconnectedInstallation = false
 
 	// Set SSH defaults
-	p.Cluster.SSH.User = "kismaticuser"
-	p.Cluster.SSH.Key = "kismaticuser.key"
+	p.Cluster.SSH.User = ""
+	p.Cluster.SSH.Key = ""
 	p.Cluster.SSH.Port = 22
 
 	// Set Networking defaults
