@@ -119,15 +119,6 @@ spec:
             # Set MTU for tunnel device used if ipip is enabled
             - name: FELIX_IPINIPMTU
               value: "1440"
-            # Set to enable the Prometheus metrics server in Felix
-            - name: FELIX_PROMETHEUSMETRICSENABLED
-              value: "true"
-            # Set to false to disable Go runtime metrics collection
-            - name: FELIX_PROMETHEUSGOMETRICSENABLED
-              value: "false"
-            # Set to false to disable process metrics collection, which the Prometheus client does by default
-            - name: FELIX_PROMETHEUSPROCESSMETRICSENABLED
-              value: "false"
             # Location of the CA certificate for etcd.
             - name: ETCD_CA_CERT_FILE
               valueFrom:
