@@ -29,6 +29,8 @@ const (
 	modifyFailed    = "modifyFailed"
 	destroying      = "destroying"
 	destroyed       = "destroyed"
+	// TODO: Remove once we support multiple clusters
+	clusterName = "theCluster"
 )
 
 // The ClusterController manages the lifecycle of a given cluster
@@ -46,12 +48,12 @@ type clusterController struct {
 
 // New returns a controller that manages the lifecycle of the clusters that are
 // defined in the cluster store
-func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir string) ClusterController {
+func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir string, reconFreq time.Duration) ClusterController {
 	return &clusterController{
 		log:                l,
 		executor:           e,
 		clusterStore:       cs{bucket: "clusters", store: s},
-		reconcileFreq:      10 * time.Minute,
+		reconcileFreq:      reconFreq,
 		generatedAssetsDir: genAssetsDir,
 	}
 }
@@ -67,36 +69,45 @@ func (c *clusterController) Run(ctx context.Context) error {
 		select {
 		case resp := <-watch:
 			c.log.Printf("Got a watch event for key: %s", string(resp.Key))
-
 			var pw planWrapper
 			err := json.Unmarshal(resp.Value, &pw)
 			if err != nil {
 				c.log.Printf("error unmarshaling watch event's value: %v", err)
 				continue
 			}
+			c.reconcile(pw)
 
-			c.log.Println("Current state is:", pw.CurrentState, "Desired state is:", pw.DesiredState)
-			for pw.CurrentState != pw.DesiredState && pw.CanContinue {
-				// take the cluster to the next state, and update the store
-				pw.CurrentState, pw.CanContinue = c.next(pw)
-
-				err = c.clusterStore.Put(resp.Key, pw)
-				if err != nil {
-					c.log.Printf("error storing cluster state: %v. The cluster's current state is %q and desired state is %q", err, pw.CurrentState, pw.DesiredState)
-					break
-				}
-			}
-
-			if pw.CurrentState == pw.DesiredState {
-				c.log.Println("reached desired state:", pw.DesiredState)
-			}
 		case <-ticker:
 			c.log.Println("tick")
-			// TODO: Check if action must be taken
+			pw, err := c.clusterStore.Get(clusterName)
+			if err != nil {
+				c.log.Printf("error getting cluster spec from store: %v", err)
+				continue
+			}
+			c.reconcile(*pw)
+
 		case <-ctx.Done():
 			c.log.Println("stopping the controller")
 			return nil
 		}
+	}
+}
+
+// reconcile the cluster / take it to the desired state
+func (c *clusterController) reconcile(pw planWrapper) {
+	c.log.Println("Current state is:", pw.CurrentState, "Desired state is:", pw.DesiredState)
+	for pw.CurrentState != pw.DesiredState && pw.CanContinue {
+		// transition cluster and update its state in the store
+		pw.CurrentState, pw.CanContinue = c.next(pw)
+		err := c.clusterStore.Put(clusterName, pw)
+		if err != nil {
+			c.log.Printf("error storing cluster state: %v. The cluster's current state is %q and desired state is %q", err, pw.CurrentState, pw.DesiredState)
+			break
+		}
+	}
+
+	if pw.CurrentState == pw.DesiredState {
+		c.log.Printf("cluster %q reached desired state %q", pw.Plan.Cluster.Name, pw.DesiredState)
 	}
 }
 

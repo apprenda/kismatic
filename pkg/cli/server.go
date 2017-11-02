@@ -111,7 +111,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		return err
 	}
 
-	ctrl := controller.New(logger, executor, s, genAssetsDir)
+	ctrl := controller.New(logger, executor, s, genAssetsDir, 10*time.Minute)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		if err := ctrl.Run(ctx); err != nil {

@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -114,10 +115,9 @@ func (s *dummyStore) Watch(ctx context.Context, bucket string, _ uint) <-chan st
 	return s.watch()
 }
 
-func TestClusterController(t *testing.T) {
+func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	defer leaktest.Check(t)()
 
-	clusterName := "prodCluster"
 	ctx, cancel := context.WithCancel(context.Background())
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
@@ -145,7 +145,7 @@ func TestClusterController(t *testing.T) {
 	executor := dummyExec{installSleep: 1 * time.Second}
 
 	// Start the controller
-	c := New(logger, executor, store, "foo")
+	c := New(logger, executor, store, "foo", 10*time.Minute)
 	go func(ctx context.Context) {
 		err := c.Run(ctx)
 		if err != nil {
@@ -167,7 +167,69 @@ func TestClusterController(t *testing.T) {
 				done = true
 				break
 			}
-		case <-time.After(10 * time.Second):
+		case <-time.After(5 * time.Second):
+			fmt.Println("tick")
+			cancel()
+			t.Errorf("did not reach installed state")
+			done = true
+			break
+		}
+	}
+}
+
+func TestClusterControllerReconciliationLoop(t *testing.T) {
+	defer leaktest.Check(t)()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
+
+	// Stub out dependencies
+	pw := planWrapper{CurrentState: planned, DesiredState: installed, CanContinue: true}
+	pwBytes, err := json.Marshal(pw)
+	if err != nil {
+		t.Fatalf("error marshaling plan: %v", err)
+	}
+
+	watchFunc := func() chan store.WatchResponse {
+		c := make(chan store.WatchResponse)
+		go func(ctx context.Context) {
+			// don't send any watch notifications. we want to test the reconciliation loop
+			<-ctx.Done()
+			return
+		}(ctx)
+		return c
+	}
+	store := &dummyStore{
+		watch: watchFunc,
+		data:  map[string][]byte{clusterName: pwBytes},
+	}
+	executor := dummyExec{installSleep: 1 * time.Second}
+
+	// Start the controller
+	c := New(logger, executor, store, "foo", 3*time.Second)
+	go func(ctx context.Context) {
+		err := c.Run(ctx)
+		if err != nil {
+			t.Errorf("error running controller")
+			cancel()
+		}
+	}(ctx)
+
+	// Assert that the cluster reaches desired state
+	var done bool
+	for !done {
+		select {
+		case <-time.Tick(time.Second):
+			var pw planWrapper
+			b, _ := store.Get("", clusterName)
+			json.Unmarshal(b, &pw)
+			if pw.CurrentState == pw.DesiredState {
+				cancel()
+				done = true
+				break
+			}
+		case <-time.After(5 * time.Second):
+			fmt.Println("tick")
 			cancel()
 			t.Errorf("did not reach installed state")
 			done = true
