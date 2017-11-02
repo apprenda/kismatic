@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
+	"github.com/apprenda/kismatic/pkg/store"
 )
 
 type planWrapper struct {
@@ -36,34 +36,23 @@ type ClusterController interface {
 	Run(ctx context.Context) error
 }
 
-type watchChan <-chan watchResponse
-
-type watchResponse struct {
-	key   []byte
-	value []byte
-}
-
-type store interface {
-	Watch(ctx context.Context, bucket []byte) (watchChan, error)
-	Put(key []byte, value []byte) error
-}
-
 type clusterController struct {
 	log                *log.Logger
 	executor           install.Executor
-	clusterStore       store
+	clusterStore       store.WatchedStore
 	reconcileFreq      time.Duration
 	generatedAssetsDir string
 }
 
 // New returns a controller that manages the lifecycle of the clusters that are
 // defined in the cluster store
-func New(l *log.Logger, e install.Executor, s store) ClusterController {
+func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir string) ClusterController {
 	return &clusterController{
-		log:           l,
-		executor:      e,
-		clusterStore:  s,
-		reconcileFreq: 10 * time.Minute,
+		log:                l,
+		executor:           e,
+		clusterStore:       s,
+		reconcileFreq:      10 * time.Minute,
+		generatedAssetsDir: genAssetsDir,
 	}
 }
 
@@ -72,18 +61,15 @@ func New(l *log.Logger, e install.Executor, s store) ClusterController {
 // cancelled.
 func (c *clusterController) Run(ctx context.Context) error {
 	c.log.Println("started controller")
-	watch, err := c.clusterStore.Watch(context.Background(), []byte("clusters"))
-	if err != nil {
-		return fmt.Errorf("error creating watch on 'clusters': %v", err)
-	}
+	watch := c.clusterStore.Watch(context.Background(), "clusters", 0)
 	ticker := time.Tick(c.reconcileFreq)
 	for {
 		select {
 		case resp := <-watch:
-			c.log.Printf("Got a watch event for key: %s", string(resp.key))
+			c.log.Printf("Got a watch event for key: %s", string(resp.Key))
 
 			var pw planWrapper
-			err := json.Unmarshal(resp.value, &pw)
+			err := json.Unmarshal(resp.Value, &pw)
 			if err != nil {
 				c.log.Printf("error unmarshaling watch event's value: %v", err)
 				continue
@@ -100,7 +86,7 @@ func (c *clusterController) Run(ctx context.Context) error {
 					c.log.Printf("error marshaling cluster resource: %v. The cluster's current state is %q and desired state is %q", err, pw.CurrentState, pw.DesiredState)
 					break
 				}
-				err = c.clusterStore.Put(resp.key, b)
+				err = c.clusterStore.Put("clusters", resp.Key, b)
 				if err != nil {
 					c.log.Printf("error storing cluster state: %v. The cluster's current state is %q and desired state is %q", err, pw.CurrentState, pw.DesiredState)
 					break
@@ -159,17 +145,17 @@ func (c *clusterController) next(pw planWrapper) (string, bool) {
 }
 
 func (c *clusterController) provision() (string, bool) {
-	c.log.Println("provisioning")
+	c.log.Println("provisioning infrastructure for cluster")
 	return "provisioned", true
 }
 
 func (c *clusterController) destroy() (string, bool) {
-	c.log.Println("destroying")
+	c.log.Println("destroying cluster")
 	return "destroyed", true
 }
 
 func (c *clusterController) install(plan install.Plan) (string, bool) {
-	c.log.Println("installing")
+	c.log.Println("installing cluster")
 
 	// TODO: Run validation here, or create "validating", "validationFailed" states?
 

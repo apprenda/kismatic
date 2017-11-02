@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
+	"github.com/apprenda/kismatic/pkg/store"
 	"github.com/fortytw2/leaktest"
 )
 
@@ -77,24 +78,40 @@ func (e dummyExec) UpgradeClusterServices(plan install.Plan) error {
 type dummyStore struct {
 	mu    sync.Mutex
 	data  map[string][]byte
-	watch func() (watchChan, error)
+	watch func() chan store.WatchResponse
 }
 
-func (s *dummyStore) Watch(ctx context.Context, bucket []byte) (watchChan, error) {
-	return s.watch()
+func (s *dummyStore) CreateBucket(name string) error {
+	panic("not implemented")
 }
 
-func (s *dummyStore) Put(key, value []byte) error {
+func (s *dummyStore) DeleteBucket(name string) error {
+	panic("not implemented")
+}
+
+func (s *dummyStore) Put(bucket string, key string, value []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data[string(key)] = value
 	return nil
 }
 
-func (s *dummyStore) Get(key []byte) ([]byte, error) {
+func (s *dummyStore) Get(bucket string, key string) ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.data[string(key)], nil
+}
+
+func (s *dummyStore) List(bucket string) ([]store.Entry, error) {
+	panic("not implemented")
+}
+
+func (s *dummyStore) Delete(bucket string, key string) error {
+	panic("not implemented")
+}
+
+func (s *dummyStore) Watch(ctx context.Context, bucket string, _ uint) <-chan store.WatchResponse {
+	return s.watch()
 }
 
 func TestClusterController(t *testing.T) {
@@ -111,15 +128,15 @@ func TestClusterController(t *testing.T) {
 		t.Fatalf("error marshaling plan: %v", err)
 	}
 
-	watchFunc := func() (watchChan, error) {
-		c := make(chan watchResponse)
+	watchFunc := func() chan store.WatchResponse {
+		c := make(chan store.WatchResponse)
 		go func(ctx context.Context) {
 			// trigger a watch, and then wait until the ctx is done
-			c <- watchResponse{key: []byte(clusterName), value: pwBytes}
+			c <- store.WatchResponse{Key: clusterName, Value: pwBytes}
 			<-ctx.Done()
 			return
 		}(ctx)
-		return c, nil
+		return c
 	}
 	store := &dummyStore{
 		watch: watchFunc,
@@ -128,7 +145,7 @@ func TestClusterController(t *testing.T) {
 	executor := dummyExec{installSleep: 1 * time.Second}
 
 	// Start the controller
-	c := New(logger, executor, store)
+	c := New(logger, executor, store, "foo")
 	go func(ctx context.Context) {
 		err := c.Run(ctx)
 		if err != nil {
@@ -143,7 +160,7 @@ func TestClusterController(t *testing.T) {
 		select {
 		case <-time.Tick(time.Second):
 			var pw planWrapper
-			b, _ := store.Get([]byte(clusterName))
+			b, _ := store.Get("", clusterName)
 			json.Unmarshal(b, &pw)
 			if pw.CurrentState == pw.DesiredState {
 				cancel()

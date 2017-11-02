@@ -16,7 +16,6 @@ import (
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
 	"github.com/apprenda/kismatic/pkg/server/http/service"
 	"github.com/apprenda/kismatic/pkg/store"
-
 	"github.com/spf13/cobra"
 )
 
@@ -62,6 +61,7 @@ If cert-file or key-file are not provided, a self-signed CA will be used to crea
 
 func doServer(stdout io.Writer, options serverOptions) error {
 	logger := log.New(stdout, "[kismatic] ", log.LstdFlags|log.Lshortfile)
+	genAssetsDir := "server-assets"
 
 	// Create the store
 	s, err := store.NewBoltDB(options.dbFile, 0600, logger)
@@ -100,7 +100,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 
 	// Setup the controller
 	executorOpts := install.ExecutorOptions{
-		GeneratedAssetsDirectory: "server-assets",
+		GeneratedAssetsDirectory: genAssetsDir,
 		RunsDirectory:            "server-runs",
 		RestartServices:          true,
 		OutputFormat:             "simple",
@@ -111,7 +111,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		return err
 	}
 
-	ctrl := controller.New(logger, executor, nil)
+	ctrl := controller.New(logger, executor, s, genAssetsDir)
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
 		if err := ctrl.Run(ctx); err != nil {
