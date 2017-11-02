@@ -73,7 +73,7 @@ official_images:
     version: v1.0.0
   helm: 
     name: gcr.io/kubernetes-helm/tiller
-    version: v2.6.1
+    version: v2.7.0
   heapster: 
     name: gcr.io/google_containers/heapster-amd64
     version: v1.4.0
