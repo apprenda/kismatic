@@ -39,7 +39,7 @@ type ClusterController interface {
 type clusterController struct {
 	log                *log.Logger
 	executor           install.Executor
-	clusterStore       store.WatchedStore
+	clusterStore       clusterStore
 	reconcileFreq      time.Duration
 	generatedAssetsDir string
 }
@@ -50,7 +50,7 @@ func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir s
 	return &clusterController{
 		log:                l,
 		executor:           e,
-		clusterStore:       s,
+		clusterStore:       cs{bucket: "clusters", store: s},
 		reconcileFreq:      10 * time.Minute,
 		generatedAssetsDir: genAssetsDir,
 	}
@@ -61,7 +61,7 @@ func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir s
 // cancelled.
 func (c *clusterController) Run(ctx context.Context) error {
 	c.log.Println("started controller")
-	watch := c.clusterStore.Watch(context.Background(), "clusters", 0)
+	watch := c.clusterStore.Watch(context.Background(), 0)
 	ticker := time.Tick(c.reconcileFreq)
 	for {
 		select {
@@ -80,13 +80,7 @@ func (c *clusterController) Run(ctx context.Context) error {
 				// take the cluster to the next state, and update the store
 				pw.CurrentState, pw.CanContinue = c.next(pw)
 
-				// Update the store with the latest state
-				b, err := json.Marshal(pw)
-				if err != nil {
-					c.log.Printf("error marshaling cluster resource: %v. The cluster's current state is %q and desired state is %q", err, pw.CurrentState, pw.DesiredState)
-					break
-				}
-				err = c.clusterStore.Put("clusters", resp.Key, b)
+				err = c.clusterStore.Put(resp.Key, pw)
 				if err != nil {
 					c.log.Printf("error storing cluster state: %v. The cluster's current state is %q and desired state is %q", err, pw.CurrentState, pw.DesiredState)
 					break
