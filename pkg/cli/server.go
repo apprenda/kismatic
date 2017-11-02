@@ -1,15 +1,17 @@
 package cli
 
 import (
+	"context"
 	"io"
 	"log"
+	nethttp "net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	nethttp "net/http"
-
+	"github.com/apprenda/kismatic/pkg/controller"
+	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/server/http"
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
 	"github.com/apprenda/kismatic/pkg/server/http/service"
@@ -31,11 +33,12 @@ type serverOptions struct {
 	dbFile   string
 }
 
+// NewCmdServer returns the server command
 func NewCmdServer(stdout io.Writer) *cobra.Command {
 	var options serverOptions
 	cmd := &cobra.Command{
 		Use:   "server",
-		Short: "server starts an http server",
+		Short: "server starts an HTTP server",
 		Long: `
 Start an HTTP server to manage KET clusters. The API has endpoints to create, mutate, delete and view clusters.
 
@@ -95,11 +98,33 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		}
 	}()
 
+	// Setup the controller
+	executorOpts := install.ExecutorOptions{
+		GeneratedAssetsDirectory: "server-assets",
+		RunsDirectory:            "server-runs",
+		RestartServices:          true,
+		OutputFormat:             "simple",
+		Verbose:                  true,
+	}
+	executor, err := install.NewExecutor(stdout, os.Stderr, executorOpts)
+	if err != nil {
+		return err
+	}
+
+	ctrl := controller.New(logger, executor, nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		if err := ctrl.Run(ctx); err != nil {
+			logger.Fatalf("Error starting controller: %v", err)
+		}
+	}()
+
 	// Setup interrupt channel for graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
 	<-stop
+	cancel()
 	if err := server.Shutdown(30 * time.Second); err != nil {
 		logger.Fatalf("Error shutting down server: %v", err)
 	}
