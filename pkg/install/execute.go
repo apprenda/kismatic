@@ -30,6 +30,7 @@ type Executor interface {
 	PreFlightExecutor
 	Install(p *Plan) error
 	GenerateCertificates(p *Plan, useExistingCA bool) error
+	GenerateKubeconfig(p Plan, generatedAssetsDir string) error
 	RunSmokeTest(*Plan) error
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunPlay(string, *Plan) error
@@ -274,6 +275,10 @@ func (ae *ansibleExecutor) GenerateCertificates(p *Plan, useExistingCA bool) err
 
 	util.PrettyPrintOk(ae.stdout, "Cluster certificates can be found in the %q directory", ae.options.GeneratedAssetsDirectory)
 	return nil
+}
+
+func (ae *ansibleExecutor) GenerateKubeconfig(p Plan, generatedAssetsDir string) error {
+	return GenerateKubeconfig(&p, generatedAssetsDir)
 }
 
 // Install the cluster according to the installation plan

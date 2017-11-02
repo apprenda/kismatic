@@ -35,11 +35,15 @@ func (e dummyExec) RunUpgradePreFlightCheck(*install.Plan, install.ListableNode)
 }
 
 func (e dummyExec) GenerateCertificates(p *install.Plan, useExistingCA bool) error {
-	panic("not implemented")
+	return nil
+}
+
+func (e dummyExec) GenerateKubeconfig(plan install.Plan, generatedAssetsDir string) error {
+	return nil
 }
 
 func (e dummyExec) RunSmokeTest(*install.Plan) error {
-	panic("not implemented")
+	return nil
 }
 
 func (e dummyExec) AddWorker(*install.Plan, install.Node) (*install.Plan, error) {
@@ -101,7 +105,7 @@ func TestClusterController(t *testing.T) {
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
 	// Stub out dependencies
-	pw := planWrapper{CurrentState: planned, DesiredState: installed}
+	pw := planWrapper{CurrentState: planned, DesiredState: installed, CanContinue: true}
 	pwBytes, err := json.Marshal(pw)
 	if err != nil {
 		t.Fatalf("error marshaling plan: %v", err)
