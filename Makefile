@@ -101,7 +101,7 @@ test: vendor
 	    make bare-test
 
 bare-test: vendor
-	go test -v ./cmd/... ./pkg/... $(TEST_OPTS)
+	go test ./cmd/... ./pkg/... $(TEST_OPTS)
 
 integration-test: dist just-integration-test
 

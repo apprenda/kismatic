@@ -14,7 +14,7 @@ jobs:
           command: apt update && apt install unzip
       - run:
           name: Unit tests
-          command: make bare-test
+          command: make TEST_OPTS="-v" bare-test
       - run:
           name: Verify gofmt
           command: diff -u <(echo -n) <(gofmt -d ./pkg ./cmd)
