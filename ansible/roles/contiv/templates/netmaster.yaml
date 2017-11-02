@@ -48,6 +48,9 @@ metadata:
 spec:
   # The netmaster should have 1, 3, 5 nodes of which one is active at any given time.
   # More nodes are desired in a production environment for HA.
+  selector:
+    matchLabels:
+      k8s-app: contiv-netmaster
   template:
     metadata:
       name: contiv-netmaster

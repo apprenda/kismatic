@@ -29,6 +29,9 @@ metadata:
     kismatic/version: "{{ kismatic_short_version }}"
 spec:
   replicas: {{ heapster.options.heapster.replicas }}
+  selector:
+    matchLabels:
+      k8s-app: heapster
   template:
     metadata:
       labels:

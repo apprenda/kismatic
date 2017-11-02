@@ -5,6 +5,9 @@ metadata:
   name: default-http-backend
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      app: default-http-backend
   template:
     metadata:
       labels:

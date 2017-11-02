@@ -60,6 +60,9 @@ items:
         k8s-app: weave-net
       namespace: kube-system
     spec:
+      selector:
+        matchLabels:
+          k8s-app: weave-net
       template:
         metadata:
           labels:

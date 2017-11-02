@@ -4,6 +4,9 @@ metadata:
   name: ingress
   namespace: kube-system
 spec:
+  selector:
+    matchLabels:
+      name: ingress
   template:
     metadata:
       labels:
