@@ -21,49 +21,55 @@ type Server interface {
 	Shutdown(timeout time.Duration) error
 }
 
-type loggerHttpServer struct {
-	httpServer *http.Server
-	logger     *log.Logger
+type HttpServer struct {
+	httpServer   *http.Server
+	CertFile     string
+	KeyFile      string
+	Logger       *log.Logger
+	Port         string
+	ClustersAPI  handler.Clusters
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
 }
 
-// New creates a configured http server
+// Init creates a configured http server
 // If certificates are not provided, a self signed CA will be used
 // Use 0 for no read and write timeouts
-func New(logger *log.Logger, port string, certFile string, keyFile string, readTimeout time.Duration, writeTimeout time.Duration) (Server, error) {
-	if logger == nil {
-		return nil, fmt.Errorf("logger cannot be nil")
+func (s *HttpServer) Init() error {
+	if s.Logger == nil {
+		return fmt.Errorf("logger cannot be nil")
 	}
-	if port == "" {
-		return nil, fmt.Errorf("port cannot be empty")
+	if s.Port == "" {
+		return fmt.Errorf("port cannot be empty")
 	}
-	addr := fmt.Sprintf(":%s", port)
-	if readTimeout < 0 {
-		return nil, fmt.Errorf("readTimeout cannot be negative")
+	addr := fmt.Sprintf(":%s", s.Port)
+	if s.ReadTimeout < 0 {
+		return fmt.Errorf("readTimeout cannot be negative")
 	}
-	if readTimeout == 0 {
-		logger.Printf("ReadTimeout is set to 0 and will never timeout, you may want to provide a timeout value\n")
+	if s.ReadTimeout == 0 {
+		s.Logger.Printf("ReadTimeout is set to 0 and will never timeout, you may want to provide a timeout value\n")
 	}
-	if writeTimeout < 0 {
-		return nil, fmt.Errorf("writeTimeout cannot be negative")
+	if s.WriteTimeout < 0 {
+		return fmt.Errorf("writeTimeout cannot be negative")
 	}
-	if writeTimeout == 0 {
-		logger.Printf("WriteTimeout is set to 0 and will never timeout, you may want to provide a timeout value\n")
+	if s.WriteTimeout == 0 {
+		s.Logger.Printf("WriteTimeout is set to 0 and will never timeout, you may want to provide a timeout value\n")
 	}
 	// use self signed CA
 	var keyPair tls.Certificate
-	if certFile == "" || keyFile == "" {
-		logger.Printf("Using self-signed certificate\n")
+	if s.CertFile == "" || s.KeyFile == "" {
+		s.Logger.Printf("Using self-signed certificate\n")
 		key, cert, err := selfSignedCert()
 		if err != nil {
-			return nil, fmt.Errorf("could not get self-signed certificate key-pair: %v", err)
+			return fmt.Errorf("could not get self-signed certificate key-pair: %v", err)
 		}
 		if keyPair, err = tls.X509KeyPair(cert, key); err != nil {
-			return nil, fmt.Errorf("could not parse key-pair: %v", err)
+			return fmt.Errorf("could not parse key-pair: %v", err)
 		}
 	} else {
 		var err error
-		if keyPair, err = tls.LoadX509KeyPair(certFile, keyFile); err != nil {
-			return nil, fmt.Errorf("could not load provided key-pair: %v", err)
+		if keyPair, err = tls.LoadX509KeyPair(s.CertFile, s.KeyFile); err != nil {
+			return fmt.Errorf("could not load provided key-pair: %v", err)
 		}
 	}
 	tlsConfig := &tls.Config{Certificates: []tls.Certificate{keyPair}}
@@ -71,46 +77,45 @@ func New(logger *log.Logger, port string, certFile string, keyFile string, readT
 	// setup routes
 	router := httprouter.New()
 	router.GET("/healthz", handler.Healthz)
+	router.GET("/clusters/:name", s.ClustersAPI.Get)
+	router.POST("/clusters", s.ClustersAPI.Create)
 
 	// use our own logger format
 	l := negroni.NewLogger()
-	l.Logger = logger
+	l.Logger = s.Logger
 	// use our own logger format
 	r := negroni.NewRecovery()
-	r.Logger = logger
+	r.Logger = s.Logger
 	r.PrintStack = false
 	h := negroni.New(r, l)
 	h.UseHandler(router)
 
-	s := &loggerHttpServer{
-		httpServer: &http.Server{
-			Addr:         addr,
-			TLSConfig:    tlsConfig,
-			Handler:      h,
-			ReadTimeout:  readTimeout,
-			WriteTimeout: writeTimeout,
-		},
-		logger: logger,
+	s.httpServer = &http.Server{
+		Addr:         addr,
+		TLSConfig:    tlsConfig,
+		Handler:      h,
+		ReadTimeout:  s.ReadTimeout,
+		WriteTimeout: s.WriteTimeout,
 	}
 
-	return s, nil
+	return nil
 }
 
 // RunTLS support
-func (s *loggerHttpServer) RunTLS() error {
-	s.logger.Printf("Listening on 0.0.0.0%s\n", s.httpServer.Addr)
+func (s *HttpServer) RunTLS() error {
+	s.Logger.Printf("Listening on 0.0.0.0%s\n", s.httpServer.Addr)
 	return s.httpServer.ListenAndServeTLS("", "")
 }
 
 // Shutdown will gracefully shutdown the server
-func (s *loggerHttpServer) Shutdown(timeout time.Duration) error {
+func (s *HttpServer) Shutdown(timeout time.Duration) error {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	s.logger.Println("Shutting down the server...")
+	s.Logger.Println("Shutting down the server...")
 	if err := s.httpServer.Shutdown(ctx); err != nil {
 		return err
 	}
-	s.logger.Println("Server stopped")
+	s.Logger.Println("Server stopped")
 
 	return nil
 }

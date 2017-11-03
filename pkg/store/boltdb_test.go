@@ -1,4 +1,4 @@
-package bolt
+package store
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 func setupStore() (WatchedStore, error) {
@@ -171,10 +171,10 @@ func TestWatchingBucket(t *testing.T) {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	ch := s.Watch(ctx, "b1", 0)
+	ch := s.Watch(ctx, "b1", 10)
 
 	ctx2, cancel2 := context.WithCancel(context.Background())
-	ch2 := s.Watch(ctx2, "b2", 0)
+	ch2 := s.Watch(ctx2, "b2", 10)
 
 	type kv struct {
 		k string

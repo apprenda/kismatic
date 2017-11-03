@@ -1,12 +1,13 @@
-package bolt
+package store
 
 import (
 	"fmt"
 	"log"
 	"os"
 
+	"context"
+
 	"github.com/boltdb/bolt"
-	"golang.org/x/net/context"
 )
 
 // WatchedStore exposes a Watch() method

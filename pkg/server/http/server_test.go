@@ -1,11 +1,34 @@
 package http
 
 import (
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/apprenda/kismatic/pkg/server/http/handler"
+	"github.com/apprenda/kismatic/pkg/server/http/service"
+	"github.com/apprenda/kismatic/pkg/store"
 )
+
+const (
+	bucket = "server_test"
+)
+
+func setupStore() (store.WatchedStore, error) {
+	f, err := ioutil.TempFile("/tmp", "httptests")
+	if err != nil {
+		return nil, err
+	}
+	s, err := store.NewBoltDB(f.Name(), 0644, log.New(ioutil.Discard, "test ", 0))
+	if err != nil {
+		return nil, err
+	}
+	s.CreateBucket(bucket)
+
+	return s, nil
+}
 
 func TestNewHTTPServer(t *testing.T) {
 	if testing.Short() {
@@ -58,8 +81,23 @@ func TestNewHTTPServer(t *testing.T) {
 			valid:        false,
 		},
 	}
+	store, err := setupStore()
+	if err != nil {
+		t.Fatalf("could not create store: %v", err)
+	}
+	clusterService := service.NewClustersService(store, bucket)
+	clusterAPI := handler.Clusters{Service: clusterService}
 	for _, test := range tests {
-		_, err := New(test.logger, test.port, test.certFile, test.keyFile, test.readTimeout, test.writeTimeout)
+		server := HttpServer{
+			Logger:       test.logger,
+			Port:         test.port,
+			ClustersAPI:  clusterAPI,
+			ReadTimeout:  test.readTimeout,
+			WriteTimeout: test.writeTimeout,
+			CertFile:     test.certFile,
+			KeyFile:      test.keyFile,
+		}
+		err := server.Init()
 		if test.valid && err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}

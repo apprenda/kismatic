@@ -1,9 +1,9 @@
-package bolt
+package store
 
 import (
 	"log"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 // The watchMgr keeps track of all the watches that are set on the store.

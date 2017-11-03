@@ -2,6 +2,7 @@ package cli
 
 import (
 	"io"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,18 +11,24 @@ import (
 	nethttp "net/http"
 
 	"github.com/apprenda/kismatic/pkg/server/http"
+	"github.com/apprenda/kismatic/pkg/server/http/handler"
+	"github.com/apprenda/kismatic/pkg/server/http/service"
+	"github.com/apprenda/kismatic/pkg/store"
 
 	"github.com/spf13/cobra"
 )
 
 const (
-	defaultTimeout = 10 * time.Second
+	loggerPrefix          = "[kismatic] "
+	defaultTimeout        = 10 * time.Second
+	clustersServiceBucket = "kismatic"
 )
 
 type serverOptions struct {
 	port     string
 	certFile string
 	keyFile  string
+	dbFile   string
 }
 
 func NewCmdServer(stdout io.Writer) *cobra.Command {
@@ -46,20 +53,41 @@ If cert-file or key-file are not provided, a self-signed CA will be used to crea
 	cmd.Flags().StringVarP(&options.port, "port", "p", "443", "port to start the server on")
 	cmd.Flags().StringVar(&options.certFile, "cert-file", "", "path to the TLS cert file")
 	cmd.Flags().StringVar(&options.keyFile, "key-file", "", "path to the TLS key file")
+	cmd.Flags().StringVar(&options.dbFile, "db-file", "./server.db", "path to the database file")
 	return cmd
 }
 
 func doServer(stdout io.Writer, options serverOptions) error {
-	logger := http.DefaultLogger(stdout, "[kismatic] ")
-	server, err := http.New(logger, options.port, options.certFile, options.keyFile, defaultTimeout, defaultTimeout)
+	logger := log.New(stdout, "[kismatic] ", log.LstdFlags|log.Lshortfile)
+
+	// Create the store
+	s, err := store.NewBoltDB(options.dbFile, 0600, logger)
 	if err != nil {
-		logger.Fatalf("Error creating server: %v", err)
+		logger.Fatalf("Error creating store: %v", err)
+	}
+	err = s.CreateBucket("clusters")
+	if err != nil {
+		logger.Fatalf("Error creating bucket in store: %v", err)
 	}
 
-	// setup interrupt channgel for graceful shutdown
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	// create services and handlers
+	clusterService := service.NewClustersService(s, clustersServiceBucket)
+	clusterAPI := handler.Clusters{Service: clusterService}
 
+	// Setup the HTTP server
+	server := http.HttpServer{
+		Logger:       logger,
+		Port:         options.port,
+		ClustersAPI:  clusterAPI,
+		ReadTimeout:  defaultTimeout,
+		WriteTimeout: defaultTimeout,
+		CertFile:     options.certFile,
+		KeyFile:      options.keyFile,
+	}
+
+	if err := server.Init(); err != nil {
+		logger.Fatalf("Error creating server: %v", err)
+	}
 	go func() {
 		logger.Println("Starting server...")
 		if err := server.RunTLS(); err != nethttp.ErrServerClosed {
@@ -67,8 +95,11 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		}
 	}()
 
-	<-stop
+	// Setup interrupt channel for graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
+	<-stop
 	if err := server.Shutdown(30 * time.Second); err != nil {
 		logger.Fatalf("Error shutting down server: %v", err)
 	}

@@ -9,11 +9,15 @@ import (
 	nethttp "net/http"
 
 	"github.com/apprenda/kismatic/pkg/server/http"
+	"github.com/apprenda/kismatic/pkg/server/http/handler"
+	"github.com/apprenda/kismatic/pkg/server/http/service"
+	"github.com/apprenda/kismatic/pkg/store"
 )
 
 const (
 	defaultTimeout = 10 * time.Second
 	defaultPort    = "8443"
+	bucket         = "kismatic"
 )
 
 func main() {
@@ -22,14 +26,29 @@ func main() {
 		port = os.Getenv("PORT")
 	}
 	logger := http.DefaultLogger(os.Stdout, "[kismatic] ")
-	server, err := http.New(logger, port, "", "", defaultTimeout, defaultTimeout)
+	store, err := store.NewBoltDB("/tmp/kismatic", 0644, logger)
 	if err != nil {
-		logger.Fatalf("Error creating server: %v", err)
+		logger.Fatalf("Error opening store: %v", err)
+	}
+	if err := store.CreateBucket(bucket); err != nil {
+		logger.Fatalf("Error creating bucket: %v", err)
+	}
+	// create services and handlers
+	clusterService := service.NewClustersService(store, bucket)
+	clusterAPI := handler.Clusters{Service: clusterService}
+
+	// Setup the HTTP server
+	server := http.HttpServer{
+		Logger:       logger,
+		Port:         port,
+		ClustersAPI:  clusterAPI,
+		ReadTimeout:  defaultTimeout,
+		WriteTimeout: defaultTimeout,
 	}
 
-	// setup interrupt channgel for graceful shutdown
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	if err := server.Init(); err != nil {
+		logger.Fatalf("Error creating server: %v", err)
+	}
 
 	go func() {
 		logger.Println("Starting server...")
@@ -38,8 +57,11 @@ func main() {
 		}
 	}()
 
-	<-stop
+	// setup interrupt channgel for graceful shutdown
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
+	<-stop
 	if err := server.Shutdown(30 * time.Second); err != nil {
 		logger.Fatalf("Error shutting down server: %v\n", err)
 	}
