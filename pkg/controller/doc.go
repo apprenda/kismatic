@@ -4,8 +4,8 @@ Kubernetes clusters. The controller connects to a store where cluster resources
 are defined. Whenever there is a change in the store, the controller takes
 action.
 
-The controller's only mission is to take the defined cluster from its current
-state to its desired state. While the cluster transitions between the different
-states, the controller will update the cluster definition in the store.
+The controller's only mission is to take the defined clusters from their current
+states to their desired states. While the clusters transition between the different
+states, the controller updates the cluster definitions in the store.
 */
 package controller

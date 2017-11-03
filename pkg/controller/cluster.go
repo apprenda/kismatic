@@ -1,13 +1,9 @@
 package controller
 
 import (
-	"context"
-	"encoding/json"
 	"log"
-	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
-	"github.com/apprenda/kismatic/pkg/store"
 )
 
 type planWrapper struct {
@@ -29,73 +25,33 @@ const (
 	modifyFailed    = "modifyFailed"
 	destroying      = "destroying"
 	destroyed       = "destroyed"
-	// TODO: Remove once we support multiple clusters
-	clusterName = "theCluster"
 )
 
-// The ClusterController manages the lifecycle of a given cluster
-type ClusterController interface {
-	Run(ctx context.Context) error
-}
-
+// The clusterController manages the lifecycle of a single cluster.
 type clusterController struct {
 	log                *log.Logger
 	executor           install.Executor
 	clusterStore       clusterStore
-	reconcileFreq      time.Duration
 	generatedAssetsDir string
 }
 
-// New returns a controller that manages the lifecycle of the clusters that are
-// defined in the cluster store
-func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir string, reconFreq time.Duration) ClusterController {
-	return &clusterController{
-		log:                l,
-		executor:           e,
-		clusterStore:       cs{bucket: "clusters", store: s},
-		reconcileFreq:      reconFreq,
-		generatedAssetsDir: genAssetsDir,
-	}
-}
-
-// Run starts the controller. If there is an issue starting the controller, an
-// error is returned. Otherwise, the controller will run until the context is
-// cancelled.
-func (c *clusterController) Run(ctx context.Context) error {
+func (c *clusterController) run(clusterName string, watch <-chan planWrapper) {
 	c.log.Println("started controller")
-	watch := c.clusterStore.Watch(context.Background(), 0)
-	ticker := time.Tick(c.reconcileFreq)
-	for {
-		select {
-		case resp := <-watch:
-			c.log.Printf("Got a watch event for key: %s", string(resp.Key))
-			var pw planWrapper
-			err := json.Unmarshal(resp.Value, &pw)
-			if err != nil {
-				c.log.Printf("error unmarshaling watch event's value: %v", err)
-				continue
-			}
-			c.reconcile(pw)
-
-		case <-ticker:
-			c.log.Println("tick")
-			pw, err := c.clusterStore.Get(clusterName)
-			if err != nil {
-				c.log.Printf("error getting cluster spec from store: %v", err)
-				continue
-			}
-			c.reconcile(*pw)
-
-		case <-ctx.Done():
-			c.log.Println("stopping the controller")
-			return nil
+	for _ = range watch {
+		c.log.Printf("got notification for cluster %q", clusterName)
+		pw, err := c.clusterStore.Get(clusterName)
+		if err != nil {
+			c.log.Printf("error getting cluster from store: %v", err)
+			continue
 		}
+		c.reconcile(clusterName, *pw)
 	}
+	c.log.Printf("stopping controller that was managing cluster %q", clusterName)
 }
 
 // reconcile the cluster / take it to the desired state
-func (c *clusterController) reconcile(pw planWrapper) {
-	c.log.Println("Current state is:", pw.CurrentState, "Desired state is:", pw.DesiredState)
+func (c *clusterController) reconcile(clusterName string, pw planWrapper) {
+	c.log.Println("current state is:", pw.CurrentState, "desired state is:", pw.DesiredState)
 	for pw.CurrentState != pw.DesiredState && pw.CanContinue {
 		// transition cluster and update its state in the store
 		pw.CurrentState, pw.CanContinue = c.next(pw)
@@ -107,7 +63,7 @@ func (c *clusterController) reconcile(pw planWrapper) {
 	}
 
 	if pw.CurrentState == pw.DesiredState {
-		c.log.Printf("cluster %q reached desired state %q", pw.Plan.Cluster.Name, pw.DesiredState)
+		c.log.Printf("cluster %q reached desired state %q", clusterName, pw.DesiredState)
 	}
 }
 
@@ -144,7 +100,7 @@ func (c *clusterController) next(pw planWrapper) (string, bool) {
 		// Log a message, and return false so that we don't get stuck in an
 		// infinte loop. The only thing the user can do in this case is delete
 		// the cluster and file a bug, as this scenario should not happen.
-		c.log.Printf("The desired state is %q, but there is no transition defined for the cluster's current state %q", pw.DesiredState, pw.CurrentState)
+		c.log.Printf("the desired state is %q, but there is no transition defined for the cluster's current state %q", pw.DesiredState, pw.CurrentState)
 		return pw.CurrentState, false
 	}
 }

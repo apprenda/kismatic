@@ -113,11 +113,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 
 	ctrl := controller.New(logger, executor, s, genAssetsDir, 10*time.Minute)
 	ctx, cancel := context.WithCancel(context.Background())
-	go func() {
-		if err := ctrl.Run(ctx); err != nil {
-			logger.Fatalf("Error starting controller: %v", err)
-		}
-	}()
+	go ctrl.Run(ctx)
 
 	// Setup interrupt channel for graceful shutdown
 	stop := make(chan os.Signal, 1)
