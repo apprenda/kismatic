@@ -29,7 +29,7 @@ type clusterController struct {
 	generatedAssetsDir string
 }
 
-func (c *clusterController) run(clusterName string, watch <-chan store.Cluster) {
+func (c *clusterController) run(clusterName string, watch <-chan struct{}) {
 	c.log.Println("started controller")
 	for _ = range watch {
 		c.log.Printf("got notification for cluster %q", clusterName)
