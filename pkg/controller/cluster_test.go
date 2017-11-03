@@ -142,5 +142,68 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 }
 
 func TestClusterControllerReconciliationLoop(t *testing.T) {
+	// TODO: the store is leaking a goroutine, so can't enable this
+	// defer leaktest.Check(t)()
 
+	ctx, cancel := context.WithCancel(context.Background())
+	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
+
+	// Stub out dependencies
+	executor := dummyExec{installSleep: 1 * time.Second}
+
+	tmpFile, err := ioutil.TempFile("", "cluster-controller-tests")
+	if err != nil {
+		t.Fatalf("error creating temp dir for store")
+	}
+	s, err := store.NewBoltDB(tmpFile.Name(), 0600, logger)
+	bucketName := "clusters"
+	if err != nil {
+		t.Fatalf("error creating store")
+	}
+	s.CreateBucket(bucketName)
+
+	// Create a new cluster in the store before starting the controller.
+	// The controller should pick it up in the reconciliation loop.
+	clusterName := "testCluster"
+	pw := planWrapper{CurrentState: planned, DesiredState: installed, CanContinue: true}
+	pwBytes, err := json.Marshal(pw)
+	if err != nil {
+		t.Fatalf("error marshaling cluster")
+	}
+	err = s.Put(bucketName, clusterName, pwBytes)
+	if err != nil {
+		t.Fatalf("error storing cluster")
+	}
+
+	// Start the controller
+	c := New(logger, executor, s, "foo", 3*time.Second)
+	go c.Run(ctx)
+
+	// Assert that the cluster reaches desired state
+	var done bool
+	for !done {
+		select {
+		case <-time.Tick(time.Second):
+			var pw planWrapper
+			b, err := s.Get(bucketName, clusterName)
+			if err != nil {
+				t.Fatalf("got an error trying to read the cluster from the store")
+			}
+			err = json.Unmarshal(b, &pw)
+			if err != nil {
+				t.Fatalf("error unmarshaling from store")
+			}
+			if pw.CurrentState == pw.DesiredState {
+				cancel()
+				done = true
+				break
+			}
+		case <-time.After(5 * time.Second):
+			fmt.Println("tick")
+			cancel()
+			t.Errorf("did not reach installed state")
+			done = true
+			break
+		}
+	}
 }

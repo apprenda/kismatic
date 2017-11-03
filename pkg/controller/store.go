@@ -50,7 +50,7 @@ func (s cs) GetAll() (map[string]planWrapper, error) {
 	m := make(map[string]planWrapper)
 	for _, e := range es {
 		var pw planWrapper
-		err := json.Unmarshal(e.Value, pw)
+		err := json.Unmarshal(e.Value, &pw)
 		if err != nil {
 			return nil, err
 		}

@@ -119,7 +119,13 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 
 			// Poke each cluster controller with the latest cluster definition
 			for clusterName, ch := range mcc.clusterControllers {
-				ch <- definedClusters[clusterName]
+				pw := definedClusters[clusterName]
+				// Don't block if the cluster controller's buffer is full.
+				select {
+				case ch <- pw:
+				default:
+					mcc.log.Printf("buffer of cluster %s is full. dropping notification.", clusterName)
+				}
 			}
 
 		case <-ctx.Done():
