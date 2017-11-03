@@ -20,9 +20,9 @@ import (
 )
 
 const (
-	loggerPrefix          = "[kismatic] "
-	defaultTimeout        = 10 * time.Second
-	clustersServiceBucket = "kismatic"
+	loggerPrefix   = "[kismatic] "
+	defaultTimeout = 10 * time.Second
+	clustersBucket = "kismatic"
 )
 
 type serverOptions struct {
@@ -64,17 +64,17 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	genAssetsDir := "server-assets"
 
 	// Create the store
-	s, err := store.NewBoltDB(options.dbFile, 0600, logger)
+	clusterStore, err := store.NewBoltDB(options.dbFile, 0600, logger)
 	if err != nil {
 		logger.Fatalf("Error creating store: %v", err)
 	}
-	err = s.CreateBucket("clusters")
+	err = clusterStore.CreateBucket("clusters")
 	if err != nil {
 		logger.Fatalf("Error creating bucket in store: %v", err)
 	}
 
 	// create services and handlers
-	clusterService := service.NewClustersService(s, clustersServiceBucket)
+	clusterService := service.NewClustersService(clusterStore, clustersBucket)
 	clusterAPI := handler.Clusters{Service: clusterService}
 
 	// Setup the HTTP server
@@ -111,7 +111,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		return err
 	}
 
-	ctrl := controller.New(logger, executor, s, genAssetsDir, 10*time.Minute)
+	ctrl := controller.New(logger, executor, clusterStore, genAssetsDir, 10*time.Minute, clustersBucket)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ctrl.Run(ctx)
 
