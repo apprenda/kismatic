@@ -98,16 +98,16 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 
 	// Start the controller
 	clusterName := "testCluster"
-	c := New(logger, executor, s, "foo", 10*time.Minute)
+	c := New(logger, executor, s, "foo", 10*time.Minute, bucketName)
 	go c.Run(ctx)
 
 	// Create a new cluster in the store
-	pw := planWrapper{CurrentState: planned, DesiredState: installed, CanContinue: true}
-	pwBytes, err := json.Marshal(pw)
+	cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
+	clusterBytes, err := json.Marshal(cluster)
 	if err != nil {
 		t.Fatalf("error marshaling cluster")
 	}
-	err = s.Put(bucketName, clusterName, pwBytes)
+	err = s.Put(bucketName, clusterName, clusterBytes)
 	if err != nil {
 		t.Fatalf("error storing cluster")
 	}
@@ -117,16 +117,16 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	for !done {
 		select {
 		case <-time.Tick(time.Second):
-			var pw planWrapper
+			var cluster store.Cluster
 			b, err := s.Get(bucketName, clusterName)
 			if err != nil {
 				t.Fatalf("got an error trying to read the cluster from the store")
 			}
-			err = json.Unmarshal(b, &pw)
+			err = json.Unmarshal(b, &cluster)
 			if err != nil {
 				t.Fatalf("error unmarshaling from store")
 			}
-			if pw.CurrentState == pw.DesiredState {
+			if cluster.CurrentState == cluster.DesiredState {
 				cancel()
 				done = true
 				break
@@ -165,18 +165,18 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	// Create a new cluster in the store before starting the controller.
 	// The controller should pick it up in the reconciliation loop.
 	clusterName := "testCluster"
-	pw := planWrapper{CurrentState: planned, DesiredState: installed, CanContinue: true}
-	pwBytes, err := json.Marshal(pw)
+	cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
+	clusterBytes, err := json.Marshal(cluster)
 	if err != nil {
 		t.Fatalf("error marshaling cluster")
 	}
-	err = s.Put(bucketName, clusterName, pwBytes)
+	err = s.Put(bucketName, clusterName, clusterBytes)
 	if err != nil {
 		t.Fatalf("error storing cluster")
 	}
 
 	// Start the controller
-	c := New(logger, executor, s, "foo", 3*time.Second)
+	c := New(logger, executor, s, "foo", 3*time.Second, bucketName)
 	go c.Run(ctx)
 
 	// Assert that the cluster reaches desired state
@@ -184,16 +184,16 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	for !done {
 		select {
 		case <-time.Tick(time.Second):
-			var pw planWrapper
+			var cluster store.Cluster
 			b, err := s.Get(bucketName, clusterName)
 			if err != nil {
 				t.Fatalf("got an error trying to read the cluster from the store")
 			}
-			err = json.Unmarshal(b, &pw)
+			err = json.Unmarshal(b, &cluster)
 			if err != nil {
 				t.Fatalf("error unmarshaling from store")
 			}
-			if pw.CurrentState == pw.DesiredState {
+			if cluster.CurrentState == cluster.DesiredState {
 				cancel()
 				done = true
 				break

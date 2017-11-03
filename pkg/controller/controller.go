@@ -22,6 +22,6 @@ func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir s
 		clusterStore:       cs{bucket: clustersBucket, store: s},
 		reconcileFreq:      reconFreq,
 		generatedAssetsDir: genAssetsDir,
-		clusterControllers: make(map[string]chan<- planWrapper),
+		clusterControllers: make(map[string]chan<- store.Cluster),
 	}
 }

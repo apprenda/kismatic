@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
+	"github.com/apprenda/kismatic/pkg/store"
 )
 
 // The size of the buffer assigned to each cluster controller created by the
@@ -35,7 +36,7 @@ type multiClusterController struct {
 	clusterStore       clusterStore
 	reconcileFreq      time.Duration
 	generatedAssetsDir string
-	clusterControllers map[string]chan<- planWrapper
+	clusterControllers map[string]chan<- store.Cluster
 }
 
 // Run starts the multiClusterController. The controller will run until the
@@ -60,7 +61,7 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 			// Create a new controller if this is the first time we hear about
 			// this cluster
 			if !found {
-				newChan := make(chan planWrapper, clusterControllerNotificationBuffer)
+				newChan := make(chan store.Cluster, clusterControllerNotificationBuffer)
 				ch = newChan
 				mcc.clusterControllers[clusterName] = newChan
 				cc := clusterController{
@@ -72,8 +73,8 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 				go cc.run(clusterName, newChan)
 			}
 
-			var pw planWrapper
-			err := json.Unmarshal(resp.Value, &pw)
+			var cluster store.Cluster
+			err := json.Unmarshal(resp.Value, &cluster)
 			if err != nil {
 				mcc.log.Printf("error unmarshaling watch event value for cluster %q: %v", clusterName, err)
 				continue
@@ -81,7 +82,7 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 
 			// Don't block if the cluster controller's buffer is full.
 			select {
-			case ch <- pw:
+			case ch <- cluster:
 			default:
 				mcc.log.Printf("buffer of cluster %s is full. dropping notification.", clusterName)
 			}
@@ -97,7 +98,7 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 			for clusterName := range definedClusters {
 				_, found := mcc.clusterControllers[clusterName]
 				if !found {
-					newChan := make(chan planWrapper, clusterControllerNotificationBuffer)
+					newChan := make(chan store.Cluster, clusterControllerNotificationBuffer)
 					mcc.clusterControllers[clusterName] = newChan
 					cc := clusterController{
 						log:                mcc.log,
@@ -119,10 +120,10 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 
 			// Poke each cluster controller with the latest cluster definition
 			for clusterName, ch := range mcc.clusterControllers {
-				pw := definedClusters[clusterName]
+				cluster := definedClusters[clusterName]
 				// Don't block if the cluster controller's buffer is full.
 				select {
-				case ch <- pw:
+				case ch <- cluster:
 				default:
 					mcc.log.Printf("buffer of cluster %s is full. dropping notification.", clusterName)
 				}

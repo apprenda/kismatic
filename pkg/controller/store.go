@@ -10,9 +10,9 @@ import (
 // smaller interface into the store so that the controller doesn't need to worry
 // about the bucket or marshaling/unmarshaling
 type clusterStore interface {
-	Get(key string) (*planWrapper, error)
-	Put(key string, pw planWrapper) error
-	GetAll() (map[string]planWrapper, error)
+	Get(key string) (*store.Cluster, error)
+	Put(key string, cluster store.Cluster) error
+	GetAll() (map[string]store.Cluster, error)
 	Watch(ctx context.Context, buffer uint) <-chan store.WatchResponse
 }
 
@@ -21,40 +21,40 @@ type cs struct {
 	store  store.WatchedStore
 }
 
-func (s cs) Get(key string) (*planWrapper, error) {
+func (s cs) Get(key string) (*store.Cluster, error) {
 	b, err := s.store.Get(s.bucket, key)
 	if err != nil {
 		return nil, err
 	}
-	var pw planWrapper
-	err = json.Unmarshal(b, &pw)
+	var c store.Cluster
+	err = json.Unmarshal(b, &c)
 	if err != nil {
 		return nil, err
 	}
-	return &pw, nil
+	return &c, nil
 }
 
-func (s cs) Put(key string, pw planWrapper) error {
-	b, err := json.Marshal(pw)
+func (s cs) Put(key string, c store.Cluster) error {
+	b, err := json.Marshal(c)
 	if err != nil {
 		return err
 	}
 	return s.store.Put(s.bucket, key, b)
 }
 
-func (s cs) GetAll() (map[string]planWrapper, error) {
+func (s cs) GetAll() (map[string]store.Cluster, error) {
 	es, err := s.store.List(s.bucket)
 	if err != nil {
 		return nil, err
 	}
-	m := make(map[string]planWrapper)
+	m := make(map[string]store.Cluster)
 	for _, e := range es {
-		var pw planWrapper
-		err := json.Unmarshal(e.Value, &pw)
+		var c store.Cluster
+		err := json.Unmarshal(e.Value, &c)
 		if err != nil {
 			return nil, err
 		}
-		m[e.Key] = pw
+		m[e.Key] = c
 	}
 	return m, nil
 }
