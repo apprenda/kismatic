@@ -97,9 +97,11 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	}
 	s.CreateBucket(bucketName)
 
+	clusterStore := store.NewClusterStore(s, bucketName)
+
 	// Start the controller
 	clusterName := "testCluster"
-	c := New(logger, executor, s, "foo", 10*time.Minute, bucketName)
+	c := New(logger, executor, clusterStore, "foo", 10*time.Minute)
 	go c.Run(ctx)
 
 	// Create a new cluster in the store
@@ -177,8 +179,9 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 		t.Fatalf("error storing cluster")
 	}
 
+	clusterStore := store.NewClusterStore(s, bucketName)
 	// Start the controller
-	c := New(logger, executor, s, "foo", 3*time.Second, bucketName)
+	c := New(logger, executor, clusterStore, "foo", 3*time.Second)
 	go c.Run(ctx)
 
 	// Assert that the cluster reaches desired state

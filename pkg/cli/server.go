@@ -14,7 +14,6 @@ import (
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/server/http"
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
-	"github.com/apprenda/kismatic/pkg/server/http/service"
 	"github.com/apprenda/kismatic/pkg/store"
 	"github.com/spf13/cobra"
 )
@@ -64,19 +63,20 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	genAssetsDir := "server-assets"
 
 	// Create the store
-	clusterStore, err := store.DefaultStore(options.dbFile, 0600, logger)
-	defer clusterStore.Close()
+	s, err := store.DefaultStore(options.dbFile, 0600, logger)
+	defer s.Close()
 	if err != nil {
 		logger.Fatalf("Error creating store: %v", err)
 	}
-	err = clusterStore.CreateBucket("clusters")
+	err = s.CreateBucket("clusters")
 	if err != nil {
 		logger.Fatalf("Error creating bucket in store: %v", err)
 	}
 
-	// create services and handlers
-	clusterService := service.NewClustersService(clusterStore, clustersBucket)
-	clusterAPI := handler.Clusters{Service: clusterService}
+	clusterStore := store.NewClusterStore(s, clustersBucket)
+
+	// create handlers
+	clusterAPI := handler.Clusters{Store: clusterStore}
 
 	// Setup the HTTP server
 	server := http.HttpServer{
@@ -112,7 +112,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		return err
 	}
 
-	ctrl := controller.New(logger, executor, clusterStore, genAssetsDir, 10*time.Minute, clustersBucket)
+	ctrl := controller.New(logger, executor, clusterStore, genAssetsDir, 10*time.Minute)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ctrl.Run(ctx)
 

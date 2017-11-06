@@ -2,45 +2,47 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/apprenda/kismatic/pkg/server/http/model"
-	"github.com/apprenda/kismatic/pkg/server/http/service"
+	"github.com/apprenda/kismatic/pkg/store"
 	"github.com/julienschmidt/httprouter"
 )
 
-type mockClustersService struct {
-	store map[string][]byte
+type mockClustersStore struct {
+	store map[string]store.Cluster
 }
 
-func (cs *mockClustersService) Create(c *model.ClusterRequest) error {
+func (cs mockClustersStore) Get(key string) (*store.Cluster, error) {
+	c, ok := cs.store[key]
+	if !ok {
+		return nil, nil
+	}
+	return &c, nil
+}
+func (cs *mockClustersStore) Put(key string, cluster store.Cluster) error {
 	if cs.store == nil {
-		cs.store = make(map[string][]byte)
+		cs.store = make(map[string]store.Cluster)
 	}
-	b, err := service.MarshalForStore(c)
-	if err != nil {
-		return err
-	}
-	cs.store[c.Name] = b
+	cs.store[key] = cluster
 	return nil
 }
 
-func (cs *mockClustersService) Get(name string) (*model.ClusterResponse, error) {
-	v, ok := cs.store[name]
-	if !ok {
-		return nil, service.ErrClusterNotFound
-	}
-	return service.UnmarshalFromStore(name, v)
+func (cs mockClustersStore) GetAll() (map[string]store.Cluster, error) {
+	return nil, nil
+}
+func (cs mockClustersStore) Watch(ctx context.Context, buffer uint) <-chan store.WatchResponse {
+	return nil
 }
 
 func TestCreateAndGet(t *testing.T) {
 	if testing.Short() {
 		return
 	}
-	c := &model.ClusterRequest{
+	c := &ClusterRequest{
 		Name:         "foo",
 		DesiredState: "running",
 		AwsID:        "",
@@ -64,8 +66,8 @@ func TestCreateAndGet(t *testing.T) {
 	// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
 	r := httprouter.New()
 
-	cs := &mockClustersService{}
-	clustersAPI := Clusters{Service: cs}
+	cs := &mockClustersStore{}
+	clustersAPI := Clusters{Store: cs}
 	r.POST("/clusters", clustersAPI.Create)
 	r.ServeHTTP(rr, req)
 

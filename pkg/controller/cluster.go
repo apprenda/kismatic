@@ -25,7 +25,7 @@ const (
 type clusterController struct {
 	log                *log.Logger
 	executor           install.Executor
-	clusterStore       clusterStore
+	clusterStore       store.ClusterStore
 	generatedAssetsDir string
 }
 

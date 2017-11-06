@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
-	"github.com/apprenda/kismatic/pkg/server/http/service"
 	"github.com/apprenda/kismatic/pkg/store"
 )
 
@@ -86,8 +85,8 @@ func TestNewHTTPServer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("could not create store: %v", err)
 	}
-	clusterService := service.NewClustersService(s, bucket)
-	clusterAPI := handler.Clusters{Service: clusterService}
+	clusterStore := store.NewClusterStore(s, bucket)
+	clusterAPI := handler.Clusters{Store: clusterStore}
 	for _, test := range tests {
 		server := HttpServer{
 			Logger:       test.logger,

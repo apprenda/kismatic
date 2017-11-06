@@ -33,7 +33,7 @@ const clusterControllerNotificationBuffer = 10
 type multiClusterController struct {
 	log                *log.Logger
 	executor           install.Executor
-	clusterStore       clusterStore
+	clusterStore       store.ClusterStore
 	reconcileFreq      time.Duration
 	generatedAssetsDir string
 	clusterControllers map[string]chan<- struct{}

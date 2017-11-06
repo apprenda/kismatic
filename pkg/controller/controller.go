@@ -15,11 +15,11 @@ type ClusterController interface {
 }
 
 // New returns a cluster controller
-func New(l *log.Logger, e install.Executor, s store.WatchedStore, genAssetsDir string, reconFreq time.Duration, clustersBucket string) ClusterController {
+func New(l *log.Logger, e install.Executor, cs store.ClusterStore, genAssetsDir string, reconFreq time.Duration) ClusterController {
 	return &multiClusterController{
 		log:                l,
 		executor:           e,
-		clusterStore:       cs{bucket: clustersBucket, store: s},
+		clusterStore:       cs,
 		reconcileFreq:      reconFreq,
 		generatedAssetsDir: genAssetsDir,
 		clusterControllers: make(map[string]chan<- struct{}),

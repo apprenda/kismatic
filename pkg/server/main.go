@@ -10,7 +10,6 @@ import (
 
 	"github.com/apprenda/kismatic/pkg/server/http"
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
-	"github.com/apprenda/kismatic/pkg/server/http/service"
 	"github.com/apprenda/kismatic/pkg/store"
 )
 
@@ -34,9 +33,11 @@ func main() {
 	if err := s.CreateBucket(bucket); err != nil {
 		logger.Fatalf("Error creating bucket: %v", err)
 	}
-	// create services and handlers
-	clusterService := service.NewClustersService(s, bucket)
-	clusterAPI := handler.Clusters{Service: clusterService}
+
+	clusterStore := store.NewClusterStore(s, bucket)
+
+	// create handlers
+	clusterAPI := handler.Clusters{Store: clusterStore}
 
 	// Setup the HTTP server
 	server := http.HttpServer{
