@@ -1,5 +1,5 @@
-hash: f1e1c7515c49bc69417f943bf7c8dc863edf1b0936bd768db5284244e97ca0d5
-updated: 2017-07-25T11:20:54.761474195-04:00
+hash: 7053b8239bb6b054d7f7585489d23bbe5236ec325aa608e68470db7820a4ae6e
+updated: 2017-11-03T13:26:03.86529105Z
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 40f45e34986ba617a372d1590de273a0ca84a53d
@@ -144,6 +144,10 @@ imports:
   - doc
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: github.com/stretchr/testify
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
+  subpackages:
+  - assert
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:
@@ -181,4 +185,14 @@ imports:
   - internal/tag
 - name: gopkg.in/yaml.v2
   version: 25c4ec802a7d637f88d584ab26798e94ad14c13b
-testImports: []
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  repo: https://github.com/davecgh/go-spew
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  repo: https://github.com/pmezard/go-difflib
+  subpackages:
+  - difflib

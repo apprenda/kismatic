@@ -3,6 +3,7 @@ package install
 import (
 	"fmt"
 	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 var validPlan = Plan{
@@ -21,6 +22,12 @@ var validPlan = Plan{
 			User: "root",
 			Key:  "/bin/sh",
 			Port: 22,
+		},
+	},
+	Docker: Docker{
+		Logs: DockerLogs{
+			MaxSize: "10m",
+			MaxFile: 1,
 		},
 	},
 	AddOns: AddOns{
@@ -92,9 +99,7 @@ var validPlan = Plan{
 
 func assertInvalidPlan(t *testing.T, p Plan) {
 	valid, _ := ValidatePlan(&p)
-	if valid {
-		t.Errorf("expected invalid, but got valid")
-	}
+	assert.False(t, valid)
 }
 
 func TestValidateBlankPlan(t *testing.T) {
@@ -105,9 +110,7 @@ func TestValidateBlankPlan(t *testing.T) {
 func TestValidateValidPlan(t *testing.T) {
 	p := validPlan
 	valid, errs := ValidatePlan(&p)
-	if !valid {
-		t.Errorf("expected valid, but got invalid")
-	}
+	assert.True(t, valid)
 	fmt.Println(errs)
 }
 

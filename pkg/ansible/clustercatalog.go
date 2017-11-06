@@ -69,6 +69,10 @@ type ClusterCatalog struct {
 	DiagnosticsDirectory string `yaml:"diagnostics_dir"`
 	DiagnosticsDateTime  string `yaml:"diagnostics_date_time"`
 
+	DockerLogOptsEnabled bool   `yaml:"docker_log_opts_enabled"`
+	DockerLogOptsMaxSize string `yaml:"docker_log_opts_max_size"`
+	DockerLogOptsMaxFile int    `yaml:"docker_log_opts_max_file"`
+
 	DockerDirectLVMEnabled                 bool   `yaml:"docker_direct_lvm_enabled"`
 	DockerDirectLVMBlockDevicePath         string `yaml:"docker_direct_lvm_block_device_path"`
 	DockerDirectLVMDeferredDeletionEnabled bool   `yaml:"docker_direct_lvm_deferred_deletion_enabled"`

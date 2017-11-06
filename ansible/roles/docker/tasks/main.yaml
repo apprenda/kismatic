@@ -7,7 +7,6 @@
     template:
       src: daemon.json
       dest: /etc/docker/daemon.json
-    when: docker_direct_lvm_enabled|bool == true
   # start and verify that Docker installed succesfully and is running
   - name: start docker service
     service:

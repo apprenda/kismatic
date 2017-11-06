@@ -303,10 +303,10 @@ func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
 	t := task{
 		name:           "smoketest",
 		playbook:       "smoketest.yaml",
-		explainer:      ae.defaultExplainer(),
 		plan:           *p,
 		inventory:      buildInventoryFromPlan(p),
 		clusterCatalog: *cc,
+		explainer:      ae.defaultExplainer(),
 	}
 	util.PrintHeader(ae.stdout, "Running Smoke Test", '=')
 	return ae.execute(t)
@@ -325,10 +325,10 @@ func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
 	t := task{
 		name:           "preflight",
 		playbook:       "preflight.yaml",
+		plan:           *p,
 		inventory:      buildInventoryFromPlan(p),
 		clusterCatalog: *cc,
 		explainer:      ae.preflightExplainer(),
-		plan:           *p,
 	}
 	return ae.execute(t)
 }
@@ -348,10 +348,10 @@ func (ae *ansibleExecutor) RunNewWorkerPreFlightCheck(p Plan, node Node) error {
 	t := task{
 		name:           "add-worker-preflight",
 		playbook:       "preflight.yaml",
+		plan:           p,
 		inventory:      buildInventoryFromPlan(&p),
 		clusterCatalog: *cc,
 		explainer:      ae.preflightExplainer(),
-		plan:           p,
 		limit:          []string{node.Host},
 	}
 	return ae.execute(t)
@@ -370,10 +370,10 @@ func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan, node ListableNode) 
 	t := task{
 		name:           "upgrade-preflight",
 		playbook:       "upgrade-preflight.yaml",
-		explainer:      ae.preflightExplainer(),
 		plan:           *p,
 		inventory:      inventory,
 		clusterCatalog: *cc,
+		explainer:      ae.preflightExplainer(),
 		limit:          []string{node.Node.Host},
 	}
 	return ae.execute(t)
@@ -393,10 +393,10 @@ func (ae *ansibleExecutor) RunPlay(playName string, p *Plan) error {
 	t := task{
 		name:           "step",
 		playbook:       playName,
+		plan:           *p,
 		inventory:      buildInventoryFromPlan(p),
 		clusterCatalog: *cc,
 		explainer:      ae.defaultExplainer(),
-		plan:           *p,
 	}
 	return ae.execute(t)
 }
@@ -559,9 +559,9 @@ func (ae *ansibleExecutor) upgradeNodes(plan Plan, onlineUpgrade bool, nodes ...
 	t := task{
 		name:           "upgrade-nodes",
 		playbook:       "upgrade-nodes.yaml",
+		plan:           plan,
 		inventory:      inventory,
 		clusterCatalog: *cc,
-		plan:           plan,
 		explainer:      ae.defaultExplainer(),
 		limit:          limit,
 	}
@@ -583,9 +583,9 @@ func (ae *ansibleExecutor) ValidateControlPlane(plan Plan) error {
 	t := task{
 		name:           "validate-control-plane",
 		playbook:       "validate-control-plane.yaml",
+		plan:           plan,
 		inventory:      inventory,
 		clusterCatalog: *cc,
-		plan:           plan,
 		explainer:      ae.defaultExplainer(),
 	}
 	return ae.execute(t)
@@ -600,9 +600,9 @@ func (ae *ansibleExecutor) UpgradeClusterServices(plan Plan) error {
 	t := task{
 		name:           "upgrade-cluster-services",
 		playbook:       "upgrade-cluster-services.yaml",
+		plan:           plan,
 		inventory:      inventory,
 		clusterCatalog: *cc,
-		plan:           plan,
 		explainer:      ae.defaultExplainer(),
 	}
 	return ae.execute(t)
@@ -621,9 +621,9 @@ func (ae *ansibleExecutor) DiagnoseNodes(plan Plan) error {
 	t := task{
 		name:           "diagnose",
 		playbook:       "diagnose-nodes.yaml",
+		plan:           plan,
 		inventory:      inventory,
 		clusterCatalog: *cc,
-		plan:           plan,
 		explainer:      ae.defaultExplainer(),
 	}
 	return ae.execute(t)
@@ -691,6 +691,10 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 	}
 
 	// Setup docker options
+	cc.DockerLogOptsEnabled = p.Docker.Logs.MaxSize != "-1"
+	cc.DockerLogOptsMaxSize = p.Docker.Logs.MaxSize
+	cc.DockerLogOptsMaxFile = p.Docker.Logs.MaxFile
+
 	cc.DockerDirectLVMEnabled = p.Docker.Storage.DirectLVM.Enabled
 	if cc.DockerDirectLVMEnabled {
 		cc.DockerDirectLVMBlockDevicePath = p.Docker.Storage.DirectLVM.BlockDevice
