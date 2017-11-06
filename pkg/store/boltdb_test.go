@@ -18,7 +18,7 @@ func setupStore() (WatchedStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewBoltDB(f.Name(), 0644, log.New(ioutil.Discard, "test ", 0))
+	return DefaultStore(f.Name(), 0644, log.New(ioutil.Discard, "test ", 0))
 }
 
 func TestWritingToBucketThatDoesNotExist(t *testing.T) {

@@ -26,7 +26,7 @@ func main() {
 		port = os.Getenv("PORT")
 	}
 	logger := http.DefaultLogger(os.Stdout, "[kismatic] ")
-	s, err := store.NewBoltDB("/tmp/kismatic", 0644, logger)
+	s, err := store.DefaultStore("/tmp/kismatic", 0644, logger)
 	defer s.Close()
 	if err != nil {
 		logger.Fatalf("Error opening store: %v", err)

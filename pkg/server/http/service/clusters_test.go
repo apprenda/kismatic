@@ -18,7 +18,7 @@ func setupStore() (store.WatchedStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	s, err := store.NewBoltDB(f.Name(), 0644, log.New(ioutil.Discard, "test ", 0))
+	s, err := store.DefaultStore(f.Name(), 0644, log.New(ioutil.Discard, "test ", 0))
 	if err != nil {
 		return nil, err
 	}

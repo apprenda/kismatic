@@ -64,7 +64,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	genAssetsDir := "server-assets"
 
 	// Create the store
-	clusterStore, err := store.NewBoltDB(options.dbFile, 0600, logger)
+	clusterStore, err := store.DefaultStore(options.dbFile, 0600, logger)
 	defer clusterStore.Close()
 	if err != nil {
 		logger.Fatalf("Error creating store: %v", err)

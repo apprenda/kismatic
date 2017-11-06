@@ -47,7 +47,7 @@ type WatchResponse struct {
 	Value []byte
 }
 
-func NewBoltDB(path string, mode os.FileMode, logger *log.Logger) (WatchedStore, error) {
+func DefaultStore(path string, mode os.FileMode, logger *log.Logger) (WatchedStore, error) {
 	if logger == nil {
 		return nil, fmt.Errorf("logger must be provided")
 	}
