@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/fortytw2/leaktest"
+
 	"context"
 )
 
@@ -21,6 +23,7 @@ func setupStore() (WatchedStore, error) {
 
 func TestWritingToBucketThatDoesNotExist(t *testing.T) {
 	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("unexpected error creating store: %v", err)
 	}
@@ -32,6 +35,7 @@ func TestWritingToBucketThatDoesNotExist(t *testing.T) {
 
 func TestDeletingBucketThatDoesNotExist(t *testing.T) {
 	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("unexpected error creating store: %v", err)
 	}
@@ -43,6 +47,7 @@ func TestDeletingBucketThatDoesNotExist(t *testing.T) {
 
 func TestDeletingKeyInABucketThatDoesNotExist(t *testing.T) {
 	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("unexpected error creating store: %v", err)
 	}
@@ -54,6 +59,7 @@ func TestDeletingKeyInABucketThatDoesNotExist(t *testing.T) {
 
 func TestWritingToAKey(t *testing.T) {
 	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("unexpected error creating store: %v", err)
 	}
@@ -103,14 +109,13 @@ func TestWritingToAKey(t *testing.T) {
 		if err == nil && test.shoudlFail {
 			t.Errorf("expected an error, test %d", i)
 		}
-		// if err != nil && test.shoudlFail {
-		// 	t.Logf("expected an error, test %d: %v", i, err)
-		// }
 	}
 }
 
 func TestWritingThenReadingKey(t *testing.T) {
+	defer leaktest.Check(t)()
 	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("unexpected error creating store: %v", err)
 	}
@@ -157,7 +162,9 @@ func TestWritingThenReadingKey(t *testing.T) {
 }
 
 func TestWatchingBucket(t *testing.T) {
+	defer leaktest.Check(t)()
 	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("unexpected error creating store: %v", err)
 	}
@@ -311,4 +318,5 @@ func TestWatchingBucket(t *testing.T) {
 		}
 	}
 	cancel2()
+	time.Sleep(100 * time.Millisecond)
 }

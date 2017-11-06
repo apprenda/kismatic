@@ -90,6 +90,7 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 		t.Fatalf("error creating temp dir for store")
 	}
 	s, err := store.NewBoltDB(tmpFile.Name(), 0600, logger)
+	defer s.Close()
 	bucketName := "clusters"
 	if err != nil {
 		t.Fatalf("error creating store")
@@ -156,6 +157,7 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 		t.Fatalf("error creating temp dir for store")
 	}
 	s, err := store.NewBoltDB(tmpFile.Name(), 0600, logger)
+	defer s.Close()
 	bucketName := "clusters"
 	if err != nil {
 		t.Fatalf("error creating store")

@@ -23,57 +23,62 @@ type watchMgr struct {
 	logger       *log.Logger
 }
 
-func (mgr *watchMgr) run() {
-	for msg := range mgr.mailbox {
-		switch m := msg.(type) {
-		case newWatchMsg:
-			// stash the response channel in the right map so that we can use it
-			// later for notifying on writes
-			keyWatchers, ok := mgr.watchersPerKey[m.bucket]
-			if !ok {
-				keyWatchers = make(map[uint64]chan WatchResponse)
-				mgr.watchersPerKey[m.bucket] = keyWatchers
-			}
-			keyWatchers[mgr.watchCounter] = m.respChan
-
-			// Detect watch cancelation
-			go func(id uint64) {
-				<-m.ctx.Done()
-				mgr.mailbox <- watchCanceledMsg{bucket: m.bucket, watcherID: id}
-			}(mgr.watchCounter)
-
-			mgr.watchCounter++
-
-		case watchCanceledMsg:
-			keyWatchers, ok := mgr.watchersPerKey[m.bucket]
-			if !ok {
-				continue
-			}
-			w, ok := keyWatchers[m.watcherID]
-			if !ok {
-				continue
-			}
-			close(w)
-			delete(keyWatchers, m.watcherID)
-
-		case writeOnKeyMsg:
-			watchers, ok := mgr.watchersPerKey[m.bucket]
-			if !ok {
-				mgr.logger.Printf("cannot send key write notification, bucket %q is nil\n", m.bucket)
-				continue
-			}
-			for _, w := range watchers {
-				// Notify each client in a non-blocking fashion.
-				// Dropping msgs is OK.
-				select {
-				case w <- WatchResponse{Key: m.key, Value: m.value}:
-				default:
-					mgr.logger.Printf("dropped notification\n")
+func (mgr *watchMgr) run(ctx context.Context) {
+	for {
+		select {
+		case msg := <-mgr.mailbox:
+			switch m := msg.(type) {
+			case newWatchMsg:
+				// stash the response channel in the right map so that we can use it
+				// later for notifying on writes
+				keyWatchers, ok := mgr.watchersPerKey[m.bucket]
+				if !ok {
+					keyWatchers = make(map[uint64]chan WatchResponse)
+					mgr.watchersPerKey[m.bucket] = keyWatchers
 				}
-			}
+				keyWatchers[mgr.watchCounter] = m.respChan
 
-		default:
-			mgr.logger.Printf("unknown message sent to watch mgr: %T\n", msg)
+				// Detect watch cancelation
+				go func(id uint64) {
+					<-m.ctx.Done()
+					mgr.mailbox <- watchCanceledMsg{bucket: m.bucket, watcherID: id}
+				}(mgr.watchCounter)
+
+				mgr.watchCounter++
+
+			case watchCanceledMsg:
+				keyWatchers, ok := mgr.watchersPerKey[m.bucket]
+				if !ok {
+					continue
+				}
+				w, ok := keyWatchers[m.watcherID]
+				if !ok {
+					continue
+				}
+				close(w)
+				delete(keyWatchers, m.watcherID)
+
+			case writeOnKeyMsg:
+				watchers, ok := mgr.watchersPerKey[m.bucket]
+				if !ok {
+					mgr.logger.Printf("cannot send key write notification, bucket %q is nil\n", m.bucket)
+					continue
+				}
+				for _, w := range watchers {
+					// Notify each client in a non-blocking fashion.
+					// Dropping msgs is OK.
+					select {
+					case w <- WatchResponse{Key: m.key, Value: m.value}:
+					default:
+						mgr.logger.Printf("dropped notification\n")
+					}
+				}
+			default:
+				mgr.logger.Printf("unknown message sent to watch mgr: %T\n", msg)
+			}
+		case <-ctx.Done():
+			close(mgr.mailbox)
+			return
 		}
 	}
 }

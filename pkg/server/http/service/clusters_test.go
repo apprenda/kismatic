@@ -29,6 +29,7 @@ func setupStore() (store.WatchedStore, error) {
 
 func TestCreateAndGet(t *testing.T) {
 	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("unexpected error creating store: %v", err)
 	}

@@ -81,11 +81,12 @@ func TestNewHTTPServer(t *testing.T) {
 			valid:        false,
 		},
 	}
-	store, err := setupStore()
+	s, err := setupStore()
+	defer s.Close()
 	if err != nil {
 		t.Fatalf("could not create store: %v", err)
 	}
-	clusterService := service.NewClustersService(store, bucket)
+	clusterService := service.NewClustersService(s, bucket)
 	clusterAPI := handler.Clusters{Service: clusterService}
 	for _, test := range tests {
 		server := HttpServer{

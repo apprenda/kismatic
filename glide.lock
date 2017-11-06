@@ -1,5 +1,5 @@
 hash: 38cc9f8fa9f6dbc1a778dd747bc3aa0f1ed80f6e3ca6a2e2a2cb950a015ffafa
-updated: 2017-11-02T14:08:51.8744464-04:00
+updated: 2017-11-06T09:06:34.715332742-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 40f45e34986ba617a372d1590de273a0ca84a53d
@@ -162,7 +162,6 @@ imports:
 - name: golang.org/x/net
   version: ab5485076ff3407ad2d02db054635913f017b0ed
   subpackages:
-  - context
   - html
   - html/atom
   - html/charset

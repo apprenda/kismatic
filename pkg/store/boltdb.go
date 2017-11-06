@@ -22,6 +22,7 @@ type Watcher interface {
 }
 
 type Store interface {
+	Close()
 	CreateBucket(name string) error
 	DeleteBucket(name string) error
 	Put(bucket string, key string, value []byte) error
@@ -33,6 +34,7 @@ type Store interface {
 type boltDB struct {
 	db       *bolt.DB
 	notifier chan<- interface{}
+	cancel   func()
 }
 
 type Entry struct {
@@ -60,13 +62,20 @@ func NewBoltDB(path string, mode os.FileMode, logger *log.Logger) (WatchedStore,
 		watchersPerKey: make(map[string]map[uint64]chan WatchResponse),
 		logger:         logger,
 	}
-	go wm.run()
+	ctx, cancel := context.WithCancel(context.Background())
+	go wm.run(ctx)
 	bdb := &boltDB{
 		db:       db,
 		notifier: wmMailbox,
+		cancel:   cancel,
 	}
 
 	return bdb, nil
+}
+
+// Close cleans up the watch manager goroutine
+func (bdb *boltDB) Close() {
+	bdb.cancel()
 }
 
 // Watch enables to recieve notification anytime a key in the bucket is create, modified or deleted

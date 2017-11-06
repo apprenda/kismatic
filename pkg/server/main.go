@@ -26,15 +26,16 @@ func main() {
 		port = os.Getenv("PORT")
 	}
 	logger := http.DefaultLogger(os.Stdout, "[kismatic] ")
-	store, err := store.NewBoltDB("/tmp/kismatic", 0644, logger)
+	s, err := store.NewBoltDB("/tmp/kismatic", 0644, logger)
+	defer s.Close()
 	if err != nil {
 		logger.Fatalf("Error opening store: %v", err)
 	}
-	if err := store.CreateBucket(bucket); err != nil {
+	if err := s.CreateBucket(bucket); err != nil {
 		logger.Fatalf("Error creating bucket: %v", err)
 	}
 	// create services and handlers
-	clusterService := service.NewClustersService(store, bucket)
+	clusterService := service.NewClustersService(s, bucket)
 	clusterAPI := handler.Clusters{Service: clusterService}
 
 	// Setup the HTTP server
