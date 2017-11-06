@@ -22,7 +22,7 @@ const (
 	// CentOS7East is the AMI for CentOS 7
 	CentOS7East = AMI("ami-6d1c2007")
 	// RedHat7East is the AMI for RedHat 7
-	RedHat7East = AMI("ami-b63769a1")
+	RedHat7East = AMI("ami-c998b6b2")
 	// T2Micro is the T2 Micro instance type
 	T2Micro = InstanceType(ec2.InstanceTypeT2Micro)
 	// T2Medium is the T2 Medium instance type
