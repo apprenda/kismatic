@@ -77,7 +77,9 @@ func (s *HttpServer) Init() error {
 	// setup routes
 	router := httprouter.New()
 	router.GET("/healthz", handler.Healthz)
+	router.GET("/clusters", s.ClustersAPI.GetAll)
 	router.GET("/clusters/:name", s.ClustersAPI.Get)
+	router.DELETE("/clusters/:name", s.ClustersAPI.Delete)
 	router.POST("/clusters", s.ClustersAPI.Create)
 
 	// use our own logger format

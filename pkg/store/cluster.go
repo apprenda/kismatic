@@ -23,6 +23,7 @@ type ClusterStore interface {
 	Get(key string) (*Cluster, error)
 	Put(key string, cluster Cluster) error
 	GetAll() (map[string]Cluster, error)
+	Delete(key string) error
 	Watch(ctx context.Context, buffer uint) <-chan WatchResponse
 }
 
@@ -74,6 +75,10 @@ func (s cs) GetAll() (map[string]Cluster, error) {
 		m[e.Key] = c
 	}
 	return m, nil
+}
+
+func (s cs) Delete(key string) error {
+	return s.Store.Delete(s.Bucket, key)
 }
 
 func (s cs) Watch(ctx context.Context, buffer uint) <-chan WatchResponse {

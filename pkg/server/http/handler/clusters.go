@@ -71,6 +71,34 @@ func (api Clusters) Get(w http.ResponseWriter, r *http.Request, p httprouter.Par
 	fmt.Fprintln(w, string(resp))
 }
 
+func (api Clusters) GetAll(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	clustersResp, err := getAllFromStore(api.Store)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "%s\n", err.Error())
+		return
+	}
+	// Write content-type, statuscode, payload
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	resp, err := json.MarshalIndent(clustersResp, "", "    ")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, "could not marshall response\n")
+	}
+	fmt.Fprintln(w, string(resp))
+}
+
+func (api Clusters) Delete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	id := p.ByName("name")
+	if err := api.Store.Delete(id); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprintf(w, "could not delete from the store: %v", err)
+	}
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte("ok\n"))
+}
+
 func putToStore(req *ClusterRequest, cs store.ClusterStore) error {
 	// build the plan template
 	planTemplate := install.PlanTemplateOptions{
@@ -117,6 +145,27 @@ func getFromStore(name string, cs store.ClusterStore) (*ClusterResponse, error) 
 		DesiredState: sc.DesiredState,
 		CurrentState: sc.CurrentState,
 		Plan:         sc.Plan,
+	}
+	return resp, nil
+}
+
+func getAllFromStore(cs store.ClusterStore) ([]ClusterResponse, error) {
+	msc, err := cs.GetAll()
+	if err != nil {
+		return nil, fmt.Errorf("could not get from the store: %v", err)
+	}
+	resp := make([]ClusterResponse, 0)
+	if msc == nil {
+		return resp, nil
+	}
+	for key, sc := range msc {
+		r := ClusterResponse{
+			Name:         key,
+			DesiredState: sc.DesiredState,
+			CurrentState: sc.CurrentState,
+			Plan:         sc.Plan,
+		}
+		resp = append(resp, r)
 	}
 	return resp, nil
 }

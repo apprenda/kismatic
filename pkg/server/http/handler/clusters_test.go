@@ -32,13 +32,19 @@ func (cs *mockClustersStore) Put(key string, cluster store.Cluster) error {
 }
 
 func (cs mockClustersStore) GetAll() (map[string]store.Cluster, error) {
-	return nil, nil
+	return cs.store, nil
 }
+
+func (cs mockClustersStore) Delete(key string) error {
+	delete(cs.store, key)
+	return nil
+}
+
 func (cs mockClustersStore) Watch(ctx context.Context, buffer uint) <-chan store.WatchResponse {
 	return nil
 }
 
-func TestCreateAndGet(t *testing.T) {
+func TestCreateGetGetandDelete(t *testing.T) {
 	if testing.Short() {
 		return
 	}
@@ -85,7 +91,7 @@ func TestCreateAndGet(t *testing.T) {
 	}
 
 	// should get 404
-	req, err = http.NewRequest("GET", "/clusters/bar", bytes.NewBuffer(encoded))
+	req, err = http.NewRequest("GET", "/clusters/bar", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +106,7 @@ func TestCreateAndGet(t *testing.T) {
 	}
 
 	// should get a response
-	req, err = http.NewRequest("GET", "/clusters/foo", bytes.NewBuffer(encoded))
+	req, err = http.NewRequest("GET", "/clusters/foo", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,5 +117,57 @@ func TestCreateAndGet(t *testing.T) {
 	if status := rr.Code; status != http.StatusOK {
 		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusOK, rr.Body.String())
+	}
+
+	// should getAll
+	req, err = http.NewRequest("GET", "/clusters", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr = httptest.NewRecorder()
+	r = httprouter.New()
+	r.GET("/clusters", clustersAPI.GetAll)
+	r.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusOK, rr.Body.String())
+	}
+
+	// should delete
+	req, err = http.NewRequest("DELETE", "/clusters/foo", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr = httptest.NewRecorder()
+	r = httprouter.New()
+	r.DELETE("/clusters/:name", clustersAPI.Delete)
+	r.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusAccepted {
+		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusAccepted, rr.Code)
+	}
+	expected = "ok\n"
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
+
+	// should getAll
+	req, err = http.NewRequest("GET", "/clusters", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr = httptest.NewRecorder()
+	r = httprouter.New()
+	r.GET("/clusters", clustersAPI.GetAll)
+	r.ServeHTTP(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusOK, rr.Body.String())
+	}
+	expected = "[]\n"
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
 	}
 }
