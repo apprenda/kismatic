@@ -63,7 +63,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	genAssetsDir := "server-assets"
 
 	// Create the store
-	s, err := store.DefaultStore(options.dbFile, 0600, logger)
+	s, err := store.New(options.dbFile, 0600, logger)
 	defer s.Close()
 	if err != nil {
 		logger.Fatalf("Error creating store: %v", err)

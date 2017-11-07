@@ -89,7 +89,7 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating temp dir for store")
 	}
-	s, err := store.DefaultStore(tmpFile.Name(), 0600, logger)
+	s, err := store.New(tmpFile.Name(), 0600, logger)
 	defer s.Close()
 	bucketName := "clusters"
 	if err != nil {
@@ -158,7 +158,7 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error creating temp dir for store")
 	}
-	s, err := store.DefaultStore(tmpFile.Name(), 0600, logger)
+	s, err := store.New(tmpFile.Name(), 0600, logger)
 	defer s.Close()
 	bucketName := "clusters"
 	if err != nil {

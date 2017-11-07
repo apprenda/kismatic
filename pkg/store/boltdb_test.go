@@ -18,7 +18,7 @@ func setupStore() (WatchedStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	return DefaultStore(f.Name(), 0644, log.New(ioutil.Discard, "test ", 0))
+	return New(f.Name(), 0644, log.New(ioutil.Discard, "test ", 0))
 }
 
 func TestWritingToBucketThatDoesNotExist(t *testing.T) {

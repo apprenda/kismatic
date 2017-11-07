@@ -47,7 +47,7 @@ type WatchResponse struct {
 	Value []byte
 }
 
-func DefaultStore(path string, mode os.FileMode, logger *log.Logger) (WatchedStore, error) {
+func New(path string, mode os.FileMode, logger *log.Logger) (WatchedStore, error) {
 	if logger == nil {
 		return nil, fmt.Errorf("logger must be provided")
 	}
