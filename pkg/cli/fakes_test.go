@@ -39,7 +39,7 @@ func (fe *fakeExecutor) GenerateCertificates(*install.Plan, bool) error {
 	return nil
 }
 
-func (fe *fakeExecutor) GenerateKubeconfig(plan install.Plan, generatedAssetsDir string) error {
+func (fe *fakeExecutor) GenerateKubeconfig(plan install.Plan) error {
 	return nil
 }
 

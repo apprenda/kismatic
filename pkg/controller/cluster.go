@@ -23,10 +23,9 @@ const (
 
 // The clusterController manages the lifecycle of a single cluster.
 type clusterController struct {
-	log                *log.Logger
-	executor           install.Executor
-	clusterStore       store.ClusterStore
-	generatedAssetsDir string
+	log          *log.Logger
+	executor     install.Executor
+	clusterStore store.ClusterStore
 }
 
 func (c *clusterController) run(clusterName string, watch <-chan struct{}) {
@@ -120,7 +119,7 @@ func (c *clusterController) install(plan install.Plan) (string, bool) {
 		return installFailed, false
 	}
 
-	err = c.executor.GenerateKubeconfig(plan, c.generatedAssetsDir)
+	err = c.executor.GenerateKubeconfig(plan)
 	if err != nil {
 		c.log.Printf("error generating kubeconfig file: %v", err)
 		return installFailed, false

@@ -4,10 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"path/filepath"
 	"time"
 
-	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/store"
 )
 
@@ -32,10 +30,9 @@ const clusterControllerNotificationBuffer = 10
 // terminated.
 type multiClusterController struct {
 	log                *log.Logger
-	executor           install.Executor
+	newExecutor        ExecutorCreator
 	clusterStore       store.ClusterStore
 	reconcileFreq      time.Duration
-	generatedAssetsDir string
 	clusterControllers map[string]chan<- struct{}
 }
 
@@ -64,11 +61,15 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 				newChan := make(chan struct{}, clusterControllerNotificationBuffer)
 				ch = newChan
 				mcc.clusterControllers[clusterName] = newChan
+				executor, err := mcc.newExecutor(clusterName)
+				if err != nil {
+					mcc.log.Printf("error creating executor for new cluster: %v", err)
+					continue
+				}
 				cc := clusterController{
-					log:                mcc.log,
-					executor:           mcc.executor,
-					clusterStore:       mcc.clusterStore,
-					generatedAssetsDir: filepath.Join(mcc.generatedAssetsDir, clusterName),
+					log:          mcc.log,
+					executor:     executor,
+					clusterStore: mcc.clusterStore,
 				}
 				go cc.run(clusterName, newChan)
 			}
@@ -100,11 +101,15 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 				if !found {
 					newChan := make(chan struct{}, clusterControllerNotificationBuffer)
 					mcc.clusterControllers[clusterName] = newChan
+					executor, err := mcc.newExecutor(clusterName)
+					if err != nil {
+						mcc.log.Printf("error creating executor for new cluster: %v", err)
+						continue
+					}
 					cc := clusterController{
-						log:                mcc.log,
-						executor:           mcc.executor,
-						clusterStore:       mcc.clusterStore,
-						generatedAssetsDir: filepath.Join(mcc.generatedAssetsDir, clusterName),
+						log:          mcc.log,
+						executor:     executor,
+						clusterStore: mcc.clusterStore,
 					}
 					go cc.run(clusterName, newChan)
 				}

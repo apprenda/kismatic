@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/controller"
-	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/server/http"
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
 	"github.com/apprenda/kismatic/pkg/store"
@@ -60,7 +59,6 @@ If cert-file or key-file are not provided, a self-signed CA will be used to crea
 
 func doServer(stdout io.Writer, options serverOptions) error {
 	logger := log.New(stdout, "[kismatic] ", log.LstdFlags|log.Lshortfile)
-	genAssetsDir := "server-assets"
 
 	// Create the store
 	s, err := store.New(options.dbFile, 0600, logger)
@@ -99,20 +97,13 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		}
 	}()
 
-	// Setup the controller
-	executorOpts := install.ExecutorOptions{
-		GeneratedAssetsDirectory: genAssetsDir,
-		RunsDirectory:            "server-runs",
-		RestartServices:          true,
-		OutputFormat:             "simple",
-		Verbose:                  true,
-	}
-	executor, err := install.NewExecutor(stdout, os.Stderr, executorOpts)
+	// Create a dir where all the controller-related files will be stored
+	rootDir := "server"
+	err = os.MkdirAll(rootDir, 0600)
 	if err != nil {
-		return err
+		logger.Fatalf("error creating directory %q: %v", rootDir, err)
 	}
-
-	ctrl := controller.New(logger, executor, clusterStore, genAssetsDir, 10*time.Minute)
+	ctrl := controller.New(logger, controller.DefaultExecutorCreator(rootDir), clusterStore, 10*time.Minute)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ctrl.Run(ctx)
 

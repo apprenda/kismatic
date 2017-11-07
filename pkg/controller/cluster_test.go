@@ -39,7 +39,7 @@ func (e dummyExec) GenerateCertificates(p *install.Plan, useExistingCA bool) err
 	return nil
 }
 
-func (e dummyExec) GenerateKubeconfig(plan install.Plan, generatedAssetsDir string) error {
+func (e dummyExec) GenerateKubeconfig(plan install.Plan) error {
 	return nil
 }
 
@@ -83,7 +83,7 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
 	// Stub out dependencies
-	executor := dummyExec{installSleep: 1 * time.Second}
+	executorCreator := func(string) (install.Executor, error) { return dummyExec{installSleep: 1 * time.Second}, nil }
 
 	tmpFile, err := ioutil.TempFile("", "cluster-controller-tests")
 	if err != nil {
@@ -101,7 +101,7 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 
 	// Start the controller
 	clusterName := "testCluster"
-	c := New(logger, executor, clusterStore, "foo", 10*time.Minute)
+	c := New(logger, executorCreator, clusterStore, 10*time.Minute)
 	go c.Run(ctx)
 
 	// Create a new cluster in the store
@@ -152,7 +152,7 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
 	// Stub out dependencies
-	executor := dummyExec{installSleep: 1 * time.Second}
+	executorCreator := func(string) (install.Executor, error) { return dummyExec{installSleep: 1 * time.Second}, nil }
 
 	tmpFile, err := ioutil.TempFile("", "cluster-controller-tests")
 	if err != nil {
@@ -181,7 +181,7 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 
 	clusterStore := store.NewClusterStore(s, bucketName)
 	// Start the controller
-	c := New(logger, executor, clusterStore, "foo", 3*time.Second)
+	c := New(logger, executorCreator, clusterStore, 3*time.Second)
 	go c.Run(ctx)
 
 	// Assert that the cluster reaches desired state
