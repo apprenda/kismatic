@@ -50,11 +50,10 @@ Xt3kFlXWFvZIMEmJWA/fHakxzU+TjUbc
 EOF
 
 ### Create snapshost of the docker repository
-wget -O - https://apt.dockerproject.org/gpg | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-aptly mirror create docker https://apt.dockerproject.org/repo/ ubuntu-xenial main
+wget -O - https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+aptly -architectures="amd64" mirror create docker https://download.docker.com/linux/ubuntu xenial stable
 aptly mirror update docker
 aptly snapshot create docker from mirror docker
-aptly publish snapshot --passphrase dummy docker
 
 ### Create snapshost of the kubernetes repository
 wget -O - https://packages.cloud.google.com/apt/doc/apt-key.gpg | gpg --no-default-keyring --keyring trustedkeys.gpg --import
@@ -89,8 +88,8 @@ aptly mirror create gluster ppa:gluster/glusterfs-3.8
 aptly mirror update gluster
 aptly snapshot create gluster from mirror gluster
 
-### Merge ubuntu and gluster snapshots into
-aptly snapshot merge xenial-repo ubuntu-main gluster
+### Merge ubuntu, gluster and docker snapshots
+aptly snapshot merge xenial-repo ubuntu-main gluster docker
 aptly publish snapshot --passphrase dummy xenial-repo
 
 ### Serve the mirrors

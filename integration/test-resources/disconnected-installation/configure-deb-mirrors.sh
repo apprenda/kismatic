@@ -39,7 +39,7 @@ EOF
 cat <<EOF > /etc/apt/sources.list
 deb $1 xenial main
 deb $1 kubernetes-xenial main
-deb $1 ubuntu-xenial main
+deb [arch=amd64] $1 xenial stable
 EOF
 
 apt-get update -y

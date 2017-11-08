@@ -72,11 +72,11 @@ The kubernetes, docker and gluster RPM repositories must be configured on the no
 sudo bash -c 'cat <<EOF > /etc/yum.repos.d/docker.repo
 [docker]
 name=Docker
-baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+baseurl=https://download.docker.com/linux/centos/7/x86_64/stable/
 enabled=1
 gpgcheck=1
 repo_gpgcheck=0
-gpgkey=https://yum.dockerproject.org/gpg
+gpgkey=https://download.docker.com/linux/centos/gpg
 EOF'
 
 # Add Kubernetes repo
@@ -185,11 +185,10 @@ apt-get -y install aptly
 
 ### Create snapshost of the docker repository
 ```
-wget -O - https://apt.dockerproject.org/gpg | gpg --no-default-keyring --keyring trustedkeys.gpg --import
-aptly mirror create docker https://apt.dockerproject.org/repo/ ubuntu-xenial main
+wget -O - https://download.docker.com/linux/ubuntu/gpg | gpg --no-default-keyring --keyring trustedkeys.gpg --import
+aptly -architectures="amd64" mirror create docker https://download.docker.com/linux/ubuntu xenial stable
 aptly mirror update docker
 aptly snapshot create docker from mirror docker
-aptly publish snapshot docker
 ```
 
 ### Create snapshost of the kubernetes repository
@@ -225,9 +224,9 @@ aptly mirror update gluster
 aptly snapshot create gluster from mirror gluster
 ```
 
-### Merge ubuntu and gluster snapshots into
+### Merge ubuntu, gluster and docker snapshots
 ```
-aptly snapshot merge xenial-repo ubuntu-main gluster
+aptly snapshot merge xenial-repo ubuntu-main gluster docker
 aptly publish snapshot xenial-repo
 ```
 
@@ -254,7 +253,7 @@ Sample `/etc/apt/sources.list`:
 ```
 deb http://mirror.example.com xenial main
 deb http://mirror.example.com kubernetes-xenial main
-deb http://mirror.example.com ubuntu-xenial main
+deb [arch=amd64] http://mirror.example.com xenial stable
 ```
 
 ## Seeding a local container registry

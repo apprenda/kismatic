@@ -29,11 +29,11 @@ EOF
 	createDockerRepoFileYum = `cat <<EOF > /tmp/docker.repo
 [docker]
 name=Docker
-baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+baseurl=https://download.docker.com/linux/centos/7/x86_64/stable/
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
-gpgkey=https://yum.dockerproject.org/gpg
+gpgkey=https://download.docker.com/linux/centos/gpg
 EOF
 `
 
@@ -51,16 +51,16 @@ EOF`
 	moveDockerRepoFileYum     = `sudo mv /tmp/docker.repo /etc/yum.repos.d`
 	moveGlusterRepoFileYum    = `sudo mv /tmp/gluster.repo /etc/yum.repos.d`
 
-	installDockerYum          = `sudo yum -y install docker-engine-1.12.6-1.el7.centos`
+	installDockerYum          = `sudo yum -y install --setopt=obsoletes=0 docker-ce-17.03.2.ce-1.el7.centos`
 	installKubeletYum         = `sudo yum -y install kubelet-1.9.0-0`
 	installNFSUtilsYum        = `sudo yum -y install nfs-utils` // required for the kubelet
 	installKubectlYum         = `sudo yum -y install kubectl-1.9.0-0`
 	installGlusterfsServerYum = `sudo yum -y install --nogpgcheck glusterfs-server-3.8.15-2.el7`
 
 	updateAptGet        = `sudo apt-get update`
-	addDockerRepoKeyApt = `wget -qO - https://apt.dockerproject.org/gpg | sudo apt-key add -`
-	addDockerRepoApt    = `sudo add-apt-repository "deb https://apt.dockerproject.org/repo/ ubuntu-xenial main"`
-	installDockerApt    = `sudo apt-get -y install docker-engine=1.12.6-0~ubuntu-xenial`
+	addDockerRepoKeyApt = `wget -qO - https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -`
+	addDockerRepoApt    = `sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable"`
+	installDockerApt    = `sudo apt-get -y install docker-ce=17.03.2~ce-0~ubuntu-xenial`
 
 	addKubernetesRepoKeyApt = `wget -qO - https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -`
 	addKubernetesRepoApt    = `sudo add-apt-repository "deb https://packages.cloud.google.com/apt/ kubernetes-xenial main"`
