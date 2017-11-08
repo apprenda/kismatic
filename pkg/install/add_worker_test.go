@@ -21,7 +21,7 @@ func mustGetTempDir(t *testing.T) string {
 
 func TestAddWorkerCertMissingCAMissing(t *testing.T) {
 	e := ansibleExecutor{
-		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		options:             ExecutorOptions{RunsDirectory: mustGetTempDir(t)},
 		stdout:              ioutil.Discard,
 		consoleOutputFormat: ansible.RawFormat,
 		pki:                 &fakePKI{},
@@ -33,7 +33,7 @@ func TestAddWorkerCertMissingCAMissing(t *testing.T) {
 		},
 	}
 	newWorker := Node{}
-	newPlan, err := e.AddWorker(originalPlan, newWorker)
+	newPlan, err := e.AddWorker(originalPlan, newWorker, true)
 	if newPlan != nil {
 		t.Errorf("add worker returned an updated plan")
 	}
@@ -48,7 +48,7 @@ func TestAddWorkerCertMissingCAExists(t *testing.T) {
 		caExists: true,
 	}
 	e := ansibleExecutor{
-		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		options:             ExecutorOptions{RunsDirectory: mustGetTempDir(t)},
 		stdout:              ioutil.Discard,
 		consoleOutputFormat: ansible.RawFormat,
 		pki:                 pki,
@@ -69,7 +69,7 @@ func TestAddWorkerCertMissingCAExists(t *testing.T) {
 		},
 	}
 	newWorker := Node{}
-	_, err := e.AddWorker(originalPlan, newWorker)
+	_, err := e.AddWorker(originalPlan, newWorker, true)
 	if err != nil {
 		t.Errorf("unexpected error while adding worker: %v", err)
 	}
@@ -83,7 +83,7 @@ func TestAddWorkerCertMissingCAExists(t *testing.T) {
 
 func TestAddWorkerPlanIsUpdated(t *testing.T) {
 	e := ansibleExecutor{
-		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		options:             ExecutorOptions{RunsDirectory: mustGetTempDir(t)},
 		stdout:              ioutil.Discard,
 		consoleOutputFormat: ansible.RawFormat,
 		pki: &fakePKI{
@@ -113,7 +113,7 @@ func TestAddWorkerPlanIsUpdated(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	updatedPlan, err := e.AddWorker(originalPlan, newWorker)
+	updatedPlan, err := e.AddWorker(originalPlan, newWorker, true)
 	if err != nil {
 		t.Errorf("unexpected error while adding worker: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestAddWorkerPlanIsUpdated(t *testing.T) {
 
 func TestAddWorkerPlanNotUpdatedAfterFailure(t *testing.T) {
 	e := ansibleExecutor{
-		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		options:             ExecutorOptions{RunsDirectory: mustGetTempDir(t)},
 		stdout:              ioutil.Discard,
 		consoleOutputFormat: ansible.RawFormat,
 		pki: &fakePKI{
@@ -163,7 +163,7 @@ func TestAddWorkerPlanNotUpdatedAfterFailure(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	updatedPlan, err := e.AddWorker(originalPlan, newWorker)
+	updatedPlan, err := e.AddWorker(originalPlan, newWorker, true)
 	if err == nil {
 		t.Errorf("expected an error, but didn't get one")
 	}
@@ -176,7 +176,7 @@ func TestAddWorkerRestartServicesEnabled(t *testing.T) {
 	fakeRunner := fakeRunner{}
 	e := ansibleExecutor{
 		certsDir:            mustGetTempDir(t),
-		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		options:             ExecutorOptions{RunsDirectory: mustGetTempDir(t)},
 		stdout:              ioutil.Discard,
 		consoleOutputFormat: ansible.RawFormat,
 		pki: &fakePKI{
@@ -207,7 +207,7 @@ func TestAddWorkerRestartServicesEnabled(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	_, err := e.AddWorker(originalPlan, newWorker)
+	_, err := e.AddWorker(originalPlan, newWorker, true)
 	if err != nil {
 		t.Errorf("unexpected error")
 	}
@@ -265,7 +265,7 @@ func TestAddWorkerHostsFilesDNSEnabled(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	_, err := e.AddWorker(originalPlan, newWorker)
+	_, err := e.AddWorker(originalPlan, newWorker, false)
 	if err != nil {
 		t.Errorf("unexpected error")
 	}

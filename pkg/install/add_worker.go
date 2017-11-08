@@ -12,7 +12,7 @@ var errMissingClusterCA = errors.New("The Certificate Authority's private key an
 
 // AddWorker adds a worker node to the original cluster described in the plan.
 // If successful, the updated plan is returned.
-func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan, error) {
+func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node, restartServices bool) (*Plan, error) {
 	if err := checkAddWorkerPrereqs(ae.pki, newWorker); err != nil {
 		return nil, err
 	}
@@ -33,6 +33,9 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 	cc, err := ae.buildClusterCatalog(&updatedPlan)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate ansible vars: %v", err)
+	}
+	if restartServices {
+		cc.EnableRestart()
 	}
 	util.PrintHeader(ae.stdout, "Adding Worker Node to Cluster", '=')
 	t := task{

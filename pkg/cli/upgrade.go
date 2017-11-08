@@ -120,7 +120,6 @@ func doUpgrade(in io.Reader, out io.Writer, opts *upgradeOpts) error {
 	planner := install.FilePlanner{File: planFile}
 	executorOpts := install.ExecutorOptions{
 		GeneratedAssetsDirectory: opts.generatedAssetsDir,
-		RestartServices:          opts.restartServices,
 		OutputFormat:             opts.outputFormat,
 		Verbose:                  opts.verbose,
 		DryRun:                   opts.dryRun,
@@ -365,7 +364,7 @@ func upgradeNodes(in io.Reader, out io.Writer, plan install.Plan, opts upgradeOp
 	}
 
 	// Run the upgrade on the nodes that need it
-	if err := executor.UpgradeNodes(plan, toUpgrade, opts.online, opts.maxParallelWorkers); err != nil {
+	if err := executor.UpgradeNodes(plan, toUpgrade, opts.online, opts.maxParallelWorkers, opts.restartServices); err != nil {
 		return fmt.Errorf("Failed to upgrade nodes: %v", err)
 	}
 	return nil

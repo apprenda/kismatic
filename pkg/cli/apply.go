@@ -19,6 +19,7 @@ type applyCmd struct {
 	verbose            bool
 	outputFormat       string
 	skipPreFlight      bool
+	restartServices    bool
 }
 
 type applyOpts struct {
@@ -42,7 +43,6 @@ func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
 			planner := &install.FilePlanner{File: installOpts.planFilename}
 			executorOpts := install.ExecutorOptions{
 				GeneratedAssetsDirectory: applyOpts.generatedAssetsDir,
-				RestartServices:          applyOpts.restartServices,
 				OutputFormat:             applyOpts.outputFormat,
 				Verbose:                  applyOpts.verbose,
 			}
@@ -60,6 +60,7 @@ func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
 				verbose:            applyOpts.verbose,
 				outputFormat:       applyOpts.outputFormat,
 				skipPreFlight:      applyOpts.skipPreFlight,
+				restartServices:    applyOpts.restartServices,
 			}
 			return applyCmd.run()
 		},
@@ -107,7 +108,7 @@ func (c *applyCmd) run() error {
 	util.PrettyPrintOk(c.out, "Generated kubeconfig file in the %q directory", c.generatedAssetsDir)
 
 	// Perform the installation
-	if err := c.executor.Install(plan); err != nil {
+	if err := c.executor.Install(plan, c.restartServices); err != nil {
 		return fmt.Errorf("error installing: %v", err)
 	}
 

@@ -39,7 +39,6 @@ func NewCmdStep(out io.Writer, opts *installOpts) *cobra.Command {
 			}
 			execOpts := install.ExecutorOptions{
 				GeneratedAssetsDirectory: stepCmd.generatedAssetsDir,
-				RestartServices:          stepCmd.restartServices,
 				OutputFormat:             stepCmd.outputFormat,
 				Verbose:                  stepCmd.verbose,
 			}
@@ -77,7 +76,7 @@ func (c stepCmd) run() error {
 		return fmt.Errorf("error reading plan file: %v", err)
 	}
 	util.PrintHeader(c.out, "Running Task", '=')
-	if err := c.executor.RunPlay(c.task, plan); err != nil {
+	if err := c.executor.RunPlay(c.task, plan, c.restartServices); err != nil {
 		return err
 	}
 	util.PrintColor(c.out, util.Green, "\nTask completed successfully\n\n")

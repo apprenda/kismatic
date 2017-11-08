@@ -22,10 +22,10 @@ type ClusterController interface {
 type ExecutorCreator func(clusterName string) (install.Executor, error)
 
 // New returns a cluster controller
-func New(l *log.Logger, execCreater ExecutorCreator, cs store.ClusterStore, reconFreq time.Duration) ClusterController {
+func New(l *log.Logger, execCreator ExecutorCreator, cs store.ClusterStore, reconFreq time.Duration) ClusterController {
 	return &multiClusterController{
 		log:                l,
-		newExecutor:        execCreater,
+		newExecutor:        execCreator,
 		clusterStore:       cs,
 		reconcileFreq:      reconFreq,
 		clusterControllers: make(map[string]chan<- struct{}),
@@ -55,7 +55,6 @@ func DefaultExecutorCreator(rootDir string) ExecutorCreator {
 		executorOpts := install.ExecutorOptions{
 			GeneratedAssetsDirectory: filepath.Join(rootDir, clusterName, "generated"),
 			RunsDirectory:            filepath.Join(rootDir, clusterName, "runs"),
-			RestartServices:          true,
 			OutputFormat:             "simple",
 			Verbose:                  true,
 		}

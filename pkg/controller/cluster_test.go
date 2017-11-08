@@ -18,7 +18,7 @@ type dummyExec struct {
 	installSleep time.Duration
 }
 
-func (e dummyExec) Install(p *install.Plan) error {
+func (e dummyExec) Install(p *install.Plan, restartServices bool) error {
 	time.Sleep(e.installSleep)
 	return nil
 }
@@ -47,11 +47,11 @@ func (e dummyExec) RunSmokeTest(*install.Plan) error {
 	return nil
 }
 
-func (e dummyExec) AddWorker(*install.Plan, install.Node) (*install.Plan, error) {
+func (e dummyExec) AddWorker(*install.Plan, install.Node, bool) (*install.Plan, error) {
 	panic("not implemented")
 }
 
-func (e dummyExec) RunPlay(string, *install.Plan) error {
+func (e dummyExec) RunPlay(string, *install.Plan, bool) error {
 	panic("not implemented")
 }
 
@@ -63,7 +63,7 @@ func (e dummyExec) DeleteVolume(*install.Plan, string) error {
 	panic("not implemented")
 }
 
-func (e dummyExec) UpgradeNodes(plan install.Plan, nodesToUpgrade []install.ListableNode, onlineUpgrade bool, maxParallelWorkers int) error {
+func (e dummyExec) UpgradeNodes(plan install.Plan, nodesToUpgrade []install.ListableNode, onlineUpgrade bool, maxParallelWorkers int, restartServices bool) error {
 	panic("not implemented")
 }
 

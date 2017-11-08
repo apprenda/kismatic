@@ -125,7 +125,7 @@ func (c *clusterController) install(plan install.Plan) (string, bool) {
 		return installFailed, false
 	}
 
-	err = c.executor.Install(&plan)
+	err = c.executor.Install(&plan, true)
 	if err != nil {
 		c.log.Printf("error installing the cluster: %v", err)
 		return installFailed, false

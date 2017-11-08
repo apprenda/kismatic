@@ -31,7 +31,7 @@ type fakeExecutor struct {
 	err           error
 }
 
-func (fe *fakeExecutor) AddWorker(p *install.Plan, newWorker install.Node) (*install.Plan, error) {
+func (fe *fakeExecutor) AddWorker(p *install.Plan, newWorker install.Node, restartServices bool) (*install.Plan, error) {
 	return nil, nil
 }
 
@@ -43,7 +43,7 @@ func (fe *fakeExecutor) GenerateKubeconfig(plan install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) Install(p *install.Plan) error {
+func (fe *fakeExecutor) Install(p *install.Plan, restartServices bool) error {
 	fe.installCalled = true
 	return fe.err
 }
@@ -60,7 +60,7 @@ func (fe *fakeExecutor) RunUpgradePreFlightCheck(*install.Plan, install.Listable
 	return nil
 }
 
-func (fe *fakeExecutor) UpgradeNodes(install.Plan, []install.ListableNode, bool, int) error {
+func (fe *fakeExecutor) UpgradeNodes(install.Plan, []install.ListableNode, bool, int, bool) error {
 	return nil
 }
 
@@ -80,7 +80,7 @@ func (fe *fakeExecutor) RunSmokeTest(p *install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) RunPlay(string, *install.Plan) error {
+func (fe *fakeExecutor) RunPlay(string, *install.Plan, bool) error {
 	return nil
 }
 

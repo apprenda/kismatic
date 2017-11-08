@@ -67,7 +67,6 @@ func doAddWorker(out io.Writer, planFile string, opts *addWorkerOpts, newWorker 
 	}
 	execOpts := install.ExecutorOptions{
 		GeneratedAssetsDirectory: opts.GeneratedAssetsDirectory,
-		RestartServices:          opts.RestartServices,
 		OutputFormat:             opts.OutputFormat,
 		Verbose:                  opts.Verbose,
 	}
@@ -104,7 +103,7 @@ func doAddWorker(out io.Writer, planFile string, opts *addWorkerOpts, newWorker 
 			return err
 		}
 	}
-	updatedPlan, err := executor.AddWorker(plan, newWorker)
+	updatedPlan, err := executor.AddWorker(plan, newWorker, opts.RestartServices)
 	if err != nil {
 		return err
 	}
