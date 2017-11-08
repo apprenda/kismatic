@@ -9,11 +9,11 @@ yum install -y yum-utils httpd createrepo
 cat <<EOF > /etc/yum.repos.d/docker.repo
 [docker]
 name=Docker
-baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+baseurl=https://download.docker.com/linux/centos/7/x86_64/stable/
 enabled=1
 gpgcheck=1
 repo_gpgcheck=0
-gpgkey=https://yum.dockerproject.org/gpg
+gpgkey=https://download.docker.com/linux/centos/gpg
 EOF
 
 # Add Kubernetes repo

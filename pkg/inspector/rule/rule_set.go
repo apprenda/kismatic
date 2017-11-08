@@ -183,8 +183,8 @@ const defaultRuleSet = `---
 
 - kind: PackageDependency
   when: ["etcd","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
@@ -199,20 +199,20 @@ const defaultRuleSet = `---
   packageVersion: 1.9.0-00
 - kind: PackageDependency
   when: ["master","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["worker","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["storage","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubelet
@@ -253,8 +253,8 @@ const defaultRuleSet = `---
 
 - kind: PackageDependency
   when: ["etcd","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
@@ -269,20 +269,20 @@ const defaultRuleSet = `---
   packageVersion: 1.9.0-0
 - kind: PackageDependency
   when: ["master","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["storage","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubelet
@@ -323,8 +323,8 @@ const defaultRuleSet = `---
 
 - kind: PackageDependency
   when: ["etcd","rhel"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet
@@ -339,20 +339,20 @@ const defaultRuleSet = `---
   packageVersion: 1.9.0-0
 - kind: PackageDependency
   when: ["master","rhel"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","rhel"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","rhel"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["storage","rhel"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubelet
@@ -457,8 +457,8 @@ const upgradeRuleSet = `---
 
 - kind: PackageDependency
   when: ["etcd","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
@@ -473,20 +473,20 @@ const upgradeRuleSet = `---
   packageVersion: 1.9.0-00
 - kind: PackageDependency
   when: ["master","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["worker","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["storage","ubuntu"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-0~ubuntu-xenial
+  packageName: docker-ce
+  packageVersion: 17.03.2~ce-0~ubuntu-xenial
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubelet
@@ -526,8 +526,8 @@ const upgradeRuleSet = `---
 
 - kind: PackageDependency
   when: ["etcd","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
@@ -542,20 +542,20 @@ const upgradeRuleSet = `---
   packageVersion: 1.9.0-0
 - kind: PackageDependency
   when: ["master","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["storage","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubelet
@@ -595,8 +595,8 @@ const upgradeRuleSet = `---
 
 - kind: PackageDependency
   when: ["etcd","rhel"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet
@@ -611,20 +611,20 @@ const upgradeRuleSet = `---
   packageVersion: 1.9.0-0
 - kind: PackageDependency
   when: ["master","rhel"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["ingress","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["storage","centos"]
-  packageName: docker-engine
-  packageVersion: 1.12.6-1.el7.centos
+  packageName: docker-ce
+  packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubelet

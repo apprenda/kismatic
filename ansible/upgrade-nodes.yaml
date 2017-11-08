@@ -7,8 +7,6 @@
   # Drain the node before we touch it
   - include: _kube-drain-node.yaml
 
-  - include: _packages-cleanup.yaml
-    when: allow_package_installation|bool == true
   - include: _packages-repo.yaml
     when: allow_package_installation|bool == true
 

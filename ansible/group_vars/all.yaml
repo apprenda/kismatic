@@ -2,8 +2,8 @@
 # VERSIONS
 kubernetes_yum_version: 1.9.0-0
 kubernetes_deb_version: 1.9.0-00
-docker_engine_yum_version: 1.12.6-1.el7.centos
-docker_engine_apt_version: 1.12.6-0~ubuntu-xenial
+docker_ce_yum_version: 17.03.2.ce-1.el7.centos
+docker_ce_apt_version: 17.03.2~ce-0~ubuntu-xenial
 glusterfs_server_version_rhel: "3.8.15-2.el7"
 glusterfs_server_version_ubuntu: "3.8.15-ubuntu1~xenial1"
 
@@ -294,10 +294,10 @@ images:
 
 #===============================================================================
 # docker packages
-docker_yum_repository_url: https://yum.dockerproject.org/repo/main/centos/7/
-docker_yum_gpg_key_url: https://yum.dockerproject.org/gpg
-docker_deb_repository_url: https://apt.dockerproject.org/repo/
-docker_deb_gpg_key_url: https://apt.dockerproject.org/gpg
+docker_yum_repository_url: "https://download.docker.com/linux/centos/7/x86_64/stable/"
+docker_yum_gpg_key_url: "https://download.docker.com/linux/centos/gpg"
+docker_deb_repository_url: "https://download.docker.com/linux/ubuntu"
+docker_deb_gpg_key_url: "https://download.docker.com/linux/ubuntu/gpg"
 
 # kubernetes packages
 kubernetes_yum_repository_url: "https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64"

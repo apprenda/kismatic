@@ -39,9 +39,14 @@
       state: absent
     when: ansible_os_family == 'RedHat'
 
-
   - name: remove Kismatic deb repository
     apt_repository:
       repo: 'deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main'
+      state: absent
+    when: ansible_os_family == 'Debian'
+  
+  - name: remove outdated docker deb repository
+    apt_repository:
+      repo: 'deb https://apt.dockerproject.org/repo/ ubuntu-xenial main'
       state: absent
     when: ansible_os_family == 'Debian'

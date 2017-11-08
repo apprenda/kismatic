@@ -61,7 +61,7 @@
 
   - name: add Docker deb repository
     apt_repository:
-      repo: 'deb {{ docker_deb_repository_url }} ubuntu-xenial main'
+      repo: 'deb [arch=amd64] {{ docker_deb_repository_url }} xenial stable'
     when: ansible_os_family == 'Debian'
   
   - name: add Kubernetes deb repository

@@ -12,11 +12,11 @@ By default, Kismatic will install the required repos onto machines and use them 
 sudo bash -c 'cat <<EOF > /etc/yum.repos.d/docker.repo
 [docker]
 name=Docker
-baseurl=https://yum.dockerproject.org/repo/main/centos/7/
+baseurl=https://download.docker.com/linux/centos/7/x86_64/stable/
 enabled=1
 gpgcheck=1
 repo_gpgcheck=1
-gpgkey=https://yum.dockerproject.org/gpg
+gpgkey=https://download.docker.com/linux/centos/gpg
 EOF'
 ```
 
@@ -38,8 +38,8 @@ EOF'
 
 | Component | Install Command |
 | ---- | ---- |
-| Etcd Node | `sudo yum -y install docker-engine-1.12.6-1.el7.centos` |
-| Kubernetes Node | `sudo yum -y install docker-engine-1.12.6-1.el7.centos nfs-utils kubelet-1.9.0-0 kubectl-1.9.0-0` |
+| Etcd Node | `sudo yum -y install --setopt=obsoletes=0 docker-ce-17.03.2.ce-1.el7.centos` |
+| Kubernetes Node | `sudo yum -y install --setopt=obsoletes=0 docker-ce-17.03.2.ce-1.el7.centos && yum -y install nfs-utils kubelet-1.9.0-0 kubectl-1.9.0-0` |
 
 ## Installing via DEB (Ubuntu Xenial)
 
@@ -53,14 +53,14 @@ sudo apt-get update && sudo apt-get install -y apt-transport-https curl
 2. Add the Docker public key to apt
 
 ```
-curl -s https://apt.dockerproject.org/gpg | sudo apt-key add -
+curl -s https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
 ```
 
 3.  Add the Docker repo
 
 ```
 sudo bash -c 'cat <<EOF >/etc/apt/sources.list.d/docker.list
-deb https://apt.dockerproject.org/repo/ ubuntu-xenial main
+deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
 EOF'
 ```
 
@@ -89,8 +89,8 @@ sudo apt-get update
 
 | Component | Install Command |
 | ---- | ---- |
-| Etcd Node | `sudo apt-get install -y docker-engine=1.12.6-0~ubuntu-xenial` |
-| Kubernetes Node | `sudo apt-get install -y docker-engine=1.12.6-0~ubuntu-xenial nfs-common kubelet=1.9.0-00 kubectl=1.9.0-00` |
+| Etcd Node | `sudo apt-get install -y docker-ce=17.03.2~ce-0~ubuntu-xenial` |
+| Kubernetes Node | `sudo apt-get install -y docker-ce=17.03.2~ce-0~ubuntu-xenial nfs-common kubelet=1.9.0-00 kubectl=1.9.0-00` |
 
 #### Stop the kubelet
 When the Ubuntu kubelet package is installed the service will be started and will bind to ports. This will cause some preflight port checks to fail.
