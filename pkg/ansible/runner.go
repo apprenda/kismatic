@@ -117,24 +117,17 @@ func (r *runner) startPlaybook(playbookFile string, inv Inventory, cc ClusterCat
 	if err != nil {
 		return nil, fmt.Errorf("error writing cluster catalog data to yaml: %v", err)
 	}
-	clusterCatalogFile := filepath.Join(r.ansibleDir, "clustercatalog.yaml")
-	if err = ioutil.WriteFile(clusterCatalogFile, yamlBytes, 0644); err != nil {
+	clusterCatalogFile := filepath.Join(r.runDir, "clustercatalog.yaml")
+	if err := ioutil.WriteFile(clusterCatalogFile, yamlBytes, 0644); err != nil {
 		return nil, fmt.Errorf("error writing cluster catalog file to %q: %v", clusterCatalogFile, err)
 	}
 
-	inventoryFile := filepath.Join(r.ansibleDir, "inventory.ini")
+	inventoryFile := filepath.Join(r.runDir, "inventory.ini")
 	if err := ioutil.WriteFile(inventoryFile, inv.ToINI(), 0644); err != nil {
 		return nil, fmt.Errorf("error writing inventory file to %q: %v", inventoryFile, err)
 	}
 
-	if err := copyFileContents(clusterCatalogFile, filepath.Join(r.runDir, "clustercatalog.yaml")); err != nil {
-		return nil, fmt.Errorf("error copying clustercatalog.yaml to %q: %v", r.runDir, err)
-	}
-	if err := copyFileContents(inventoryFile, filepath.Join(r.runDir, "inventory.ini")); err != nil {
-		return nil, fmt.Errorf("error copying inventory.ini to %q: %v", r.runDir, err)
-	}
-
-	cmd := exec.Command(filepath.Join(r.ansibleDir, "bin", "ansible-playbook"), "-i", inventoryFile, "-s", playbook, "--extra-vars", "@"+clusterCatalogFile)
+	cmd := exec.Command(filepath.Join(r.ansibleDir, "bin", "ansible-playbook"), "-i", filepath.Join(r.runDir, "inventory.ini"), "-s", playbook, "--extra-vars", "@"+filepath.Join(r.runDir, "clustercatalog.yaml"))
 	cmd.Stdout = r.out
 	cmd.Stderr = r.errOut
 
