@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -25,19 +26,29 @@ func main() {
 		port = os.Getenv("PORT")
 	}
 	logger := http.DefaultLogger(os.Stdout, "[kismatic] ")
-	s, err := store.New("/tmp/kismatic", 0644, logger)
-	defer s.Close()
+
+	storeFile, err := ioutil.TempFile("/tmp", "ket-server-store")
+	if err != nil {
+		logger.Fatalf("error creating temp directory: %v", err)
+	}
+	s, err := store.New(storeFile.Name(), 0644, logger)
 	if err != nil {
 		logger.Fatalf("Error opening store: %v", err)
 	}
+	defer s.Close()
 	if err := s.CreateBucket(bucket); err != nil {
 		logger.Fatalf("Error creating bucket: %v", err)
 	}
 
 	clusterStore := store.NewClusterStore(s, bucket)
 
+	assetsDir, err := ioutil.TempDir("/tmp", "ket-server-assets")
+	if err != nil {
+		logger.Fatalf("error creating assets directory %q: %v", assetsDir, err)
+	}
+
 	// create handlers
-	clusterAPI := handler.Clusters{Store: clusterStore}
+	clusterAPI := handler.Clusters{Store: clusterStore, AssetsDir: assetsDir}
 
 	// Setup the HTTP server
 	server := http.HttpServer{

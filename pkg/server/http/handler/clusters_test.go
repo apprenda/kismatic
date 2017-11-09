@@ -4,8 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
+	"strings"
 	"testing"
 
 	"github.com/apprenda/kismatic/pkg/store"
@@ -79,7 +84,7 @@ func TestCreateGetGetandDelete(t *testing.T) {
 
 	// Check the status code is as expected
 	if status := rr.Code; status != http.StatusAccepted {
-		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusAccepted, rr.Body.String())
 	}
 
@@ -93,7 +98,7 @@ func TestCreateGetGetandDelete(t *testing.T) {
 	// should get 404
 	req, err = http.NewRequest("GET", "/clusters/bar", nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	rr = httptest.NewRecorder()
 	r = httprouter.New()
@@ -101,49 +106,49 @@ func TestCreateGetGetandDelete(t *testing.T) {
 	r.ServeHTTP(rr, req)
 	// Check the status code is 404
 	if status := rr.Code; status != http.StatusNotFound {
-		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusNotFound, rr.Body.String())
 	}
 
 	// should get a response
 	req, err = http.NewRequest("GET", "/clusters/foo", nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	rr = httptest.NewRecorder()
 	r = httprouter.New()
 	r.GET("/clusters/:name", clustersAPI.Get)
 	r.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
-		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusOK, rr.Body.String())
 	}
 
 	// should getAll
 	req, err = http.NewRequest("GET", "/clusters", nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	rr = httptest.NewRecorder()
 	r = httprouter.New()
 	r.GET("/clusters", clustersAPI.GetAll)
 	r.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
-		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusOK, rr.Body.String())
 	}
 
 	// should delete
 	req, err = http.NewRequest("DELETE", "/clusters/foo", nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	rr = httptest.NewRecorder()
 	r = httprouter.New()
 	r.DELETE("/clusters/:name", clustersAPI.Delete)
 	r.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusAccepted {
-		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusAccepted, rr.Code)
 	}
 	expected = "ok\n"
@@ -155,14 +160,14 @@ func TestCreateGetGetandDelete(t *testing.T) {
 	// should getAll
 	req, err = http.NewRequest("GET", "/clusters", nil)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	rr = httptest.NewRecorder()
 	r = httprouter.New()
 	r.GET("/clusters", clustersAPI.GetAll)
 	r.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusOK {
-		t.Fatalf("handler returned wrong status code: got %v want %v: %s",
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusOK, rr.Body.String())
 	}
 	expected = "[]\n"
@@ -170,4 +175,122 @@ func TestCreateGetGetandDelete(t *testing.T) {
 		t.Errorf("handler returned unexpected body: got %v want %v",
 			rr.Body.String(), expected)
 	}
+}
+
+func TestGetKubeconfig(t *testing.T) {
+	cs := &mockClustersStore{}
+
+	// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
+	r := httprouter.New()
+
+	assetsDir, err := mockAssetsDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clustersAPI := Clusters{Store: cs, AssetsDir: assetsDir}
+	r.GET("/clusters/:name/kubeconfig", clustersAPI.GetKubeconfig)
+
+	// Create a request to pass to our handler
+	req, err := http.NewRequest("GET", "/clusters/foo/kubeconfig", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusOK, rr.Body.String())
+	}
+	if strings.TrimSpace(rr.Body.String()) != "kubeconfig" {
+		t.Errorf("response was not what was expecteded\ngot: %v\nexpected: %v", rr.Body.String(), "kubeconfig")
+	}
+
+	// Create a request to pass to our handler that should return a 404
+	req, err = http.NewRequest("GET", "/clusters/bar/kubeconfig", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	rr = httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusNotFound, rr.Body.String())
+	}
+}
+
+func TestGetLogs(t *testing.T) {
+	cs := &mockClustersStore{}
+
+	// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
+	r := httprouter.New()
+
+	assetsDir, err := mockAssetsDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clustersAPI := Clusters{Store: cs, AssetsDir: assetsDir}
+	r.GET("/clusters/:name/logs", clustersAPI.GetLogs)
+
+	// Create a request to pass to our handler
+	req, err := http.NewRequest("GET", "/clusters/foo/logs", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusOK, rr.Body.String())
+	}
+	if strings.TrimSpace(rr.Body.String()) != "logs" {
+		t.Errorf("response was not what was expecteded\ngot: %v\nexpected: %v", rr.Body.String(), "logs")
+	}
+
+	// Create a request to pass to our handler that should return a 404
+	req, err = http.NewRequest("GET", "/clusters/bar/logs", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	rr = httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusNotFound, rr.Body.String())
+	}
+}
+
+func mockAssetsDir() (string, error) {
+	assetsDir, err := ioutil.TempDir("/tmp", "ket-server-assets")
+	if err != nil {
+		return "", fmt.Errorf("error creating assets directory %q: %v", assetsDir, err)
+	}
+
+	generatedDir := path.Join(assetsDir, "foo", "generated")
+	err = os.MkdirAll(generatedDir, 0770)
+	if err != nil {
+		return "", fmt.Errorf("Error creating generated directory %q: %v", generatedDir, err)
+	}
+
+	// write a fake kubeconfig file
+	configd := []byte("kubeconfig")
+	err = ioutil.WriteFile(path.Join(generatedDir, "kubeconfig"), configd, 0644)
+	if err != nil {
+		return "", fmt.Errorf("could not write to kubeconfig file")
+	}
+
+	logsd := []byte("logs")
+	err = ioutil.WriteFile(path.Join(assetsDir, "foo", "kismatic.log"), logsd, 0644)
+	if err != nil {
+		return "", fmt.Errorf("could not write to kismatic.log file")
+	}
+
+	return assetsDir, nil
 }

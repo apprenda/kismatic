@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 
 	"github.com/apprenda/kismatic/pkg/store"
 
@@ -32,9 +33,11 @@ type ClusterResponse struct {
 }
 
 type Clusters struct {
-	Store store.ClusterStore
+	Store     store.ClusterStore
+	AssetsDir string
 }
 
+// TODO add validation to all requests
 func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	req := &ClusterRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -97,6 +100,26 @@ func (api Clusters) Delete(w http.ResponseWriter, r *http.Request, p httprouter.
 	}
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("ok\n"))
+}
+
+// GetKubeconfig will return the kubeconfig file for a cluster :name
+// A 404 is returned if a file is not found
+func (api Clusters) GetKubeconfig(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	id := p.ByName("name")
+	f := path.Join(api.AssetsDir, id, "generated", "kubeconfig")
+	// set so the browser downloads it instead of displaying it
+	w.Header().Set("Content-Disposition", "attachment; filename=config")
+	http.ServeFile(w, r, f)
+}
+
+// GetLogs will return the log file for a cluster :name
+// A 404 is returned if a file is not found
+func (api Clusters) GetLogs(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	id := p.ByName("name")
+	f := path.Join(api.AssetsDir, id, "kismatic.log")
+	// set so the browser downloads it instead of displaying it
+	w.Header().Set("Content-Disposition", "attachment; filename=kismatic.log")
+	http.ServeFile(w, r, f)
 }
 
 func putToStore(req *ClusterRequest, cs store.ClusterStore) error {

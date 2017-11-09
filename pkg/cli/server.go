@@ -7,6 +7,7 @@ import (
 	nethttp "net/http"
 	"os"
 	"os/signal"
+	"path"
 	"syscall"
 	"time"
 
@@ -22,6 +23,7 @@ const (
 	loggerPrefix   = "[kismatic] "
 	defaultTimeout = 10 * time.Second
 	clustersBucket = "kismatic"
+	assetsFolder   = "assets"
 )
 
 type serverOptions struct {
@@ -63,10 +65,10 @@ func doServer(stdout io.Writer, options serverOptions) error {
 
 	// Create the store
 	s, err := store.New(options.dbFile, 0600, logger)
-	defer s.Close()
 	if err != nil {
 		logger.Fatalf("Error creating store: %v", err)
 	}
+	defer s.Close()
 	err = s.CreateBucket(clustersBucket)
 	if err != nil {
 		logger.Fatalf("Error creating bucket in store: %v", err)
@@ -74,8 +76,20 @@ func doServer(stdout io.Writer, options serverOptions) error {
 
 	clusterStore := store.NewClusterStore(s, clustersBucket)
 
+	// Create a dir where all the controller-related files will be stored
+	// Needs to be an absoulute path for the HTTP server
+	pwd, err := os.Getwd()
+	if err != nil {
+		logger.Fatalf("Could not get current directory for assets")
+	}
+	assetsDir := path.Join(pwd, assetsFolder)
+	err = os.MkdirAll(assetsDir, 0700)
+	if err != nil {
+		logger.Fatalf("Error creating assets directory %q: %v", assetsDir, err)
+	}
+
 	// create handlers
-	clusterAPI := handler.Clusters{Store: clusterStore}
+	clusterAPI := handler.Clusters{Store: clusterStore, AssetsDir: assetsDir}
 
 	// Setup the HTTP server
 	server := http.HttpServer{
@@ -103,15 +117,9 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		BinaryPath: "./../../bin/terraform",
 	}
 
-	// Create a dir where all the controller-related files will be stored
-	rootDir := "server"
-	err = os.MkdirAll(rootDir, 0700)
-	if err != nil {
-		logger.Fatalf("error creating directory %q: %v", rootDir, err)
-	}
 	ctrl := controller.New(
 		logger,
-		controller.DefaultExecutorCreator(rootDir),
+		controller.DefaultExecutorCreator(assetsDir),
 		controller.DefaultProvisionerCreator(terraform),
 		clusterStore,
 		10*time.Minute,
