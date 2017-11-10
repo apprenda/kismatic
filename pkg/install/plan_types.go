@@ -80,7 +80,8 @@ type Provisioner struct {
 	// The provider where the infrastructue will be provisioned to.
 	// The provider will expect provider specific ENV variables to be set.
 	// Options: aws
-	Provider   string
+	Provider string
+	// Options that are specific to the chosen infrastructure provider.
 	AWSOptions *AWSProviderOptions `yaml:"options,omitempty"`
 }
 
