@@ -47,7 +47,7 @@ func (c *clusterController) reconcile(clusterName string, cluster store.Cluster)
 	c.log.Println("current state is:", cluster.CurrentState, "desired state is:", cluster.DesiredState)
 	for cluster.CurrentState != cluster.DesiredState && cluster.CanContinue {
 		// transition cluster and update its state in the store
-		cluster.CurrentState, cluster.CanContinue = c.next(cluster)
+		cluster = c.transition(cluster)
 		err := c.clusterStore.Put(clusterName, cluster)
 		if err != nil {
 			c.log.Printf("error storing cluster state: %v. The cluster's current state is %q and desired state is %q", err, cluster.CurrentState, cluster.DesiredState)
@@ -60,88 +60,110 @@ func (c *clusterController) reconcile(clusterName string, cluster store.Cluster)
 	}
 }
 
-// next transitions the cluster into the next state according to the desired
-// state. It returns the cluster's state after the transition, and whether it
-// can continue transitioning the cluster to the desired state. In the case of
-// an error, it will return false, as we do not currently support retries.
-func (c *clusterController) next(cluster store.Cluster) (string, bool) {
+// transition performs an action to take the cluster to the next state. The
+// action to be performed depends on the current state and the desired state.
+// Once the action is done, an updated cluster spec is returned that reflects
+// the outcome of the action.
+func (c *clusterController) transition(cluster store.Cluster) store.Cluster {
+	if cluster.CurrentState == cluster.DesiredState {
+		panic("cannot transition a cluster that is already at it's desired state")
+	}
 	switch cluster.CurrentState {
 	case planned:
-		return provisioning, true
+		cluster.CurrentState = provisioning
+		return cluster
 	case provisioning:
-		return c.provision()
+		return c.provision(cluster)
 	case provisioned:
 		if cluster.DesiredState == destroyed {
-			return destroying, true
+			cluster.CurrentState = destroying
+			return cluster
 		}
-		return installing, true
+		cluster.CurrentState = installing
+		return cluster
 	case provisionFailed:
 		if cluster.DesiredState == destroyed {
-			return destroying, true
+			cluster.CurrentState = destroying
+			return cluster
 		}
-		return provisioning, true
+		cluster.CurrentState = provisioning
+		return cluster
 	case destroying:
-		return c.destroy()
+		return c.destroy(cluster)
 	case installing:
-		return c.install(cluster.Plan)
+		return c.install(cluster)
 	case installFailed:
 		if cluster.DesiredState == destroyed {
-			return destroying, true
+			cluster.CurrentState = destroying
+			return cluster
 		}
-		return installing, true
+		cluster.CurrentState = installing
+		return cluster
 	default:
-		// Log a message, and return false so that we don't get stuck in an
-		// infinte loop. The only thing the user can do in this case is delete
-		// the cluster and file a bug, as this scenario should not happen.
+		// Log a message, and set CanContinue to false so that we don't get
+		// stuck in an infinte loop. The only thing the user can do in this case
+		// is delete the cluster and file a bug, as this scenario should not
+		// happen.
 		c.log.Printf("the desired state is %q, but there is no transition defined for the cluster's current state %q", cluster.DesiredState, cluster.CurrentState)
-		return cluster.CurrentState, false
+		cluster.CanContinue = false
+		return cluster
 	}
 }
 
-func (c *clusterController) provision() (string, bool) {
+func (c *clusterController) provision(cluster store.Cluster) store.Cluster {
 	c.log.Println("provisioning infrastructure for cluster")
-	return "provisioned", true
+	cluster.CurrentState = provisioned
+	return cluster
 }
 
-func (c *clusterController) destroy() (string, bool) {
+func (c *clusterController) destroy(cluster store.Cluster) store.Cluster {
 	c.log.Println("destroying cluster")
-	return "destroyed", true
+	return cluster
 }
 
-func (c *clusterController) install(plan install.Plan) (string, bool) {
+func (c *clusterController) install(cluster store.Cluster) store.Cluster {
 	c.log.Println("installing cluster")
-
+	plan := cluster.Plan
 	// TODO: Run validation here, or create "validating", "validationFailed" states?
 
 	err := c.executor.GenerateCertificates(&plan, false)
 	if err != nil {
 		c.log.Printf("error generating certificates: %v", err)
-		return installFailed, false
+		cluster.CurrentState = installFailed
+		cluster.CanContinue = false
+		return cluster
 	}
 
 	err = c.executor.GenerateKubeconfig(plan)
 	if err != nil {
 		c.log.Printf("error generating kubeconfig file: %v", err)
-		return installFailed, false
+		cluster.CurrentState = installFailed
+		cluster.CanContinue = false
+		return cluster
 	}
 
 	err = c.executor.Install(&plan, true)
 	if err != nil {
 		c.log.Printf("error installing the cluster: %v", err)
-		return installFailed, false
+		cluster.CurrentState = installFailed
+		cluster.CanContinue = false
+		return cluster
 	}
 
 	// Skip the smoketest if the user asked us to skip the installation of a
 	// networking stack
 	if !plan.NetworkConfigured() {
-		return installed, true
+		cluster.CurrentState = installed
+		return cluster
 	}
 
 	err = c.executor.RunSmokeTest(&plan)
 	if err != nil {
 		c.log.Printf("error running smoke test against the cluster: %v", err)
-		return installFailed, false
+		cluster.CurrentState = installFailed
+		return cluster
 	}
 
-	return installed, true
+	cluster.CurrentState = installed
+	return cluster
 }
