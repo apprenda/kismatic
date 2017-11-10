@@ -8,7 +8,10 @@
   $ export AWS_ACCESS_KEY_ID=YOUR_AWS_ACCESS_KEY_ID
   $ export AWS_SECRET_ACCESS_KEY=YOUR_AWS_SECRET_ACCESS_KEY
   $ export AWS_DEFAULT_REGION=us-east-1
+<<<<<<< HEAD
 
+=======
+>>>>>>> 633a818... Basic terraform vendoring and scripts. No automated variable generation yet.
   can be used instead of the following variables
   */
 
@@ -32,7 +35,10 @@ variable "public_ssh_key" {
   #As an example.
   /*
     When importing an existing key pair the public key material may be in any format supported by AWS. Supported formats (per the AWS documentation) are:
+<<<<<<< HEAD
 
+=======
+>>>>>>> 633a818... Basic terraform vendoring and scripts. No automated variable generation yet.
     OpenSSH public key format (the format in ~/.ssh/authorized_keys)
     Base64 encoded DER format
     SSH public key file format as specified in RFC4716

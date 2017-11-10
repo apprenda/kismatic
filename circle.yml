@@ -14,7 +14,7 @@ jobs:
           command: apt update && apt install unzip
       - run:
           name: Unit tests
-          command: make TEST_OPTS="-v" bare-test
+          command: make bare-test
       - run:
           name: Verify gofmt
           command: diff -u <(echo -n) <(gofmt -d ./pkg ./cmd)
@@ -94,7 +94,6 @@ jobs:
               unzip ghr_v0.5.4_linux_amd64.zip
               ./ghr -draft -u "$CIRCLE_PROJECT_USERNAME" "${CIRCLE_TAG}-draft" release/
             fi
-
 deployment:
   fake_deploy_for_cci2:
     tag: /.*/
