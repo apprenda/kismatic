@@ -80,7 +80,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	// Needs to be an absoulute path for the HTTP server
 	pwd, err := os.Getwd()
 	if err != nil {
-		logger.Fatalf("Could not get current directory for assets")
+		logger.Fatalf("Could not get current directory for assets: %v", err)
 	}
 	assetsDir := path.Join(pwd, assetsFolder)
 	err = os.MkdirAll(assetsDir, 0700)
@@ -89,7 +89,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	}
 
 	// create handlers
-	clusterAPI := handler.Clusters{Store: clusterStore, AssetsDir: assetsDir}
+	clusterAPI := handler.Clusters{Store: clusterStore, AssetsDir: assetsDir, Logger: logger}
 
 	// Setup the HTTP server
 	server := http.HttpServer{

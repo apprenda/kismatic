@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"path"
 
 	"github.com/apprenda/kismatic/pkg/store"
@@ -35,6 +37,7 @@ type ClusterResponse struct {
 type Clusters struct {
 	Store     store.ClusterStore
 	AssetsDir string
+	Logger    *log.Logger
 }
 
 // TODO add validation to all requests
@@ -45,8 +48,9 @@ func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 	if err := putToStore(req, api.Store); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "%s\n", err.Error())
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
+		return
 	}
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("ok\n"))
@@ -56,67 +60,95 @@ func (api Clusters) Get(w http.ResponseWriter, r *http.Request, p httprouter.Par
 	clusterResp, err := getFromStore(p.ByName("name"), api.Store)
 	if err != nil {
 		if err == ErrClusterNotFound {
-			w.WriteHeader(http.StatusNotFound)
+			http.Error(w, "", http.StatusNotFound)
 		} else {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, "", http.StatusInternalServerError)
 		}
-		fmt.Fprintf(w, "%s\n", err.Error())
+		api.Logger.Println(errorf(err.Error()))
 		return
 	}
-	// Write content-type, statuscode, payload
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	resp, err := json.MarshalIndent(clusterResp, "", "    ")
+
+	err = json.NewEncoder(w).Encode(clusterResp)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "could not marshall response\n")
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf("could not marshall response: %v", err))
+		return
 	}
-	fmt.Fprintln(w, string(resp))
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (api Clusters) GetAll(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	clustersResp, err := getAllFromStore(api.Store)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "%s\n", err.Error())
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
 		return
 	}
-	// Write content-type, statuscode, payload
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	resp, err := json.MarshalIndent(clustersResp, "", "    ")
+
+	err = json.NewEncoder(w).Encode(clustersResp)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, "could not marshall response\n")
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf("could not marshall response: %v", err))
+		return
 	}
-	fmt.Fprintln(w, string(resp))
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (api Clusters) Delete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("name")
 	if err := api.Store.Delete(id); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "could not delete from the store: %v", err)
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf("could not delete from the store: %v", err))
 	}
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("ok\n"))
 }
 
 // GetKubeconfig will return the kubeconfig file for a cluster :name
-// A 404 is returned if a file is not found
+// 404 is returned if the cluster is not found in the store
+// 500 is returned when the cluster is in the store but the file does not exist in the assets
 func (api Clusters) GetKubeconfig(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("name")
+	exists, err := existsInStore(id, api.Store)
+	if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
+		return
+	}
+	if !exists {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
 	f := path.Join(api.AssetsDir, id, "generated", "kubeconfig")
+	if stat, err := os.Stat(f); os.IsNotExist(err) || stat.IsDir() {
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf("kubeconfig for cluster %s could not be retrieved: %v", id, err))
+	}
 	// set so the browser downloads it instead of displaying it
 	w.Header().Set("Content-Disposition", "attachment; filename=config")
 	http.ServeFile(w, r, f)
 }
 
 // GetLogs will return the log file for a cluster :name
-// A 404 is returned if a file is not found
+// A 404 is returned if a file is not found in the store
+// 500 is returned when the cluster is in the store but the file does not exist in the assets
 func (api Clusters) GetLogs(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("name")
+	exists, err := existsInStore(id, api.Store)
+	if err != nil {
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
+		return
+	}
+	if !exists {
+		http.Error(w, "", http.StatusNotFound)
+		return
+	}
 	f := path.Join(api.AssetsDir, id, "kismatic.log")
+	if stat, err := os.Stat(f); os.IsNotExist(err) || stat.IsDir() {
+		http.Error(w, "", http.StatusInternalServerError)
+		api.Logger.Println(errorf("logs for cluster %s could not be retrieved: %v", id, err))
+	}
 	// set so the browser downloads it instead of displaying it
 	w.Header().Set("Content-Disposition", "attachment; filename=kismatic.log")
 	http.ServeFile(w, r, f)
@@ -153,6 +185,14 @@ func putToStore(req *ClusterRequest, cs store.ClusterStore) error {
 		return fmt.Errorf("could not put to the store: %v", err)
 	}
 	return nil
+}
+
+func existsInStore(name string, cs store.ClusterStore) (bool, error) {
+	sc, err := cs.Get(name)
+	if err != nil {
+		return false, fmt.Errorf("could not get from the store: %v", err)
+	}
+	return sc != nil, nil
 }
 
 func getFromStore(name string, cs store.ClusterStore) (*ClusterResponse, error) {

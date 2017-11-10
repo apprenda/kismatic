@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -78,7 +79,7 @@ func TestCreateGetGetandDelete(t *testing.T) {
 	r := httprouter.New()
 
 	cs := &mockClustersStore{}
-	clustersAPI := Clusters{Store: cs}
+	clustersAPI := Clusters{Store: cs, Logger: log.New(os.Stdout, "test", 0)}
 	r.POST("/clusters", clustersAPI.Create)
 	r.ServeHTTP(rr, req)
 
@@ -179,6 +180,8 @@ func TestCreateGetGetandDelete(t *testing.T) {
 
 func TestGetKubeconfig(t *testing.T) {
 	cs := &mockClustersStore{}
+	cs.Put("foo", store.Cluster{})
+	cs.Put("foobar", store.Cluster{})
 
 	// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
 	r := httprouter.New()
@@ -188,7 +191,7 @@ func TestGetKubeconfig(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	clustersAPI := Clusters{Store: cs, AssetsDir: assetsDir}
+	clustersAPI := Clusters{Store: cs, AssetsDir: assetsDir, Logger: log.New(os.Stdout, "test", 0)}
 	r.GET("/clusters/:name/kubeconfig", clustersAPI.GetKubeconfig)
 
 	// Create a request to pass to our handler
@@ -220,10 +223,26 @@ func TestGetKubeconfig(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusNotFound, rr.Body.String())
 	}
+
+	// Create a request to pass to our handler that should return a 500
+	// Exists in store but not in the assets dir
+	req, err = http.NewRequest("GET", "/clusters/foobar/kubeconfig", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	rr = httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusInternalServerError, rr.Body.String())
+	}
 }
 
 func TestGetLogs(t *testing.T) {
 	cs := &mockClustersStore{}
+	cs.Put("foo", store.Cluster{})
+	cs.Put("foobar", store.Cluster{})
 
 	// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
 	r := httprouter.New()
@@ -233,7 +252,7 @@ func TestGetLogs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	clustersAPI := Clusters{Store: cs, AssetsDir: assetsDir}
+	clustersAPI := Clusters{Store: cs, AssetsDir: assetsDir, Logger: log.New(os.Stdout, "test", 0)}
 	r.GET("/clusters/:name/logs", clustersAPI.GetLogs)
 
 	// Create a request to pass to our handler
@@ -264,6 +283,20 @@ func TestGetLogs(t *testing.T) {
 	if status := rr.Code; status != http.StatusNotFound {
 		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusNotFound, rr.Body.String())
+	}
+
+	// Create a request to pass to our handler that should return a 500
+	// Exists in store but not in the assets dir
+	req, err = http.NewRequest("GET", "/clusters/foobar/logs", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	rr = httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusInternalServerError, rr.Body.String())
 	}
 }
 

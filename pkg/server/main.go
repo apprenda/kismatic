@@ -48,7 +48,7 @@ func main() {
 	}
 
 	// create handlers
-	clusterAPI := handler.Clusters{Store: clusterStore, AssetsDir: assetsDir}
+	clusterAPI := handler.Clusters{Store: clusterStore, AssetsDir: assetsDir, Logger: logger}
 
 	// Setup the HTTP server
 	server := http.HttpServer{
