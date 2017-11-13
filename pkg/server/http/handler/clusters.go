@@ -48,7 +48,7 @@ func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.
 		return
 	}
 	if err := putToStore(req, api.Store); err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf(err.Error()))
 		return
 	}
@@ -60,9 +60,9 @@ func (api Clusters) Get(w http.ResponseWriter, r *http.Request, p httprouter.Par
 	clusterResp, err := getFromStore(p.ByName("name"), api.Store)
 	if err != nil {
 		if err == ErrClusterNotFound {
-			http.Error(w, "", http.StatusNotFound)
+			w.WriteHeader(http.StatusNotFound)
 		} else {
-			http.Error(w, "", http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
 		}
 		api.Logger.Println(errorf(err.Error()))
 		return
@@ -70,7 +70,7 @@ func (api Clusters) Get(w http.ResponseWriter, r *http.Request, p httprouter.Par
 
 	err = json.NewEncoder(w).Encode(clusterResp)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf("could not marshall response: %v", err))
 		return
 	}
@@ -80,25 +80,38 @@ func (api Clusters) Get(w http.ResponseWriter, r *http.Request, p httprouter.Par
 func (api Clusters) GetAll(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	clustersResp, err := getAllFromStore(api.Store)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf(err.Error()))
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(clustersResp)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf("could not marshall response: %v", err))
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 }
 
+// Delete a cluster
+// 404 is returned if the cluster is not found in the store
 func (api Clusters) Delete(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	id := p.ByName("name")
+	exists, err := existsInStore(id, api.Store)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
+		return
+	}
+	if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 	if err := api.Store.Delete(id); err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf("could not delete from the store: %v", err))
+		return
 	}
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("ok\n"))
@@ -111,18 +124,19 @@ func (api Clusters) GetKubeconfig(w http.ResponseWriter, r *http.Request, p http
 	id := p.ByName("name")
 	exists, err := existsInStore(id, api.Store)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf(err.Error()))
 		return
 	}
 	if !exists {
-		http.Error(w, "", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	f := path.Join(api.AssetsDir, id, "generated", "kubeconfig")
 	if stat, err := os.Stat(f); os.IsNotExist(err) || stat.IsDir() {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf("kubeconfig for cluster %s could not be retrieved: %v", id, err))
+		return
 	}
 	// set so the browser downloads it instead of displaying it
 	w.Header().Set("Content-Disposition", "attachment; filename=config")
@@ -136,21 +150,20 @@ func (api Clusters) GetLogs(w http.ResponseWriter, r *http.Request, p httprouter
 	id := p.ByName("name")
 	exists, err := existsInStore(id, api.Store)
 	if err != nil {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf(err.Error()))
 		return
 	}
 	if !exists {
-		http.Error(w, "", http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	f := path.Join(api.AssetsDir, id, "kismatic.log")
 	if stat, err := os.Stat(f); os.IsNotExist(err) || stat.IsDir() {
-		http.Error(w, "", http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf("logs for cluster %s could not be retrieved: %v", id, err))
+		return
 	}
-	// set so the browser downloads it instead of displaying it
-	w.Header().Set("Content-Disposition", "attachment; filename=kismatic.log")
 	http.ServeFile(w, r, f)
 }
 
@@ -217,7 +230,7 @@ func getAllFromStore(cs store.ClusterStore) ([]ClusterResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not get from the store: %v", err)
 	}
-	resp := make([]ClusterResponse, 0)
+	resp := make([]ClusterResponse, len(msc))
 	if msc == nil {
 		return resp, nil
 	}
