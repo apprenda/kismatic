@@ -29,7 +29,7 @@ func NewCmdVersion(buildDate string, out io.Writer) *cobra.Command {
 				GoVersion: runtime.Version(),
 			}
 			if outFormat == "json" {
-				b, err := json.MarshalIndent(v, "", "    ")
+				b, err := json.MarshalIndent(v, "", "  ")
 				if err != nil {
 					return fmt.Errorf("error marshaling data: %v", err)
 				}

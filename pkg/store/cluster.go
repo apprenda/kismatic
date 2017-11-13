@@ -8,12 +8,20 @@ import (
 )
 
 type Cluster struct {
-	DesiredState string
-	CurrentState string
-	CanContinue  bool
-	Plan         install.Plan
-	AwsID        string
-	AwsKey       string
+	DesiredState           string
+	CurrentState           string
+	CanContinue            bool
+	Plan                   install.Plan
+	ProvisionerCredentials ProvisionerCredentials
+}
+
+type ProvisionerCredentials struct {
+	AWS AWSCredentials
+}
+
+type AWSCredentials struct {
+	AccessKeyId     string
+	SecretAccessKey string
 }
 
 // ClusterStore is a smaller interface into the store

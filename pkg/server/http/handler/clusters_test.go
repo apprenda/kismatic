@@ -50,18 +50,245 @@ func (cs mockClustersStore) Watch(ctx context.Context, buffer uint) <-chan store
 	return nil
 }
 
+func TestValidationShouldError(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+	tests := []*ClusterRequest{
+		&ClusterRequest{
+			Name:         "",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "bar",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "foobar",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    0,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  0,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  0,
+			IngressCount: 2,
+		},
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: -1,
+		},
+	}
+	for i, c := range tests {
+		encoded, err := json.Marshal(c)
+		if err != nil {
+			t.Fatalf("could not encode body to json %v", err)
+		}
+		// Create a request to pass to our handler
+		req, err := http.NewRequest("POST", "/clusters", bytes.NewBuffer(encoded))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response
+		rr := httptest.NewRecorder()
+
+		// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
+		r := httprouter.New()
+
+		cs := &mockClustersStore{}
+		clustersAPI := Clusters{Store: cs, Logger: log.New(os.Stdout, "test", 0)}
+		r.POST("/clusters", clustersAPI.Create)
+		r.ServeHTTP(rr, req)
+
+		// Check the status code is as expected
+		if status := rr.Code; status != http.StatusBadRequest {
+			t.Logf("running test: %d", i)
+			t.Errorf("handler returned wrong status code: got %v want %v: %s",
+				status, http.StatusBadRequest, rr.Body.String())
+		}
+	}
+}
+
+func TestValidation(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+	tests := []*ClusterRequest{
+		&ClusterRequest{
+			Name:         "foo",
+			DesiredState: "installed",
+			Provisioner: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					AccessKeyID:     "ACCESS_ID",
+					SecretAccessKey: "SECRET",
+				},
+			},
+			EtcdCount:    3,
+			MasterCount:  2,
+			WorkerCount:  5,
+			IngressCount: 2,
+		},
+	}
+	for _, c := range tests {
+		encoded, err := json.Marshal(c)
+		if err != nil {
+			t.Fatalf("could not encode body to json %v", err)
+		}
+		// Create a request to pass to our handler
+		req, err := http.NewRequest("POST", "/clusters", bytes.NewBuffer(encoded))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response
+		rr := httptest.NewRecorder()
+
+		// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
+		r := httprouter.New()
+
+		cs := &mockClustersStore{}
+		clustersAPI := Clusters{Store: cs, Logger: log.New(os.Stdout, "test", 0)}
+		r.POST("/clusters", clustersAPI.Create)
+		r.ServeHTTP(rr, req)
+
+		// Check the status code is as expected
+		if status := rr.Code; status != http.StatusAccepted {
+			t.Errorf("handler returned wrong status code: got %v want %v: %s",
+				status, http.StatusAccepted, rr.Body.String())
+		}
+	}
+}
+
 func TestCreateGetGetandDelete(t *testing.T) {
 	if testing.Short() {
 		return
 	}
 	c := &ClusterRequest{
 		Name:         "foo",
-		DesiredState: "running",
-		AwsID:        "",
-		AwsKey:       "",
-		Etcd:         3,
-		Master:       2,
-		Worker:       5,
+		DesiredState: "installed",
+		Provisioner: Provisioner{
+			Provider: "aws",
+			AWSOptions: &AWSProvisionerOptions{
+				AccessKeyID:     "ACCESS_ID",
+				SecretAccessKey: "SECRET",
+			},
+		},
+		EtcdCount:    3,
+		MasterCount:  2,
+		WorkerCount:  5,
+		IngressCount: 2,
 	}
 	encoded, err := json.Marshal(c)
 	if err != nil {

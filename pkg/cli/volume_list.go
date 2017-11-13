@@ -252,7 +252,7 @@ func print(out io.Writer, resp *ListResponse, format string) error {
 		w.Flush()
 	} else if format == "json" {
 		// pretty prtin JSON
-		prettyResp, err := json.MarshalIndent(resp, "", "    ")
+		prettyResp, err := json.MarshalIndent(resp, "", "  ")
 		if err != nil {
 			return fmt.Errorf("marshal error: %v", err)
 		}
