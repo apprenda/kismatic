@@ -6,6 +6,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/apprenda/kismatic/pkg/provision"
+
 	"github.com/apprenda/kismatic/pkg/store"
 )
 
@@ -31,6 +33,7 @@ const clusterControllerNotificationBuffer = 10
 type multiClusterController struct {
 	log                *log.Logger
 	newExecutor        ExecutorCreator
+	provisionerCreator func(store.Cluster) provision.Provisioner
 	clusterStore       store.ClusterStore
 	reconcileFreq      time.Duration
 	clusterControllers map[string]chan<- struct{}
@@ -67,9 +70,10 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 					continue
 				}
 				cc := clusterController{
-					log:          mcc.log,
-					executor:     executor,
-					clusterStore: mcc.clusterStore,
+					log:            mcc.log,
+					executor:       executor,
+					clusterStore:   mcc.clusterStore,
+					newProvisioner: mcc.provisionerCreator,
 				}
 				go cc.run(clusterName, newChan)
 			}
@@ -107,9 +111,10 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 						continue
 					}
 					cc := clusterController{
-						log:          mcc.log,
-						executor:     executor,
-						clusterStore: mcc.clusterStore,
+						log:            mcc.log,
+						executor:       executor,
+						clusterStore:   mcc.clusterStore,
+						newProvisioner: mcc.provisionerCreator,
 					}
 					go cc.run(clusterName, newChan)
 				}

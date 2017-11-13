@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	nethttp "net/http"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/controller"
+	"github.com/apprenda/kismatic/pkg/provision"
 	"github.com/apprenda/kismatic/pkg/server/http"
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
 	"github.com/apprenda/kismatic/pkg/store"
@@ -66,7 +68,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	if err != nil {
 		logger.Fatalf("Error creating store: %v", err)
 	}
-	err = s.CreateBucket("clusters")
+	err = s.CreateBucket(clustersBucket)
 	if err != nil {
 		logger.Fatalf("Error creating bucket in store: %v", err)
 	}
@@ -97,13 +99,31 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		}
 	}()
 
+	// Setup provisioner
+	terraform := provision.Terraform{
+		BinaryPath: "./../../bin/terraform",
+	}
+	var provisionerCreater = func(cluster store.Cluster) provision.Provisioner {
+		switch cluster.Plan.Provisioner.Provider {
+		case "aws":
+			p := provision.AWS{
+				KeyID:     cluster.AwsID,
+				Secret:    cluster.AwsKey,
+				Terraform: terraform,
+			}
+			return p
+		default:
+			panic(fmt.Sprintf("provider not supported: %q", cluster.Plan.Provisioner.Provider))
+		}
+	}
+
 	// Create a dir where all the controller-related files will be stored
 	rootDir := "server"
-	err = os.MkdirAll(rootDir, 0600)
+	err = os.MkdirAll(rootDir, 0700)
 	if err != nil {
 		logger.Fatalf("error creating directory %q: %v", rootDir, err)
 	}
-	ctrl := controller.New(logger, controller.DefaultExecutorCreator(rootDir), clusterStore, 10*time.Minute)
+	ctrl := controller.New(logger, controller.DefaultExecutorCreator(rootDir), provisionerCreater, clusterStore, 10*time.Minute)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ctrl.Run(ctx)
 

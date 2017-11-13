@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/apprenda/kismatic/pkg/provision"
+
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/store"
 )
@@ -75,6 +77,16 @@ func (e dummyExec) UpgradeClusterServices(plan install.Plan) error {
 	panic("not implemented")
 }
 
+type dummyProvisioner struct{}
+
+func (p dummyProvisioner) Provision(plan install.Plan) (*install.Plan, error) {
+	return &plan, nil
+}
+
+func (p dummyProvisioner) Destroy(string) error {
+	return nil
+}
+
 func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	// TODO: the store is leaking a goroutine, so can't enable this
 	// defer leaktest.Check(t)()
@@ -99,18 +111,18 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 
 	clusterStore := store.NewClusterStore(s, bucketName)
 
+	provisioner := func(store.Cluster) provision.Provisioner {
+		return dummyProvisioner{}
+	}
+
 	// Start the controller
 	clusterName := "testCluster"
-	c := New(logger, executorCreator, clusterStore, 10*time.Minute)
+	c := New(logger, executorCreator, provisioner, clusterStore, 10*time.Minute)
 	go c.Run(ctx)
 
 	// Create a new cluster in the store
 	cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
-	clusterBytes, err := json.Marshal(cluster)
-	if err != nil {
-		t.Fatalf("error marshaling cluster")
-	}
-	err = s.Put(bucketName, clusterName, clusterBytes)
+	err = clusterStore.Put(clusterName, cluster)
 	if err != nil {
 		t.Fatalf("error storing cluster")
 	}
@@ -147,7 +159,6 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 func TestClusterControllerReconciliationLoop(t *testing.T) {
 	// TODO: the store is leaking a goroutine, so can't enable this
 	// defer leaktest.Check(t)()
-
 	ctx, cancel := context.WithCancel(context.Background())
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
@@ -166,22 +177,23 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	}
 	s.CreateBucket(bucketName)
 
+	clusterStore := store.NewClusterStore(s, bucketName)
+
 	// Create a new cluster in the store before starting the controller.
 	// The controller should pick it up in the reconciliation loop.
 	clusterName := "testCluster"
 	cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
-	clusterBytes, err := json.Marshal(cluster)
-	if err != nil {
-		t.Fatalf("error marshaling cluster")
-	}
-	err = s.Put(bucketName, clusterName, clusterBytes)
+	err = clusterStore.Put(clusterName, cluster)
 	if err != nil {
 		t.Fatalf("error storing cluster")
 	}
 
-	clusterStore := store.NewClusterStore(s, bucketName)
+	provisioner := func(store.Cluster) provision.Provisioner {
+		return dummyProvisioner{}
+	}
+
 	// Start the controller
-	c := New(logger, executorCreator, clusterStore, 3*time.Second)
+	c := New(logger, executorCreator, provisioner, clusterStore, 3*time.Second)
 	go c.Run(ctx)
 
 	// Assert that the cluster reaches desired state

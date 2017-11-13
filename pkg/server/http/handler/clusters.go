@@ -89,8 +89,10 @@ func putToStore(req *ClusterRequest, cs store.ClusterStore) error {
 	}
 	// set some defaults in the plan
 	p.Cluster.Name = req.Name
+	p.Provisioner.Provider = "aws"
 	sc := store.Cluster{
 		DesiredState: req.DesiredState,
+		CurrentState: "planned",
 		Plan:         *p,
 		CanContinue:  true,
 		AwsID:        req.AwsID,

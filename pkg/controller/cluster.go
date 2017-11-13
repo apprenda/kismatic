@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/apprenda/kismatic/pkg/install"
+	"github.com/apprenda/kismatic/pkg/provision"
 	"github.com/apprenda/kismatic/pkg/store"
 )
 
@@ -23,9 +24,10 @@ const (
 
 // The clusterController manages the lifecycle of a single cluster.
 type clusterController struct {
-	log          *log.Logger
-	executor     install.Executor
-	clusterStore store.ClusterStore
+	log            *log.Logger
+	executor       install.Executor
+	newProvisioner func(store.Cluster) provision.Provisioner
+	clusterStore   store.ClusterStore
 }
 
 func (c *clusterController) run(clusterName string, watch <-chan struct{}) {
@@ -112,6 +114,15 @@ func (c *clusterController) transition(cluster store.Cluster) store.Cluster {
 
 func (c *clusterController) provision(cluster store.Cluster) store.Cluster {
 	c.log.Println("provisioning infrastructure for cluster")
+	provisioner := c.newProvisioner(cluster)
+	updatedPlan, err := provisioner.Provision(cluster.Plan)
+	if err != nil {
+		c.log.Printf("error provisioning: %v", err)
+		cluster.CurrentState = provisionFailed
+		cluster.CanContinue = false
+		return cluster
+	}
+	cluster.Plan = *updatedPlan
 	cluster.CurrentState = provisioned
 	return cluster
 }
