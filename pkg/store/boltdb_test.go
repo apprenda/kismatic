@@ -2,7 +2,6 @@ package store
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"testing"
@@ -161,6 +160,25 @@ func TestWritingThenReadingKey(t *testing.T) {
 	}
 }
 
+type kv struct {
+	k string
+	v []byte
+}
+
+type kvSlice []kv
+
+func (this kvSlice) equals(other kvSlice) bool {
+	if len(this) != len(other) {
+		return false
+	}
+	for i, e := range this {
+		if e.k != other[i].k || bytes.Compare(e.v, other[i].v) != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 func TestWatchingBucket(t *testing.T) {
 	defer leaktest.Check(t)()
 	s, err := setupStore()
@@ -183,15 +201,11 @@ func TestWatchingBucket(t *testing.T) {
 	ctx2, cancel2 := context.WithCancel(context.Background())
 	ch2 := s.Watch(ctx2, "b2", 10)
 
-	type kv struct {
-		k string
-		v []byte
-	}
 	got1 := make([]kv, 0)
 	// watch for messages
 	go func(got1 *[]kv) {
 		for r := range ch {
-			t.Logf("notified ch1: %s", r.Key)
+			t.Logf("got watch on ch1 for: %s", r.Key)
 			*got1 = append(*got1, kv{k: r.Key, v: r.Value})
 		}
 	}(&got1)
@@ -200,12 +214,12 @@ func TestWatchingBucket(t *testing.T) {
 	// watch for messages
 	go func(got2 *[]kv) {
 		for r := range ch2 {
-			t.Logf("notified ch2: %s", r.Key)
+			t.Logf("got watch on ch2 for: %s", r.Key)
 			*got2 = append(*got2, kv{k: r.Key, v: r.Value})
 		}
 	}(&got2)
 
-	put1 := []kv{
+	put1 := kvSlice{
 		{
 			k: "foo",
 			v: []byte("bar"),
@@ -224,7 +238,7 @@ func TestWatchingBucket(t *testing.T) {
 		},
 	}
 
-	put2 := []kv{
+	put2 := kvSlice{
 		{
 			k: "bar",
 			v: []byte("foo"),
@@ -254,7 +268,6 @@ func TestWatchingBucket(t *testing.T) {
 				t.Errorf("unexpected error putting key %s, value %v", m.k, m.v)
 			}
 		}
-		fmt.Println("done")
 	}()
 	// write to a different bucket, should have 2 watchers not interfering
 	go func() {
@@ -263,29 +276,20 @@ func TestWatchingBucket(t *testing.T) {
 				t.Errorf("unexpected error putting key %s, value %v", m.k, m.v)
 			}
 		}
-		fmt.Println("done")
 	}()
 
-	// let the gor be notified
-	time.Sleep(100 * time.Millisecond)
-	// compare put and got, should be the same
-	if len(put1) != len(got1) {
-		t.Errorf("length of got did not equal got, wanted %d, got %d", len(put1), len(got1))
-	} else {
-		for i, m := range got1 {
-			if m.k != put1[i].k || bytes.Compare(m.v, put1[i].v) != 0 {
-				t.Errorf("got did not equal %d got, wanted %v, got %v", i, put1[i], m)
+	// verify that watch notifications are issued for all writes
+	tick := time.Tick(100 * time.Millisecond)
+	deadline := time.After(1 * time.Second)
+writeWatch:
+	for {
+		select {
+		case <-tick:
+			if put1.equals(got1) && put2.equals(got2) {
+				break writeWatch
 			}
-		}
-	}
-	// compare put and got, should be the same
-	if len(put2) != len(got2) {
-		t.Errorf("length of got did not equal got, wanted %d, got %d", len(put2), len(got2))
-	} else {
-		for i, m := range got2 {
-			if m.k != put2[i].k || bytes.Compare(m.v, put2[i].v) != 0 {
-				t.Errorf("got did not equal %d got, wanted %v, got %v", i, put2[i], m)
-			}
+		case <-deadline:
+			t.Fatalf("Timed out waiting for expected conditions to be true")
 		}
 	}
 
@@ -293,19 +297,25 @@ func TestWatchingBucket(t *testing.T) {
 	if err := s.Delete("b2", "foo"); err != nil {
 		t.Errorf("unexpected error deleting key foo")
 	}
-	time.Sleep(100 * time.Millisecond)
-	if len(put2) == len(got2) {
-		t.Errorf("length of put equaled equal to got, shoudl not be as we deleted a key")
-	} else {
-		if got2[len(got2)-1].v != nil {
-			t.Errorf("expected delted key to notify with a nil value, instead for %v", got2[len(got2)-1])
+	tick = time.Tick(100 * time.Millisecond)
+	deadline = time.After(1 * time.Second)
+deleteWatch:
+	for {
+		select {
+		case <-tick:
+			if got2[len(got2)-1].v == nil {
+				break deleteWatch
+			}
+		case <-deadline:
+			t.Fatalf("timed out waiting for delete notification")
 		}
 	}
 
 	cancel()
-	// write after canceling watches, should not notify the watcher
+
+	// write after canceling watches. should not notify the watcher
 	if err := s.Put("b1", "alice", []byte("bob")); err != nil {
-		t.Errorf("unexpected error putting key after cancel()")
+		t.Fatalf("unexpected error putting key after cancel()")
 	}
 	// compare put and got, should be the same
 	if len(put1) != len(got1) {
