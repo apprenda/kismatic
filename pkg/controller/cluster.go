@@ -135,9 +135,16 @@ func (c *clusterController) destroy(cluster store.Cluster) store.Cluster {
 func (c *clusterController) install(cluster store.Cluster) store.Cluster {
 	c.log.Println("installing cluster")
 	plan := cluster.Plan
-	// TODO: Run validation here, or create "validating", "validationFailed" states?
 
-	err := c.executor.GenerateCertificates(&plan, false)
+	err := c.executor.RunPreFlightCheck(&plan)
+	if err != nil {
+		c.log.Printf("error running preflight checks: %v", err)
+		cluster.CurrentState = installFailed
+		cluster.CanContinue = false
+		return cluster
+	}
+
+	err = c.executor.GenerateCertificates(&plan, false)
 	if err != nil {
 		c.log.Printf("error generating certificates: %v", err)
 		cluster.CurrentState = installFailed

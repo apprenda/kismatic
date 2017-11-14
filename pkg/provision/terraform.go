@@ -38,19 +38,17 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	if err := os.MkdirAll(clusterStateDir, 0700); err != nil {
 		return nil, fmt.Errorf("error creating directory to keep cluster state: %v", err)
 	}
-	if err := os.Chdir(clusterStateDir); err != nil {
-		return nil, fmt.Errorf("error switching dir to %s: %v", clusterStateDir, err)
-	}
-	defer os.Chdir("../../../")
 
 	// Setup the environment for all Terraform commands.
 	cmdEnv := append(os.Environ(), aws.getCommandEnvironment()...)
+	cmdDir := clusterStateDir
 
 	providerDir := fmt.Sprintf("../../providers/%s", plan.Provisioner.Provider)
 
 	// Terraform init
 	initCmd := exec.Command(terraformBinaryPath, "init", providerDir)
 	initCmd.Env = cmdEnv
+	initCmd.Dir = cmdDir
 	if out, err := initCmd.CombinedOutput(); err != nil {
 		// TODO: We need to send this output somewhere else
 		fmt.Println(string(out))
@@ -60,6 +58,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	// Terraform plan
 	planCmd := exec.Command(terraformBinaryPath, "plan", fmt.Sprintf("-out=%s", plan.Cluster.Name), providerDir)
 	planCmd.Env = cmdEnv
+	planCmd.Dir = cmdDir
 
 	if out, err := planCmd.CombinedOutput(); err != nil {
 		return nil, fmt.Errorf("Error running terraform plan: %s", out)
@@ -68,6 +67,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	// Terraform apply
 	applyCmd := exec.Command(terraformBinaryPath, "apply", plan.Cluster.Name)
 	applyCmd.Env = cmdEnv
+	applyCmd.Dir = cmdDir
 	if out, err := applyCmd.CombinedOutput(); err != nil {
 		return nil, fmt.Errorf("Error running terraform apply: %s", out)
 	}
@@ -75,6 +75,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	// Render template
 	outputCmd := exec.Command(terraformBinaryPath, "output", "rendered_template")
 	outputCmd.Env = cmdEnv
+	outputCmd.Dir = cmdDir
 	out, err := outputCmd.CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("Error collecting terraform output: %s", out)

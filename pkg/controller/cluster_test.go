@@ -26,7 +26,7 @@ func (e dummyExec) Install(p *install.Plan, restartServices bool) error {
 }
 
 func (e dummyExec) RunPreFlightCheck(*install.Plan) error {
-	panic("not implemented")
+	return nil
 }
 
 func (e dummyExec) RunNewWorkerPreFlightCheck(install.Plan, install.Node) error {

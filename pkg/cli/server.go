@@ -2,7 +2,6 @@ package cli
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	nethttp "net/http"
@@ -103,19 +102,6 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	terraform := provision.Terraform{
 		BinaryPath: "./../../bin/terraform",
 	}
-	var provisionerCreater = func(cluster store.Cluster) provision.Provisioner {
-		switch cluster.Plan.Provisioner.Provider {
-		case "aws":
-			p := provision.AWS{
-				KeyID:     cluster.AwsID,
-				Secret:    cluster.AwsKey,
-				Terraform: terraform,
-			}
-			return p
-		default:
-			panic(fmt.Sprintf("provider not supported: %q", cluster.Plan.Provisioner.Provider))
-		}
-	}
 
 	// Create a dir where all the controller-related files will be stored
 	rootDir := "server"
@@ -123,7 +109,13 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	if err != nil {
 		logger.Fatalf("error creating directory %q: %v", rootDir, err)
 	}
-	ctrl := controller.New(logger, controller.DefaultExecutorCreator(rootDir), provisionerCreater, clusterStore, 10*time.Minute)
+	ctrl := controller.New(
+		logger,
+		controller.DefaultExecutorCreator(rootDir),
+		controller.DefaultProvisionerCreator(terraform),
+		clusterStore,
+		10*time.Minute,
+	)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ctrl.Run(ctx)
 
