@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/mholt/archiver"
 
 	"github.com/apprenda/kismatic/pkg/store"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -273,7 +276,7 @@ func (api Clusters) GetKubeconfig(w http.ResponseWriter, r *http.Request, p http
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
-	f := path.Join(api.AssetsDir, id, "generated", "kubeconfig")
+	f := path.Join(api.AssetsDir, id, "assets", "kubeconfig")
 	if stat, err := os.Stat(f); os.IsNotExist(err) || stat.IsDir() {
 		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf("kubeconfig for cluster %s could not be retrieved: %v", id, err))
@@ -306,6 +309,44 @@ func (api Clusters) GetLogs(w http.ResponseWriter, r *http.Request, p httprouter
 		return
 	}
 	http.ServeFile(w, r, f)
+}
+
+func (api Clusters) GetAssets(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	id := p.ByName("name")
+	exists, err := existsInStore(id, api.Store)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
+		return
+	}
+	if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	dir := path.Join(api.AssetsDir, id, "assets")
+	if stat, err := os.Stat(dir); os.IsNotExist(err) || !stat.IsDir() {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf("assets for cluster %s could not be retrieved: %v", id, err))
+		return
+	}
+	// create a temp dir to store the tar assets
+	tmpf, err := ioutil.TempFile("/tmp", id)
+	defer os.Remove(tmpf.Name())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf("could not create an assets file for cluster %s: %v", id, err))
+		return
+	}
+	// archive the directory
+	err = archiver.TarGz.Make(tmpf.Name(), []string{dir})
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf("could not archive tge assets file for cluster %s: %v", id, err))
+		return
+	}
+	attachmentName := fmt.Sprintf("attachment; filename=%s-assets.tar.gz", id)
+	w.Header().Set("Content-Disposition", attachmentName)
+	http.ServeFile(w, r, tmpf.Name())
 }
 
 func putToStore(req *ClusterRequest, cs store.ClusterStore) error {

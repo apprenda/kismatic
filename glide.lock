@@ -1,5 +1,5 @@
-hash: 38cc9f8fa9f6dbc1a778dd747bc3aa0f1ed80f6e3ca6a2e2a2cb950a015ffafa
-updated: 2017-11-06T09:06:34.715332742-05:00
+hash: fb3da16a5093d86bb1350dce9f7e44a41591b4b253154dc61a8d3aa35c73e654
+updated: 2017-11-15T09:50:43.005879-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 40f45e34986ba617a372d1590de273a0ca84a53d
@@ -67,6 +67,14 @@ imports:
   version: 1d903dcb749992f3741d744c0f8376b4bd7eb3e1
   subpackages:
   - md2man
+- name: github.com/dsnet/compress
+  version: c4dbed65594871659ea7347a85e1b8dcd97b9990
+  subpackages:
+  - bzip2
+  - bzip2/internal/sais
+  - internal
+  - internal/errors
+  - internal/prefix
 - name: github.com/fatih/color
   version: 87d4004f2ab62d0d255e0a38f1680aa534549fe3
 - name: github.com/fortytw2/leaktest
@@ -94,6 +102,10 @@ imports:
   version: 3fa8c76f9daed4067e4a806fb7e4dc86455c6d6a
 - name: github.com/mattn/go-isatty
   version: 0360b2af4f38e8d38c7fce2a9f4e702702d73a39
+- name: github.com/mholt/archiver
+  version: cdc68dd1f170b8dfc1a0d2231b5bb0967ed67006
+  subpackages:
+  - cmd/archiver
 - name: github.com/michaelbironneau/garbler
   version: eaea49f3709333a999768eddd70d24eba599e78d
   subpackages:
@@ -103,6 +115,8 @@ imports:
 - name: github.com/mreiferson/go-httpclient
   version: 63fe23f7434723dc904c901043af07931f293c47
   repo: https://github.com/mreiferson/go-httpclient
+- name: github.com/nwaples/rardecode
+  version: e06696f847aeda6f39a8f0b7cdff193b7690aef6
 - name: github.com/onsi/ginkgo
   version: 8382b23d18dbaaff8e5f7e83784c53ebb8ec2f47
   subpackages:
@@ -150,8 +164,14 @@ imports:
   - doc
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: github.com/ulikunitz/xz
+  version: 0c6b41e72360850ca4f98dc341fd999726ea007f
+  subpackages:
+  - internal/hash
+  - internal/xlog
+  - lzma
 - name: github.com/urfave/negroni
-  version: fde5e16d32adc7ad637e9cd9ad21d4ebc6192535
+  version: 5dbbc83f748fc3ad38585842b0aedab546d0ea1e
 - name: golang.org/x/crypto
   version: 1f22c0103821b9390939b6776727195525381532
   subpackages:

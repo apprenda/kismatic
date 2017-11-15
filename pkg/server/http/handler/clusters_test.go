@@ -527,13 +527,71 @@ func TestGetLogs(t *testing.T) {
 	}
 }
 
+func TestGetAssets(t *testing.T) {
+	cs := &mockClustersStore{}
+	cs.Put("foo", store.Cluster{})
+	cs.Put("foobar", store.Cluster{})
+
+	// Call their ServeHTTP method directly and pass in our Request and ResponseRecorder
+	r := httprouter.New()
+
+	assetsDir, err := mockAssetsDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clustersAPI := Clusters{Store: cs, AssetsDir: assetsDir, Logger: log.New(os.Stdout, "test", 0)}
+	r.GET("/clusters/:name/assets", clustersAPI.GetKubeconfig)
+
+	// Create a request to pass to our handler
+	req, err := http.NewRequest("GET", "/clusters/foo/assets", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusOK, rr.Body.String())
+	}
+
+	// Create a request to pass to our handler that should return a 404
+	req, err = http.NewRequest("GET", "/clusters/bar/assets", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	rr = httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusNotFound {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusNotFound, rr.Body.String())
+	}
+
+	// Create a request to pass to our handler that should return a 500
+	// Exists in store but not in the assets dir
+	req, err = http.NewRequest("GET", "/clusters/foobar/assets", nil)
+	if err != nil {
+		t.Error(err)
+	}
+	rr = httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusInternalServerError {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusInternalServerError, rr.Body.String())
+	}
+}
+
 func mockAssetsDir() (string, error) {
 	assetsDir, err := ioutil.TempDir("/tmp", "ket-server-assets")
 	if err != nil {
 		return "", fmt.Errorf("error creating assets directory %q: %v", assetsDir, err)
 	}
 
-	generatedDir := path.Join(assetsDir, "foo", "generated")
+	generatedDir := path.Join(assetsDir, "foo", "assets")
 	err = os.MkdirAll(generatedDir, 0770)
 	if err != nil {
 		return "", fmt.Errorf("Error creating generated directory %q: %v", generatedDir, err)

@@ -83,10 +83,11 @@ func (s *HttpServer) Init() error {
 	router.POST("/clusters", s.ClustersAPI.Create)
 	router.GET("/clusters/:name/kubeconfig", s.ClustersAPI.GetKubeconfig)
 	router.GET("/clusters/:name/logs", s.ClustersAPI.GetLogs)
+	router.GET("/clusters/:name/assets", s.ClustersAPI.GetAssets)
 
 	// use our own logger format
 	l := negroni.NewLogger()
-	l.Logger = s.Logger
+	l.ALogger = s.Logger
 	// use our own logger format
 	r := negroni.NewRecovery()
 	r.Logger = s.Logger
