@@ -691,7 +691,6 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 	}
 
 	// Setup docker options
-	cc.DockerLogOptsEnabled = p.Docker.Logs.MaxSize != "-1"
 	cc.DockerLogOptsMaxSize = p.Docker.Logs.MaxSize
 	cc.DockerLogOptsMaxFile = p.Docker.Logs.MaxFile
 

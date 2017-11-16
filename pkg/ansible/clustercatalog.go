@@ -69,7 +69,6 @@ type ClusterCatalog struct {
 	DiagnosticsDirectory string `yaml:"diagnostics_dir"`
 	DiagnosticsDateTime  string `yaml:"diagnostics_date_time"`
 
-	DockerLogOptsEnabled bool   `yaml:"docker_log_opts_enabled"`
 	DockerLogOptsMaxSize string `yaml:"docker_log_opts_max_size"`
 	DockerLogOptsMaxFile int    `yaml:"docker_log_opts_max_file"`
 
