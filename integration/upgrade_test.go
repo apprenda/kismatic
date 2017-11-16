@@ -12,6 +12,230 @@ import (
 var _ = Describe("Upgrade", func() {
 
 	Describe("Upgrading a cluster using online mode", func() {
+		Context("From KET version v1.6.1", func() {
+			BeforeEach(func() {
+				dir := setupTestWorkingDirWithVersion("v1.6.1")
+				os.Chdir(dir)
+			})
+
+			Context("Using a minikube layout", func() {
+				Context("Using CentOS 7", func() {
+					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
+						WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
+							installAndUpgradeMinikube(node, sshKey, true)
+						})
+					})
+				})
+
+				Context("Using RedHat 7", func() {
+					ItOnAWS("should be upgraded [slow] [upgrade]", func(aws infrastructureProvisioner) {
+						WithMiniInfrastructure(RedHat7, aws, func(node NodeDeets, sshKey string) {
+							installAndUpgradeMinikube(node, sshKey, true)
+						})
+					})
+				})
+			})
+
+			// This spec will be used for testing non-destructive kismatic features on
+			// an upgraded cluster.
+			// This spec is open to modification when new assertions have to be made.
+			Context("Using a skunkworks cluster", func() {
+				ItOnAWS("should result in an upgraded cluster [slow] [upgrade]", func(aws infrastructureProvisioner) {
+					WithInfrastructureAndDNS(NodeCount{Etcd: 3, Master: 2, Worker: 3, Ingress: 2, Storage: 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+						// reserve one of the workers for the add-worker test
+						allWorkers := nodes.worker
+						nodes.worker = allWorkers[0 : len(nodes.worker)-1]
+
+						// Standup cluster with previous version
+						opts := installOptions{}
+						err := installKismatic(nodes, opts, sshKey)
+						FailIfError(err)
+
+						// Extract current version of kismatic
+						extractCurrentKismaticInstaller()
+
+						// Perform upgrade
+						upgradeCluster(true)
+
+						sub := SubDescribe("Using an upgraded cluster")
+						defer sub.Check()
+
+						sub.It("should have working storage volumes", func() error {
+							return testStatefulWorkload(nodes, sshKey)
+						})
+
+						sub.It("should allow adding a worker node", func() error {
+							newWorker := allWorkers[len(allWorkers)-1]
+							return addWorkerToCluster(newWorker, sshKey, []string{})
+						})
+
+						sub.It("should be able to deploy a workload with ingress", func() error {
+							return verifyIngressNodes(nodes.master[0], nodes.ingress, sshKey)
+						})
+
+						// Use master[0] public IP
+						sub.It("should have an accessible dashboard", func() error {
+							return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
+						})
+
+						sub.It("should respect network policies", func() error {
+							return verifyNetworkPolicy(nodes.master[0], sshKey, false)
+						})
+
+						// This test should always be last
+						sub.It("should still be a highly available cluster after upgrade", func() error {
+							By("Removing a Kubernetes master node")
+							if err = aws.TerminateNode(nodes.master[0]); err != nil {
+								return fmt.Errorf("could not remove node: %v", err)
+							}
+							By("Re-running Kuberang")
+							if err = runViaSSH([]string{"sudo kuberang"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
+								return err
+							}
+							return nil
+						})
+					})
+				})
+			})
+
+			Context("Using a cluster that has no internet access [slow] [upgrade]", func() {
+				Context("With nodes running CentOS 7", func() {
+					ItOnAWS("should result in an upgraded cluster", func(aws infrastructureProvisioner) {
+						distro := CentOS7
+						WithInfrastructure(NodeCount{Etcd: 1, Master: 1, Worker: 2, Ingress: 1, Storage: 1}, distro, aws, func(nodes provisionedNodes, sshKey string) {
+							// One of the nodes will function as a repo mirror and image registry
+							repoNode := nodes.worker[1]
+							nodes.worker = nodes.worker[0:1]
+							// Standup cluster with previous version
+							opts := installOptions{
+								disconnectedInstallation: false, // we want KET to install the packages, so let it use the package repo
+								modifyHostsFiles:         true,
+							}
+							err := installKismatic(nodes, opts, sshKey)
+							FailIfError(err)
+
+							// Extract current version of kismatic
+							extractCurrentKismaticInstaller()
+
+							By("Creating a package repository")
+							err = createPackageRepositoryMirror(repoNode, distro, sshKey)
+							FailIfError(err, "Error creating local package repo")
+
+							By("Deploying a docker registry")
+							caFile, err := deployAuthenticatedDockerRegistry(repoNode, dockerRegistryPort, sshKey)
+							FailIfError(err, "Failed to deploy docker registry")
+
+							By("Seeding the local registry")
+							err = seedRegistry(repoNode, caFile, dockerRegistryPort, sshKey)
+							FailIfError(err, "Error seeding local registry")
+
+							err = disableInternetAccess(nodes.allNodes(), sshKey)
+							FailIfError(err)
+
+							By("Configuring repository on nodes")
+							for _, n := range nodes.allNodes() {
+								err = copyFileToRemote("test-resources/disconnected-installation/configure-rpm-mirrors.sh", "/tmp/configure-rpm-mirrors.sh", n, sshKey, 15*time.Second)
+								FailIfError(err, "Failed to copy script to nodes")
+							}
+							cmds := []string{
+								"chmod +x /tmp/configure-rpm-mirrors.sh",
+								fmt.Sprintf("sudo /tmp/configure-rpm-mirrors.sh http://%s", repoNode.PrivateIP),
+							}
+							err = runViaSSH(cmds, nodes.allNodes(), sshKey, 5*time.Minute)
+							FailIfError(err, "Failed to run mirror configuration script")
+
+							if err := verifyNoInternetAccess(nodes.allNodes(), sshKey); err == nil {
+								Fail("was able to ping google with outgoing connections blocked")
+							}
+
+							// Cleanup old cluster file and create a new one
+							By("Recreating kismatic-testing.yaml file")
+							err = os.Remove("kismatic-testing.yaml")
+							FailIfError(err)
+							opts = installOptions{
+								disconnectedInstallation: true,
+								modifyHostsFiles:         true,
+								dockerRegistryCAPath:     caFile,
+								dockerRegistryServer:     fmt.Sprintf("%s:%d", repoNode.PrivateIP, dockerRegistryPort),
+								dockerRegistryUsername:   "kismaticuser",
+								dockerRegistryPassword:   "kismaticpassword",
+							}
+							writePlanFile(buildPlan(nodes, opts, sshKey))
+
+							upgradeCluster(true)
+						})
+					})
+				})
+
+				Context("With nodes running Ubuntu 16.04", func() {
+					ItOnAWS("should result in an upgraded cluster", func(aws infrastructureProvisioner) {
+						distro := Ubuntu1604LTS
+						WithInfrastructure(NodeCount{Etcd: 1, Master: 1, Worker: 2, Ingress: 1, Storage: 1}, distro, aws, func(nodes provisionedNodes, sshKey string) {
+							// One of the nodes will function as a repo mirror and image registry
+							repoNode := nodes.worker[1]
+							nodes.worker = nodes.worker[0:1]
+							// Standup cluster with previous version
+							opts := installOptions{
+								disconnectedInstallation: false, // we want KET to install the packages, so let it use the package repo
+								modifyHostsFiles:         true,
+							}
+							err := installKismatic(nodes, opts, sshKey)
+							FailIfError(err)
+
+							extractCurrentKismaticInstaller()
+
+							By("Creating a package repository")
+							err = createPackageRepositoryMirror(repoNode, distro, sshKey)
+							FailIfError(err, "Error creating local package repo")
+
+							By("Deploying a docker registry")
+							caFile, err := deployAuthenticatedDockerRegistry(repoNode, dockerRegistryPort, sshKey)
+							FailIfError(err, "Failed to deploy docker registry")
+
+							By("Seeding the local registry")
+							err = seedRegistry(repoNode, caFile, dockerRegistryPort, sshKey)
+							FailIfError(err, "Error seeding local registry")
+
+							err = disableInternetAccess(nodes.allNodes(), sshKey)
+							FailIfError(err)
+
+							By("Configuring repository on nodes")
+							for _, n := range nodes.allNodes() {
+								err = copyFileToRemote("test-resources/disconnected-installation/configure-deb-mirrors.sh", "/tmp/configure-deb-mirrors.sh", n, sshKey, 15*time.Second)
+								FailIfError(err, "Failed to copy script to nodes")
+							}
+							cmds := []string{
+								"chmod +x /tmp/configure-deb-mirrors.sh",
+								fmt.Sprintf("sudo /tmp/configure-deb-mirrors.sh http://%s", repoNode.PrivateIP),
+							}
+							err = runViaSSH(cmds, nodes.allNodes(), sshKey, 5*time.Minute)
+							FailIfError(err, "Failed to run mirror configuration script")
+
+							if err := verifyNoInternetAccess(nodes.allNodes(), sshKey); err == nil {
+								Fail("was able to ping google with outgoing connections blocked")
+							}
+
+							// Cleanup old cluster file and create a new one
+							By("Recreating kismatic-testing.yaml file")
+							err = os.Remove("kismatic-testing.yaml")
+							FailIfError(err)
+							opts = installOptions{
+								disconnectedInstallation: true,
+								modifyHostsFiles:         true,
+								dockerRegistryCAPath:     caFile,
+								dockerRegistryServer:     fmt.Sprintf("%s:%d", repoNode.PrivateIP, dockerRegistryPort),
+								dockerRegistryUsername:   "kismaticuser",
+								dockerRegistryPassword:   "kismaticpassword",
+							}
+							writePlanFile(buildPlan(nodes, opts, sshKey))
+
+							upgradeCluster(true)
+						})
+					})
+				})
+			})
+		})
+
 		Context("From KET version v1.6.0", func() {
 			BeforeEach(func() {
 				dir := setupTestWorkingDirWithVersion("v1.6.0")

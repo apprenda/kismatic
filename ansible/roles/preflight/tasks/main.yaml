@@ -74,7 +74,7 @@
     when: "'worker' in group_names"
 
   # kubernetes checks /proc/swaps lines > 1
-  - name: list memroy swaps in /proc/swaps
+  - name: list memory swaps in /proc/swaps
     command: cat /proc/swaps
     register: memory_swaps
     failed_when: false

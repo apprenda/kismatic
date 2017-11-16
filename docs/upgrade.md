@@ -129,7 +129,7 @@ flag to the `kismatic upgrade online` command. The checks will still run, but th
 won't prevent the upgrade from running.
 
 ## Offline Upgrade
-The offline upgrade is available for those clusters in which safety and availabilty are not a concern.
+The offline upgrade is available for those clusters in which safety and availability are not a concern.
 In this mode, the safety and availability checks will not be performed.
 
 Performing an offline upgrade could result in loss of critical data and reduced service

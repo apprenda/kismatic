@@ -13,17 +13,17 @@ var _ = Describe("NFS Shares", func() {
 	})
 
 	Context("Specifying valid NFS shares in the plan file", func() {
-		Context("targetting CentOS", func() {
+		Context("targeting CentOS", func() {
 			ItOnAWS("should result in a working deployment [slow]", func(aws infrastructureProvisioner) {
 				testNFSShare(aws, CentOS7)
 			})
 		})
-		Context("targetting Ubuntu", func() {
+		Context("targeting Ubuntu", func() {
 			ItOnAWS("should result in a working deployment [slow]", func(aws infrastructureProvisioner) {
 				testNFSShare(aws, Ubuntu1604LTS)
 			})
 		})
-		Context("targetting RHEL", func() {
+		Context("targeting RHEL", func() {
 			ItOnAWS("should result in a working deployment [slow]", func(aws infrastructureProvisioner) {
 				testNFSShare(aws, RedHat7)
 			})

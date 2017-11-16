@@ -38,7 +38,7 @@ func NewCert(ca *CA, req csr.CertificateRequest, expiry time.Duration) (key, cer
 	// Get CA private key
 	caPriv, err := helpers.ParsePrivateKeyPEMWithPassword(ca.Key, []byte(ca.Password))
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing privte key: %v", err)
+		return nil, nil, fmt.Errorf("error parsing private key: %v", err)
 	}
 	// Parse CA Cert
 	caCert, err := helpers.ParseCertificatePEM(ca.Cert)

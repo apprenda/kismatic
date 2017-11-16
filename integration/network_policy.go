@@ -61,7 +61,7 @@ func verifyNetworkPolicy(node NodeDeets, sshKey string, pre17 bool) error {
 		return fmt.Errorf("could not connect to pod after allowing traffic: %v", err)
 	}
 
-	// always try to disbale global policy
+	// always try to disable global policy
 	By("disabling global network policy on the policy-tester namespace")
 	if pre17 {
 		if err := retry.WithBackoff(func() error {

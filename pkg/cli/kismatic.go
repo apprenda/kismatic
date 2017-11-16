@@ -12,7 +12,7 @@ func NewKismaticCommand(version string, buildDate string, in io.Reader, out, std
 		Use:   "kismatic",
 		Short: "kismatic is the main tool for managing your Kubernetes cluster",
 		Long: `kismatic is the main tool for managing your Kubernetes cluster
-more documentation is availble at https://github.com/apprenda/kismatic`,
+more documentation is available at https://github.com/apprenda/kismatic`,
 		Run: func(cmd *cobra.Command, args []string) {
 			cmd.Help()
 		},

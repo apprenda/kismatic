@@ -6,7 +6,7 @@ kismatic is the main tool for managing your Kubernetes cluster
 
 
 kismatic is the main tool for managing your Kubernetes cluster
-more documentation is availble at https://github.com/apprenda/kismatic
+more documentation is available at https://github.com/apprenda/kismatic
 
 ```
 kismatic [flags]
