@@ -469,7 +469,7 @@ func (ong *OptionalNodeGroup) validate() (bool, []error) {
 	if len(ong.Nodes) != ong.ExpectedCount {
 		return false, []error{fmt.Errorf("Expected node count (%d) does not match the number of nodes provided (%d)", ong.ExpectedCount, len(ong.Nodes))}
 	}
-	ng := ong.NodeGroup
+	ng := NodeGroup(*ong)
 	return ng.validate()
 }
 

@@ -438,6 +438,9 @@ type DeprecatedPackageManager struct {
 
 // MasterNodeGroup is the collection of master nodes
 type MasterNodeGroup struct {
+	// Number of master nodes that are part of the cluster.
+	// +required
+	ExpectedCount int `yaml:"expected_count"`
 	// The FQDN of the load balancer that is fronting multiple master nodes.
 	// In the case where there is only one master node, this can be set to the IP address of the master node.
 	// +required
@@ -446,8 +449,9 @@ type MasterNodeGroup struct {
 	// In the case where there is only one master node, this can be set to the IP address of the master nodes.
 	// +required
 	LoadBalancedShortName string `yaml:"load_balanced_short_name"`
-	// The base struct
-	NodeGroup
+	// List of master nodes that are part of the cluster.
+	// +required
+	Nodes []Node
 }
 
 // A NodeGroup is a collection of nodes
@@ -461,9 +465,7 @@ type NodeGroup struct {
 }
 
 // An OptionalNodeGroup is a collection of nodes that can be empty
-type OptionalNodeGroup struct {
-	NodeGroup
-}
+type OptionalNodeGroup NodeGroup
 
 // A Node is a compute unit, virtual or physical, that is part of the cluster
 type Node struct {
@@ -539,49 +541,6 @@ type StorageVolume struct {
 type SSHConnection struct {
 	SSHConfig *SSHConfig
 	Node      *Node
-}
-
-//Convert turns three parallel slices of node data into a single node group
-func (ng *NodeGroup) Convert(IPs, InternalIPs, Hosts []string) error {
-	if len(IPs) != len(InternalIPs) || len(InternalIPs) != len(Hosts) {
-		//Transitivity is pretty cool
-		return fmt.Errorf("The data slice must contain the same number of nodes.")
-
-	}
-	//This could be any of the three, since they should all be parallel.
-	ng.ExpectedCount = len(IPs)
-
-	ng.Nodes = []Node{}
-	for i := range IPs {
-		ng.Nodes = append(ng.Nodes, Node{
-			IP:         IPs[i],
-			InternalIP: InternalIPs[i],
-			Host:       Hosts[i],
-		})
-	}
-	return nil
-}
-
-//Update updates all the nodes in the node group to be equal to the nodes in the other node group
-func (ng *NodeGroup) Update(other *NodeGroup) error {
-	if len(ng.Nodes) != len(other.Nodes) || ng.ExpectedCount != other.ExpectedCount {
-		return fmt.Errorf("The node groups must contain the same number of nodes.")
-	}
-	for i := range ng.Nodes {
-		ng.Nodes[i] = other.Nodes[i]
-	}
-	return nil
-}
-
-//Update is slightly different for masters, since we also have to update the LB names
-func (mng *MasterNodeGroup) Update(other *MasterNodeGroup) error {
-	if err := mng.NodeGroup.Update(&other.NodeGroup); err != nil {
-		//Run the base case
-		return err
-	}
-	mng.LoadBalancedFQDN = other.LoadBalancedFQDN
-	mng.LoadBalancedShortName = other.LoadBalancedShortName
-	return nil
 }
 
 // GetUniqueNodes returns a list of the unique nodes that are listed in the plan file.
