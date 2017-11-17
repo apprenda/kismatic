@@ -2,265 +2,181 @@ package provision
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
+	"path/filepath"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/ssh"
+	yaml "gopkg.in/yaml.v2"
 )
 
-func (aws *AWS) getCommandEnvironment() []string {
-	key := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", os.Getenv("AWS_ACCESS_KEY_ID"))
-	secret := fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", os.Getenv("AWS_SECRET_ACCESS_KEY"))
-	region := fmt.Sprintf("AWS_DEFAULT_REGION=%s", os.Getenv("AWS_DEFAULT_REGION"))
-	return []string{key, secret, region}
+func (aws AWS) getCommandEnvironment() []string {
+	key := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", aws.AccessKeyID)
+	secret := fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", aws.SecretAccessKey)
+	return []string{key, secret}
 }
 
-//This might be a better fit with Terraform as the receiver,
-//but I think other providers will expect keys not in this format.
-func (aws *AWS) getAWSKeyData(pubFile, privFile string) (string, string, error) {
-	wd, err := os.Getwd()
-	if err != nil {
-		return "", "", fmt.Errorf("Could not find current working dir: %v", err)
-	}
-	privPath := fmt.Sprintf("%s/%s", wd, privFile)
-	pubBytes, err := ioutil.ReadFile(pubFile)
-	if err != nil {
-		return "", "", fmt.Errorf("Error reading public ssh key file: %v", err)
-	}
-	pubData := strings.TrimSpace(string(pubBytes))
-	return pubData, privPath, nil
-}
-
-//Provision provides a wrapper for terraform init, terraform plan, and terraform apply.
-func (aws *AWS) Provision(out io.Writer, plan *install.Plan) error {
-
-	// Use the provider found in the plan
-	providerPathFromClusterDir := fmt.Sprintf("../../providers/%s", plan.Provisioner.Provider)
-
+// Provision the necessary infrastructure as described in the plan
+func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	// Create directory for keeping cluster state
-	clusterStateDir := fmt.Sprintf("terraform/clusters/%s/", plan.Cluster.Name)
-
+	clusterStateDir := aws.getClusterStateDir(plan.Cluster.Name)
 	if err := os.MkdirAll(clusterStateDir, 0700); err != nil {
-		return fmt.Errorf("error creating dir to keep cluster state: %v", err)
+		return nil, fmt.Errorf("error creating directory to keep cluster state: %v", err)
 	}
-	if err := os.Chdir(clusterStateDir); err != nil {
-		return fmt.Errorf("error switching dir to %s: %v", clusterStateDir, err)
+
+	// Setup the environment for all Terraform commands.
+	cmdEnv := append(os.Environ(), aws.getCommandEnvironment()...)
+	cmdDir := clusterStateDir
+	providerDir := fmt.Sprintf("../../providers/%s", plan.Provisioner.Provider)
+
+	// Generate SSH keypair
+	pubKeyPath := filepath.Join(clusterStateDir, fmt.Sprintf("%s-ssh.pub", plan.Cluster.Name))
+	privKeyPath := filepath.Join(clusterStateDir, fmt.Sprintf("%s-ssh.pem", plan.Cluster.Name))
+	if err := ssh.NewKeyPair(pubKeyPath, privKeyPath); err != nil {
+		return nil, fmt.Errorf("error generating SSH key pair: %v", err)
 	}
-	defer os.Chdir("../../../")
+	plan.Cluster.SSH.Key = privKeyPath
 
-	//Read tfvars from plan
-	//and fill in the blanks
-	aws.Populate(plan)
-
-	//Write tfvars out
-	file := "terraform.tfvars.json"
-	aws.Write(file)
-
-	tfInit := exec.Command(aws.BinaryPath, "init", providerPathFromClusterDir)
-	if stdoutStderr, err := tfInit.CombinedOutput(); err != nil {
-		return fmt.Errorf("Error initializing terraform: %s", stdoutStderr)
+	// Write out the terraform variables
+	data := AWSTerraformData{
+		Region:            plan.Provisioner.AWSOptions.Region,
+		ClusterName:       plan.Cluster.Name,
+		EC2InstanceType:   plan.Provisioner.AWSOptions.EC2InstanceType,
+		MasterCount:       len(plan.Master.Nodes),
+		EtcdCount:         len(plan.Etcd.Nodes),
+		WorkerCount:       len(plan.Worker.Nodes),
+		IngressCount:      len(plan.Ingress.Nodes),
+		StorageCount:      len(plan.Storage.Nodes),
+		PrivateSSHKeyPath: privKeyPath,
+		PublicSSHKeyPath:  pubKeyPath,
 	}
-	fmt.Fprintf(out, "Provisioner initialization successful.\n")
-
-	tfPlan := exec.Command(aws.BinaryPath, "plan", fmt.Sprintf("-out=%s", plan.Cluster.Name), providerPathFromClusterDir)
-
-	if stdoutStderr, err := tfPlan.CombinedOutput(); err != nil {
-		return fmt.Errorf("Error running terraform plan: %s", stdoutStderr)
+	b, err := json.Marshal(data)
+	if err != nil {
+		return nil, err
 	}
-	fmt.Fprintf(out, "Provisioner planning successful.\n")
-
-	fmt.Fprintf(out, "Provisioning...\n")
-	tfApply := exec.Command(aws.Terraform.BinaryPath, "apply", plan.Cluster.Name)
-	if stdoutStderr, err := tfApply.CombinedOutput(); err != nil {
-		return fmt.Errorf("Error running terraform apply: %s", stdoutStderr)
+	err = ioutil.WriteFile(filepath.Join(clusterStateDir, "terraform.tfvars.json"), b, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("error writing terraform variables: %v", err)
 	}
-	fmt.Fprintf(out, "Provisioning successful!\n")
 
-	fmt.Fprintf(out, "Rendering plan file...\n")
-	return aws.updatePlan(plan)
+	// Terraform init
+	initCmd := exec.Command(terraformBinaryPath, "init", providerDir)
+	initCmd.Env = cmdEnv
+	initCmd.Dir = cmdDir
+	if out, err := initCmd.CombinedOutput(); err != nil {
+		// TODO: We need to send this output somewhere else
+		fmt.Println(string(out))
+		return nil, fmt.Errorf("Error initializing terraform: %s", err)
+	}
+
+	// Terraform plan
+	planCmd := exec.Command(terraformBinaryPath, "plan", fmt.Sprintf("-out=%s", plan.Cluster.Name), providerDir)
+	planCmd.Env = cmdEnv
+	planCmd.Dir = cmdDir
+
+	if out, err := planCmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("Error running terraform plan: %s", out)
+	}
+
+	// Terraform apply
+	applyCmd := exec.Command(terraformBinaryPath, "apply", plan.Cluster.Name)
+	applyCmd.Env = cmdEnv
+	applyCmd.Dir = cmdDir
+	if out, err := applyCmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("Error running terraform apply: %s", out)
+	}
+
+	// Render template
+	outputCmd := exec.Command(terraformBinaryPath, "output", "rendered_template")
+	outputCmd.Env = cmdEnv
+	outputCmd.Dir = cmdDir
+	out, err := outputCmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("Error collecting terraform output: %s", out)
+	}
+	var provisionedPlan install.Plan
+	if err := yaml.Unmarshal(out, &provisionedPlan); err != nil {
+		return nil, fmt.Errorf("error unmarshaling plan: %v", err)
+	}
+	return &provisionedPlan, nil
 }
 
-func (aws *AWS) updatePlan(plan *install.Plan) error {
-
-	//For mutations eventually
-	masterDiff := plan.Master.ExpectedCount - aws.MasterCount
-	if masterDiff != 0 {
-		return fmt.Errorf("We do not yet support cluster mutations")
-	}
-	etcdDiff := plan.Etcd.ExpectedCount - aws.EtcdCount
-	if etcdDiff != 0 {
-		return fmt.Errorf("We do not yet support cluster mutations")
-	}
-	workerDiff := plan.Worker.ExpectedCount - aws.WorkerCount
-	if workerDiff != 0 {
-		return fmt.Errorf("We do not yet support cluster mutations")
-	}
-	storageDiff := plan.Storage.ExpectedCount - aws.StorageCount
-	if storageDiff != 0 {
-		return fmt.Errorf("We do not yet support cluster mutations")
-	}
-	ingressDiff := plan.Ingress.ExpectedCount - aws.IngressCount
-	if ingressDiff != 0 {
-		return fmt.Errorf("We do not yet support cluster mutations")
-	}
-
-	//This is probably not as DRY as it could be, but I think it's the cleanest way to convert
-	//the representations without doing any interface type assertion.
-	//Node roles need to be refactored.
-
-	//Masters
+// updatePlan
+func (aws *AWS) buildPopulatedPlan(plan install.Plan) (*install.Plan, error) {
+	// Masters
 	tfNodes, err := aws.getTerraformNodes("master")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	mng := &install.MasterNodeGroup{}
+	mng := install.MasterNodeGroup{}
+	mng.NodeGroup = nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
+	mng.LoadBalancedFQDN = tfNodes.InternalIPs[0]
+	mng.LoadBalancedShortName = tfNodes.IPs[0]
+	plan.Master = mng
 
-	if err := mng.Convert(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts); err != nil {
-		return err
-	}
-	if len(mng.Nodes) == 1 {
-		//Write these in in the case of a single master with no external LB
-		mng.LoadBalancedFQDN = tfNodes.InternalIPs[0]
-		mng.LoadBalancedShortName = tfNodes.IPs[0]
-	} else {
-		//Just grab the one already in the plan otherwise,
-		//so Update doesn't overwrite it to a blank.
-		mng.LoadBalancedFQDN = plan.Master.LoadBalancedFQDN
-		mng.LoadBalancedShortName = plan.Master.LoadBalancedShortName
-
-	}
-	plan.Master.Update(mng)
-
-	//Etcds
+	// Etcds
 	tfNodes, err = aws.getTerraformNodes("etcd")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	eng := &install.NodeGroup{}
-	if err := eng.Convert(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts); err != nil {
-		return err
-	}
-	plan.Etcd.Update(eng)
+	plan.Etcd = nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
 
-	//Workers
+	// Workers
 	tfNodes, err = aws.getTerraformNodes("worker")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	wng := &install.NodeGroup{}
-	if err = wng.Convert(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts); err != nil {
-		return err
-	}
-	plan.Worker.Update(wng)
+	plan.Worker = nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
 
-	//Ingress
+	// Ingress
 	tfNodes, err = aws.getTerraformNodes("ingress")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	ing := &install.NodeGroup{}
-	if err := ing.Convert(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts); err != nil {
-		return err
-	}
-	plan.Ingress.Update(ing)
+	plan.Ingress = install.OptionalNodeGroup{NodeGroup: nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)}
 
-	//Storage
+	// Storage
 	tfNodes, err = aws.getTerraformNodes("storage")
 	if err != nil {
-		return err
+		return nil, err
 	}
-	sng := &install.NodeGroup{}
-	if err = sng.Convert(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts); err != nil {
-		return err
-	}
-	plan.Storage.Update(sng)
+	plan.Storage = install.OptionalNodeGroup{NodeGroup: nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)}
 
-	//SSH
-	plan.Cluster.SSH.Key = aws.PrivateSSHKeyPath
-	if aws.AMI == "" {
-		plan.Cluster.SSH.User = "ubuntu"
-	} else {
-		plan.Cluster.SSH.User = "root"
-	}
+	// SSH
+	plan.Cluster.SSH.User = "ubuntu"
+	return &plan, nil
+}
 
-	//Write the updated plan
-	clusterYaml := fmt.Sprintf("%s.yaml", aws.ClusterName)
-	fp := install.FilePlanner{File: clusterYaml}
-	if err := fp.Write(plan); err != nil {
-		return fmt.Errorf("Error writing rendered file to file system")
+// Destroy destroys a provisioned cluster (using -force by default)
+func (aws AWS) Destroy(clusterName string) error {
+	cmd := exec.Command(aws.BinaryPath, "destroy", "-force")
+	cmd.Stdout = aws.Terraform.Output
+	cmd.Stderr = aws.Terraform.Output
+	cmd.Env = aws.getCommandEnvironment()
+	cmd.Dir = aws.getClusterStateDir(clusterName)
+	if err := cmd.Run(); err != nil {
+		return errors.New("Error destroying infrastructure with Terraform")
 	}
 	return nil
 }
 
-//Populate fills in the fields for an AWS struct from the plan file and environment variables.
-//This is also where the SSH keys are generated.
-func (aws *AWS) Populate(plan *install.Plan) error {
-
-	env := aws.getCommandEnvironment()
-
-	//Terraform only cares about the data to the right
-	aws.AccessKey = strings.Split(env[0], "=")[1]
-	aws.SecretKey = strings.Split(env[1], "=")[1]
-
-	if plan.Provisioner.AWSOptions.Region != "" {
-		//Prefer the one defined in the plan
-		aws.Region = plan.Provisioner.AWSOptions.Region
-	} else if regionEnv := strings.Split(env[2], "=")[1]; regionEnv != "" {
-		//Otherwise use the one defined in the environment variable
-		aws.Region = regionEnv
-	}
-	//Allows for the case where the user already has a key they want to use
-	if plan.Cluster.SSH.Key == "" {
-		err := ssh.NewKeyPair("sshkey.pub", "sshkey.pem")
-		if err != nil {
-			return err
+func nodeGroupFromSlices(ips, internalIPs, hosts []string) install.NodeGroup {
+	ng := install.NodeGroup{}
+	ng.ExpectedCount = len(ips)
+	ng.Nodes = []install.Node{}
+	for i := range ips {
+		n := install.Node{
+			IP:   ips[i],
+			Host: hosts[i],
 		}
-		aws.PublicSSHKey, aws.PrivateSSHKeyPath, err = aws.getAWSKeyData("sshkey.pub", "sshkey.pem")
-		if err != nil {
-			return err
+		if len(internalIPs) != 0 {
+			n.InternalIP = internalIPs[i]
 		}
+		ng.Nodes = append(ng.Nodes, n)
 	}
-	aws.ClusterName = plan.Cluster.Name
-	aws.AMI = plan.Provisioner.AWSOptions.AMI
-	aws.EC2InstanceType = plan.Provisioner.AWSOptions.EC2InstanceType
-	aws.MasterCount = len(plan.Master.Nodes)
-	aws.EtcdCount = len(plan.Etcd.Nodes)
-	aws.WorkerCount = len(plan.Worker.Nodes)
-	aws.IngressCount = len(plan.Ingress.Nodes)
-	aws.StorageCount = len(plan.Storage.Nodes)
-	return nil
-}
-
-// Write the TFVars to the file system
-func (aws *AWS) Write(file string) error {
-	bytez, err := json.Marshal(aws.AWSTerraformData)
-	if err != nil {
-		return fmt.Errorf("error marshalling tfvars to json: %v", err)
-	}
-	err = ioutil.WriteFile(file, bytez, 0700)
-	if err != nil {
-		return fmt.Errorf("error making tfvars file: %v", err)
-	}
-	return nil
-}
-
-//Destroy destroys a provisioned cluster (using -force by default)
-func (aws *AWS) Destroy(out io.Writer, clusterName string) error {
-	clusterPathFromWd := clusterName
-	os.Chdir(clusterPathFromWd)
-	defer os.Chdir("../../../")
-	defer os.RemoveAll(clusterPathFromWd)
-
-	tfDestroy := exec.Command(aws.BinaryPath, "destroy", "-force")
-	if stdoutStderr, err := tfDestroy.CombinedOutput(); err != nil {
-		return fmt.Errorf("Error attempting to destroy: %s", stdoutStderr)
-	}
-	fmt.Fprintf(out, "Cluster destruction successful.\n")
-
-	return nil
+	return ng
 }

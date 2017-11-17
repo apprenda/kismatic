@@ -124,7 +124,7 @@ func doPlan(in io.Reader, out io.Writer, planner *install.FilePlanner) error {
 		}
 		planner.File = fmt.Sprintf("%s/%s.yaml", dir, planTemplate.ClusterName)
 	}
-	if err = install.WritePlanTemplate(planTemplate, *planner); err != nil {
+	if err = install.WritePlanTemplate(planTemplate, planner); err != nil {
 		return fmt.Errorf("error planning installation: %v", err)
 	}
 	fmt.Fprintf(out, "Wrote plan file template to %q\n", planner.File)

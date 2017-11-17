@@ -105,9 +105,11 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	defer s.Close()
 	bucketName := "clusters"
 	if err != nil {
-		t.Fatalf("error creating store")
+		t.Fatalf("error creating store: %v", err)
 	}
-	s.CreateBucket(bucketName)
+	if err := s.CreateBucket(bucketName); err != nil {
+		t.Fatalf("error creating bucket: %v", err)
+	}
 
 	clusterStore := store.NewClusterStore(s, bucketName)
 
@@ -121,17 +123,37 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	go c.Run(ctx)
 
 	// Create a new cluster in the store
-	cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
-	err = clusterStore.Put(clusterName, cluster)
-	if err != nil {
-		t.Fatalf("error storing cluster")
-	}
+	writerDone := make(chan struct{})
+	go func(done <-chan struct{}) {
+		cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
+		err = clusterStore.Put(clusterName, cluster)
+		if err != nil {
+			t.Fatalf("error storing cluster")
+		}
+		tick := time.Tick(1 * time.Second)
+		for {
+			select {
+			case <-tick:
+				// We don't have a way to wait until the controller is watching,
+				// so we have to issue multiple writes
+				cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
+				err = clusterStore.Put(clusterName, cluster)
+				if err != nil {
+					t.Fatalf("error storing cluster")
+				}
+			case <-done:
+				return
+			}
+		}
+	}(writerDone)
 
 	// Assert that the cluster reaches desired state
 	var done bool
+	tick := time.Tick(time.Second)
+	deadline := time.After(5 * time.Second)
 	for !done {
 		select {
-		case <-time.Tick(time.Second):
+		case <-tick:
 			var cluster store.Cluster
 			b, err := s.Get(bucketName, clusterName)
 			if err != nil {
@@ -143,14 +165,16 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 			}
 			if cluster.CurrentState == cluster.DesiredState {
 				cancel()
+				close(writerDone)
 				done = true
 				break
 			}
-		case <-time.After(5 * time.Second):
+		case <-deadline:
 			fmt.Println("tick")
 			cancel()
 			t.Errorf("did not reach installed state")
 			done = true
+			close(writerDone)
 			break
 		}
 	}

@@ -191,15 +191,6 @@ func (p *Provisioner) validate() (bool, []error) {
 	if p.Provider != "" {
 		switch p.Provider {
 		case "aws":
-			if aws := os.Getenv("AWS_ACCESS_KEY_ID"); aws == "" {
-				v.addError(fmt.Errorf("AWS_ACCESS_KEY_ID not found"))
-			}
-			if aws := os.Getenv("AWS_SECRET_ACCESS_KEY"); aws == "" {
-				v.addError(fmt.Errorf("AWS_SECRET_ACCESS_KEY not found"))
-			}
-			if aws := os.Getenv("AWS_DEFAULT_REGION"); aws == "" {
-				v.addError(fmt.Errorf("AWS_DEFAULT_REGION not found"))
-			}
 			validEC2Type, err := regexp.MatchString(ec2Regexp, p.AWSOptions.AMI)
 			if err != nil {
 				v.addError(fmt.Errorf("Could not determine if %q is an EC2 instance type: %v", p.AWSOptions.AMI, err))

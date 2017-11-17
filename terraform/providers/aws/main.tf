@@ -27,7 +27,7 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_key_pair" "kismatic" {
   key_name   = "${var.cluster_name}"
-  public_key = "${var.public_ssh_key}"
+  public_key = "${file("${var.public_ssh_key_path}")}"
 }
 
 resource "aws_vpc" "kismatic" {

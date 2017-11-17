@@ -14,6 +14,7 @@ const terraformBinaryPath = "../../bin/terraform"
 
 // Terraform provisioner
 type Terraform struct {
+	Output     io.Writer
 	BinaryPath string
 	Logger     *log.Logger
 }
@@ -28,8 +29,8 @@ type tfNodeGroup struct {
 	Hosts       []string
 }
 
-//For de-serializing terraform output
-type tfNodes struct {
+// For deserializing terraform output
+type tfOutputVar struct {
 	Sensitive  bool     `json:"sensitive"`
 	OutputType string   `json:"type"`
 	Value      []string `json:"value"`
@@ -38,8 +39,8 @@ type tfNodes struct {
 // Provisioner is responsible for creating and destroying infrastructure for
 // a given cluster.
 type Provisioner interface {
-	Provision(io.Writer, install.Plan) (*install.Plan, error)
-	Destroy(io.Writer, string) error
+	Provision(install.Plan) (*install.Plan, error)
+	Destroy(string) error
 }
 
 // Creates a new terraform struct with specified logger.
@@ -50,7 +51,7 @@ func NewTerraform(logger *log.Logger) *Terraform {
 	return tf
 }
 
-func (tf *Terraform) getTerraformNodes(role string) (*tfNodeGroup, error) {
+func (tf Terraform) getTerraformNodes(role string) (*tfNodeGroup, error) {
 	tfOutPubIPs := fmt.Sprintf("%s_pub_ips", role)
 	tfOutPrivIPs := fmt.Sprintf("%s_priv_ips", role)
 	tfOutHosts := fmt.Sprintf("%s_hosts", role)
@@ -63,7 +64,7 @@ func (tf *Terraform) getTerraformNodes(role string) (*tfNodeGroup, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPub)
 	}
-	pubIPData := tfNodes{}
+	pubIPData := tfOutputVar{}
 	json.Unmarshal(stdoutStderrPub, &pubIPData)
 	nodes.IPs = pubIPData.Value
 
@@ -73,7 +74,7 @@ func (tf *Terraform) getTerraformNodes(role string) (*tfNodeGroup, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPriv)
 	}
-	privIPData := tfNodes{}
+	privIPData := tfOutputVar{}
 	json.Unmarshal(stdoutStderrPriv, &privIPData)
 	nodes.InternalIPs = privIPData.Value
 
@@ -83,9 +84,22 @@ func (tf *Terraform) getTerraformNodes(role string) (*tfNodeGroup, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrHost)
 	}
-	hostData := tfNodes{}
+	hostData := tfOutputVar{}
 	json.Unmarshal(stdoutStderrHost, &hostData)
 	nodes.Hosts = hostData.Value
 
+	if len(nodes.IPs) != len(nodes.Hosts) {
+		return nil, fmt.Errorf("Expected to get %d host names, but got %d", len(nodes.IPs), len(nodes.Hosts))
+	}
+
+	// Verify that we got the right number of internal IPs if we are using them
+	if len(nodes.InternalIPs) != 0 && len(nodes.IPs) != len(nodes.InternalIPs) {
+		return nil, fmt.Errorf("Expected to get %d internal IPs, but got %d", len(nodes.IPs), len(nodes.InternalIPs))
+	}
+
 	return nodes, nil
+}
+
+func (t Terraform) getClusterStateDir(clusterName string) string {
+	return fmt.Sprintf("terraform/clusters/%s/", clusterName)
 }

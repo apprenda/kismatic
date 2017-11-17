@@ -12,7 +12,6 @@ import (
 
 // NewCmdProvision creates a new provision command
 func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "provision",
 		Short: "provision your Kubernetes cluster",
@@ -22,24 +21,32 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 			if err != nil {
 				return fmt.Errorf("unable to read plan file: %v", err)
 			}
-			tf := provision.NewTerraform(nil)
+			tf := provision.Terraform{
+				Output:     out,
+				BinaryPath: "",
+			}
 			switch plan.Provisioner.Provider {
 			case "aws":
-				aws := provision.AWS{Terraform: *tf}
-				return aws.Provision(out, plan)
+				aws := provision.AWS{Terraform: tf}
+				updatedPlan, err := aws.Provision(*plan)
+				if err != nil {
+					return err
+				}
+				if err := fp.Write(updatedPlan); err != nil {
+					return fmt.Errorf("error writing updated plan file to %s: %v", opts.planFilename, err)
+				}
+				return nil
+
 			default:
 				return fmt.Errorf("provider %s not yet supported", plan.Provisioner.Provider)
 			}
 		},
 	}
-	cmd.Flags().StringVarP(&opts.planFilename, "plan-file", "f", "kismatic-cluster", "name of the kismatic cluster to create.)")
-
 	return cmd
 }
 
 // NewCmdDestroy creates a new destroy command
 func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "destroy",
 		Short: "destroy your provisioned cluster",
@@ -49,17 +56,19 @@ func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comman
 			if err != nil {
 				return fmt.Errorf("unable to read plan file: %v", err)
 			}
-			tf := provision.NewTerraform(nil)
+			tf := provision.Terraform{
+				Output:     out,
+				BinaryPath: "",
+			}
 			switch plan.Provisioner.Provider {
 			case "aws:":
-				aws := provision.AWS{Terraform: *tf}
-				return aws.Destroy(out, opts.planFilename)
+				aws := provision.AWS{Terraform: tf}
+				return aws.Destroy(opts.planFilename)
 			default:
 				return fmt.Errorf("provider %s not yet supported", plan.Provisioner.Provider)
 			}
 
 		},
 	}
-	cmd.Flags().StringVarP(&opts.planFilename, "plan-file", "f", "kismatic-cluster", "name of the kismatic cluster to destroy.)")
 	return cmd
 }
