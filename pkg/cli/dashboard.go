@@ -1,13 +1,12 @@
 package cli
 
 import (
-	"crypto/tls"
-	"errors"
 	"fmt"
 	"io"
-	"net/http"
-	"net/url"
-	"time"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/pkg/browser"
@@ -15,12 +14,15 @@ import (
 )
 
 type dashboardOpts struct {
-	planFilename     string
-	dashboardURLMode bool
+	dashboardURLMode   bool
+	generatedAssetsDir string
+	planFilename       string
 }
 
+const url = "http://localhost:8001/api/v1/namespaces/kube-system/services/https:kubernetes-dashboard:/proxy/#!/login"
+
 // NewCmdDashboard opens or displays the dashboard URL
-func NewCmdDashboard(out io.Writer) *cobra.Command {
+func NewCmdDashboard(in io.Reader, out io.Writer) *cobra.Command {
 	opts := &dashboardOpts{}
 
 	cmd := &cobra.Command{
@@ -30,76 +32,84 @@ func NewCmdDashboard(out io.Writer) *cobra.Command {
 			if len(args) != 0 {
 				return fmt.Errorf("Unexpected args: %v", args)
 			}
-			planner := &install.FilePlanner{File: opts.planFilename}
-			return doDashboard(out, planner, opts)
+			return doDashboard(in, out, opts)
 		},
 	}
 
-	// PersistentFlags
-	addPlanFileFlag(cmd.Flags(), &opts.planFilename)
+	cmd.Flags().StringVar(&opts.generatedAssetsDir, "generated-assets-dir", "generated", "path to the directory where assets generated during the installation process will be stored")
 	cmd.Flags().BoolVar(&opts.dashboardURLMode, "url", false, "Display the kubernetes dashboard URL instead of opening it in the default browser")
+	addPlanFileFlag(cmd.PersistentFlags(), &opts.planFilename)
 	return cmd
 }
 
-func doDashboard(out io.Writer, planner install.Planner, opts *dashboardOpts) error {
-	if !planner.PlanExists() {
-		return planFileNotFoundErr{filename: opts.planFilename}
-	}
-	plan, err := planner.Read()
-	if err != nil {
-		return fmt.Errorf("Error reading plan file %q: %v", opts.planFilename, err)
-	}
-
-	req, err := getDashboardRequest(*plan)
-	if err != nil {
-		return err
-	}
-	// Validate dashboard is accessible
-	if err = verifyDashboardConnectivity(req); err != nil {
-		return fmt.Errorf("Error verifying connectivity to cluster dashboard: %v", err)
-	}
-	// Dashboard is accessible.. take action
+func doDashboard(in io.Reader, out io.Writer, opts *dashboardOpts) error {
 	if opts.dashboardURLMode {
-		fmt.Fprintln(out, req.URL)
+		fmt.Fprintln(out, url)
 		return nil
 	}
-	fmt.Fprintln(out, "Opening kubernetes dashboard in default browser...")
-	//Not obvious, but this is for escaping userinfo
-	urlFmted := fmt.Sprintf("https://%s@%s:6443/ui", url.UserPassword("admin", plan.Cluster.AdminPassword), plan.Master.LoadBalancedFQDN)
-	if err := browser.OpenURL(urlFmted); err != nil {
-		// Don't error. Just print a message if something goes wrong
-		fmt.Fprintf(out, "Unexpected error opening the kubernetes dashboard: %v. You may access it at %q", err, req.URL)
+
+	kubeconfig := filepath.Join(opts.generatedAssetsDir, "kubeconfig")
+	if stat, err := os.Stat(kubeconfig); os.IsNotExist(err) || stat.IsDir() {
+		return fmt.Errorf("Did not find required kubeconfig file %q", kubeconfig)
 	}
+
+	var generateErr error
+	adminKubeconfig := filepath.Join(opts.generatedAssetsDir, "dashboard-admin-kubeconfig")
+	// Generate dashboard admin certificate if it does not exist
+	if _, err := os.Stat(adminKubeconfig); os.IsNotExist(err) {
+		planner := &install.FilePlanner{File: opts.planFilename}
+		plan, err := planner.Read()
+		if err != nil {
+			return fmt.Errorf("error reading plan file: %v", err)
+		}
+
+		if generateErr = generateDashboardAdminKubeconfig(out, opts.generatedAssetsDir, *plan); generateErr != nil {
+			fmt.Fprintf(out, "Error generating a kubeconfig file, you may still use the dashboard with your own ServiceAccount token\n\n")
+		}
+	}
+
+	fmt.Fprintf(out, "Opening kubernetes dashboard in default browser...\n")
+	if generateErr == nil {
+		fmt.Fprintf(out, "Use the kubeconfig in %q\n", adminKubeconfig)
+	}
+	if err := browser.OpenURL(url); err != nil {
+		fmt.Fprintf(out, "Unexpected error opening the kubernetes dashboard: %v. You may access it at %q", err, url)
+	}
+
+	cmd := exec.Command("./kubectl", "proxy", "--kubeconfig", kubeconfig)
+	cmd.Stdin = in
+	cmd.Stdout = out
+	cmd.Stderr = out
+	err := cmd.Run()
+	if err != nil {
+		return fmt.Errorf("Error running kubectl proxy: %v", err)
+	}
+
 	return nil
 }
 
-func verifyDashboardConnectivity(req *http.Request) error {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		//This was always set to true within the http util, but probably worth adding as a flag?
-	}
-	client := http.Client{
-		Timeout:   2 * time.Second,
-		Transport: tr,
-	}
-	resp, err := client.Do(req)
+func generateDashboardAdminKubeconfig(out io.Writer, generatedAssetsDir string, plan install.Plan) error {
+	// All of this is required because cannot set a label on the secret so no selectors
+	cmd := exec.Command("./kubectl", "-n", "kube-system", "get", "sa", "kubernetes-dashboard-admin", "-o", "jsonpath={.secrets[0].name}", "--kubeconfig", filepath.Join(generatedAssetsDir, "kubeconfig"))
+	secret, err := cmd.Output()
 	if err != nil {
-		return fmt.Errorf("request failed with error: %q", err)
+		return fmt.Errorf("error getting token secret: %v", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("got %d HTTP status code when trying to reach the dashboard at %q", resp.StatusCode, req.URL)
+	if len(secret) == 0 || !strings.Contains(string(secret), "kubernetes-dashboard-admin-token") {
+		return fmt.Errorf("kubernetes-dashboard-admin-token secret not found")
+	}
+
+	cmd = exec.Command("./kubectl", "-n", "kube-system", "get", "secrets", string(secret), "-o", "jsonpath={.data.token}", "--kubeconfig", filepath.Join(generatedAssetsDir, "kubeconfig"))
+	token, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("error getting the token: %v", err)
+	}
+	if len(token) == 0 {
+		return fmt.Errorf("got an empty token")
+	}
+	err = install.GenerateDashboardAdminKubeconfig(strings.Trim(string(token), "'"), &plan, generatedAssetsDir)
+	if err != nil {
+		return fmt.Errorf("error generating dashboard-admin kubeconfig file: %v", err)
 	}
 	return nil
-}
-
-func getDashboardRequest(plan install.Plan) (*http.Request, error) {
-	if plan.Master.LoadBalancedFQDN == "" {
-		return nil, errors.New("master load balanced FQDN is not set in the plan file")
-	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://%s:6443/ui", plan.Master.LoadBalancedFQDN), nil)
-	if err != nil {
-		return nil, fmt.Errorf("request failed with error: %q", err)
-	}
-	req.SetBasicAuth("admin", plan.Cluster.AdminPassword)
-	return req, nil
 }

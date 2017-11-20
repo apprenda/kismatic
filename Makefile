@@ -44,6 +44,9 @@ build: vendor # vendor on host because of some permission issues with glide insi
 
 bare-build: bin/$(GOOS)/kismatic
 
+bare-build-update-dist: bare-build
+	cp bin/$(GOOS)/kismatic out
+
 build-inspector: vendor
 	@echo Building inspector in container
 	@docker run                                \

@@ -2,6 +2,7 @@ package install
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"html/template"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 )
 
 const kubeconfigFilename = "kubeconfig"
+const dashboardAdminKubeconfigFilename = "dashboard-admin-kubeconfig"
 
 // ConfigOptions sds
 type ConfigOptions struct {
@@ -22,6 +24,7 @@ type ConfigOptions struct {
 	Context string
 	Cert    string
 	Key     string
+	Token   string
 }
 
 var kubeconfigTemplate = `apiVersion: v1
@@ -43,6 +46,7 @@ users:
   user:
     client-certificate-data: {{.Cert}}
     client-key-data: {{.Key}}
+    token: {{.Token}}
 `
 
 // GenerateKubeconfig generate a kubeconfig file for a specific user
@@ -70,24 +74,51 @@ func GenerateKubeconfig(p *Plan, generatedAssetsDir string) error {
 		return fmt.Errorf("error reading certificate key file for kubeconfig: %v", err)
 	}
 
+	configOptions := ConfigOptions{caEncoded, server, cluster, user, context, certEncoded, keyEncoded, ""}
+
+	return writeTemplate(configOptions, filepath.Join(generatedAssetsDir, kubeconfigFilename))
+}
+
+func GenerateDashboardAdminKubeconfig(base64token string, p *Plan, generatedAssetsDir string) error {
+	user := "admin"
+	server := "https://" + p.Master.LoadBalancedFQDN + ":6443"
+	cluster := p.Cluster.Name
+	context := p.Cluster.Name + "-" + "dashboard-admin"
+
+	certsDir := filepath.Join(generatedAssetsDir, "keys")
+
+	// Base64 encoded ca
+	caEncoded, err := util.Base64String(filepath.Join(certsDir, "ca.pem"))
+	if err != nil {
+		return fmt.Errorf("error reading ca file for kubeconfig: %v", err)
+	}
+
+	token, err := base64.StdEncoding.DecodeString(base64token)
+	if err != nil {
+		return fmt.Errorf("error decoding token: %v", err)
+	}
+	configOptions := ConfigOptions{caEncoded, server, cluster, user, context, "", "", string(token)}
+
+	return writeTemplate(configOptions, filepath.Join(generatedAssetsDir, dashboardAdminKubeconfigFilename))
+}
+
+func writeTemplate(conf ConfigOptions, file string) error {
 	// Process template file
 	tmpl, err := template.New("kubeconfig").Parse(kubeconfigTemplate)
 	if err != nil {
 		return fmt.Errorf("error reading config template: %v", err)
 	}
-	configOptions := ConfigOptions{caEncoded, server, cluster, user, context, certEncoded, keyEncoded}
+
 	var kubeconfig bytes.Buffer
-	err = tmpl.Execute(&kubeconfig, configOptions)
+	err = tmpl.Execute(&kubeconfig, conf)
 	if err != nil {
 		return fmt.Errorf("error processing config template: %v", err)
 	}
 	// Write config file
-	kubeconfigFile := filepath.Join(generatedAssetsDir, kubeconfigFilename)
-	err = ioutil.WriteFile(kubeconfigFile, kubeconfig.Bytes(), 0644)
+	err = ioutil.WriteFile(file, kubeconfig.Bytes(), 0644)
 	if err != nil {
 		return fmt.Errorf("error writing kubeconfig file: %v", err)
 	}
-
 	return nil
 }
 
