@@ -81,6 +81,7 @@ func (s *HttpServer) Init() error {
 	router.GET("/clusters/:name", s.ClustersAPI.Get)
 	router.DELETE("/clusters/:name", s.ClustersAPI.Delete)
 	router.POST("/clusters", s.ClustersAPI.Create)
+	router.PUT("/clusters/:name", s.ClustersAPI.Update)
 	router.GET("/clusters/:name/kubeconfig", s.ClustersAPI.GetKubeconfig)
 	router.GET("/clusters/:name/logs", s.ClustersAPI.GetLogs)
 	router.GET("/clusters/:name/assets", s.ClustersAPI.GetAssets)
