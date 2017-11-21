@@ -1536,3 +1536,39 @@ func TestNodeKubeletOptions(t *testing.T) {
 		}
 	}
 }
+
+func TestProvisioner(t *testing.T) {
+	tests := []struct {
+		p     Provisioner
+		valid bool
+	}{
+		{
+			p: Provisioner{
+				Provider: "",
+			},
+			valid: true,
+		},
+		{
+			p: Provisioner{
+				Provider: "foo",
+			},
+			valid: false,
+		},
+		{
+			p: Provisioner{
+				Provider: "aws",
+				AWSOptions: &AWSProvisionerOptions{
+					Region: "us-east-1",
+				},
+			},
+			valid: true,
+		},
+	}
+
+	for i, test := range tests {
+		ok, errs := test.p.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t\n %v", i, test.valid, ok, errs)
+		}
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -112,9 +113,13 @@ func doServer(stdout io.Writer, options serverOptions) error {
 		}
 	}()
 
+	wd, err := os.Getwd()
+	if err != nil {
+		logger.Fatalf("Error getting working directory: %v", err)
+	}
 	// Setup provisioner
 	terraform := provision.Terraform{
-		BinaryPath: "./../../bin/terraform",
+		BinaryPath: filepath.Join(wd, "terraform/bin/terraform"),
 	}
 
 	ctrl := controller.New(

@@ -1,0 +1,74 @@
+package cli
+
+import (
+	"fmt"
+	"io"
+
+	"github.com/apprenda/kismatic/pkg/install"
+	"github.com/apprenda/kismatic/pkg/provision"
+
+	"github.com/spf13/cobra"
+)
+
+// NewCmdProvision creates a new provision command
+func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "provision",
+		Short: "provision your Kubernetes cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fp := &install.FilePlanner{File: opts.planFilename}
+			plan, err := fp.Read()
+			if err != nil {
+				return fmt.Errorf("unable to read plan file: %v", err)
+			}
+			tf := provision.Terraform{
+				Output:     out,
+				BinaryPath: "",
+			}
+			switch plan.Provisioner.Provider {
+			case "aws":
+				aws := provision.AWS{Terraform: tf}
+				updatedPlan, err := aws.Provision(*plan)
+				if err != nil {
+					return err
+				}
+				if err := fp.Write(updatedPlan); err != nil {
+					return fmt.Errorf("error writing updated plan file to %s: %v", opts.planFilename, err)
+				}
+				return nil
+
+			default:
+				return fmt.Errorf("provider %s not yet supported", plan.Provisioner.Provider)
+			}
+		},
+	}
+	return cmd
+}
+
+// NewCmdDestroy creates a new destroy command
+func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "destroy",
+		Short: "destroy your provisioned cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fp := &install.FilePlanner{File: fmt.Sprintf("terraform/clusters/%s/%s.yaml", opts.planFilename, opts.planFilename)}
+			plan, err := fp.Read()
+			if err != nil {
+				return fmt.Errorf("unable to read plan file: %v", err)
+			}
+			tf := provision.Terraform{
+				Output:     out,
+				BinaryPath: "",
+			}
+			switch plan.Provisioner.Provider {
+			case "aws:":
+				aws := provision.AWS{Terraform: tf}
+				return aws.Destroy(opts.planFilename)
+			default:
+				return fmt.Errorf("provider %s not yet supported", plan.Provisioner.Provider)
+			}
+
+		},
+	}
+	return cmd
+}

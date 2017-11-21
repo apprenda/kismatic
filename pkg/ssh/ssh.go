@@ -181,10 +181,14 @@ func NewKeyPair(pubKeyPath, privateKeyPath string) error {
 		return err
 	}
 
+	if err := os.Chmod(privateKeyPath, 0600); err != nil {
+		return fmt.Errorf("Unable to chmod file %v to 0600: %v", privateKeyPath, err)
+	}
+
 	// generate and write public key
 	pub, err := cryptoSSH.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(pubKeyPath, cryptoSSH.MarshalAuthorizedKey(pub), 0644)
+	return ioutil.WriteFile(pubKeyPath, cryptoSSH.MarshalAuthorizedKey(pub), 0600)
 }

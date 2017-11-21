@@ -146,7 +146,7 @@ type Cluster struct {
 }
 
 type AWSProvisionerOptions struct {
-	*install.AWSProvisionerOptions
+	install.AWSProvisionerOptions
 	AccessKeyID     string `json:"accessKeyID"`
 	SecretAccessKey string `json:"secretAccessKey"`
 }
@@ -368,7 +368,10 @@ func putToStore(req *ClusterRequest, cs store.ClusterStore) error {
 	}
 	// set some defaults in the plan
 	p.Cluster.Name = req.Name
-	p.Provisioner = install.Provisioner{Provider: req.Provisioner.Provider, AWSOptions: req.Provisioner.AWSOptions.AWSProvisionerOptions}
+	p.Provisioner = install.Provisioner{Provider: req.Provisioner.Provider}
+	if req.Provisioner.AWSOptions != nil {
+		p.Provisioner.AWSOptions = &req.Provisioner.AWSOptions.AWSProvisionerOptions
+	}
 	sc := store.Cluster{
 		DesiredState: req.DesiredState,
 		CurrentState: "planned",
@@ -435,7 +438,7 @@ func buildResponse(name string, sc store.Cluster) ClusterResponse {
 	case "aws":
 		if sc.Plan.Provisioner.AWSOptions != nil {
 			provisioner.AWSOptions = &AWSProvisionerOptions{
-				AWSProvisionerOptions: sc.Plan.Provisioner.AWSOptions,
+				AWSProvisionerOptions: *sc.Plan.Provisioner.AWSOptions,
 			}
 		}
 	}

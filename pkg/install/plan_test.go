@@ -18,25 +18,29 @@ func TestWritePlanTemplate(t *testing.T) {
 		{
 			golden: "./test/plan-template.golden.yaml",
 			template: PlanTemplateOptions{
-				EtcdNodes:     3,
-				MasterNodes:   2,
-				WorkerNodes:   3,
-				IngressNodes:  2,
-				StorageNodes:  0,
-				NFSVolumes:    0,
-				AdminPassword: "password",
+				ClusterName:               "kismatic",
+				InfrastructureProvisioner: "",
+				EtcdNodes:                 3,
+				MasterNodes:               2,
+				WorkerNodes:               3,
+				IngressNodes:              2,
+				StorageNodes:              0,
+				NFSVolumes:                0,
+				AdminPassword:             "password",
 			},
 		},
 		{
 			golden: "./test/plan-template-with-storage.golden.yaml",
 			template: PlanTemplateOptions{
-				EtcdNodes:     3,
-				MasterNodes:   2,
-				WorkerNodes:   3,
-				IngressNodes:  2,
-				StorageNodes:  2,
-				NFSVolumes:    3,
-				AdminPassword: "password",
+				ClusterName:               "kubernetes",
+				InfrastructureProvisioner: "aws",
+				EtcdNodes:                 3,
+				MasterNodes:               2,
+				WorkerNodes:               3,
+				IngressNodes:              2,
+				StorageNodes:              2,
+				NFSVolumes:                3,
+				AdminPassword:             "password",
 			},
 		},
 	}
@@ -60,11 +64,10 @@ func TestWritePlanTemplate(t *testing.T) {
 		}
 		if !bytes.Equal(wrote, expected) {
 			t.Errorf("the resulting plan file did not equal the expected plan file (%s)", test.golden)
-			if _, err := exec.LookPath("diff"); err == nil {
-				cmd := exec.Command("diff", test.golden, file)
-				fmt.Println(file)
-				cmd.Stdout = os.Stdout
-				cmd.Run()
+			if c, err := exec.LookPath("diff"); err == nil {
+				cmd := exec.Command(c, test.golden, file)
+				result, _ := cmd.CombinedOutput()
+				fmt.Println(string(result))
 			}
 		}
 	}

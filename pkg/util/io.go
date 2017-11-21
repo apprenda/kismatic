@@ -50,6 +50,22 @@ func PromptForString(in io.Reader, out io.Writer, prompt string, defaultValue st
 	return ans, nil
 }
 
+// like PromptForString, but will accept any answer - instead of the ones in choices.
+func PromptForAnyString(in io.Reader, out io.Writer, prompt string, defaultValue string) (string, error) {
+	fmt.Fprintf(out, "=> %s: ", prompt)
+	s := bufio.NewScanner(in)
+	// Scan the first token
+	s.Scan()
+	if s.Err() != nil {
+		return defaultValue, fmt.Errorf("error reading string: %v", s.Err())
+	}
+	ans := s.Text()
+	if ans == "" {
+		return defaultValue, nil
+	}
+	return ans, nil
+}
+
 // CreateDir check if directory exists and create it
 func CreateDir(dir string, perm os.FileMode) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {

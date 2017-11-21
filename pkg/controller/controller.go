@@ -79,9 +79,9 @@ func DefaultProvisionerCreator(terraform provision.Terraform) ProvisionerCreator
 		switch cluster.Plan.Provisioner.Provider {
 		case "aws":
 			p := provision.AWS{
-				KeyID:     cluster.ProvisionerCredentials.AWS.AccessKeyId,
-				Secret:    cluster.ProvisionerCredentials.AWS.SecretAccessKey,
-				Terraform: terraform,
+				AccessKeyID:     cluster.ProvisionerCredentials.AWS.AccessKeyId,
+				SecretAccessKey: cluster.ProvisionerCredentials.AWS.SecretAccessKey,
+				Terraform:       terraform,
 			}
 			return p
 		default:

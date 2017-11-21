@@ -20,6 +20,7 @@ const (
 	modifyFailed    = "modifyFailed"
 	destroying      = "destroying"
 	destroyed       = "destroyed"
+	destroyFailed   = "destroyFailed"
 )
 
 // The clusterController manages the lifecycle of a single cluster.
@@ -129,6 +130,14 @@ func (c *clusterController) provision(cluster store.Cluster) store.Cluster {
 
 func (c *clusterController) destroy(cluster store.Cluster) store.Cluster {
 	c.log.Println("destroying cluster")
+	provisioner := c.newProvisioner(cluster)
+	err := provisioner.Destroy(cluster.Plan.Cluster.Name)
+	if err != nil {
+		cluster.CurrentState = destroyFailed
+		cluster.CanContinue = false
+		return cluster
+	}
+	cluster.CurrentState = destroyed
 	return cluster
 }
 

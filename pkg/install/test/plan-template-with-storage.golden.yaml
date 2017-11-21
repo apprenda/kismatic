@@ -1,3 +1,8 @@
+provisioner:
+  provider: aws
+  options:
+    region: ""
+
 cluster:
   name: kubernetes
 
@@ -48,10 +53,10 @@ cluster:
   ssh:
 
     # This user must be able to sudo without password.
-    user: kismaticuser
+    user: ""
 
     # Absolute path to the ssh private key we should use to manage nodes.
-    ssh_key: /root/.ssh/kismaticuser.key
+    ssh_key: ""
     ssh_port: 22
 
   # Override configuration of Kubernetes components.

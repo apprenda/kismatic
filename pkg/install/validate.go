@@ -19,6 +19,24 @@ import (
 	"github.com/apprenda/kismatic/pkg/util"
 )
 
+//Every single possible EC2 instance type.
+const ec2Regexp string = `((t2.(nano|micro|small|medium|(|x|2x)large))|
+							(m4.((|x|2x|4x|10x|16x)large))|
+							(m3.(medium|(|x|2x)large))|
+							(c5.((|x|2x|4x|9x|18x)large))|
+							(c4.((|x|2x|4x|8x)large))|
+							(c3.((|x|2x|4x|8x)large))|
+							(x1.(16|32)xlarge)|
+							(x1e.32xlarge)|
+							(r4.(|x|2x|4x|8x|16x)large)|
+							(r3.((|x|2x|4x|8x)large))|
+							(p3.(2|8|16)xlarge)|
+							(p2.(x|8x|16x)large)|
+							(g3.(4|8|16)xlarge)|
+							(f1.16xlarge)|
+							(i3.(|x|2x|4x|8x|16x)large)|
+							(d2.(|2|4|8)xlarge))|`
+
 // TODO: There is need to run validation against anything that is validatable.
 // Expose the validatable interface so that it can be consumed when
 // validating objects other than a Plan or a Node
@@ -136,13 +154,12 @@ func (v *validator) valid() (bool, []error) {
 
 func (p *Plan) validate() (bool, []error) {
 	v := newValidator()
-
+	v.validate(&p.Provisioner)
 	v.validate(&p.Cluster)
 	v.validate(&p.DockerRegistry)
 	if p.Cluster.DisconnectedInstallation && !p.PrivateRegistryProvided() {
 		v.addError(fmt.Errorf("A container image registry is required when disconnected_installation is true"))
 	}
-
 	v.validateWithErrPrefix("Docker", p.Docker)
 	v.validate(&p.AddOns)
 	v.validate(nodeList{Nodes: p.getAllNodes()})
@@ -153,6 +170,33 @@ func (p *Plan) validate() (bool, []error) {
 	v.validate(&p.NFS)
 	v.validateWithErrPrefix("Storage nodes", &p.Storage)
 
+	return v.valid()
+}
+
+func (p *Provisioner) validate() (bool, []error) {
+	awsRegionsRegexp := `(us-(east|west)-(1|2))|
+							((ca|eu)-central-1)|
+							(eu-west-(1|2))|
+							(ap-(north|south)east-(1|2))|
+							(ap-south-1)|
+							(sa-east-1)|`
+
+	v := newValidator()
+	if !util.Contains(p.Provider, InfrastructureProviders()) {
+		v.addError(fmt.Errorf("%q is not a valid provisioner provider. Options are %v", p.Provider, InfrastructureProviders()))
+	}
+	switch p.Provider {
+	case "aws":
+		if p.AWSOptions != nil {
+			validAwsRegion, err := regexp.MatchString(awsRegionsRegexp, p.AWSOptions.Region)
+			if err != nil {
+				v.addError(fmt.Errorf("Could not determine if %q is an AWS region: %v", p.AWSOptions.Region, err))
+			}
+			if !validAwsRegion {
+				v.addError(fmt.Errorf("%q is not a valid AWS region", p.AWSOptions.Region))
+			}
+		}
+	}
 	return v.valid()
 }
 
@@ -414,7 +458,7 @@ func (ong *OptionalNodeGroup) validate() (bool, []error) {
 	if len(ong.Nodes) != ong.ExpectedCount {
 		return false, []error{fmt.Errorf("Expected node count (%d) does not match the number of nodes provided (%d)", ong.ExpectedCount, len(ong.Nodes))}
 	}
-	ng := NodeGroup(*ong)
+	ng := ong.NodeGroup
 	return ng.validate()
 }
 
