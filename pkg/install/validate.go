@@ -174,37 +174,26 @@ func (p *Plan) validate() (bool, []error) {
 }
 
 func (p *Provisioner) validate() (bool, []error) {
-	awsRegions := `(us-(east|west)-(1|2))|
-					((ca|eu)-central-1)|
-					(eu-west-(1|2))|
-					(ap-(north|south)east-(1|2))|
-					(ap-south-1)|
-					(sa-east-1)|`
+	awsRegionsRegexp := `(us-(east|west)-(1|2))|
+							((ca|eu)-central-1)|
+							(eu-west-(1|2))|
+							(ap-(north|south)east-(1|2))|
+							(ap-south-1)|
+							(sa-east-1)|`
+
 	v := newValidator()
-	if p.Provider == "" {
-		v.addError(fmt.Errorf("Provisioner provider cannot be empty"))
-		return v.valid()
-	}
 	if !util.Contains(p.Provider, InfrastructureProviders()) {
 		v.addError(fmt.Errorf("%q is not a valid provisioner provider. Options are %v", p.Provider, InfrastructureProviders()))
 	}
-	if p.Provider != "" {
-		switch p.Provider {
-		case "aws":
-			validEC2Type, err := regexp.MatchString(ec2Regexp, p.AWSOptions.AMI)
+	switch p.Provider {
+	case "aws":
+		if p.AWSOptions != nil {
+			validAwsRegion, err := regexp.MatchString(awsRegionsRegexp, p.AWSOptions.Region)
 			if err != nil {
-				v.addError(fmt.Errorf("Could not determine if %q is an EC2 instance type: %v", p.AWSOptions.AMI, err))
-			}
-			if !validEC2Type {
-				v.addError(fmt.Errorf("%q is not a valid EC2 instance", p.AWSOptions.AMI))
-			}
-			//TODO add the rest of the validation for AWS
-			validAwsRegion, err := regexp.MatchString(awsRegions, p.AWSOptions.Region)
-			if err != nil {
-				v.addError(fmt.Errorf("Could not determine if %q is an AWS region: %v", p.AWSOptions.AMI, err))
+				v.addError(fmt.Errorf("Could not determine if %q is an AWS region: %v", p.AWSOptions.Region, err))
 			}
 			if !validAwsRegion {
-				v.addError(fmt.Errorf("%q is not a valid AWS region", p.AWSOptions.AMI))
+				v.addError(fmt.Errorf("%q is not a valid AWS region", p.AWSOptions.Region))
 			}
 		}
 	}
@@ -469,7 +458,7 @@ func (ong *OptionalNodeGroup) validate() (bool, []error) {
 	if len(ong.Nodes) != ong.ExpectedCount {
 		return false, []error{fmt.Errorf("Expected node count (%d) does not match the number of nodes provided (%d)", ong.ExpectedCount, len(ong.Nodes))}
 	}
-	ng := NodeGroup(*ong)
+	ng := ong.NodeGroup
 	return ng.validate()
 }
 
