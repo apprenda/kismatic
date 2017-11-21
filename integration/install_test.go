@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"time"
@@ -256,9 +255,9 @@ var _ = Describe("kismatic", func() {
 						})
 
 						// Use master[0] public IP
-						sub.It("should have an accessible dashboard", func() error {
-							return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
-						})
+						// sub.It("should have an accessible dashboard", func() error {
+						// 	return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
+						// })
 
 						sub.It("should respect network policies", func() error {
 							return verifyNetworkPolicy(nodes.master[0], sshKey)
@@ -318,9 +317,9 @@ var _ = Describe("kismatic", func() {
 						})
 
 						// Use master[0] public IP
-						sub.It("should have an accessible dashboard", func() error {
-							return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
-						})
+						// sub.It("should have an accessible dashboard", func() error {
+						// 	return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
+						// })
 
 						sub.It("should respect network policies", func() error {
 							return verifyNetworkPolicy(nodes.master[0], sshKey)
