@@ -246,7 +246,7 @@ func TestGenerateClusterCAPlanFileExpirationIsRespected(t *testing.T) {
 	}
 
 	expirationDate := time.Now().Add(validity)
-	if caCert.NotAfter.Year() != expirationDate.Year() || caCert.NotAfter.YearDay() != expirationDate.YearDay() {
+	if caCert.NotAfter.YearDay() < expirationDate.YearDay() {
 		t.Errorf("bad expiration date on generated cert. expected %v, got %v", expirationDate, caCert.NotAfter)
 	}
 }
@@ -529,7 +529,7 @@ func TestGenerateClusterCertificatesPlanFileExpirationIsRespected(t *testing.T) 
 	cert := mustReadCertFile(certFile, t)
 
 	expirationDate := time.Now().Add(validity)
-	if cert.NotAfter.Year() != expirationDate.Year() || cert.NotAfter.YearDay() != expirationDate.YearDay() {
+	if cert.NotAfter.YearDay() < expirationDate.YearDay() {
 		t.Errorf("bad expiration date on generated cert. expected %v, got %v", expirationDate, cert.NotAfter)
 	}
 }
@@ -1082,7 +1082,7 @@ func TestGenerateCertificate(t *testing.T) {
 				t.Errorf("test %d: could not parse validityPeriod %s", i, test.validityPeriod)
 			} else {
 				expirationDate := time.Now().Add(time.Duration(validity) * time.Hour)
-				if cert.NotAfter.Year() != expirationDate.Year() || cert.NotAfter.YearDay() != expirationDate.YearDay() {
+				if cert.NotAfter.YearDay() < expirationDate.YearDay() {
 					t.Errorf("test %d: bad expiration date on generated cert. expected %v, got %v", i, expirationDate, cert.NotAfter)
 				}
 			}

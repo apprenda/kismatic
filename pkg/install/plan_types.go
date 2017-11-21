@@ -46,7 +46,7 @@ func cloudProviders() []string {
 // Plan is the installation plan that the user intends to execute
 type Plan struct {
 	// Infrastructure provisioner
-	Provisioner Provisioner `yaml:"provisioner,omitempty"`
+	Provisioner Provisioner `yaml:"provisioner"`
 	// Kubernetes cluster configuration
 	// +required
 	Cluster Cluster

@@ -153,6 +153,9 @@ func (bdb *boltDB) Put(bucket string, key string, value []byte) error {
 		return fmt.Errorf("value cannot be nil")
 	}
 	db := bdb.db
+	if db == nil {
+		return fmt.Errorf("db pointer was set to nil")
+	}
 	err := db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucket))
 		if b == nil {

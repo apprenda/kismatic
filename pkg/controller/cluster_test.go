@@ -130,7 +130,7 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error storing cluster")
 		}
-		tick := time.Tick(1 * time.Second)
+		tick := time.Tick(5 * time.Second)
 		for {
 			select {
 			case <-tick:
@@ -150,7 +150,7 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	// Assert that the cluster reaches desired state
 	var done bool
 	tick := time.Tick(time.Second)
-	deadline := time.After(5 * time.Second)
+	deadline := time.After(10 * time.Second)
 	for !done {
 		select {
 		case <-tick:

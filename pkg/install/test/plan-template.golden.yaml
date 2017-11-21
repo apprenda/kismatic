@@ -1,5 +1,8 @@
+provisioner:
+  provider: ""
+
 cluster:
-  name: kubernetes
+  name: kismatic
 
   # This password is used to login to the Kubernetes Dashboard and can also be
   # used for administration without a security certificate.
@@ -48,10 +51,10 @@ cluster:
   ssh:
 
     # This user must be able to sudo without password.
-    user: kismaticuser
+    user: ""
 
     # Absolute path to the ssh private key we should use to manage nodes.
-    ssh_key: /root/.ssh/kismaticuser.key
+    ssh_key: ""
     ssh_port: 22
 
   # Override configuration of Kubernetes components.
