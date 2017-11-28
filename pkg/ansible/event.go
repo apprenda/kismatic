@@ -19,7 +19,7 @@ type runnerResult struct {
 	Stderr string
 	// Message returned by the runner
 	Message string `json:"msg"`
-	// Item that corresponds to this result. Avaliable only when event is related
+	// Item that corresponds to this result. Available only when event is related
 	// to an item
 	Item string
 	// Number of attempts a task has been retried

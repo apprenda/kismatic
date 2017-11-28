@@ -1,4 +1,4 @@
-# KET Installation Overview
+# Installation Overview
 
 [CLI documentation](https://github.com/apprenda/kismatic/tree/master/docs/kismatic-cli)
 
@@ -7,9 +7,9 @@
 * Use key-based SSH to manage machines in a Kubernetes cluster
 * Validate that machines and network have been properly provisioned for a Kubernetes installation
 * Generate SSL certificates for internal Kubernetes traffic
-* Install and properly configure Calico that Kubernetes will use for Pod and Service traffic
+* Install and properly configure the CNI network that Kubernetes will use for Pod and Service traffic
 * Install and properly configure Kubernetes control plane components
-* Install useful add-ons such as a Docker Registry, Kubernetes DNS and the native Kubernetes Dashboard
+* Install useful add-ons such as a Kubernetes DNS and the native Kubernetes Dashboard
 * Allow for the addition of worker nodes to an existing cluster built with Kismatic
 * Allow for the installation of basic Ingress
 * Allow for the installation of basic clustered storage
@@ -53,7 +53,7 @@ First, review the following document to learn about a few example Kubernetes clu
       4. Configure the cluster.
       5. After configuration, run a smoke test to ensure that scaling and pod networking are working as prescribed.
 
-# <a name="validate"></a>Validate
+# Validate
 
 If you're confident about the structure of your plan file and the state of your cluster, validation will be performed during `install apply` as well. Feel free to throw caution to the wind.
 
@@ -66,7 +66,7 @@ This will cause the installer to validate the structure and content of your plan
 This step will result in the copying of the kismatic-inspector to each node via ssh. You should expect it to fail if all your nodes are not yet set up to be accessed via ssh; in this case, only the failure to connect (not the readiness of the node) will be reported.
 
 
-# <a name="apply"></a>Apply
+# Apply
 
 Having a valid plan, from your installation machine, run:
 
@@ -76,12 +76,15 @@ Kismatic will connect to each of your machines, install necessary software and p
 
 Congratulations! You've got a Kubernetes cluster. Enjoy.
 
-# Using Your Shiny New Cluster
+# Using Your New Cluster
 
 The installer automatically configures and deploys [Kubernetes Dashboard](http://kubernetes.io/docs/user-guide/ui/) in the cluster.
 
-Simply use the `kismatic dashboard` command to open the dashboard
+Use the `kismatic dashboard` command to open the dashboard in your browser.
 
 You may be prompted for credentials, use `admin` for the **User Name** and `%admin_password%` (from your `kismatic-cluster.yaml` file) for the **Password**.
 
-The installer also generates a [kubeconfig file](http://kubernetes.io/docs/user-guide/kubeconfig-file/) required for [kubectl](http://kubernetes.io/docs/user-guide/kubectl-overview/), just follow the instructions provided at the end of the installation to use it.
+The installer also generates a [kubeconfig file](http://kubernetes.io/docs/user-guide/kubeconfig-file/) required for [kubectl](http://kubernetes.io/docs/user-guide/kubectl-overview/).
+If you want `kubectl` to automatically use this configuration file for all commands,
+the file must be placed in `~/.kube/config`. Otherwise, you can use the `--kubeconfig`
+flag to specify the location of the configuration file when using `kubectl`.

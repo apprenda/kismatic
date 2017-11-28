@@ -6,11 +6,8 @@
     become: yes
     vars_files:
       - group_vars/all.yaml
+      - group_vars/container_images.yaml
 
-    environment:
-      https_proxy: "{{ https_proxy }}"
-      http_proxy: "{{ http_proxy }}"
-      no_proxy: "{{ no_proxy }}"
       
     roles:
       - role: packages-kubernetes

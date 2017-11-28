@@ -15,4 +15,4 @@
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
 
-  - include: ../validate-pod/tasks/validate-pod.yaml item="kube-proxy-{{ inventory_hostname|lower }}"
+  - include: ../validate-pod/tasks/validate-pod.yaml  name="kube-proxy" selector="component=kube-proxy,kismatic/host={{ inventory_hostname }}"

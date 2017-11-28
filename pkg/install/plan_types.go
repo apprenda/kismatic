@@ -3,7 +3,7 @@ package install
 import (
 	"fmt"
 	"net"
-	"strconv"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
@@ -27,93 +27,192 @@ func calicoMode() []string {
 	return []string{"overlay", "routed"}
 }
 
+func calicoLogLevel() []string {
+	return []string{"warning", "info", "debug", ""}
+}
+
 func serviceTypes() []string {
 	return []string{"ClusterIP", "NodePort", "LoadBalancer", "ExternalName"}
 }
 
+func cloudProviders() []string {
+	return []string{"aws", "azure", "cloudstack", "fake", "gce", "mesos", "openstack", "ovirt", "photon", "rackspace", "vsphere"}
+}
+
+// Plan is the installation plan that the user intends to execute
+type Plan struct {
+	// Kubernetes cluster configuration
+	// +required
+	Cluster Cluster
+	// Configuration for the docker engine installed by KET
+	Docker Docker
+	// Docker registry configuration
+	DockerRegistry DockerRegistry `yaml:"docker_registry"`
+	// Add on configuration
+	AddOns AddOns `yaml:"add_ons"`
+	// Feature configuration
+	// +deprecated
+	Features *Features `yaml:"features,omitempty"`
+	// Etcd nodes of the cluster
+	// +required
+	Etcd NodeGroup
+	// Master nodes of the cluster
+	// +required
+	Master MasterNodeGroup
+	// Worker nodes of the cluster
+	// +required
+	Worker NodeGroup
+	// Ingress nodes of the cluster
+	Ingress OptionalNodeGroup
+	// Storage nodes of the cluster.
+	Storage OptionalNodeGroup
+	// NFS volumes of the cluster.
+	NFS NFS
+}
+
+// Cluster describes a Kubernetes cluster
+type Cluster struct {
+	// Name of the cluster to be used when generating assets that require a
+	// cluster name, such as kubeconfig files and certificates.
+	// +required
+	Name string
+	// The password for the admin user. This is mainly used to access the Kubernetes Dashboard.
+	// +required
+	AdminPassword string `yaml:"admin_password"`
+	// Whether KET should install the packages on the cluster nodes.
+	// When true, KET will not install the required packages.
+	// Instead, it will verify that the packages have been installed by the operator.
+	DisablePackageInstallation bool `yaml:"disable_package_installation"`
+	// Whether KET should install the packages on the cluster nodes.
+	// Use DisablePackageInstallation instead.
+	// +deprecated
+	AllowPackageInstallation *bool `yaml:"allow_package_installation,omitempty"`
+	// Whether the cluster nodes are disconnected from the internet.
+	// When set to `true`, internal package repositories and a container image
+	// registry are required for installation.
+	// +default=false
+	DisconnectedInstallation bool `yaml:"disconnected_installation"`
+	// The Networking configuration for the cluster.
+	Networking NetworkConfig
+	// The Certificates configuration for the cluster.
+	Certificates CertsConfig
+	// The SSH configuration for the cluster nodes.
+	SSH SSHConfig
+	// Kubernetes API Server configuration.
+	APIServerOptions APIServerOptions `yaml:"kube_apiserver"`
+	// Kubernetes Controller Manager configuration.
+	KubeControllerManagerOptions KubeControllerManagerOptions `yaml:"kube_controller_manager"`
+	// Kubernetes Scheduler configuration.
+	KubeSchedulerOptions KubeSchedulerOptions `yaml:"kube_scheduler"`
+	// Kubernetes Proxy configuration.
+	KubeProxyOptions KubeProxyOptions `yaml:"kube_proxy"`
+	// Kubelet configuration applied to all nodes.
+	KubeletOptions KubeletOptions `yaml:"kubelet"`
+	// The CloudProvider configuration for the cluster.
+	CloudProvider CloudProvider `yaml:"cloud_provider"`
+}
+
+type APIServerOptions struct {
+	// Listing of option overrides that are to be applied to the Kubernetes
+	// API server configuration. This is an advanced feature that can prevent
+	// the API server from starting up if invalid configuration is provided.
+	Overrides map[string]string `yaml:"option_overrides"`
+}
+
+type KubeControllerManagerOptions struct {
+	// Listing of option overrides that are to be applied to the Kubernetes
+	// Controller Manager configuration. This is an advanced feature that can prevent
+	// the Controller Manager from starting up if invalid configuration is provided.
+	Overrides map[string]string `yaml:"option_overrides"`
+}
+
+type KubeProxyOptions struct {
+	// Listing of option overrides that are to be applied to the Kubernetes
+	// Proxy configuration. This is an advanced feature that can prevent
+	// the Proxy from starting up if invalid configuration is provided.
+	Overrides map[string]string `yaml:"option_overrides"`
+}
+
+type KubeSchedulerOptions struct {
+	// Listing of option overrides that are to be applied to the Kubernetes
+	// Scheduler configuration. This is an advanced feature that can prevent
+	// the Scheduler from starting up if invalid configuration is provided.
+	Overrides map[string]string `yaml:"option_overrides"`
+}
+
+type KubeletOptions struct {
+	// Listing of option overrides that are to be applied to the Kubelet configurations.
+	// This is an advanced feature that can prevent the Kubelet from starting up if invalid configuration is provided.
+	Overrides map[string]string `yaml:"option_overrides"`
+}
+
 // NetworkConfig describes the cluster's networking configuration
 type NetworkConfig struct {
-	Type             string `yaml:"type,omitempty"`
-	PodCIDRBlock     string `yaml:"pod_cidr_block"`
+	// The datapath technique that should be configured in Calico.
+	// +default=overlay
+	// +options=overlay,routed
+	// +deprecated
+	Type string `yaml:"type,omitempty"`
+	// The pod network's CIDR block. For example: `172.16.0.0/16`
+	// +required
+	PodCIDRBlock string `yaml:"pod_cidr_block"`
+	// The Kubernetes service network's CIDR block. For example: `172.20.0.0/16`
+	// +required
 	ServiceCIDRBlock string `yaml:"service_cidr_block"`
-	UpdateHostsFiles bool   `yaml:"update_hosts_files"`
-	HTTPProxy        string `yaml:"http_proxy"`
-	HTTPSProxy       string `yaml:"https_proxy"`
-	NoProxy          string `yaml:"no_proxy"`
+	// Whether the /etc/hosts file should be updated on the cluster nodes.
+	// When set to true, KET will update the hosts file on all nodes to include
+	// entries for all other nodes in the cluster.
+	// +default=false
+	UpdateHostsFiles bool `yaml:"update_hosts_files"`
+	// The URL of the proxy that should be used for HTTP connections.
+	HTTPProxy string `yaml:"http_proxy"`
+	// The URL of the proxy that should be used for HTTPS connections.
+	HTTPSProxy string `yaml:"https_proxy"`
+	// Comma-separated list of host names and/or IPs for which connections
+	// should not go through a proxy.
+	// All nodes' 'host' and 'IPs' are always set.
+	NoProxy string `yaml:"no_proxy"`
 }
 
 // CertsConfig describes the cluster's trust and certificate configuration
 type CertsConfig struct {
-	Expiry   string
+	// The length of time that the generated certificates should be valid for.
+	// For example: "17520h" for 2 years.
+	// +required
+	Expiry string
+	// The length of time that the generated Certificate Authority should be valid for.
+	// For example: "17520h" for 2 years.
+	// +required.
 	CAExpiry string `yaml:"ca_expiry"`
 }
 
 // SSHConfig describes the cluster's SSH configuration for accessing nodes
 type SSHConfig struct {
+	// The user for accessing the cluster nodes via SSH.
+	// This user requires sudo elevation privileges on the cluster nodes.
+	// +required
 	User string
-	Key  string `yaml:"ssh_key"`
-	Port int    `yaml:"ssh_port"`
+	// The absolute path of the SSH key that should be used for accessing the
+	// cluster nodes via SSH.
+	// +required
+	Key string `yaml:"ssh_key"`
+	// The port number on which cluster nodes are listening for SSH connections.
+	// +required
+	Port int `yaml:"ssh_port"`
 }
 
-// Cluster describes a Kubernetes cluster
-type Cluster struct {
-	Name                       string
-	AdminPassword              string `yaml:"admin_password"`
-	DisablePackageInstallation bool   `yaml:"disable_package_installation"`
-	AllowPackageInstallation   *bool  `yaml:"allow_package_installation,omitempty"`
-	PackageRepoURLs            string `yaml:"package_repository_urls"`
-	DisconnectedInstallation   bool   `yaml:"disconnected_installation"`
-	DisableRegistrySeeding     bool   `yaml:"disable_registry_seeding"`
-	Networking                 NetworkConfig
-	Certificates               CertsConfig
-	SSH                        SSHConfig
-	APIServerOptions           APIServerOptions `yaml:"kube_apiserver"`
-}
-
-// A Node is a compute unit, virtual or physical, that is part of the cluster
-type Node struct {
-	Host       string
-	IP         string
-	InternalIP string
-}
-
-// A NodeGroup is a collection of nodes
-type NodeGroup struct {
-	ExpectedCount int `yaml:"expected_count"`
-	Nodes         []Node
-}
-
-// An OptionalNodeGroup is a collection of nodes that can be empty
-type OptionalNodeGroup NodeGroup
-
-type NFS struct {
-	Volumes []NFSVolume `yaml:"nfs_volume"`
-}
-
-type NFSVolume struct {
-	Host string `yaml:"nfs_host"`
-	Path string `yaml:"mount_path"`
-}
-
-// MasterNodeGroup is the collection of master nodes
-type MasterNodeGroup struct {
-	ExpectedCount         int    `yaml:"expected_count"`
-	LoadBalancedFQDN      string `yaml:"load_balanced_fqdn"`
-	LoadBalancedShortName string `yaml:"load_balanced_short_name"`
-	Nodes                 []Node
-}
-
-// DockerRegistry details for docker registry, either confgiured by the cli or customer provided
-type DockerRegistry struct {
-	SetupInternal bool `yaml:"setup_internal"`
-	Address       string
-	Port          int
-	CAPath        string `yaml:"CA"`
+// CloudProvider controls the Kubernetes cloud providers feature
+type CloudProvider struct {
+	// The cloud provider that should be set in the Kubernetes components
+	// +options=aws,azure,cloudstack,fake,gce,mesos,openstack,ovirt,photon,rackspace,vsphere
+	Provider string
+	// Path to the cloud provider config file. This will be copied to all the machines in the cluster
+	Config string
 }
 
 // Docker includes the configuration for the docker installation owned by KET.
 type Docker struct {
-	// Storage includes the storage-specific configuration for docker
+	// Storage configuration for the docker engine
 	Storage DockerStorage
 }
 
@@ -126,27 +225,275 @@ type DockerStorage struct {
 // DockerStorageDirectLVM includes the configuration required for setting up
 // device mapper in direct-lvm mode
 type DockerStorageDirectLVM struct {
-	// Determines whether direct-lvm mode is enabled
+	// Whether the direct_lvm mode of the devicemapper storage driver should be enabled.
+	// When set to true, a dedicated block storage device must be available on each cluster node.
+	// +default=false
 	Enabled bool
-	// BlockDevice is the path to the block device that will be used. E.g. /dev/sdb
+	// The path to the block storage device that will be used by the devicemapper storage driver.
 	BlockDevice string `yaml:"block_device"`
-	// EnableDeferredDeletion determines whether deferred deletion should be enabled
+	// Whether deferred deletion should be enabled when using devicemapper in direct_lvm mode.
+	// +default=false
 	EnableDeferredDeletion bool `yaml:"enable_deferred_deletion"`
 }
 
-// Plan is the installation plan that the user intends to execute
-type Plan struct {
-	Cluster        Cluster
-	Docker         Docker
-	DockerRegistry DockerRegistry `yaml:"docker_registry"`
-	AddOns         AddOns         `yaml:"add_ons"`
-	Features       *Features      `yaml:"features,omitempty"`
-	Etcd           NodeGroup
-	Master         MasterNodeGroup
-	Worker         NodeGroup
-	Ingress        OptionalNodeGroup
-	Storage        OptionalNodeGroup
-	NFS            NFS
+// DockerRegistry details for docker registry, either confgiured by the cli or customer provided
+type DockerRegistry struct {
+	// The hostname or IP address and port of a private container image registry.
+	// Do not include http or https.
+	// When performing a disconnected installation, this registry will be used
+	// to fetch all the required container images.
+	Server string
+	// The hostname or IP address of a private container image registry.
+	// When performing a disconnected installation, this registry will be used
+	// to fetch all the required container images.
+	// +deprecated
+	Address string `yaml:"address,omitempty"`
+	// The port on which the private container image registry is listening on.
+	// +deprecated
+	Port int `yaml:"port,omitempty"`
+	// The absolute path of the Certificate Authority that should be installed on
+	// all cluster nodes that have a docker daemon.
+	// This is required to establish trust between the daemons and the private
+	// registry when the registry is using a self-signed certificate.
+	CAPath string `yaml:"CA"`
+	// The username that should be used when connecting to a registry that has authentication enabled.
+	// Otherwise leave blank for unauthenticated access.
+	Username string
+	// The password that should be used when connecting to a registry that has authentication enabled.
+	// Otherwise leave blank for unauthenticated access.
+	Password string
+}
+
+// AddOns are components that are deployed on the cluster that KET considers
+// necessary for producing a production cluster.
+type AddOns struct {
+	// The Container Networking Interface (CNI) add-on configuration.
+	CNI *CNI `yaml:"cni"`
+	// The DNS add-on configuration.
+	DNS DNS `yaml:"dns"`
+	// The Heapster Monitoring add-on configuration.
+	HeapsterMonitoring *HeapsterMonitoring `yaml:"heapster"`
+	// The Dashboard add-on configuration.
+	Dashboard *Dashboard `yaml:"dashboard"`
+	// The Dashboard add-on configuration.
+	// +deprecated
+	DashboardDeprecated *Dashboard `yaml:"dashbard,omitempty"`
+	// The PackageManager add-on configuration.
+	PackageManager PackageManager `yaml:"package_manager"`
+	// The Rescheduler add-on configuration.
+	// Because the Rescheduler does not have leader election and therefore can only run as a single instance in a cluster, it will be deployed as a static pod on the first master.
+	// More information about the Rescheduler can be found here: https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
+	Rescheduler Rescheduler `yaml:"rescheduler"`
+}
+
+// Features configuration
+// +deprecated
+type Features struct {
+	// The PackageManager feature configuration.
+	// +deprecated
+	PackageManager *DeprecatedPackageManager `yaml:"package_manager,omitempty"`
+}
+
+// CNI add-on configuration
+type CNI struct {
+	// Whether the CNI add-on is disabled. When set to true,
+	// CNI will not be installed on the cluster. Furthermore, the smoke test and
+	// any validation that depends on a functional pod network will be skipped.
+	// +default=false
+	Disable bool
+	// The CNI provider that should be installed on the cluster.
+	// +default=calico
+	// +options=calico,weave,contiv,custom
+	Provider string
+	// The CNI options that can be configured for each CNI provider.
+	Options CNIOptions `yaml:"options"`
+}
+
+// CNIOptions that can be configured for each CNI provider.
+type CNIOptions struct {
+	// The options that can be configured for the Calico CNI provider.
+	Calico CalicoOptions
+}
+
+// The CalicoOptions that can be configured for the Calico CNI provider.
+type CalicoOptions struct {
+	// The datapath technique that should be configured in Calico.
+	// +default=overlay
+	// +options=overlay,routed
+	Mode string
+	// The logging level for the CNI plugin
+	// +default=info
+	// +options=warning,info,debug
+	LogLevel string `yaml:"log_level"`
+}
+
+// The DNS add-on configuration
+type DNS struct {
+	// Whether the DNS add-on should be disabled.
+	// When set to true, no DNS solution will be deployed on the cluster.
+	Disable bool
+}
+
+// The HeapsterMonitoring add-on configuration
+type HeapsterMonitoring struct {
+	// Whether the Heapster add-on should be disabled.
+	// When set to true, Heapster and InfluxDB will not be deployed on the cluster.
+	// +default=false
+	Disable bool
+	// The options that can be configured for the Heapster add-on
+	Options HeapsterOptions `yaml:"options"`
+}
+
+// The HeapsterOptions for the HeapsterMonitoring add-on
+type HeapsterOptions struct {
+	// The Heapster configuration options.
+	Heapster Heapster `yaml:"heapster"`
+	// The InfluxDB configuration options.
+	InfluxDB InfluxDB `yaml:"influxdb"`
+	// Number of Heapster replicas that should be scheduled on the cluster.
+	// +deprecated
+	HeapsterReplicas int `yaml:"heapster_replicas,omitempty"`
+	// Name of the Persistent Volume Claim that will be used by InfluxDB.
+	// When set, this PVC must be created after the installation.
+	// If not set, InfluxDB will be configured with ephemeral storage.
+	// +deprecated
+	InfluxDBPVCName string `yaml:"influxdb_pvc_name,omitempty"`
+}
+
+// Heapster configuration options for the Heapster add-on
+type Heapster struct {
+	// Number of Heapster replicas that should be scheduled on the cluster.
+	// +default=2
+	Replicas int `yaml:"replicas"`
+	// Kubernetes service type of the Heapster service.
+	// +default=ClusterIP
+	// +options=ClusterIP,NodePort,LoadBalancer,ExternalName
+	ServiceType string `yaml:"service_type"`
+	// URL of the backend store that will be used as the Heapster sink.
+	// +default=influxdb:http://heapster-influxdb.kube-system.svc:8086
+	Sink string `yaml:"sink"`
+}
+
+// InfluxDB configuration options for the Heapster add-on
+type InfluxDB struct {
+	// Name of the Persistent Volume Claim that will be used by InfluxDB.
+	// This PVC must be created after the installation.
+	// If not set, InfluxDB will be configured with ephemeral storage.
+	PVCName string `yaml:"pvc_name"`
+}
+
+// Dashboard add-on configuration
+type Dashboard struct {
+	// Whether the dashboard add-on should be disabled.
+	// When set to true, the Kubernetes Dashboard will not be installed on the cluster.
+	// +default=false
+	Disable bool
+}
+
+// PackageManager add-on configuration
+type PackageManager struct {
+	// Whether the package manager add-on should be disabled.
+	// When set to true, the package manager will not be installed on the cluster.
+	// +default=false
+	Disable bool
+	// This property indicates the package manager provider.
+	// +required
+	// +options=helm
+	Provider string
+}
+
+// Rescheduler add-on configuration
+type Rescheduler struct {
+	// Whether the pod rescheduler add-on should be disabled.
+	// When set to true, the rescheduler will not be installed on the cluster.
+	// +default=false
+	Disable bool
+}
+
+type DeprecatedPackageManager struct {
+	// Whether the package manager add-on should be enabled.
+	// +deprecated
+	Enabled bool
+}
+
+// MasterNodeGroup is the collection of master nodes
+type MasterNodeGroup struct {
+	// Number of master nodes that are part of the cluster.
+	// +required
+	ExpectedCount int `yaml:"expected_count"`
+	// The FQDN of the load balancer that is fronting multiple master nodes.
+	// In the case where there is only one master node, this can be set to the IP address of the master node.
+	// +required
+	LoadBalancedFQDN string `yaml:"load_balanced_fqdn"`
+	// The short name of the load balancer that is fronting multiple master nodes.
+	// In the case where there is only one master node, this can be set to the IP address of the master nodes.
+	// +required
+	LoadBalancedShortName string `yaml:"load_balanced_short_name"`
+	// List of master nodes that are part of the cluster.
+	// +required
+	Nodes []Node
+}
+
+// A NodeGroup is a collection of nodes
+type NodeGroup struct {
+	// Number of nodes.
+	// +required
+	ExpectedCount int `yaml:"expected_count"`
+	// List of nodes.
+	// +required
+	Nodes []Node
+}
+
+// An OptionalNodeGroup is a collection of nodes that can be empty
+type OptionalNodeGroup NodeGroup
+
+// A Node is a compute unit, virtual or physical, that is part of the cluster
+type Node struct {
+	// The hostname of the node. The hostname is verified
+	// in the validation phase of the installation.
+	// +required
+	Host string
+	// The IP address of the node. This is the IP address that will be used to
+	// connect to the node over SSH.
+	// +required
+	IP string
+	// The internal (or private) IP address of the node.
+	// If set, this IP will be used when configuring cluster components.
+	InternalIP string
+	// Labels to add when installing the node in the cluster.
+	// If a node is defined under multiple roles, the labels for that node will be merged.
+	// If a label is repeated for the same node,
+	// only one will be used in this order: etcd,master,worker,ingress,storage roles where 'storage' has the highest precedence.
+	// It is recommended to use reverse-DNS notation to avoid collision with other labels.
+	Labels map[string]string
+	// Kubelet configuration applied to this node.
+	// If a node is repeated for multiple roles, the overrides cannot be different.
+	KubeletOptions KubeletOptions `yaml:"kubelet,omitempty"`
+}
+
+// Equal returns true of 2 nodes have the same host, IP and InternalIP
+func (node Node) Equal(other Node) bool {
+	return node.Host == other.Host && node.IP == other.IP && node.InternalIP == other.InternalIP
+}
+
+// HashCode is crude implementation for the Node struct
+func (node Node) HashCode() string {
+	return fmt.Sprint(node.Host, node.IP, node.InternalIP)
+}
+
+type NFS struct {
+	// List of NFS volumes that should be attached to the cluster during
+	// the installation.
+	Volumes []NFSVolume `yaml:"nfs_volume"`
+}
+
+type NFSVolume struct {
+	// The hostname or IP of the NFS volume.
+	// +required
+	Host string `yaml:"nfs_host"`
+	// The path where the NFS volume should be mounted.
+	// +required
+	Path string `yaml:"mount_path"`
 }
 
 // StorageVolume managed by Kismatic
@@ -176,84 +523,20 @@ type SSHConnection struct {
 	Node      *Node
 }
 
-type AddOns struct {
-	CNI                 *CNI                `yaml:"cni"`
-	DNS                 DNS                 `yaml:"dns"`
-	HeapsterMonitoring  *HeapsterMonitoring `yaml:"heapster"`
-	Dashboard           *Dashboard          `yaml:"dashboard"`
-	DashboardDeprecated *Dashboard          `yaml:"dashbard"`
-	PackageManager      PackageManager      `yaml:"package_manager"`
-}
-
-// Features is deprecated, required to support KET v1.3.3
-// When writing out a new plan file, this will be nil and will not appear
-type Features struct {
-	PackageManager *DeprecatedPackageManager `yaml:"package_manager,omitempty"`
-}
-
-type CNI struct {
-	Disable  bool
-	Provider string
-	Options  CNIOptions `yaml:"options"`
-}
-
-type CNIOptions struct {
-	Calico CalicoOptions
-}
-
-type CalicoOptions struct {
-	Mode string
-}
-
-type DNS struct {
-	Disable bool
-}
-
-type HeapsterMonitoring struct {
-	Disable bool
-	Options HeapsterOptions `yaml:"options"`
-}
-
-type Dashboard struct {
-	Disable bool
-}
-
-type HeapsterOptions struct {
-	Heapster         Heapster `yaml:"heapster"`
-	InfluxDB         InfluxDB `yaml:"influxdb"`
-	HeapsterReplicas int      `yaml:"heapster_replicas,omitempty"`
-	InfluxDBPVCName  string   `yaml:"influxdb_pvc_name,omitempty"`
-}
-
-type Heapster struct {
-	Replicas    int    `yaml:"replicas"`
-	ServiceType string `yaml:"service_type"`
-	Sink        string `yaml:"sink"`
-}
-type InfluxDB struct {
-	PVCName string `yaml:"pvc_name"`
-}
-
-type PackageManager struct {
-	Disable  bool
-	Provider string
-}
-
-type DeprecatedPackageManager struct {
-	Enabled bool
-}
-
 // GetUniqueNodes returns a list of the unique nodes that are listed in the plan file.
 // That is, if a node has multiple roles, it will only appear once in the list.
+// Nodes are considered unique if the combination of 'host', 'IP' or 'internalIP' is unique to all other nodes.
 func (p *Plan) GetUniqueNodes() []Node {
-	seenNodes := map[Node]bool{}
+	seenNodes := map[string]bool{}
 	nodes := []Node{}
 	for _, node := range p.getAllNodes() {
-		if seenNodes[node] {
+		// Cannot use the Node struct directly as it contains a map
+		key := node.HashCode()
+		if seenNodes[key] {
 			continue
 		}
 		nodes = append(nodes, node)
-		seenNodes[node] = true
+		seenNodes[key] = true
 	}
 	return nodes
 }
@@ -279,6 +562,20 @@ func (p *Plan) getNodeWithIP(ip string) (*Node, error) {
 		}
 	}
 	return nil, fmt.Errorf("Node with IP %q was not found in plan", ip)
+}
+
+// AllAddresses will return the hostnames, IPs and internal IPs for all nodes
+func (p *Plan) AllAddresses() string {
+	nodes := p.GetUniqueNodes()
+	var addr []string
+	for _, n := range nodes {
+		addr = append(addr, n.Host)
+		addr = append(addr, n.IP)
+		if n.InternalIP != "" {
+			addr = append(addr, n.InternalIP)
+		}
+	}
+	return strings.Join(addr, ",")
 }
 
 // GetSSHConnection returns the SSHConnection struct containing the node and SSHConfig details
@@ -385,30 +682,10 @@ func hasIP(nodes *[]Node, ip string) bool {
 	return false
 }
 
-// ConfigureDockerWithPrivateRegistry returns true when confgiuring an external or on cluster registry is required
-func (r DockerRegistry) ConfigureDockerWithPrivateRegistry() bool {
-	return r.Address != "" || r.SetupInternal
-}
-
-func (p Plan) DockerRegistryAddress() string {
-	address := p.DockerRegistry.Address
-	// If external is not set use master[0]
-	if address == "" {
-		address = p.Master.Nodes[0].IP
-		// Use internal address if available
-		if p.Master.Nodes[0].InternalIP != "" {
-			address = p.Master.Nodes[0].InternalIP
-		}
-	}
-	return address
-}
-
-func (p Plan) DockerRegistryPort() string {
-	port := 8443
-	if p.DockerRegistry.Port != 0 {
-		port = p.DockerRegistry.Port
-	}
-	return strconv.Itoa(port)
+// PrivateRegistryProvided returns true when the details about a private
+// registry have been provided
+func (p Plan) PrivateRegistryProvided() bool {
+	return p.DockerRegistry.Server != ""
 }
 
 // NetworkConfigured returns true if pod validation/smoketest should run

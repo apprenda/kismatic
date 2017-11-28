@@ -33,16 +33,17 @@
   - include: _validate-control-plane-node.yaml serial_count="1" upgrading=true
   - include: _kube-proxy-stop.yaml play_name="Upgrade Kubernetes Proxy" upgrading=true
   - include: _kube-proxy.yaml play_name="Upgrade Kubernetes Proxy" upgrading=true
-  - include: _cni.yaml play_name="Upgrade Kubernetes CNI" upgrading=true
-    when: cni.enabled|bool == true
+  - include: _label-nodes.yaml
   - include: _calico.yaml play_name="Upgrade Calico Cluster Network" upgrading=true
     when: cni.enabled|bool == true and cni.provider == "calico"
   - include: _calico-validate.yaml upgrading=true
     when: cni.enabled|bool == true and cni.provider == "calico"
-  - include: _weave.yaml play_name="Upgrade Wave Cluster Network" upgrading=true
+  - include: _weave.yaml play_name="Upgrade Weave Cluster Network" upgrading=true
     when: cni.enabled|bool == true and cni.provider == "weave"
   - include: _weave-validate.yaml upgrading=true
     when: cni.enabled|bool == true and cni.provider == "weave"
+  - include: _rescheduler.yaml play_name="Upgrade Kubernetes Pod Rescheduler" upgrading=true
+    when: rescheduler.enabled|bool == true
     
   - include: _kube-uncordon-node.yaml
 

@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"os"
 
 	. "github.com/onsi/ginkgo"
@@ -13,31 +14,21 @@ var _ = Describe("kismatic docker registry feature", func() {
 		os.Chdir(dir)
 	})
 
-	Describe("enabling the internal docker registry feature", func() {
-		ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-			WithInfrastructure(NodeCount{1, 1, 1, 0, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
-				opts := installOptions{
-					autoConfigureDockerRegistry: true,
-				}
-				err := installKismatic(nodes, opts, sshKey)
-				Expect(err).ToNot(HaveOccurred())
-			})
-		})
-	})
-
 	Describe("using an existing private docker registry", func() {
 		ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-			WithInfrastructure(NodeCount{1, 1, 1, 0, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+			WithInfrastructure(NodeCount{2, 1, 1, 0, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 				By("Installing an external Docker registry on one of the nodes")
 				dockerRegistryPort := 8443
-				caFile, err := deployDockerRegistry(nodes.etcd[0], dockerRegistryPort, sshKey)
+				caFile, err := deployAuthenticatedDockerRegistry(nodes.etcd[1], dockerRegistryPort, sshKey)
 				Expect(err).ToNot(HaveOccurred())
-				installOpts := installOptions{
-					dockerRegistryCAPath: caFile,
-					dockerRegistryIP:     nodes.etcd[0].PrivateIP,
-					dockerRegistryPort:   dockerRegistryPort,
+				opts := installOptions{
+					dockerRegistryCAPath:   caFile,
+					dockerRegistryServer:   fmt.Sprintf("%s:%d", nodes.etcd[1].PrivateIP, dockerRegistryPort),
+					dockerRegistryUsername: "kismaticuser",
+					dockerRegistryPassword: "kismaticpassword",
 				}
-				err = installKismatic(nodes, installOpts, sshKey)
+				nodes.etcd = []NodeDeets{nodes.etcd[0]}
+				err = installKismatic(nodes, opts, sshKey)
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})

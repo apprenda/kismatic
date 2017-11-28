@@ -4,23 +4,22 @@
     yum:
       name: docker-engine-{{ docker_engine_yum_version }}
       state: present
-      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
-      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     register: docker_installation_rpm
     until: docker_installation_rpm|success
     retries: 3
     delay: 3
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
 
   # DEB
   - name: install docker-engine deb package
     apt:
       name: docker-engine={{ docker_engine_apt_version }}
       state: present
-      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
-      default_release: kismatic-xenial
+      default_release: ubuntu-xenial
     register: docker_installation_deb
     until: docker_installation_deb|success
     retries: 3
     delay: 3
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"

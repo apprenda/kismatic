@@ -1,0 +1,29 @@
+---
+  - hosts: storage
+    any_errors_fatal: true
+    name: "Delete Gluster Volume"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+
+    tasks:
+      - name: verify volume exists
+        command: gluster volume list
+        register: out
+        failed_when: "'{{ volume_name }}' not in out.stdout"
+        run_once: true
+
+      - name: stop Gluster volume
+        command: gluster volume stop {{ volume_name }} --mode=script
+        run_once: true
+
+      - name: delete Gluster volume
+        command: gluster volume delete {{ volume_name }} --mode=script
+        run_once: true
+
+      - name: delete brick directory
+        file:
+          path: "{{ volume_mount }}{{ volume_base_dir }}{{ volume_name }}"
+          state: directory
+          mode: "{{ volume_mode }}"
+          state: absent

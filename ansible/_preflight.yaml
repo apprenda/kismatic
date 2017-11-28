@@ -7,3 +7,4 @@
       - group_vars/all.yaml
     roles:
       - preflight
+    environment: "{{proxy_env}}"

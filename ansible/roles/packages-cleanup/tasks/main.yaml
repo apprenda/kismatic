@@ -1,41 +1,47 @@
 ---
-    # remove YUM packages
-  - name: remove kismatic-kubernetes-master package
-    package: name=kismatic-kubernetes-master state=absent
-    when: "'master' in group_names"
-    register: result
-    until: result|success
-    retries: 1
-    delay: 1
-
-  - name: remove kismatic-kubernetes-node package
-    package: name=kismatic-kubernetes-node state=absent
+  - name: remove kubelet package
+    package: name=kubelet state=absent
     when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names"
     register: result
     until: result|success
-    retries: 1
+    retries: 2
     delay: 1
 
-  - name: remove kismatic-docker-engine package
-    package: name=kismatic-docker-engine state=absent
+  - name: remove kubectl package
+    package: name=kubectl state=absent
     when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names"
     register: result
     until: result|success
-    retries: 1
+    retries: 2
     delay: 1
 
-  - name: remove kismatic-etcd package
-    package: name=kismatic-etcd state=absent
+  - name: remove docker-engine package
+    package: name=docker-engine state=absent
+    when: "'master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names"
+    register: result
+    until: result|success
+    retries: 2
+    delay: 1
+
+  - name: remove etcd package
+    package: name=etcd state=absent
     when: "'etcd' in group_names"
     register: result
     until: result|success
-    retries: 1
+    retries: 2
     delay: 1
 
-  - name: remove transition-etcd package
-    package: name=transition-etcd state=absent
-    when: "'etcd' in group_names"
-    register: result
-    until: result|success
-    retries: 1
-    delay: 1
+  - name: remove Kismatic yum repository
+    yum_repository:
+      name: kismatic
+      description: Kismatic Packages
+      baseurl: "https://kismatic-packages-rpm.s3-accelerate.amazonaws.com"
+      state: absent
+    when: ansible_os_family == 'RedHat'
+
+
+  - name: remove Kismatic deb repository
+    apt_repository:
+      repo: 'deb https://kismatic-packages-deb.s3-accelerate.amazonaws.com kismatic-xenial main'
+      state: absent
+    when: ansible_os_family == 'Debian'

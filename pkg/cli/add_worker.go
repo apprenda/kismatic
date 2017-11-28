@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -12,6 +13,7 @@ import (
 )
 
 type addWorkerOpts struct {
+	NodeLabels               []string
 	GeneratedAssetsDirectory string
 	RestartServices          bool
 	OutputFormat             string
@@ -36,9 +38,20 @@ func NewCmdAddWorker(out io.Writer, installOpts *installOpts) *cobra.Command {
 			if len(args) == 3 {
 				newWorker.InternalIP = args[2]
 			}
+			if len(opts.NodeLabels) > 0 {
+				newWorker.Labels = make(map[string]string)
+				for _, l := range opts.NodeLabels {
+					pair := strings.Split(l, "=")
+					if len(pair) != 2 {
+						return fmt.Errorf("invalid label %q provided, must be key=value pair", l)
+					}
+					newWorker.Labels[pair[0]] = pair[1]
+				}
+			}
 			return doAddWorker(out, installOpts.planFilename, opts, newWorker)
 		},
 	}
+	cmd.Flags().StringSliceVarP(&opts.NodeLabels, "labels", "l", []string{}, "key=value pairs separated by ','")
 	cmd.Flags().StringVar(&opts.GeneratedAssetsDirectory, "generated-assets-dir", "generated", "path to the directory where assets generated during the installation process will be stored")
 	cmd.Flags().BoolVar(&opts.RestartServices, "restart-services", false, "force restart clusters services (Use with care)")
 	cmd.Flags().BoolVar(&opts.Verbose, "verbose", false, "enable verbose logging from the installation")

@@ -1,6 +1,6 @@
 [![GitHub license](https://img.shields.io/badge/license-Apache%20License%202.0-blue.svg)](LICENSE)
 [![CircleCI](https://circleci.com/gh/apprenda/kismatic.svg?style=svg)](https://circleci.com/gh/apprenda/kismatic)
-[![Slackin](http://54.242.94.98/badge.svg)](http://54.242.94.98/)
+[![Slackin](http://slack.kismatic.com/badge.svg)](http://slack.kismatic.com/)
 
 # Kismatic Enterprise Toolkit (KET): Design, Deployment and Operations System for Production Kubernetes Clusters
 
@@ -20,21 +20,18 @@ KET operational tools include:
    * Cluster health and validation utility for assuring that software and network configurations of cluster nodes are correct when installing Kubernetes.
 3. [`Kuberang`](https://github.com/apprenda/kuberang)
    * Cluster build verification to ensure networking and scaling work as intended. This tool is used to smoke-test a newly built cluster.
-4. [Kismatic RPM & DEB Packages](docs/packages.md)
-   * Packages for installing Kubernetes and its dependencies, focused on specific roles in an HA cluster.
-   * With these packages installed on a local repo, it is possible to use Kismatic to install Kubernetes on nodes that do not have access to the public internet.
-5. [`Kismatic Provision`](https://github.com/apprenda/kismatic-provision)
+4. [`Kismatic Provision`](https://github.com/apprenda/kismatic-provision)
    * Quickly provision infrastructure on public clouds such as AWS and Packet. Makes building demo and development clusters a 2-step process.
 
 ## Components
 | Component | Version |
 | --- | --- |
-| Kubernetes | v1.7.3 |
+| Kubernetes | v1.8.4 |
 | Docker | v1.12.6 |
 | Etcd (for Kubernetes) | v3.1.10 |
 | Etcd (for Calico & Contiv) | v3.1.10 |
-| Calico | v2.3.0 |
-| Weave | v2.0.1 |
+| Calico | v2.6.2 |
+| Weave | v2.0.5 |
 | Contiv | v1.1.1 |
 
 
@@ -47,21 +44,21 @@ KET operational tools include:
 
 # Usage Documentation
 
+[Full Documentation](docs/README.md) -- Index of all the documentation
+
 [Installation Overview](docs/install.md) -- Instructions on using KET to install a Kubernetes cluster.
 
-[Upgrade a Kubernetes cluster](docs/upgrade.md) -- Instructions on using KET to upgrade your Kubernetes cluster.
+[Upgrading Your Cluster](docs/upgrade.md) -- Instructions on using KET to upgrade your Kubernetes cluster.
 
-[Cluster Examples](docs/intent.md) -- Examples for various ways you can use Kismatic in your organization.
+[Plan File Reference](docs/plan-file-reference.md) -- Reference documentaion for the KET plan file.
+
+[Cluster Examples](docs/intent.md) -- Examples for various ways you can use KET in your organization.
 
 [CNI Providers](docs/networking.md) -- Information about the supported CNI providers by KET.
 
 [Add Ons](docs/add_ons.md) -- Information about the Add-Ons supported by KET.
 
-[Cert Generation](docs/certificates.md) -- Information on how KET handles certificates.
-
 [Kismatic CLI](https://github.com/apprenda/kismatic/tree/master/docs/kismatic-cli) -- Dynamically generated documentation for the Kismatic CLI.
-
-[Roadmap](ROADMAP.md) -- The feature roadmap for the next few releases of KET.
 
 # Development Documentation
 

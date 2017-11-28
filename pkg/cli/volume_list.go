@@ -23,7 +23,6 @@ func NewCmdVolumeList(out io.Writer, planFile *string) *cobra.Command {
 		Use:   "list",
 		Short: "list storage volumes to the Kubernetes cluster",
 		Long: `List storage volumes to the Kubernetes cluster.
-
 This function requires a target cluster that has storage nodes.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return doVolumeList(out, opts, *planFile, args)
@@ -195,23 +194,23 @@ func buildResponse(glusterClient data.GlusterClient, kubernetesClient data.Kuber
 
 const (
 	_          = iota // ignore first value by assigning to blank identifier
-	KB float64 = 1 << (10 * iota)
-	MB
-	GB
-	TB
+	kb float64 = 1 << (10 * iota)
+	mb
+	gb
+	tb
 )
 
 // HumanFormat converts bytes to human readable KB,MB,GB,TB formats
 func HumanFormat(bytes float64) string {
 	switch {
-	case bytes >= TB:
-		return fmt.Sprintf("%.2fTB", bytes/TB)
-	case bytes >= GB:
-		return fmt.Sprintf("%.2fGB", bytes/GB)
-	case bytes >= MB:
-		return fmt.Sprintf("%.2fMB", bytes/MB)
-	case bytes >= KB:
-		return fmt.Sprintf("%.2fKB", bytes/KB)
+	case bytes >= tb:
+		return fmt.Sprintf("%.2fTB", bytes/tb)
+	case bytes >= gb:
+		return fmt.Sprintf("%.2fGB", bytes/gb)
+	case bytes >= mb:
+		return fmt.Sprintf("%.2fMB", bytes/mb)
+	case bytes >= kb:
+		return fmt.Sprintf("%.2fKB", bytes/kb)
 	}
 	return fmt.Sprintf("%.2fB", bytes)
 }

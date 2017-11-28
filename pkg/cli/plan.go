@@ -87,64 +87,18 @@ func doPlan(in io.Reader, out io.Writer, planner install.Planner, planFile strin
 	fmt.Fprintf(out, "- %d nfs volumes\n", nfsVolumes)
 	fmt.Fprintln(out)
 
-	template := planTemplate{
-		etcdNodes:    etcdNodes,
-		masterNodes:  masterNodes,
-		workerNodes:  workerNodes,
-		ingressNodes: ingressNodes,
-		storageNodes: storageNodes,
-		nfsVolumes:   nfsVolumes,
+	planTemplate := install.PlanTemplateOptions{
+		EtcdNodes:    etcdNodes,
+		MasterNodes:  masterNodes,
+		WorkerNodes:  workerNodes,
+		IngressNodes: ingressNodes,
+		StorageNodes: storageNodes,
+		NFSVolumes:   nfsVolumes,
 	}
-
-	plan := buildPlan(template)
-	// Write out the plan
-	if err = install.WritePlanTemplate(plan, planner); err != nil {
+	if err = install.WritePlanTemplate(planTemplate, planner); err != nil {
 		return fmt.Errorf("error planning installation: %v", err)
 	}
 	fmt.Fprintf(out, "Wrote plan file template to %q\n", planFile)
 	fmt.Fprintf(out, "Edit the plan file to further describe your cluster. Once ready, execute the \"install validate\" command to proceed.\n")
 	return nil
-}
-
-type planTemplate struct {
-	etcdNodes    int
-	masterNodes  int
-	workerNodes  int
-	ingressNodes int
-	storageNodes int
-	nfsVolumes   int
-}
-
-func buildPlan(template planTemplate) *install.Plan {
-	// Create a plan
-	masterNodeGroup := install.MasterNodeGroup{}
-	masterNodeGroup.ExpectedCount = template.masterNodes
-	plan := install.Plan{
-		Etcd: install.NodeGroup{
-			ExpectedCount: template.etcdNodes,
-		},
-		Master: masterNodeGroup,
-		Worker: install.NodeGroup{
-			ExpectedCount: template.workerNodes,
-		},
-	}
-
-	if template.ingressNodes > 0 {
-		plan.Ingress = install.OptionalNodeGroup{
-			ExpectedCount: template.ingressNodes,
-		}
-	}
-
-	if template.storageNodes > 0 {
-		plan.Storage = install.OptionalNodeGroup{
-			ExpectedCount: template.storageNodes,
-		}
-	}
-
-	for i := 0; i < template.nfsVolumes; i++ {
-		v := install.NFSVolume{Host: "", Path: "/"}
-		plan.NFS.Volumes = append(plan.NFS.Volumes, v)
-	}
-
-	return &plan
 }

@@ -16,7 +16,7 @@ spec:
       nodeSelector:
         kismatic/ingress: "true"
       containers:
-      - image: {{ nginx_ingress_controller_img }}
+      - image: {{ images.nginx_ingress_controller }}
         name: ingress
         imagePullPolicy: IfNotPresent
         readinessProbe:

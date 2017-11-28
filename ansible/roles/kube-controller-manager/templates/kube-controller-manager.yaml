@@ -4,8 +4,9 @@ metadata:
   labels:
     tier: control-plane
     component: kube-controller-manager
+    kismatic/host: {{ inventory_hostname }}
   annotations:
-    version: "{{ kubernetes_version }}"
+    version: "{{ official_images.kube_apiserver.version }}"
     kismatic/version: "{{ kismatic_short_version }}"
   name: kube-controller-manager
   namespace: kube-system
@@ -13,20 +14,16 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-controller-manager
-    image: {{ kube_controller_manager_img }}
+    image: {{ images.kube_controller_manager }}
     imagePullPolicy: IfNotPresent
     command:
       - kube-controller-manager
-      - --allocate-node-cidrs=true
-      - --cluster-cidr={{ kubernetes_pods_cidr }}
-      - --cluster-name={{ kubernetes_cluster_name }}
-      - --kubeconfig={{ kubernetes_kubeconfig.controller_manager }}
-      - --leader-elect=true
-      - --root-ca-file={{ kubernetes_certificates.ca }}
-      - --service-account-private-key-file={{ kubernetes_certificates.service_account_key }}
-      - --service-cluster-ip-range={{ kubernetes_services_cidr }}
-      - --use-service-account-credentials=true
-      - --v=2
+{% set combined_options = kube_controller_manager_option_defaults | combine(kube_controller_manager_option_overrides) -%}
+{% for option in combined_options | dictsort %}
+{% if option[1] is defined and option[1] | string | length > 0 %}
+      - --{{ option[0] }}={{ option[1] }}
+{% endif %}
+{% endfor %}
     livenessProbe:
       httpGet:
         host: 127.0.0.1
@@ -45,6 +42,14 @@ spec:
     - mountPath: /etc/ssl/certs
       name: ssl-certs-host
       readOnly: true
+    - name: usr-ca-certs-host
+      mountPath: /usr/share/ca-certificates
+      readOnly: true
+{% if cloud_provider is defined and cloud_provider == 'aws' and ansible_os_family == 'RedHat' %}
+    - mountPath: /etc/ssl/certs/ca-bundle.crt
+      name: rhel-ca-bundle
+      readOnly: true
+{% endif %}
   volumes:
   - name: "kubeconfig"
     hostPath:
@@ -53,5 +58,13 @@ spec:
       path: /etc/kubernetes
     name: ssl-certs-kubernetes
   - hostPath:
-      path: /usr/share/ca-certificates
+      path: /etc/ssl/certs/
     name: ssl-certs-host
+  - hostPath:
+      path: /usr/share/ca-certificates
+    name: usr-ca-certs-host
+{% if cloud_provider is defined and cloud_provider == 'aws' and ansible_os_family == 'RedHat' %}
+  - hostPath:
+      path: /etc/ssl/certs/ca-bundle.crt
+    name: rhel-ca-bundle
+{% endif %}

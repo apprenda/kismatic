@@ -23,34 +23,16 @@ const (
 	defaultCAExpiry              = "17520h"
 )
 
-type stack struct {
-	lock sync.Mutex
-	s    []string
-}
-
-func newStack() *stack {
-	return &stack{sync.Mutex{}, make([]string, 0)}
-}
-
-func (s *stack) Push(v string) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	s.s = append(s.s, v)
-}
-
-func (s *stack) Pop() (string, error) {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	l := len(s.s)
-	if l == 0 {
-		return "", errors.New("Empty Stack")
-	}
-
-	res := s.s[l-1]
-	s.s = s.s[:l-1]
-	return res, nil
+// PlanTemplateOptions contains the options that are desired when generating
+// a plan file template.
+type PlanTemplateOptions struct {
+	EtcdNodes     int
+	MasterNodes   int
+	WorkerNodes   int
+	IngressNodes  int
+	StorageNodes  int
+	NFSVolumes    int
+	AdminPassword string
 }
 
 // PlanReadWriter is capable of reading/writing a Plan
@@ -110,6 +92,10 @@ func readDeprecatedFields(p *Plan) {
 			Disable: p.AddOns.DashboardDeprecated.Disable,
 		}
 	}
+
+	if p.DockerRegistry.Server == "" && p.DockerRegistry.Address != "" && p.DockerRegistry.Port != 0 {
+		p.DockerRegistry.Server = fmt.Sprintf("%s:%d", p.DockerRegistry.Address, p.DockerRegistry.Port)
+	}
 }
 
 func setDefaults(p *Plan) {
@@ -117,11 +103,16 @@ func setDefaults(p *Plan) {
 		p.AddOns.CNI = &CNI{}
 		p.AddOns.CNI.Provider = cniProviderCalico
 		p.AddOns.CNI.Options.Calico.Mode = "overlay"
+		p.AddOns.CNI.Options.Calico.LogLevel = "info"
 		// read KET <v1.5.0 plan option
 		if p.Cluster.Networking.Type != "" {
 			p.AddOns.CNI.Options.Calico.Mode = p.Cluster.Networking.Type
 		}
 	}
+	if p.AddOns.CNI.Options.Calico.LogLevel == "" {
+		p.AddOns.CNI.Options.Calico.LogLevel = "info"
+	}
+
 	if p.AddOns.HeapsterMonitoring == nil {
 		p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
 	}
@@ -155,7 +146,11 @@ var yamlKeyRE = regexp.MustCompile(`[^a-zA-Z]*([a-z_\-A-Z]+)[ ]*:`)
 
 // Write the plan to the file system
 func (fp *FilePlanner) Write(p *Plan) error {
-	oneTimeComments := commentMap
+	// make a copy of the global comment map
+	oneTimeComments := map[string][]string{}
+	for k, v := range commentMap {
+		oneTimeComments[k] = v
+	}
 	bytez, marshalErr := yaml.Marshal(p)
 	if marshalErr != nil {
 		return fmt.Errorf("error marshalling plan to yaml: %v", marshalErr)
@@ -167,36 +162,86 @@ func (fp *FilePlanner) Write(p *Plan) error {
 	}
 	defer f.Close()
 
+	// the stack keeps track of the object we are in
+	// for example, when we are inside cluster.networking, looking at the key 'foo'
+	// the stack will have [cluster, networking, foo]
 	s := newStack()
 	scanner := bufio.NewScanner(bytes.NewReader(bytez))
 	prevIndent := -1
+	addNewLineBeforeComment := true
 	for scanner.Scan() {
 		text := scanner.Text()
 		matched := yamlKeyRE.FindStringSubmatch(text)
 		if matched != nil && len(matched) > 1 {
 			indent := strings.Count(matched[0], " ") / 2
+
+			// Add a new line if we are leaving a major indentation block
+			// (leaving a struct)..
+			if indent < prevIndent {
+				f.WriteString("\n")
+				// suppress the new line that would be added if this
+				// field has a comment
+				addNewLineBeforeComment = false
+			}
 			if indent <= prevIndent {
 				for i := 0; i <= (prevIndent - indent); i++ {
-					s.Pop()
+					// Pop from the stack when we have left an object
+					// (we know because the indentation level has decreased)
+					if _, err := s.Pop(); err != nil {
+						return err
+					}
 				}
 			}
 			s.Push(matched[1])
 			prevIndent = indent
+
+			// Full key match (e.g. "cluster.networking.pod_cidr")
 			if thiscomment, ok := oneTimeComments[strings.Join(s.s, ".")]; ok {
-				f.WriteString(fmt.Sprintf("%-40s # %s\n", text, thiscomment))
+				if _, err := f.WriteString(getCommentedLine(text, thiscomment, addNewLineBeforeComment)); err != nil {
+					return err
+				}
 				delete(oneTimeComments, matched[1])
-				continue
-			}
-			if thiscomment, ok := oneTimeComments[matched[1]]; ok {
-				f.WriteString(fmt.Sprintf("%-40s # %s\n", text, thiscomment))
-				delete(oneTimeComments, matched[1])
+				addNewLineBeforeComment = true
 				continue
 			}
 		}
-		f.WriteString(text + "\n")
+		// we don't want to comment this line... just print it out
+		if _, err := f.WriteString(text + "\n"); err != nil {
+			return err
+		}
+		addNewLineBeforeComment = true
 	}
 
 	return nil
+}
+
+func getCommentedLine(line string, commentLines []string, addNewLine bool) string {
+	var b bytes.Buffer
+	// Print out a new line before each comment block
+	if addNewLine {
+		b.WriteString("\n")
+	}
+	// Print out the comment lines
+	for _, c := range commentLines {
+		// Indent the comment to the same level as the field we are commenting
+		b.WriteString(strings.Repeat(" ", countLeadingSpace(line)))
+		b.WriteString(fmt.Sprintf("# %s\n", c))
+	}
+	// Print out the line
+	b.WriteString(line + "\n")
+	return b.String()
+}
+
+func countLeadingSpace(s string) int {
+	var i int
+	for _, r := range s {
+		if r == ' ' {
+			i++
+			continue
+		}
+		break
+	}
+	return i
 }
 
 // PlanExists return true if the plan exists on the file system
@@ -206,14 +251,27 @@ func (fp *FilePlanner) PlanExists() bool {
 }
 
 // WritePlanTemplate writes an installation plan with pre-filled defaults.
-func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
-	// Set sensible defaults
-	p.Cluster.Name = "kubernetes"
-	generatedAdminPass, err := generateAlphaNumericPassword()
-	if err != nil {
-		return fmt.Errorf("error generating random password: %v", err)
+func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) error {
+	if planTemplateOpts.AdminPassword == "" {
+		pw, err := generateAlphaNumericPassword()
+		if err != nil {
+			return fmt.Errorf("error generating random password: %v", err)
+		}
+		planTemplateOpts.AdminPassword = pw
 	}
-	p.Cluster.AdminPassword = generatedAdminPass
+	p := buildPlanFromTemplateOptions(planTemplateOpts)
+	if err := w.Write(&p); err != nil {
+		return fmt.Errorf("error writing installation plan template: %v", err)
+	}
+	return nil
+}
+
+// fills out a plan with sensible defaults, according to the requested
+// template options
+func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
+	p := Plan{}
+	p.Cluster.Name = "kubernetes"
+	p.Cluster.AdminPassword = templateOpts.AdminPassword
 	p.Cluster.DisablePackageInstallation = false
 	p.Cluster.DisconnectedInstallation = false
 
@@ -231,14 +289,12 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 	p.Cluster.Certificates.Expiry = "17520h"
 	p.Cluster.Certificates.CAExpiry = defaultCAExpiry
 
-	// Set DockerRegistry defaults
-	p.DockerRegistry.Port = 8443
-
 	// Add-Ons
 	// CNI
 	p.AddOns.CNI = &CNI{}
 	p.AddOns.CNI.Provider = cniProviderCalico
 	p.AddOns.CNI.Options.Calico.Mode = "overlay"
+	p.AddOns.CNI.Options.Calico.LogLevel = "info"
 	// Heapster
 	p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
 	p.AddOns.HeapsterMonitoring.Options.Heapster.Replicas = 2
@@ -248,7 +304,21 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 	// Package Manager
 	p.AddOns.PackageManager.Provider = "helm"
 
+	p.AddOns.Dashboard = &Dashboard{}
+	p.AddOns.Dashboard.Disable = false
+
 	// Generate entries for all node types
+	p.Etcd.ExpectedCount = templateOpts.EtcdNodes
+	p.Master.ExpectedCount = templateOpts.MasterNodes
+	p.Worker.ExpectedCount = templateOpts.WorkerNodes
+	p.Ingress.ExpectedCount = templateOpts.IngressNodes
+	p.Storage.ExpectedCount = templateOpts.StorageNodes
+
+	for i := 0; i < templateOpts.NFSVolumes; i++ {
+		v := NFSVolume{Host: "", Path: "/"}
+		p.NFS.Volumes = append(p.NFS.Volumes, v)
+	}
+
 	n := Node{}
 	for i := 0; i < p.Etcd.ExpectedCount; i++ {
 		p.Etcd.Nodes = append(p.Etcd.Nodes, n)
@@ -274,10 +344,7 @@ func WritePlanTemplate(p *Plan, w PlanReadWriter) error {
 		}
 	}
 
-	if err := w.Write(p); err != nil {
-		return fmt.Errorf("error writing installation plan template: %v", err)
-	}
-	return nil
+	return p
 }
 
 func getKubernetesServiceIP(p *Plan) (string, error) {
@@ -321,44 +388,87 @@ func generateAlphaNumericPassword() (string, error) {
 	}
 }
 
-var commentMap = map[string]string{
-	"cluster.admin_password":                             "This password is used to login to the Kubernetes Dashboard and can also be used for administration without a security certificate.",
-	"cluster.disable_package_installation":               "When true, installation will not occur if any node is missing the correct deb/rpm packages. When false, the installer will attempt to install missing packages for you.",
-	"cluster.package_repository_urls":                    "Comma-separated list of URLs of the repositories that should be used during installation. These repositories must contain the kismatic packages and all their transitive dependencies.",
-	"cluster.disconnected_installation":                  "Set to true if you have already installed the required packages on the nodes or provided a local URL in package_repository_urls containing those packages.",
-	"cluster.disable_registry_seeding":                   "Set to true if you have seeded your registry with the required images for the installation.",
-	"cluster.networking.pod_cidr_block":                  "Kubernetes will assign pods IPs in this range. Do not use a range that is already in use on your local network!",
-	"cluster.networking.service_cidr_block":              "Kubernetes will assign services IPs in this range. Do not use a range that is already in use by your local network or pod network!",
-	"cluster.networking.update_hosts_files":              "When true, the installer will add entries for all nodes to other nodes' hosts files. Use when you don't have access to DNS.",
-	"cluster.networking.http_proxy":                      "Set the proxy server to use for HTTP connections.",
-	"cluster.networking.https_proxy":                     "Set the proxy server to use for HTTPs connections",
-	"cluster.networking.no_proxy":                        "List of host names and/or IPs that shouldn't go through any proxy. If set to a asterisk '*' only, it matches all hosts.",
-	"cluster.certificates.expiry":                        "Self-signed certificate expiration period in hours; default is 2 years.",
-	"cluster.certificates.ca_expiry":                     "CA certificate expiration period in hours; default is 2 years.",
-	"cluster.ssh.ssh_key":                                "Absolute path to the ssh private key we should use to manage nodes.",
-	"etcd":                                               "Here you will identify all of the nodes that should play the etcd role on your cluster.",
-	"master":                                             "Here you will identify all of the nodes that should play the master role.",
-	"worker":                                             "Here you will identify all of the nodes that will be workers.",
-	"host":                                               "The (short) hostname of a node, e.g. etcd01.",
-	"ip":                                                 "The ip address the installer should use to manage this node, e.g. 8.8.8.8.",
-	"internalip":                                         "If the node has an IP for internal traffic, enter it here; otherwise leave blank.",
-	"master.load_balanced_fqdn":                          "If you have set up load balancing for master nodes, enter the FQDN name here. Otherwise, use the IP address of a single master node.",
-	"master.load_balanced_short_name":                    "If you have set up load balancing for master nodes, enter the short name here. Otherwise, use the IP address of a single master node.",
-	"docker.storage.direct_lvm":                          "Configure devicemapper in direct-lvm mode (RHEL/CentOS only).",
-	"docker.storage.direct_lvm.block_device":             "Path to the block device that will be used for direct-lvm mode. This device will be wiped and used exclusively by docker.",
-	"docker.storage.direct_lvm.enable_deferred_deletion": "Set to true if you want to enable deferred deletion when using direct-lvm mode.",
-	"docker_registry":                                    "Here you will provide the details of your Docker registry or setup an internal one to run in the cluster. This is optional and the cluster will always have access to the Docker Hub.",
-	"docker_registry.setup_internal":                     "When true, a Docker Registry will be installed on top of your cluster and used to host Docker images needed for its installation.",
-	"docker_registry.address":                            "IP or hostname for your Docker registry. An internal registry will NOT be setup when this field is provided. Must be accessible from all the nodes in the cluster.",
-	"docker_registry.port":                               "Port for your Docker registry.",
-	"docker_registry.CA":                                 "Absolute path to the CA that was used when starting your Docker registry. The docker daemons on all nodes in the cluster will be configured with this CA.",
-	"nfs":                                                "A set of NFS volumes for use by on-cluster persistent workloads, managed by Kismatic.",
-	"nfs.nfs_host":                                       "The host name or ip address of an NFS server.",
-	"nfs.mount_path":                                     "The mount path of an NFS share. Must start with /",
-	"add_ons.cni.provider":                               "Options: 'calico','weave','contiv','custom'. Selecting 'custom' will result in a CNI ready cluster, however it is up to you to configure a plugin after the install.",
-	"add_ons.cni.options.calico.mode":                    "Options: 'overlay','routed'. Routed pods can be addressed from outside the Kubernetes cluster; Overlay pods can only address each other.",
-	"add_ons.heapster.options.influxdb.pvc_name":         "Provide the name of the persistent volume claim that you will create after installation. If not specified, the data will be stored in ephemeral storage.",
-	"add_ons.heapster.options.heapster.service_type":     "Options: 'ClusterIP','NodePort','LoadBalancer','ExternalName'. Specify kubernetes ServiceType; default 'ClusterIP'",
-	"add_ons.heapster.options.heapster.sink":             "Specify the sink to store heapster data; default to a pod running on cluster.",
-	"add_ons.package_manager.provider":                   "Options: 'helm'",
+// The comment map contains is keyed by the value that should be commented
+// in the plan file. The value of the map contains the comment, split into
+// separate lines.
+var commentMap = map[string][]string{
+	"cluster.admin_password":                             []string{"This password is used to login to the Kubernetes Dashboard and can also be", "used for administration without a security certificate."},
+	"cluster.disable_package_installation":               []string{"Set to true if the nodes have the required packages installed."},
+	"cluster.disconnected_installation":                  []string{"Set to true if you are performing a disconnected installation."},
+	"cluster.networking":                                 []string{"Networking configuration of your cluster."},
+	"cluster.networking.pod_cidr_block":                  []string{"Kubernetes will assign pods IPs in this range. Do not use a range that is", "already in use on your local network!"},
+	"cluster.networking.service_cidr_block":              []string{"Kubernetes will assign services IPs in this range. Do not use a range", "that is already in use by your local network or pod network!"},
+	"cluster.networking.update_hosts_files":              []string{"Set to true if your nodes cannot resolve each others' names using DNS."},
+	"cluster.networking.http_proxy":                      []string{"Set the proxy server to use for HTTP connections."},
+	"cluster.networking.https_proxy":                     []string{"Set the proxy server to use for HTTPs connections."},
+	"cluster.networking.no_proxy":                        []string{"List of host names and/or IPs that shouldn't go through any proxy.", "All nodes' 'host' and 'IPs' are always set."},
+	"cluster.certificates":                               []string{"Generated certs configuration."},
+	"cluster.certificates.expiry":                        []string{"Self-signed certificate expiration period in hours; default is 2 years."},
+	"cluster.certificates.ca_expiry":                     []string{"CA certificate expiration period in hours; default is 2 years."},
+	"cluster.ssh":                                        []string{"SSH configuration for cluster nodes."},
+	"cluster.ssh.user":                                   []string{"This user must be able to sudo without password."},
+	"cluster.ssh.ssh_key":                                []string{"Absolute path to the ssh private key we should use to manage nodes."},
+	"cluster.kube_apiserver":                             []string{"Override configuration of Kubernetes components."},
+	"cluster.cloud_provider":                             []string{"Kubernetes cloud provider integration"},
+	"cluster.cloud_provider.provider":                    []string{"Options: 'aws','azure','cloudstack','fake','gce','mesos','openstack',", "'ovirt','photon','rackspace','vsphere'.", "Leave empty for bare metal setups or other unsupported providers."},
+	"cluster.cloud_provider.config":                      []string{"Path to the config file, leave empty if provider does not require it."},
+	"docker":                                             []string{"Docker daemon configuration of all cluster nodes"},
+	"etcd":                                               []string{"Etcd nodes are the ones that run the etcd distributed key-value database."},
+	"etcd.nodes":                                         []string{"Provide the hostname and IP of each node. If the node has an IP for internal", "traffic, provide it in the internalip field. Otherwise, that field can be", "left blank."},
+	"master":                                             []string{"Master nodes are the ones that run the Kubernetes control plane components."},
+	"worker":                                             []string{"Worker nodes are the ones that will run your workloads on the cluster."},
+	"ingress":                                            []string{"Ingress nodes will run the ingress controllers."},
+	"storage":                                            []string{"Storage nodes will be used to create a distributed storage cluster that can", "be consumed by your workloads."},
+	"master.load_balanced_fqdn":                          []string{"If you have set up load balancing for master nodes, enter the FQDN name here.", "Otherwise, use the IP address of a single master node."},
+	"master.load_balanced_short_name":                    []string{"If you have set up load balancing for master nodes, enter the short name here.", "Otherwise, use the IP address of a single master node."},
+	"docker.storage.direct_lvm":                          []string{"Configure devicemapper in direct-lvm mode (RHEL/CentOS only)."},
+	"docker.storage.direct_lvm.block_device":             []string{"Path to the block device that will be used for direct-lvm mode. This", "device will be wiped and used exclusively by docker."},
+	"docker.storage.direct_lvm.enable_deferred_deletion": []string{"Set to true if you want to enable deferred deletion when using", "direct-lvm mode."},
+	"docker_registry":                                    []string{"If you want to use an internal registry for the installation or upgrade, you", "must provide its information here. You must seed this registry before the", "installation or upgrade of your cluster. This registry must be accessible from", "all nodes on the cluster."},
+	"docker_registry.server":                             []string{"IP or hostname and port for your registry."},
+	"docker_registry.CA":                                 []string{"Absolute path to the certificate authority that should be trusted when", "connecting to your registry."},
+	"docker_registry.username":                           []string{"Leave blank for unauthenticated access."},
+	"docker_registry.password":                           []string{"Leave blank for unauthenticated access."},
+	"add_ons":                                            []string{"Add-ons are additional components that KET installs on the cluster."},
+	"nfs":                                                []string{"A set of NFS volumes for use by on-cluster persistent workloads"},
+	"nfs.nfs_host":                                       []string{"The host name or ip address of an NFS server."},
+	"nfs.mount_path":                                     []string{"The mount path of an NFS share. Must start with /"},
+	"add_ons.cni.provider":                               []string{"Selecting 'custom' will result in a CNI ready cluster, however it is up to", "you to configure a plugin after the install.", "Options: 'calico','weave','contiv','custom'."},
+	"add_ons.cni.options.calico.mode":                    []string{"Options: 'overlay','routed'."},
+	"add_ons.cni.options.calico.log_level":               []string{"Options: 'warning','info','debug'."},
+	"add_ons.heapster.options.influxdb.pvc_name":         []string{"Provide the name of the persistent volume claim that you will create", "after installation. If not specified, the data will be stored in", "ephemeral storage."},
+	"add_ons.heapster.options.heapster.service_type":     []string{"Specify kubernetes ServiceType. Defaults to 'ClusterIP'.", "Options: 'ClusterIP','NodePort','LoadBalancer','ExternalName'."},
+	"add_ons.heapster.options.heapster.sink":             []string{"Specify the sink to store heapster data. Defaults to an influxdb pod", "running on the cluster."},
+	"add_ons.package_manager.provider":                   []string{"Options: 'helm'"},
+	"add_ons.rescheduler":                                []string{"The rescheduler ensures that critical add-ons remain running on the cluster."},
+}
+
+type stack struct {
+	lock sync.Mutex
+	s    []string
+}
+
+func newStack() *stack {
+	return &stack{sync.Mutex{}, make([]string, 0)}
+}
+
+func (s *stack) Push(v string) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.s = append(s.s, v)
+}
+
+func (s *stack) Pop() (string, error) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	l := len(s.s)
+	if l == 0 {
+		return "", errors.New("Empty Stack")
+	}
+
+	res := s.s[l-1]
+	s.s = s.s[:l-1]
+	return res, nil
 }

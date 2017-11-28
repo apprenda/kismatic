@@ -232,7 +232,6 @@ func TestGenerateClusterCAPlanFileExpirationIsRespected(t *testing.T) {
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
 	p := getPlan()
-	p.DockerRegistry.SetupInternal = true
 
 	validity := 5 * 365 * 24 * time.Hour // 5 years
 	p.Cluster.Certificates.Expiry = validity.String()
@@ -514,7 +513,6 @@ func TestGenerateClusterCertificatesPlanFileExpirationIsRespected(t *testing.T) 
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
 	p := getPlan()
-	p.DockerRegistry.SetupInternal = true
 
 	validity := 5 * 365 * 24 * time.Hour // 5 years
 	p.Cluster.Certificates.Expiry = validity.String()
@@ -591,25 +589,6 @@ func TestLoadBalancedNamesNotInEtcdCert(t *testing.T) {
 	}
 }
 
-func TestInternalDockerRegistryCertGenerated(t *testing.T) {
-	pki := getPKI(t)
-	defer cleanup(pki.GeneratedCertsDirectory, t)
-
-	p := getPlan()
-	p.Worker = NodeGroup{}
-	p.DockerRegistry.SetupInternal = true
-
-	ca, err := pki.GenerateClusterCA(p)
-	if err != nil {
-		t.Fatalf("error generating CA for test: %v", err)
-	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
-		t.Fatalf("failed to generate certs: %v", err)
-	}
-	certFile := filepath.Join(pki.GeneratedCertsDirectory, "docker-registry.pem")
-	mustReadCertFile(certFile, t)
-}
-
 func TestContivProxyServerCertGenerated(t *testing.T) {
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
@@ -660,7 +639,6 @@ func TestAPIServerCertNoEmptyDNSNames(t *testing.T) {
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
 	p := getPlan()
-	p.DockerRegistry.SetupInternal = true
 
 	ca, err := pki.GenerateClusterCA(p)
 	if err != nil {
@@ -748,7 +726,6 @@ func TestValidateClusterCertificatesInvalidCerts(t *testing.T) {
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
 	p := getPlan()
-	p.DockerRegistry.SetupInternal = true
 
 	ca, err := pki.GenerateClusterCA(p)
 	if err != nil {
@@ -781,7 +758,7 @@ func TestValidateClusterCertificatesInvalidCerts(t *testing.T) {
 				p.Master.Nodes = []Node{master}
 				return p
 			},
-			expectedWarnings: 2, // api-server and internal docker registry cert
+			expectedWarnings: 1,
 		},
 	}
 
@@ -790,7 +767,7 @@ func TestValidateClusterCertificatesInvalidCerts(t *testing.T) {
 			plan := test.plan(*p)
 			warn, errs := pki.ValidateClusterCertificates(&plan)
 			if len(errs) != 0 {
-				t.Fatalf("unexpected error ocurred validating certs: %v", err)
+				t.Fatalf("unexpected error occurred validating certs: %v", err)
 			}
 			if len(warn) != test.expectedWarnings {
 				t.Errorf("expected %d warnings, but got %d. warnings were: %v", test.expectedWarnings, len(warn), warn)

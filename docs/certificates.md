@@ -1,9 +1,9 @@
-# Certificates
+# Certificates and Certificate Generation
 
 ## Overview
 Certificates (and their corresponding private keys) are used to secure all communication endpoints
 exposed by the components of the Kubernetes cluster. In this way, messages between
-components are encrypted, and only the parties involved in the communicatoin
+components are encrypted, and only the parties involved in the communication
 are able to decrypt them.
 
 Certificates are also used to authenticate the parties involved in the 
@@ -39,7 +39,6 @@ as a cluster admin.
 | Kubelet Client Cert | Used by Kubelet to talk to API Server | $nodeName-kubelet.pem |
 | Kube Proxy Client Cert | Used by Kube-proxy to talk to API Server | kube-proxy.pem | 
 | Etcd Client Cert | Used by calico to talk to etcd | etcd-client.pem |
-| Internal Registry Cert | HTTPS for internal private docker registry | docker-registry.pem | 
 | Admin Client Cert | Used by admin to authenticate with the cluster using kubectl | admin.pem | 
 
 ### Secured Interactions

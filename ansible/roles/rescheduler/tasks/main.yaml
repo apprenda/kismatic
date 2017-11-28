@@ -1,0 +1,36 @@
+  - name: copy rescheduler.yaml manifest
+    template:
+      src: rescheduler.yaml
+      dest: "{{ kubelet_pod_manifests_dir }}/rescheduler.yaml"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      mode: "{{ kubernetes_service_mode }}"
+
+  - name: wait up to 5 min until pod 'rescheduler' is running
+    command: kubectl get pods --selector  k8s-app=rescheduler --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
+    register: phase
+    until: phase|success and "Running" in phase.stdout
+    retries: 60
+    delay: 5
+    failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+
+  - name: get docker container ID for pod 'rescheduler'
+    command: docker ps -a -f name=rescheduler --format {%raw%}"{{.ID}}"{%endraw%} -l
+    register: containerID
+    when: phase|failure or "Running" not in phase.stdout
+
+  - name: get docker logs for pod 'rescheduler'
+    command: docker logs {{ containerID.stdout }} --tail 15
+    register: docker_logs
+    when: containerID is defined and containerID|success and containerID.stdout is defined and containerID.stdout != ""
+
+  - name: fail if pod 'rescheduler' is not running
+    fail:
+      msg: |
+        Waited for pod 'rescheduler' to be running, but it did not start up in time.
+
+        The pod's latest logs may indicate why it failed to start up:
+
+        {{ docker_logs.stderr }}
+
+    when: phase|failure or "Running" not in phase.stdout

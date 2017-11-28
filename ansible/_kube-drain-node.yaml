@@ -3,14 +3,29 @@
     hosts: master:worker:ingress:storage
     serial: 1
     tasks:
-      - name: "run kubectl drain"
+      - name: check API server pod manifest
+        stat:
+          path: "{{ kubelet_pod_manifests_dir }}/kube-apiserver.yaml"
+        register: api_server_stat
+        when: "'master' in group_names"
+
+      - name: run kubectl drain
         command: "kubectl drain --timeout 5m --ignore-daemonsets --force --delete-local-data {{ inventory_hostname|lower }}" # --force is required for static pods, --delete-local-data is required for pods with emptyDir
         register: drain_node
         until: drain_node|success
         retries: 3
         delay: 30
-        failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
-      - name: fail if the node was not drained successfully
+        failed_when: false
+        # If the node is a master node, only drain it if the api server manifest
+        # exists (i.e. the API server is/should be running). This is required
+        # to make master node upgrades idempotent.
+        # If the node is not a master node, always drain the node.
+        when: "('master' in group_names and api_server_stat.stat.exists) or 'master' not in group_names"
+      
+      - name: fail if the node was not drained
         fail:
-          msg: "Timed out waiting for node to be drained."
+          msg: |
+            Attempted to drain the node, but 'kubectl drain' returned an error:
+
+            "{{ drain_node.stderr }}"
         when: drain_node|failed

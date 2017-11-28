@@ -122,7 +122,7 @@ func TestAddWorkerPlanIsUpdated(t *testing.T) {
 	}
 	found := false
 	for _, w := range updatedPlan.Worker.Nodes {
-		if w.Host == newWorker.Host {
+		if w.Equal(newWorker) {
 			found = true
 		}
 	}

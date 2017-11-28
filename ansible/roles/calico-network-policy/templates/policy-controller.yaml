@@ -1,29 +1,38 @@
+# This manifest deploys the Calico Kubernetes controllers.
+# See https://github.com/projectcalico/kube-controllers
+
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: calico-policy-controller
+  name: calico-kube-controllers
   namespace: kube-system
   labels:
     tier: control-plane
-    k8s-app: calico-policy-controller
+    k8s-app: calico-kube-controllers
   annotations:
     kismatic/version: "{{ kismatic_short_version }}"
+  annotations:
+    scheduler.alpha.kubernetes.io/critical-pod: ''
 spec:
-  # The policy controller can only have a single active instance.
+  # The controllers can only have a single active instance.
   replicas: 1
   strategy:
     type: Recreate
   template:
     metadata:
-      name: calico-policy-controller
+      name: calico-kube-controllers
       namespace: kube-system
       labels:
         tier: control-plane
-        k8s-app: calico-policy-controller
+        k8s-app: calico-kube-controllers
     spec:
-      # The policy controller must run in the host network namespace so that
+      # The controllers must run in the host network namespace so that
       # it isn't governed by policy that would prevent it from working.
       hostNetwork: true
+      serviceAccountName: calico-kube-controllers
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
       volumes:
         - name: "ca"
           hostPath:
@@ -35,8 +44,8 @@ spec:
           hostPath:
             path: "{{ kubernetes_certificates.etcd_client_key }}"
       containers:
-        - name: calico-policy-controller
-          image: "{{ calico_kube_policy_controller_img }}"
+        - name: calico-kube-controllers
+          image: "{{ images.calico_kube_controller }}"
           volumeMounts:
             - mountPath: "{{ kubernetes_certificates.ca }}"
               name: "ca"
@@ -75,3 +84,11 @@ spec:
               value: "{{ kubernetes_master_ip }}"
             - name: CONFIGURE_ETC_HOSTS
               value: "true"
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: calico-kube-controllers
+  namespace: kube-system

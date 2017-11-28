@@ -8,7 +8,7 @@
       src: daemon.json
       dest: /etc/docker/daemon.json
     when: docker_direct_lvm_enabled|bool == true
-  # start and verify that Docker installed succesfully and is running
+  # start and verify that Docker installed successfully and is running
   - name: start docker service
     service:
       name: docker
@@ -33,3 +33,7 @@
 
   - name: verify docker is running
     command: docker ps
+
+  - name: run docker login
+    command: docker login -u {{ docker_registry_username }} -p {{ docker_registry_password }} {{ docker_registry_full_url }}
+    when: docker_registry_username != ""

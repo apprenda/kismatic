@@ -74,6 +74,7 @@ func (ae *ansibleExecutor) AddWorker(originalPlan *Plan, newWorker Node) (*Plan,
 		inventory:      inventory,
 		clusterCatalog: *cc,
 		explainer:      ae.defaultExplainer(),
+		limit:          []string{newWorker.Host},
 	}
 	if err = ae.execute(t); err != nil {
 		return nil, fmt.Errorf("error running worker smoke test: %v", err)

@@ -25,7 +25,7 @@ func NewCmdInfo(out io.Writer) *cobra.Command {
 		Short: "Display info about nodes in the cluster",
 		Long: `will list the nodes that make up the cluster, along with their current versions & roles.
 
-This will retreived by connecting to each node via ssh`,
+This will be retrieved by connecting to each node via ssh`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return list(out, opts)
 		},
@@ -44,6 +44,12 @@ func list(out io.Writer, opts *infoOpts) error {
 	plan, err := planner.Read()
 	if err != nil {
 		return fmt.Errorf("error reading plan file: %v", err)
+	}
+
+	// Validate just the nodes
+	if ok, errs := install.ValidateNodes(plan.GetUniqueNodes()); !ok {
+		util.PrintValidationErrors(out, errs)
+		return fmt.Errorf("error validating nodes")
 	}
 
 	// Validate SSH connections

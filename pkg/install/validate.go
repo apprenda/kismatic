@@ -4,14 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/apprenda/kismatic/pkg/validation"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
 	"github.com/apprenda/kismatic/pkg/util"
@@ -34,6 +36,14 @@ func ValidatePlan(p *Plan) (bool, []error) {
 func ValidateNode(node *Node) (bool, []error) {
 	v := newValidator()
 	v.validate(node)
+	return v.valid()
+}
+
+// ValidateNodes runs validation against the given node.
+// Validates if the details of the nodes are unique.
+func ValidateNodes(nodes []Node) (bool, []error) {
+	v := newValidator()
+	v.validate(nodeList{Nodes: nodes})
 	return v.valid()
 }
 
@@ -129,10 +139,13 @@ func (p *Plan) validate() (bool, []error) {
 
 	v.validate(&p.Cluster)
 	v.validate(&p.DockerRegistry)
+	if p.Cluster.DisconnectedInstallation && !p.PrivateRegistryProvided() {
+		v.addError(fmt.Errorf("A container image registry is required when disconnected_installation is true"))
+	}
+
 	v.validateWithErrPrefix("Docker", p.Docker)
-	// on a disconnected_installation a registry must be provided
-	v.validate(disconnectedInstallation{cluster: p.Cluster, registry: p.DockerRegistry})
 	v.validate(&p.AddOns)
+	v.validate(nodeList{Nodes: p.getAllNodes()})
 	v.validateWithErrPrefix("Etcd nodes", &p.Etcd)
 	v.validateWithErrPrefix("Master nodes", &p.Master)
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
@@ -151,18 +164,15 @@ func (c *Cluster) validate() (bool, []error) {
 	if c.AdminPassword == "" {
 		v.addError(errors.New("Admin password cannot be empty"))
 	}
-	if c.PackageRepoURLs != "" {
-		urls := strings.Split(c.PackageRepoURLs, ",")
-		for _, u := range urls {
-			if _, err := url.ParseRequestURI(u); err != nil {
-				v.addError(fmt.Errorf("Package repository %s must be a valid URL", u))
-			}
-		}
-	}
 	v.validate(&c.Networking)
 	v.validate(&c.Certificates)
 	v.validate(&c.SSH)
 	v.validate(&c.APIServerOptions)
+	v.validate(&c.KubeControllerManagerOptions)
+	v.validate(&c.KubeProxyOptions)
+	v.validate(&c.KubeSchedulerOptions)
+	v.validate(&c.KubeletOptions)
+	v.validate(&c.CloudProvider)
 
 	return v.valid()
 }
@@ -216,6 +226,21 @@ func (s *SSHConfig) validate() (bool, []error) {
 	return v.valid()
 }
 
+func (c *CloudProvider) validate() (bool, []error) {
+	v := newValidator()
+	if c.Provider != "" {
+		if !util.Contains(c.Provider, cloudProviders()) {
+			v.addError(fmt.Errorf("%q is not a valid cloud provider. Options are %v", c.Provider, cloudProviders()))
+		}
+		if c.Config != "" {
+			if _, err := os.Stat(c.Config); os.IsNotExist(err) {
+				v.addError(fmt.Errorf("cloud config file was not found at %q", c.Config))
+			}
+		}
+	}
+	return v.valid()
+}
+
 func (f *AddOns) validate() (bool, []error) {
 	v := newValidator()
 	v.validate(f.CNI)
@@ -228,11 +253,14 @@ func (n *CNI) validate() (bool, []error) {
 	v := newValidator()
 	if n != nil && !n.Disable {
 		if !util.Contains(n.Provider, cniProviders()) {
-			v.addError(fmt.Errorf("%q is not a valid CNI provider. Optins are %v", n.Provider, cniProviders()))
+			v.addError(fmt.Errorf("%q is not a valid CNI provider. Options are %v", n.Provider, cniProviders()))
 		}
 		if n.Provider == "calico" {
 			if !util.Contains(n.Options.Calico.Mode, calicoMode()) {
 				v.addError(fmt.Errorf("%q is not a valid Calico mode. Options are %v", n.Options.Calico.Mode, calicoMode()))
+			}
+			if !util.Contains(n.Options.Calico.LogLevel, calicoLogLevel()) {
+				v.addError(fmt.Errorf("%q is not a valid Calico log level. Options are %v", n.Options.Calico.LogLevel, calicoLogLevel()))
 			}
 		}
 	}
@@ -304,6 +332,58 @@ func (s sshConnectionSet) validate() (bool, []error) {
 	return v.valid()
 }
 
+type nodeList struct {
+	Nodes []Node
+}
+
+func (nl nodeList) validate() (bool, []error) {
+	v := newValidator()
+	v.addError(validateNoDuplicateNodeInfo(nl.Nodes)...)
+	v.addError(validateKubeletOptionsDefinedOnce(nl.Nodes)...)
+	return v.valid()
+}
+
+func validateNoDuplicateNodeInfo(nodes []Node) []error {
+	errs := []error{}
+	hostnames := map[string]string{}
+	ips := map[string]string{}
+	internalIPs := map[string]string{}
+	for _, n := range nodes {
+		// Validate all hostnames are unique
+		if val, ok := hostnames[n.Host]; n.Host != "" && ok && val != n.HashCode() {
+			errs = append(errs, fmt.Errorf("Two different nodes cannot have the same hostname %q", n.Host))
+		} else if n.Host != "" {
+			hostnames[n.Host] = n.HashCode()
+		}
+		// Validate all IPs are unique
+		if val, ok := ips[n.IP]; n.IP != "" && ok && val != n.HashCode() {
+			errs = append(errs, fmt.Errorf("Two different nodes cannot have the same IP %q", n.IP))
+		} else if n.IP != "" {
+			ips[n.IP] = n.HashCode()
+		}
+		// Validate all internal IPs are unique
+		if val, ok := internalIPs[n.InternalIP]; n.InternalIP != "" && ok && val != n.HashCode() {
+			errs = append(errs, fmt.Errorf("Two different nodes cannot have the same internal IP %q", n.InternalIP))
+		} else if n.InternalIP != "" {
+			internalIPs[n.InternalIP] = n.HashCode()
+		}
+	}
+	return errs
+}
+
+func validateKubeletOptionsDefinedOnce(nodes []Node) []error {
+	errs := []error{}
+	seenNodes := map[string]map[string]string{}
+	for _, n := range nodes {
+		if val, ok := seenNodes[n.HashCode()]; ok && !reflect.DeepEqual(val, n.KubeletOptions.Overrides) {
+			errs = append(errs, fmt.Errorf("Cannot redefine kubelet options for node %q", n.Host))
+		} else {
+			seenNodes[n.HashCode()] = n.KubeletOptions.Overrides
+		}
+	}
+	return errs
+}
+
 func (ng *NodeGroup) validate() (bool, []error) {
 	v := newValidator()
 	if ng == nil || len(ng.Nodes) <= 0 {
@@ -315,29 +395,8 @@ func (ng *NodeGroup) validate() (bool, []error) {
 	if len(ng.Nodes) != ng.ExpectedCount && (len(ng.Nodes) > 0 && ng.ExpectedCount > 0) {
 		v.addError(fmt.Errorf("Expected node count (%d) does not match the number of nodes provided (%d)", ng.ExpectedCount, len(ng.Nodes)))
 	}
-	hostnames := map[string]int{}
-	ips := map[string]int{}
-	internalIPs := map[string]int{}
 	for i, n := range ng.Nodes {
 		v.validateWithErrPrefix(fmt.Sprintf("Node #%d", i+1), &n)
-		// Validate all hostnames are unique
-		if nodeID, ok := hostnames[n.Host]; ok && n.Host != "" {
-			v.addError(fmt.Errorf("Node #%d has the same hostname %q as node #%d", i+1, n.Host, nodeID))
-		} else if n.Host != "" {
-			hostnames[n.Host] = i + 1
-		}
-		// Validate all IPs are unique
-		if nodeID, ok := ips[n.IP]; ok && n.IP != "" {
-			v.addError(fmt.Errorf("Node #%d has the same IP %q as node #%d", i+1, n.IP, nodeID))
-		} else if n.IP != "" {
-			ips[n.IP] = i + 1
-		}
-		// Validate all internal IPs are unique
-		if nodeID, found := internalIPs[n.InternalIP]; found && n.InternalIP != "" {
-			v.addError(fmt.Errorf("Node #%d has the same internal IP %q as node #%d", i+1, n.InternalIP, nodeID))
-		} else if n.InternalIP != "" {
-			internalIPs[n.InternalIP] = i + 1
-		}
 	}
 
 	return v.valid()
@@ -403,22 +462,39 @@ func (n *Node) validate() (bool, []error) {
 	if ip := net.ParseIP(n.InternalIP); n.InternalIP != "" && ip == nil {
 		v.addError(fmt.Errorf("Invalid InternalIP provided"))
 	}
+	// validate node labels don't start with 'kismatic/' as that is reserved
+	for key, val := range n.Labels {
+		if strings.HasPrefix(key, "kismatic/") {
+			v.addError(fmt.Errorf("Node label %q cannot start with 'kismatic/'", key))
+		}
+		errs := validation.IsQualifiedName(key)
+		for _, err := range errs {
+			v.addError(fmt.Errorf("Node label name %q is not valid %s", key, err))
+		}
+		errs = validation.IsValidLabelValue(val)
+		for _, err := range errs {
+			v.addError(fmt.Errorf("Node label %q is not valid %s", val, err))
+		}
+	}
 	return v.valid()
 }
 
 func (dr *DockerRegistry) validate() (bool, []error) {
 	v := newValidator()
-	if dr.SetupInternal == true && (dr.Address != "" || dr.CAPath != "") {
-		v.addError(fmt.Errorf("Cannot setup internal registry when DockerRegistry address or CA is provided"))
+	if (dr.Server == "" && dr.Address == "") && (dr.CAPath != "") {
+		v.addError(fmt.Errorf("Docker Registry server cannot be empty when CA is provided"))
 	}
-	if dr.Address == "" && (dr.CAPath != "") {
-		v.addError(fmt.Errorf("Docker Registry address cannot be empty when CA is provided"))
-	}
-	if dr.Address != "" && (dr.Port < 1 || dr.Port > 65535) {
-		v.addError(fmt.Errorf("Docker Registry port %d is invalid. Port must be in the range 1-65535", dr.Port))
+	if (dr.Server == "" && dr.Address == "") && (dr.Username != "") {
+		v.addError(fmt.Errorf("Docker Registry server cannot be empty when a username is provided"))
 	}
 	if _, err := os.Stat(dr.CAPath); dr.CAPath != "" && os.IsNotExist(err) {
 		v.addError(fmt.Errorf("Docker Registry CA file was not found at %q", dr.CAPath))
+	}
+	if dr.Username != "" && dr.Password == "" {
+		v.addError(fmt.Errorf("Docker Registry password cannot be blank for username %q", dr.Username))
+	}
+	if dr.Password != "" && dr.Username == "" {
+		v.addError(fmt.Errorf("Docker Registry username cannot be blank when a password is provided"))
 	}
 	return v.valid()
 }
@@ -531,23 +607,4 @@ func validateAllowedAddress(address string) bool {
 		}
 	}
 	return true
-}
-
-type disconnectedInstallation struct {
-	cluster  Cluster
-	registry DockerRegistry
-}
-
-func (l disconnectedInstallation) validate() (bool, []error) {
-	v := newValidator()
-	if l.cluster.DisconnectedInstallation {
-		if !l.registry.ConfigureDockerWithPrivateRegistry() {
-			v.addError(fmt.Errorf("A container image registry is required when disconnected_installation is true"))
-		}
-		// Internal registry must always be seeded, there is no other source of these images that are required for an install
-		if l.cluster.DisableRegistrySeeding && l.registry.SetupInternal {
-			v.addError(fmt.Errorf("Cannot set disable_registry_seeding true when docker_registry.setup_internal is true"))
-		}
-	}
-	return v.valid()
 }

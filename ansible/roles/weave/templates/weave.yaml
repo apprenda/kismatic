@@ -67,9 +67,6 @@ items:
             k8s-app: weave-net
           annotations:
             scheduler.alpha.kubernetes.io/critical-pod: ''
-            scheduler.alpha.kubernetes.io/tolerations: |
-              [{"key": "dedicated", "value": "master", "effect": "NoSchedule" },
-              {"key":"CriticalAddonsOnly", "operator":"Exists"}]
         spec:
           containers:
             - name: weave
@@ -83,7 +80,7 @@ items:
                       fieldPath: spec.nodeName
                 - name: IPALLOC_RANGE
                   value: "{{ kubernetes_pods_cidr }}"
-              image: '{{ weave_img }}'
+              image: '{{ images.weave }}'
               imagePullPolicy: IfNotPresent
               livenessProbe:
                 httpGet:
@@ -109,6 +106,9 @@ items:
                   mountPath: /host/var/lib/dbus
                 - name: lib-modules
                   mountPath: /lib/modules
+                - name: xtables-lock			
+                  mountPath: /run/xtables.lock			
+                  readOnly: false
             - name: weave-npc
               env:
                 - name: HOSTNAME
@@ -116,13 +116,17 @@ items:
                     fieldRef:
                       apiVersion: v1
                       fieldPath: spec.nodeName
-              image: '{{ weave_npc_img }}'
+              image: '{{ images.weave_npc }}'
               imagePullPolicy: IfNotPresent
               resources:
                 requests:
                   cpu: 10m
               securityContext:
                 privileged: true
+              volumeMounts:	
+                - name: xtables-lock			
+                  mountPath: /run/xtables.lock			
+                  readOnly: false
           hostNetwork: true
           hostPID: true
           restartPolicy: Always
@@ -151,3 +155,6 @@ items:
             - name: lib-modules
               hostPath:
                 path: /lib/modules
+            - name: xtables-lock		 
+              hostPath:			
+                path: /run/xtables.lock

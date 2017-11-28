@@ -1,4 +1,4 @@
-# Cluster Intent Examples
+# Cluster Examples
 
 | Why do you want to install Kubernetes? | Example Cluster | Machines needed
 | --- | --- | --- |

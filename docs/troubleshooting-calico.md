@@ -1,4 +1,4 @@
-# Troubleshooting Calico Networking
+# Troubleshooting Calico
 
 Calico relies on an agent running on each node for the purposes of initializing the Calico network on the node, updating routing information and applying policy (when enabled).
 

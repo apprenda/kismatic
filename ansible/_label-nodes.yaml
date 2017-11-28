@@ -1,0 +1,13 @@
+---
+  - hosts: master:worker:ingress:storage
+    any_errors_fatal: true
+    name: Label Kubernetes Nodes 
+    serial: "{{ serial_count | default('100%') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      
+    tasks:
+      - name: label nodes
+        command: kubectl label --overwrite nodes --selector kismatic/host={{ inventory_hostname }} --kubeconfig {{ kubernetes_kubeconfig_path }} {{ node_labels[inventory_hostname] | join(" ") }}
+        when: node_labels[inventory_hostname] is defined and node_labels[inventory_hostname]|length > 0

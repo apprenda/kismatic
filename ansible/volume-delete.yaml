@@ -1,0 +1,3 @@
+---
+  - include: _persistent-volume-delete.yaml
+  - include: _volume-delete.yaml

@@ -28,7 +28,7 @@ type volumeAddOptions struct {
 func NewCmdVolumeAdd(out io.Writer, planFile *string) *cobra.Command {
 	opts := volumeAddOptions{}
 	cmd := &cobra.Command{
-		Use:   "add size_in_gigabytes [volume name]",
+		Use:   "add size_in_gigabytes [volume-name]",
 		Short: "add storage volumes to the Kubernetes cluster",
 		Long: `Add storage volumes to the Kubernetes cluster.
 

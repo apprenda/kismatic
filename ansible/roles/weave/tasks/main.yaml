@@ -16,11 +16,6 @@
       group: "{{ kubernetes_group }}"
       mode: "{{ kubernetes_service_mode }}"
 
-    # label nodes that will have weave isntalled
-  - name: label nodes for weave
-    command: kubectl label nodes {% for host in play_hosts %}{{ host }} {% endfor %} kismatic/cni-provider=weave --overwrite --kubeconfig {{ kubernetes_kubeconfig_path }}
-    run_once: true
-
   - name: start weave containers
     command: kubectl apply -f /etc/weave/weave.yaml --kubeconfig {{ kubernetes_kubeconfig_path }}
     run_once: true

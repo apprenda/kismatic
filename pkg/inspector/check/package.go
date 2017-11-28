@@ -25,7 +25,7 @@ type PackageCheck struct {
 }
 
 // Check returns true if the package is installed. If pkg installation is disabled,
-// we would like to check if the pacakge is available for install. However,
+// we would like to check if the package is available for install. However,
 // there is no guarantee that the node will have the kismatic package repo configured.
 // For this reason, this check is a no-op when package installation is disabled.
 func (c PackageCheck) Check() (bool, error) {

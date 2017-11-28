@@ -72,7 +72,7 @@ var _ = Describe("kismatic", func() {
 	})
 
 	Describe("calling install apply", func() {
-		Context("when targetting non-existent infrastructure", func() {
+		Context("when targeting non-existent infrastructure", func() {
 			It("should fail in a reasonable amount of time", func() {
 				if !completesInTime(installKismaticWithABadNode, 600*time.Second) {
 					Fail("It shouldn't take 600 seconds for Kismatic to fail with bad nodes.")
@@ -90,6 +90,30 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
+		Context("when deploying a cluster with all node roles and cloud-provider on CentOS", func() {
+			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
+					testCloudProvider(nodes, sshKey)
+				})
+			})
+		})
+
+		Context("when deploying a cluster with all node roles and cloud-provider on RHEL", func() {
+			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, RedHat7, aws, func(nodes provisionedNodes, sshKey string) {
+					testCloudProvider(nodes, sshKey)
+				})
+			})
+		})
+
+		Context("when deploying a cluster with all node roles and cloud-provider on Ubuntu", func() {
+			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+					testCloudProvider(nodes, sshKey)
+				})
+			})
+		})
+
 		Context("when deploying a cluster with all node roles and disabled CNI", func() {
 			installOpts := installOptions{
 				disableCNI: true,
@@ -102,7 +126,7 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
-		Context("when targetting CentOS", func() {
+		Context("when targeting CentOS", func() {
 			ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 				WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
 					err := installKismaticMini(node, sshKey)
@@ -111,7 +135,7 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
-		Context("when targetting RHEL", func() {
+		Context("when targeting RHEL", func() {
 			ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 				WithMiniInfrastructure(RedHat7, aws, func(node NodeDeets, sshKey string) {
 					err := installKismaticMini(node, sshKey)
@@ -120,7 +144,7 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
-		Context("when targetting Ubuntu", func() {
+		Context("when targeting Ubuntu", func() {
 			ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 				WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
 					err := installKismaticMini(node, sshKey)
@@ -133,7 +157,7 @@ var _ = Describe("kismatic", func() {
 			installOpts := installOptions{
 				useDirectLVM: true,
 			}
-			Context("when targetting CentOS", func() {
+			Context("when targeting CentOS", func() {
 				ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 					WithMiniInfrastructureAndBlockDevice(CentOS7, aws, func(node NodeDeets, sshKey string) {
 						theNode := []NodeDeets{node}
@@ -149,7 +173,7 @@ var _ = Describe("kismatic", func() {
 				})
 			})
 
-			Context("when targetting RHEL", func() {
+			Context("when targeting RHEL", func() {
 				ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 					WithMiniInfrastructureAndBlockDevice(RedHat7, aws, func(node NodeDeets, sshKey string) {
 						theNode := []NodeDeets{node}
@@ -199,8 +223,13 @@ var _ = Describe("kismatic", func() {
 
 						// install cluster
 						installOpts := installOptions{
-							heapsterReplicas:    3,
-							heapsterInfluxdbPVC: "influxdb",
+							heapsterReplicas:             3,
+							heapsterInfluxdbPVC:          "influxdb",
+							kubeAPIServerOptions:         map[string]string{"v": "3"},
+							kubeControllerManagerOptions: map[string]string{"v": "3"},
+							kubeSchedulerOptions:         map[string]string{"v": "3"},
+							kubeProxyOptions:             map[string]string{"v": "3"},
+							kubeletOptions:               map[string]string{"v": "3"},
 						}
 						err := installKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())
@@ -210,7 +239,7 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("should allow adding a worker node", func() error {
 							newWorker := allWorkers[len(allWorkers)-1]
-							return addWorkerToCluster(newWorker)
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"})
 						})
 
 						sub.It("should be able to deploy a workload with ingress", func() error {
@@ -223,7 +252,7 @@ var _ = Describe("kismatic", func() {
 						})
 
 						sub.It("should respect network policies", func() error {
-							return verifyNetworkPolicy(nodes.master[0], sshKey)
+							return verifyNetworkPolicy(nodes.master[0], sshKey, false)
 						})
 
 						sub.It("should support heapster with persistent storage", func() error {
@@ -232,6 +261,14 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("should have tiller running", func() error {
 							return verifyTiller(nodes.master[0], sshKey)
+						})
+
+						sub.It("nodes should contain expected labels", func() error {
+							return containsLabels(nodes, sshKey)
+						})
+
+						sub.It("nodes should contain expected component overrides", func() error {
+							return ContainsOverrides(nodes, sshKey)
 						})
 					})
 				})
@@ -260,7 +297,7 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("should allow adding a worker node", func() error {
 							newWorker := allWorkers[len(allWorkers)-1]
-							return addWorkerToCluster(newWorker)
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"})
 						})
 
 						sub.It("should be able to deploy a workload with ingress", func() error {
@@ -273,7 +310,7 @@ var _ = Describe("kismatic", func() {
 						})
 
 						sub.It("should respect network policies", func() error {
-							return verifyNetworkPolicy(nodes.master[0], sshKey)
+							return verifyNetworkPolicy(nodes.master[0], sshKey, true)
 						})
 
 						sub.It("should support heapster with persistent storage", func() error {
@@ -282,6 +319,10 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("should have tiller running", func() error {
 							return verifyTiller(nodes.master[0], sshKey)
+						})
+
+						sub.It("nodes should contain expected labels", func() error {
+							return containsLabels(nodes, sshKey)
 						})
 					})
 				})
@@ -310,7 +351,7 @@ var _ = Describe("kismatic", func() {
 
 		// 				sub.It("should allow adding a worker node", func() error {
 		// 					newWorker := allWorkers[len(allWorkers)-1]
-		// 					return addWorkerToCluster(newWorker)
+		// 					return addWorkerToCluster(newWorker, sshKey, []string{})
 		// 				})
 
 		// 				// This test is flaky with contiv
@@ -326,7 +367,7 @@ var _ = Describe("kismatic", func() {
 
 		// 				// Contiv does not support the Kubernetes network policy API
 		// 				// sub.It("should respect network policies", func() error {
-		// 				// 	return verifyNetworkPolicy(nodes.master[0], sshKey)
+		// 				// 	return verifyNetworkPolicy(nodes.master[0], sshKey, true)
 		// 				// })
 
 		// 				sub.It("should support heapster with persistent storage", func() error {
@@ -349,3 +390,15 @@ var _ = Describe("kismatic", func() {
 		})
 	})
 })
+
+func testCloudProvider(nodes provisionedNodes, sshKey string) {
+	installOpts := installOptions{cloudProvider: "aws"}
+
+	By("installing the cluster")
+	err := installKismatic(nodes, installOpts, sshKey)
+	Expect(err).ToNot(HaveOccurred())
+
+	By("test the cloud provider integration")
+	err = testAWSCloudProvider(nodes.master[0], sshKey)
+	Expect(err).ToNot(HaveOccurred())
+}

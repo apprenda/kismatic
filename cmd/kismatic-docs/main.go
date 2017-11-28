@@ -11,6 +11,6 @@ var version string
 var buildDate string
 
 func main() {
-	cmd, _ := cli.NewKismaticCommand(version, buildDate, os.Stdin, os.Stdout)
+	cmd, _ := cli.NewKismaticCommand(version, buildDate, os.Stdin, os.Stdout, os.Stderr)
 	doc.GenMarkdownTree(cmd, "./docs/kismatic-cli")
 }

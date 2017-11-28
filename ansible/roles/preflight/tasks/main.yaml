@@ -73,9 +73,39 @@
       loop_var: outer_item # Define this (even thought we don't use it) so that ansible doesn't complain.
     when: "'worker' in group_names"
 
-  - name: Validate devicemapper direct-lvm block device
+  # kubernetes checks /proc/swaps lines > 1
+  - name: list memory swaps in /proc/swaps
+    command: cat /proc/swaps
+    register: memory_swaps
+    failed_when: false
+    when: not ((kubelet_overrides is defined and kubelet_overrides['fail-swap-on'] is defined and kubelet_overrides['fail-swap-on'] == 'false') or (kubelet_node_overrides[inventory_hostname] is defined and kubelet_node_overrides[inventory_hostname]['fail-swap-on'] is defined and kubelet_node_overrides[inventory_hostname]['fail-swap-on'] == 'false'))
+
+  - name: fail if memory swap is not disabled
+    fail:
+      msg: "Memory swap is enabled on the node, disable it or set '--fail-swap-on=false' on the kubelet"
+    when: memory_swaps is defined and memory_swaps.rc is defined and (memory_swaps.rc != 0 or (memory_swaps.stdout_lines is defined and memory_swaps.stdout_lines|length > 1))
+
+  - name: validate devicemapper direct-lvm block device
     include: direct_lvm_preflight.yaml
-    when: "ansible_os_family == 'RedHat' and docker_direct_lvm_enabled|bool == true and ('master' in group_names or 'worker' in group_names or 'ingress' in group_names or 'storage' in group_names)"
+    when: "ansible_os_family == 'RedHat' and docker_direct_lvm_enabled|bool == true"
+
+    # Run from the install node, 
+    # Check if the helm repos can be reached
+  - name: verify install node can reach official helm chart repo
+    uri:
+      url: https://kubernetes-charts.storage.googleapis.com
+    delegate_to: 127.0.0.1
+    become: no
+    run_once: true
+    when: helm.enabled|bool == true and disconnected_installation|bool != true
+
+  - name: verify install node can reach Kismatic helm chart repo
+    uri:
+      url: https://apprenda.github.io/kismatic-charts
+    delegate_to: 127.0.0.1
+    become: no
+    run_once: true
+    when: helm.enabled|bool == true and disconnected_installation|bool != true
 
   # setup Kismatic Inspector
   - name: copy Kismatic Inspector to node
@@ -100,10 +130,14 @@
 
   # Run the pre-flights checks, and always stop the checker regardless of result
   - block:
-      - name: run pre-flight checks using Kismatic Inspector
-        local_action: command '{{ kismatic_preflight_checker_local | default(kismatic_preflight_checker) }}' client {{ ansible_host }}:8888 -o json --node-roles {{ ",".join(group_names) }}
+      - name: run pre-flight checks using Kismatic Inspector from the master
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %}'
+        delegate_to: "{{ groups['master'][0] }}"
         register: out
-        become: no
+      - name: run pre-flight checks using Kismatic Inspector from the worker
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %}'
+        delegate_to: "{{ groups['worker'][0] }}"
+        register: out
     always:
       - name: stop kismatic-inspector service
         service:

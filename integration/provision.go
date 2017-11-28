@@ -2,9 +2,9 @@ package integration
 
 import (
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
-	"regexp"
 	"time"
 
 	"github.com/apprenda/kismatic/integration/aws"
@@ -166,38 +166,41 @@ func (p awsProvisioner) ProvisionNodes(nodeCount NodeCount, distro linuxDistro, 
 		}
 	}
 
+	// when AWS cloud-provider is enabled all nodes in a cluster must have a unique identifier,
+	// set via kubernetes.io/cluster/$UNIQUE_ID EC2 tag
+	uniqueTag := fmt.Sprintf("kubernetes.io/cluster/testcluster%d", rand.Intn(32767))
 	provisioned := provisionedNodes{}
 	var i uint16
 	for i = 0; i < nodeCount.Etcd; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice, map[string]string{uniqueTag: ""})
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.etcd = append(provisioned.etcd, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Master; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice, map[string]string{uniqueTag: ""})
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.master = append(provisioned.master, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Worker; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice, map[string]string{uniqueTag: ""})
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.worker = append(provisioned.worker, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Ingress; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice, map[string]string{uniqueTag: ""})
 		if err != nil {
 			return provisioned, err
 		}
 		provisioned.ingress = append(provisioned.ingress, NodeDeets{id: nodeID})
 	}
 	for i = 0; i < nodeCount.Storage; i++ {
-		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice)
+		nodeID, err := p.client.CreateNode(ami, aws.T2Medium, addBlockDevice, map[string]string{uniqueTag: ""})
 		if err != nil {
 			return provisioned, err
 		}
@@ -247,15 +250,7 @@ func (p awsProvisioner) updateNodeWithDeets(nodeID string, node *NodeDeets) erro
 		node.PublicIP = awsNode.PublicIP
 		node.PrivateIP = awsNode.PrivateIP
 		node.SSHUser = awsNode.SSHUser
-
-		// Get the hostname from the DNS name
-		re := regexp.MustCompile("[^.]*")
-		hostname := re.FindString(awsNode.PrivateDNSName)
-		// RedHat uses FQDN as the hostname
-		if awsNode.ImageID == string(aws.RedHat7East) {
-			hostname = awsNode.PrivateDNSName
-		}
-		node.Hostname = hostname
+		node.Hostname = awsNode.PrivateDNSName
 		if node.PublicIP != "" && node.Hostname != "" && node.PrivateIP != "" {
 			return nil
 		}
@@ -438,7 +433,7 @@ func (p packetProvisioner) RemoveDNS(dnsRecord *DNSRecord) error {
 
 func (p packetProvisioner) createNode(distro packet.OS, count uint16) (string, error) {
 	hostname := fmt.Sprintf("kismatic-integration-%d-%d", time.Now().UnixNano(), count)
-	node, err := p.client.CreateNode(hostname, distro)
+	node, err := p.client.CreateNode(hostname, distro, nil)
 	if err != nil {
 		return "", err
 	}

@@ -4,8 +4,9 @@ metadata:
   labels:
     tier: control-plane
     component: kube-proxy
+    kismatic/host: {{ inventory_hostname }}
   annotations:
-    version: "{{ kubernetes_version }}"
+    version: "{{ official_images.kube_apiserver.version }}"
     kismatic/version: "{{ kismatic_short_version }}"
   name: kube-proxy
   namespace: kube-system
@@ -13,15 +14,16 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-proxy
-    image: {{ kube_proxy_img }}
+    image: {{ images.kube_proxy }}
     imagePullPolicy: IfNotPresent
     command:
       - kube-proxy
-      - --cluster-cidr={{ kubernetes_pods_cidr }}
-      - --hostname-override={{ inventory_hostname }}
-      - --kubeconfig={{ kubernetes_kubeconfig.kube_proxy }}
-      - --proxy-mode=iptables
-      - --v=2
+{% set combined_options = kube_proxy_option_defaults | combine(kube_proxy_option_overrides) -%}
+{% for option in combined_options | dictsort %}
+{% if option[1] is defined and option[1] | string | length > 0 %}
+      - --{{ option[0] }}={{ option[1] }}
+{% endif %}
+{% endfor %}
     securityContext:
       privileged: true
     volumeMounts:
@@ -37,7 +39,7 @@ spec:
       httpGet:
         host: 127.0.0.1
         path: /healthz
-        port: 10249
+        port: 10256
       initialDelaySeconds: 15
       timeoutSeconds: 15
       failureThreshold: 8

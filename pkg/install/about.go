@@ -23,11 +23,6 @@ type ListableNode struct {
 	Version semver.Version
 }
 
-// HasRoles returns true if contains any of the roles
-func (n *ListableNode) HasRoles(roles ...string) bool {
-	return util.Intersects(roles, n.Roles)
-}
-
 // KismaticVersion contains the version information of the currently running binary
 var KismaticVersion semver.Version
 
@@ -44,16 +39,6 @@ func SetVersion(v string) {
 func IsOlderVersion(that semver.Version) bool {
 	this := KismaticVersion
 	return this.GT(that)
-}
-
-// IsGreaterOrEqualThanVersion parses the version from a string and returns true if this version is greater or equal than that version
-func IsGreaterOrEqualThanVersion(this semver.Version, that string) bool {
-	thatVersion, err := parseVersion(that)
-	if err != nil {
-		panic("failed to parse version " + that)
-	}
-
-	return this.GTE(thatVersion)
 }
 
 // IsLessThanVersion parses the version from a string and returns true if this version is less than that version
@@ -83,49 +68,48 @@ func parseVersion(versionString string) (semver.Version, error) {
 // gathers version information about it.
 func ListVersions(plan *Plan) (ClusterVersion, error) {
 	nodes := plan.GetUniqueNodes()
-
 	cv := ClusterVersion{
 		Nodes: []ListableNode{},
 	}
 
+	sshDeets := plan.Cluster.SSH
+	verFile := "/etc/kismatic-version"
 	for i, node := range nodes {
-		sshDeets := plan.Cluster.SSH
 		client, err := ssh.NewClient(node.IP, sshDeets.Port, sshDeets.User, sshDeets.Key)
 		if err != nil {
 			return cv, fmt.Errorf("error creating SSH client: %v", err)
 		}
 
-		verFile := "/etc/kismatic-version"
-		// get the contents of the file if it exists, otherwise return 1.0.0
-		cmd := fmt.Sprintf("cat %s 2>/dev/null || echo -n 1.0.0", verFile)
-		o, err := client.Output(false, cmd)
-		var thisVersion semver.Version
+		output, err := client.Output(false, fmt.Sprintf("cat %s", verFile))
 		if err != nil {
-			return cv, fmt.Errorf("error getting version for node %q", node.Host)
-		} else {
-			thisVersion, err = parseVersion(o)
-			if err != nil {
-				return cv, fmt.Errorf("invalid version %q found in version file %q of node %s", o, verFile, node.Host)
-			}
+			// the output var contains the actual error message from the cat command, which has
+			// more meaningful info
+			return cv, fmt.Errorf("error getting version for node %q: %q", node.Host, output)
 		}
 
-		if i == 0 {
-			cv.EarliestVersion = thisVersion
-			cv.LatestVersion = thisVersion
-		} else {
-			if thisVersion.GT(cv.LatestVersion) {
-				cv.LatestVersion = thisVersion
-			}
-			if cv.EarliestVersion.GT(thisVersion) {
-				cv.EarliestVersion = thisVersion
-			}
+		thisVersion, err := parseVersion(output)
+		if err != nil {
+			return cv, fmt.Errorf("invalid version %q found in version file %q of node %s", output, verFile, node.Host)
 		}
 
 		cv.Nodes = append(cv.Nodes, ListableNode{node, plan.GetRolesForIP(node.IP), thisVersion})
+
+		// If looking at the first node, set the versions and move on
+		if i == 0 {
+			cv.EarliestVersion = thisVersion
+			cv.LatestVersion = thisVersion
+			continue
+		}
+
+		if thisVersion.GT(cv.LatestVersion) {
+			cv.LatestVersion = thisVersion
+		}
+		if cv.EarliestVersion.GT(thisVersion) {
+			cv.EarliestVersion = thisVersion
+		}
 	}
 
 	cv.IsTransitioning = cv.EarliestVersion.NE(cv.LatestVersion)
-
 	return cv, nil
 }
 

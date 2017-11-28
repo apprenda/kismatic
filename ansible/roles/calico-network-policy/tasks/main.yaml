@@ -13,7 +13,7 @@
     register: out
 
   - name: wait until policy controller pods are ready
-    command: kubectl get deployment calico-policy-controller -n kube-system -o jsonpath='{.status.availableReplicas}'
+    command: kubectl get deployment calico-kube-controllers -n kube-system -o jsonpath='{.status.availableReplicas}'
     register: readyReplicas
     until: readyReplicas.stdout|int == 1
     retries: 24

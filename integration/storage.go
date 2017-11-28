@@ -116,6 +116,13 @@ func createVolume(planFile *os.File, name string, replicationCount int, distribu
 	return cmd.Run()
 }
 
+func deleteVolume(planFile *os.File, name string) error {
+	cmd := exec.Command("./kismatic", "volume", "delete", "-f", planFile.Name(), name, "--force")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func standupGlusterCluster(planFile *os.File, nodes []NodeDeets, sshKey string, distro linuxDistro) {
 	By("Setting up a plan file with storage nodes")
 	plan := PlanAWS{
@@ -238,5 +245,24 @@ func testStatefulWorkload(nodes provisionedNodes, sshKey string) error {
 	if err != nil {
 		return fmt.Errorf("Reader workload failed: %v", err)
 	}
+
+	By("Deleting the storage volume")
+	err = deleteVolume(plan, "kis-int-test")
+	if err != nil {
+		return fmt.Errorf("Failed to delete volume: %v", err)
+	}
+
+	By("Verifying the storage volume was deleted")
+	err = runViaSSH([]string{"sudo kubectl get pv 2>&1 | grep 'No resources found.'"}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
+	if err != nil {
+		return fmt.Errorf("Error validating the volume was removed: %v", err)
+	}
+
+	By("Creating a storage volume with the same name as a deleted volume")
+	err = createVolume(plan, "kis-int-test", 2, 1, reclaimPolicy, accessModes)
+	if err != nil {
+		return fmt.Errorf("Failed to create volume: %v", err)
+	}
+
 	return nil
 }

@@ -6,42 +6,25 @@
     become: yes
     vars_files:
       - group_vars/all.yaml
+      - group_vars/container_images.yaml
 
     pre_tasks:
       - name: download networking images
         command: docker pull {{ item }}
         with_items:
-          - "{{ calico_node_img }}"
-          - "{{ calico_cni_img }}"
-          - "{{ calico_ctl_img }}"
+          - "{{ images.calico_node }}"
+          - "{{ images.calico_cni }}"
+          - "{{ images.calico_ctl }}"
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
       - name: check if calico-node is active
         command: systemctl is-active -q calico-node.service
         register: status
         failed_when: status.rc !=0 and status.rc != 3 # 0=running, 3=stopped or doesnt exist
         when: upgrading is defined and upgrading|bool == true
-
-      # always stop and disable if service exists
-      - name: stop calico-node service if running
-        service:
-          name: calico-node.service
-          state: stopped
-          enabled: no
-        when: upgrading is defined and upgrading|bool == true and status is defined and status.rc == 0
-
-      - name: remove unnecessary calico-node unit file
-        file:
-          path: "{{ init_system_dir }}/calico-node.service"
-          state: absent
-        when: upgrading is defined and upgrading|bool == true
-
-      - name: remove kismatic-kubernetes-networking package
-        package: name=kismatic-kubernetes-networking state=absent
-        when: upgrading is defined and upgrading|bool == true
-        register: result
-        until: result|success
-        retries: 1
-        delay: 1
 
     roles:
       - calico

@@ -37,7 +37,7 @@ type Node struct {
 }
 
 // CreateNode creates a node in packet with the given hostname and OS
-func (c Client) CreateNode(hostname string, os OS) (*Node, error) {
+func (c Client) CreateNode(hostname string, os OS, _ map[string]string) (*Node, error) {
 	device := &packngo.DeviceCreateRequest{
 		HostName:     hostname,
 		OS:           string(os),

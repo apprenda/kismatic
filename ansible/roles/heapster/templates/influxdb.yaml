@@ -30,7 +30,7 @@ spec:
     spec:
       containers:
       - name: influxdb
-        image: "{{ influxdb_img }}"
+        image: "{{ images.influxdb }}"
         volumeMounts:
         - mountPath: /data
           name: influxdb-storage

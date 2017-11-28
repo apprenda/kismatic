@@ -1,4 +1,4 @@
-# Provision
+# Provisioning Machines
 
 ## <a name="get"></a>Get the installer
 
@@ -123,14 +123,14 @@ If you are building a large cluster or one that won't have access to these repos
     <td></td>
   </tr>
   <tr>
-    <td>Kismatic package of Kubernetes kubelet 1.7.3-1</td>
+    <td>Kismatic package of Kubernetes kubelet 1.8.4</td>
     <td>Kubernetes</td>
     <td></td>
     <td>yes</td>
     <td>yes</td>
   </tr>
   <tr>
-    <td>Kismatic package of Kubernetes kubectl 1.7.3-1</td>
+    <td>Kismatic package of Kubernetes kubectl 1.8.4</td>
     <td>Kubernetes</td>
     <td></td>
     <td>yes</td>

@@ -38,7 +38,7 @@ spec:
       serviceAccountName: heapster
       containers:
       - name: heapster
-        image: "{{ heapster_img }}"
+        image: "{{ images.heapster }}"
         imagePullPolicy: IfNotPresent
         command:
         - /heapster

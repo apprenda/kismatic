@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
 	"time"
 
 	"strings"
@@ -35,12 +34,10 @@ type Executor interface {
 	AddWorker(*Plan, Node) (*Plan, error)
 	RunPlay(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
-	UpgradeEtcd2Nodes(plan Plan, nodesToUpgrade []ListableNode) error
+	DeleteVolume(*Plan, string) error
 	UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode, onlineUpgrade bool, maxParallelWorkers int) error
 	ValidateControlPlane(plan Plan) error
-	UpgradeDockerRegistry(plan Plan) error
 	UpgradeClusterServices(plan Plan) error
-	MigrateEtcdCluster(plan Plan) error
 }
 
 // DiagnosticsExecutor will run diagnostics on the nodes after an install
@@ -383,12 +380,7 @@ func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan, node ListableNode) 
 }
 
 func setPreflightOptions(p Plan, cc ansible.ClusterCatalog) (*ansible.ClusterCatalog, error) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
 	cc.KismaticPreflightCheckerLinux = filepath.Join("inspector", "linux", "amd64", "kismatic-inspector")
-	cc.KismaticPreflightCheckerLocal = filepath.Join(pwd, "ansible", "playbooks", "inspector", runtime.GOOS, runtime.GOARCH, "kismatic-inspector")
 	cc.EnablePackageInstallation = !p.Cluster.DisablePackageInstallation
 	return &cc, nil
 }
@@ -460,14 +452,25 @@ func (ae *ansibleExecutor) AddVolume(plan *Plan, volume StorageVolume) error {
 	return ae.execute(t)
 }
 
-func (ae *ansibleExecutor) UpgradeEtcd2Nodes(plan Plan, nodesToUpgrade []ListableNode) error {
-	for _, nodeToUpgrade := range nodesToUpgrade {
-		if err := ae.upgradeEtcd2Node(plan, nodeToUpgrade); err != nil {
-			return fmt.Errorf("error upgrading node %q: %v", nodeToUpgrade.Node.Host, err)
-		}
+func (ae *ansibleExecutor) DeleteVolume(plan *Plan, name string) error {
+	cc, err := ae.buildClusterCatalog(plan)
+	if err != nil {
+		return err
 	}
+	// Add storage related vars
+	cc.VolumeName = name
+	cc.VolumeMount = "/"
 
-	return nil
+	t := task{
+		name:           "delete-volume",
+		playbook:       "volume-delete.yaml",
+		plan:           *plan,
+		inventory:      buildInventoryFromPlan(plan),
+		clusterCatalog: *cc,
+		explainer:      ae.defaultExplainer(),
+	}
+	util.PrintHeader(ae.stdout, "Delete Persistent Storage Volume", '=')
+	return ae.execute(t)
 }
 
 // UpgradeNodes upgrades the nodes of the cluster in the following phases:
@@ -571,25 +574,6 @@ func (ae *ansibleExecutor) upgradeNodes(plan Plan, onlineUpgrade bool, nodes ...
 	return ae.execute(t)
 }
 
-func (ae *ansibleExecutor) upgradeEtcd2Node(plan Plan, node ListableNode) error {
-	inventory := buildInventoryFromPlan(&plan)
-	cc, err := ae.buildClusterCatalog(&plan)
-	if err != nil {
-		return err
-	}
-	t := task{
-		name:           "upgrade-etcd2-node",
-		playbook:       "upgrade-etcd2-node.yaml",
-		inventory:      inventory,
-		clusterCatalog: *cc,
-		plan:           plan,
-		explainer:      ae.defaultExplainer(),
-		limit:          []string{node.Node.Host},
-	}
-	util.PrintHeader(ae.stdout, fmt.Sprintf("Upgrade: %s to Temporary Etcd3", node.Node.Host), '=')
-	return ae.execute(t)
-}
-
 func (ae *ansibleExecutor) ValidateControlPlane(plan Plan) error {
 	inventory := buildInventoryFromPlan(&plan)
 	cc, err := ae.buildClusterCatalog(&plan)
@@ -607,23 +591,6 @@ func (ae *ansibleExecutor) ValidateControlPlane(plan Plan) error {
 	return ae.execute(t)
 }
 
-func (ae *ansibleExecutor) UpgradeDockerRegistry(plan Plan) error {
-	inventory := buildInventoryFromPlan(&plan)
-	cc, err := ae.buildClusterCatalog(&plan)
-	if err != nil {
-		return err
-	}
-	t := task{
-		name:           "upgrade-docker-registry",
-		playbook:       "upgrade-docker-registry.yaml",
-		inventory:      inventory,
-		clusterCatalog: *cc,
-		plan:           plan,
-		explainer:      ae.defaultExplainer(),
-	}
-	return ae.execute(t)
-}
-
 func (ae *ansibleExecutor) UpgradeClusterServices(plan Plan) error {
 	inventory := buildInventoryFromPlan(&plan)
 	cc, err := ae.buildClusterCatalog(&plan)
@@ -633,23 +600,6 @@ func (ae *ansibleExecutor) UpgradeClusterServices(plan Plan) error {
 	t := task{
 		name:           "upgrade-cluster-services",
 		playbook:       "upgrade-cluster-services.yaml",
-		inventory:      inventory,
-		clusterCatalog: *cc,
-		plan:           plan,
-		explainer:      ae.defaultExplainer(),
-	}
-	return ae.execute(t)
-}
-
-func (ae *ansibleExecutor) MigrateEtcdCluster(plan Plan) error {
-	inventory := buildInventoryFromPlan(&plan)
-	cc, err := ae.buildClusterCatalog(&plan)
-	if err != nil {
-		return err
-	}
-	t := task{
-		name:           "etcd-migrate",
-		playbook:       "etcd-migrate.yaml",
 		inventory:      inventory,
 		clusterCatalog: *cc,
 		plan:           plan,
@@ -692,24 +642,31 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 	}
 
 	cc := ansible.ClusterCatalog{
-		ClusterName:               p.Cluster.Name,
-		AdminPassword:             p.Cluster.AdminPassword,
-		TLSDirectory:              tlsDir,
-		ServicesCIDR:              p.Cluster.Networking.ServiceCIDRBlock,
-		PodCIDR:                   p.Cluster.Networking.PodCIDRBlock,
-		DNSServiceIP:              dnsIP,
-		EnableModifyHosts:         p.Cluster.Networking.UpdateHostsFiles,
-		EnablePackageInstallation: !p.Cluster.DisablePackageInstallation,
-		PackageRepoURLs:           p.Cluster.PackageRepoURLs,
-		KuberangPath:              filepath.Join("kuberang", "linux", "amd64", "kuberang"),
-		DisconnectedInstallation:  p.Cluster.DisconnectedInstallation,
-		SeedRegistry:              !p.Cluster.DisableRegistrySeeding,
-		HTTPProxy:                 p.Cluster.Networking.HTTPProxy,
-		HTTPSProxy:                p.Cluster.Networking.HTTPSProxy,
-		NoProxy:                   p.Cluster.Networking.NoProxy,
-		TargetVersion:             KismaticVersion.String(),
-		APIServerOptions:          p.Cluster.APIServerOptions.Overrides,
+		ClusterName:                  p.Cluster.Name,
+		AdminPassword:                p.Cluster.AdminPassword,
+		TLSDirectory:                 tlsDir,
+		ServicesCIDR:                 p.Cluster.Networking.ServiceCIDRBlock,
+		PodCIDR:                      p.Cluster.Networking.PodCIDRBlock,
+		DNSServiceIP:                 dnsIP,
+		EnableModifyHosts:            p.Cluster.Networking.UpdateHostsFiles,
+		EnablePackageInstallation:    !p.Cluster.DisablePackageInstallation,
+		KuberangPath:                 filepath.Join("kuberang", "linux", "amd64", "kuberang"),
+		DisconnectedInstallation:     p.Cluster.DisconnectedInstallation,
+		HTTPProxy:                    p.Cluster.Networking.HTTPProxy,
+		HTTPSProxy:                   p.Cluster.Networking.HTTPSProxy,
+		TargetVersion:                KismaticVersion.String(),
+		APIServerOptions:             p.Cluster.APIServerOptions.Overrides,
+		KubeControllerManagerOptions: p.Cluster.KubeControllerManagerOptions.Overrides,
+		KubeSchedulerOptions:         p.Cluster.KubeSchedulerOptions.Overrides,
+		KubeProxyOptions:             p.Cluster.KubeProxyOptions.Overrides,
+		KubeletOptions:               p.Cluster.KubeletOptions.Overrides,
 	}
+
+	cc.NoProxy = p.AllAddresses()
+	if p.Cluster.Networking.NoProxy != "" {
+		cc.NoProxy = cc.NoProxy + "," + p.Cluster.Networking.NoProxy
+	}
+
 	cc.LocalKubeconfigDirectory = filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig")
 	// absolute path required for ansible
 	generatedDir, err := filepath.Abs(filepath.Join(ae.options.GeneratedAssetsDirectory, "kubeconfig"))
@@ -725,17 +682,13 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.LoadBalancedFQDN = p.Master.Nodes[0].InternalIP
 	}
 
-	if p.DockerRegistry.ConfigureDockerWithPrivateRegistry() {
+	if p.PrivateRegistryProvided() {
 		cc.ConfigureDockerWithPrivateRegistry = true
-		cc.DockerRegistryAddress = p.DockerRegistryAddress()
-		cc.DockerRegistryPort = p.DockerRegistryPort()
-		cc.DockerCAPath = filepath.Join(tlsDir, "ca.pem")
+		cc.DockerRegistryServer = p.DockerRegistry.Server
+		cc.DockerRegistryCAPath = p.DockerRegistry.CAPath
+		cc.DockerRegistryUsername = p.DockerRegistry.Username
+		cc.DockerRegistryPassword = p.DockerRegistry.Password
 	}
-	if p.DockerRegistry.Address != "" { // Use external registry
-		cc.DockerCAPath = p.DockerRegistry.CAPath
-	} else if p.DockerRegistry.SetupInternal { // Use registry on master[0]
-		cc.DeployInternalDockerRegistry = true
-	} // Else just use DockerHub
 
 	// Setup docker options
 	cc.DockerDirectLVMEnabled = p.Docker.Storage.DirectLVM.Enabled
@@ -762,6 +715,9 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 
 	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
 
+	cc.CloudProvider = p.Cluster.CloudProvider.Provider
+	cc.CloudConfig = p.Cluster.CloudProvider.Config
+
 	// add_ons
 	cc.RunPodValidation = p.NetworkConfigured()
 	// CNI
@@ -769,6 +725,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.CNI.Enabled = true
 		cc.CNI.Provider = p.AddOns.CNI.Provider
 		cc.CNI.Options.Calico.Mode = p.AddOns.CNI.Options.Calico.Mode
+		cc.CNI.Options.Calico.LogLevel = p.AddOns.CNI.Options.Calico.LogLevel
 
 		if cc.CNI.Provider == cniProviderContiv {
 			cc.InsecureNetworkingEtcd = true
@@ -802,6 +759,26 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		default:
 			cc.Helm.Enabled = true
 		}
+	}
+
+	cc.Rescheduler.Enabled = !p.AddOns.Rescheduler.Disable
+
+	// merge node labels
+	// cannot use inventory file because nodes share roles
+	// set it to a map[host][]key=value
+	cc.NodeLabels = make(map[string][]string)
+	for _, n := range p.getAllNodes() {
+		if val, ok := cc.NodeLabels[n.Host]; ok {
+			cc.NodeLabels[n.Host] = append(val, keyValueList(n.Labels)...)
+		} else {
+			cc.NodeLabels[n.Host] = keyValueList(n.Labels)
+		}
+	}
+
+	// setup kubelet node overrides
+	cc.KubeletNodeOptions = make(map[string]map[string]string)
+	for _, n := range p.GetUniqueNodes() {
+		cc.KubeletNodeOptions[n.Host] = n.KubeletOptions.Overrides
 	}
 
 	return &cc, nil
@@ -949,4 +926,13 @@ func timestampWriter(out io.Writer) io.Writer {
 		}
 	}(pr)
 	return pw
+}
+
+// key=value slice
+func keyValueList(in map[string]string) []string {
+	pairs := make([]string, 0, len(in))
+	for k, v := range in {
+		pairs = append(pairs, fmt.Sprintf("%s=%s", k, v))
+	}
+	return pairs
 }

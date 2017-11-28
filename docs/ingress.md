@@ -1,4 +1,4 @@
-# KET Ingress
+# Ingress
 
 The very first question anybody has upon installing Kubernetes is “how do I access my workloads?”
 

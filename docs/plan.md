@@ -1,4 +1,4 @@
-## Plan
+## Planning Your Cluster
 
 To get started with Kubernetes quickly, you can use Kismatic to stand up a small cluster in AWS or virtualized on a personal computer.
 
@@ -100,6 +100,19 @@ Worker Count | CPUs | RAM
 < 250	       | 8	  | 30
 < 500	       | 16	  | 30
 < 1000	     | 32	  | 60
+
+### Swap Memory
+Kubernetes nodes must have swap memory disabled. Otherwise, the Kubelet will fail
+to start. If you want to run your Kubernetes nodes with swap memory enabled, you
+must override the Kubelet configuration to disable the swap check:
+
+```
+cluster:
+  # ... 
+  kubelet:
+    option_overrides:
+      fail-swap-on: false
+```
 
 ### Planning for etcd nodes:
 
@@ -319,19 +332,3 @@ udp:0-65535</td>
 Kismatic will automate generation and installation of TLS certificates and keys used for intra-cluster security. It does this using the open source CloudFlare SSL library. These certificates and keys are exclusively used to encrypt and authorize traffic between Kubernetes components; they are not presented to end-users.
 
 The default expiry period for certificates is **17520h** (2 years). Certificates must be updated prior to expiration or the cluster will cease to operate without warning. Replacing certificates will cause momentary downtime with Kubernetes as of version 1.4; future versions should allow for certificate "rolling" without downtime.
-
-## Kubernetes Api Server Options
-
-Kubernetes api server options can be set or overridden in the plan file.
-
-```
-cluster:
-...
-  kube_apiserver:
-    option_overrides:
-      "audit-log-path": "/var/log/kube-apiserver.log"
-      "event-ttl": "2h0m0s"
-      "runtime-config": "batch/v2alpha1=true"
-```
-
-Any values under the api_server tag will be passed to the API Server, whether valid or invalid. Kismatic validation will prevent overriding of critical values.

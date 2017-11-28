@@ -6,28 +6,15 @@
     become: yes
     vars_files:
       - group_vars/all.yaml
+      - group_vars/container_images.yaml
 
     pre_tasks:
       - name: download kube-apiserver image
-        command: docker pull {{ kube_apiserver_img }}
-
-      - name: check if kube-apiserver service is active
-        command: systemctl is-active -q kube-apiserver.service
-        register: status
-        failed_when: status.rc !=0 and status.rc != 3 # 0 = running. 3 = stopped/doesn't exist
-        when: upgrading is defined and upgrading|bool == true
-
-      - name: stop kube-apiserver service if running
-        service:
-          name: kube-apiserver.service
-          state: stopped
-          enabled: no
-        when: upgrading is defined and upgrading|bool == true and status is defined and status.rc == 0 # only stop if it's running
-      - name: remove unnecessary kube-apiserver unit file
-        file:
-          path: "{{ init_system_dir }}/kube-apiserver.service"
-          state: absent
-        when: upgrading is defined and upgrading|bool == true
+        command: docker pull {{ images.kube_apiserver }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
     roles:
       - authorization-policy

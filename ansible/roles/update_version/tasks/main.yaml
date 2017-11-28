@@ -1,6 +1,6 @@
 ---
-  # write version file
   - name: write version file
     template:
       src: kismatic-version.j2
       dest: "/etc/kismatic-version"
+      mode: 0644

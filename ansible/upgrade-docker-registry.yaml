@@ -1,6 +1,0 @@
----
-  - include: _packages-repo.yaml
-    when: allow_package_installation|bool == true
-
-  - include: _docker-registry.yaml upgrading=true  # only load images if using private registry and disconnected_installation 
-    when: configure_docker_with_private_registry|bool == true and disconnected_installation|bool == true

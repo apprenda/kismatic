@@ -5,11 +5,8 @@
     become: yes
     vars_files:
       - group_vars/all.yaml
-
-    environment:
-      https_proxy: "{{ https_proxy }}"
-      http_proxy: "{{ http_proxy }}"
-      no_proxy: "{{ no_proxy }}"    
+  
+    environment: "{{proxy_env}}"
 
     roles:
       - role: packages-cleanup

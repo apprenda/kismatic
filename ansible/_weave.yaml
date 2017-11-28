@@ -6,13 +6,18 @@
     become: yes
     vars_files:
       - group_vars/all.yaml
+      - group_vars/container_images.yaml
 
     pre_tasks:
       - name: download networking images
         command: docker pull {{ item }}
         with_items:
-          - "{{ weave_img }}"
-          - "{{ weave_npc_img }}"
-    
+          - "{{ images.weave }}"
+          - "{{ images.weave_npc }}"
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
+
     roles:
       - weave

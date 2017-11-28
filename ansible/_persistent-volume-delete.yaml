@@ -1,0 +1,11 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "Delete Kubernetes Persistent Volume"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+
+    tasks:
+      - name: delete Kubernetes PV
+        command: kubectl delete pv {{ volume_name }} --kubeconfig {{ kubernetes_kubeconfig_path }}

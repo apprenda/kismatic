@@ -168,7 +168,7 @@ func getKismaticReleaseTarball(version string) (string, error) {
 		}
 		return tarFile, nil
 	}
-	// some other error ocurred
+	// some other error occurred
 	return "", fmt.Errorf("failed to stat dir: %v", err)
 }
 

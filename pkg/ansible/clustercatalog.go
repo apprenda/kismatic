@@ -15,19 +15,21 @@ type ClusterCatalog struct {
 	DNSServiceIP              string `yaml:"kubernetes_dns_service_ip"`
 	EnableModifyHosts         bool   `yaml:"modify_hosts_file"`
 	EnablePackageInstallation bool   `yaml:"allow_package_installation"`
-	PackageRepoURLs           string `yaml:"package_repository_urls"`
 	DisconnectedInstallation  bool   `yaml:"disconnected_installation"`
-	SeedRegistry              bool   `yaml:"seed_registry"`
 	KuberangPath              string `yaml:"kuberang_path"`
 	LoadBalancedFQDN          string `yaml:"kubernetes_load_balanced_fqdn"`
 
-	APIServerOptions map[string]string `yaml:"kubernetes_api_server_option_overrides"`
+	APIServerOptions             map[string]string `yaml:"kubernetes_api_server_option_overrides"`
+	KubeControllerManagerOptions map[string]string `yaml:"kube_controller_manager_option_overrides"`
+	KubeSchedulerOptions         map[string]string `yaml:"kube_scheduler_option_overrides"`
+	KubeProxyOptions             map[string]string `yaml:"kube_proxy_option_overrides"`
+	KubeletOptions               map[string]string `yaml:"kubelet_overrides"`
 
 	ConfigureDockerWithPrivateRegistry bool   `yaml:"configure_docker_with_private_registry"`
-	DeployInternalDockerRegistry       bool   `yaml:"deploy_internal_docker_registry"`
-	DockerCAPath                       string `yaml:"docker_certificates_ca_path"`
-	DockerRegistryAddress              string `yaml:"docker_registry_address"`
-	DockerRegistryPort                 string `yaml:"docker_registry_port"`
+	DockerRegistryCAPath               string `yaml:"docker_certificates_ca_path"`
+	DockerRegistryServer               string `yaml:"docker_registry_full_url"`
+	DockerRegistryUsername             string `yaml:"docker_registry_username"`
+	DockerRegistryPassword             string `yaml:"docker_registry_password"`
 
 	ForceEtcdRestart              bool `yaml:"force_etcd_restart"`
 	ForceAPIServerRestart         bool `yaml:"force_apiserver_restart"`
@@ -41,7 +43,6 @@ type ClusterCatalog struct {
 	EnableConfigureIngress bool `yaml:"configure_ingress"`
 
 	KismaticPreflightCheckerLinux string `yaml:"kismatic_preflight_checker"`
-	KismaticPreflightCheckerLocal string `yaml:"kismatic_preflight_checker_local"`
 
 	WorkerNode string `yaml:"worker_node"`
 
@@ -74,6 +75,9 @@ type ClusterCatalog struct {
 
 	LocalKubeconfigDirectory string `yaml:"local_kubeconfig_directory"`
 
+	CloudProvider string `yaml:"cloud_provider"`
+	CloudConfig   string `yaml:"cloud_config_local"`
+
 	DNS struct {
 		Enabled bool
 	}
@@ -85,7 +89,8 @@ type ClusterCatalog struct {
 		Provider string
 		Options  struct {
 			Calico struct {
-				Mode string
+				Mode     string
+				LogLevel string `yaml:"log_level"`
 			}
 		}
 	}
@@ -112,11 +117,18 @@ type ClusterCatalog struct {
 		Enabled bool
 	}
 
+	Rescheduler struct {
+		Enabled bool
+	}
+
 	InsecureNetworkingEtcd bool `yaml:"insecure_networking_etcd"`
 
 	HTTPProxy  string `yaml:"http_proxy"`
 	HTTPSProxy string `yaml:"https_proxy"`
 	NoProxy    string `yaml:"no_proxy"`
+
+	NodeLabels         map[string][]string          `yaml:"node_labels"`
+	KubeletNodeOptions map[string]map[string]string `yaml:"kubelet_node_overrides"`
 }
 
 type NFSVolume struct {

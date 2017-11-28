@@ -67,7 +67,7 @@ spec:
           optional: true
       containers:
       - name: kubedns
-        image: "{{ kubedns_img }}"
+        image: "{{ images.kubedns }}"
         resources:
           # TODO: Set memory limits when we've profiled the container for large
           # clusters, then set request = limit to keep this container in
@@ -102,9 +102,6 @@ spec:
         - --config-dir=/kube-dns-config
         #- --kube-master-url={{ kubernetes_master_ip }}
         - --v=2
-        # env:
-        # - name: PROMETHEUS_PORT
-        #   value: "10055"
         ports:
         - containerPort: 10053
           name: dns-local
@@ -121,6 +118,8 @@ spec:
           value: "{{ kubernetes_load_balanced_fqdn }}"
         - name: KUBERNETES_SERVICE_PORT
           value: "{{ kubernetes_master_secure_port }}"
+        - name: PROMETHEUS_PORT
+          value: "10055"
         # - containerPort: 10055
         #   name: metrics
         #   protocol: TCP
@@ -128,7 +127,7 @@ spec:
         - name: kube-dns-config
           mountPath: /kube-dns-config
       - name: dnsmasq
-        image: "{{ kube_dnsmasq_img }}"
+        image: "{{ images.kube_dnsmasq }}"
         livenessProbe:
           httpGet:
             path: /healthcheck/dnsmasq
@@ -166,7 +165,7 @@ spec:
         - name: kube-dns-config
           mountPath: /etc/k8s/dns/dnsmasq-nanny
       - name: sidecar
-        image: "{{ kubedns_sidecar_img }}"
+        image: "{{ images.kubedns_sidecar }}"
         livenessProbe:
           httpGet:
             path: /metrics

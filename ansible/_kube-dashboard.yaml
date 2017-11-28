@@ -4,11 +4,9 @@
     name: "{{ play_name | default('Start Kubernetes Dashboard') }}"
     become: yes
     run_once: true
-
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+    
     roles:
       - kube-dashboard
-
-    post_tasks:
-      - name: remove old dashboard replication controller if exists
-        command: kubectl delete rs -l "app=kubernetes-dashboard" -n kube-system --now --ignore-not-found
-        when: upgrading is defined and upgrading|bool == true

@@ -1,7 +1,11 @@
 ---
   # Pre-download contiv images
   - name: download contiv container images
-    command: docker pull {{ contiv_netplugin_img }}
+    command: docker pull {{ images.contiv_netplugin }}
+    register: result
+    until: result|succeeded
+    retries: 2
+    delay: 1
 
   # Create a secret that contains the contiv certificates.
   # Runs on the first master node if we find that the secret does 
@@ -86,16 +90,16 @@
       when: desiredPods.stdout|int != readyPods.stdout|int
     
     - name: set forwarding mode to routed
-      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ contiv_netplugin_img }} --netmaster http://localhost:9999 global set --fwd-mode routing
+      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ images.contiv_netplugin }} --netmaster http://localhost:9999 global set --fwd-mode routing
       run_once: true
 
     - name: list existing contiv networks
-      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ contiv_netplugin_img }} --netmaster http://localhost:9999 net ls
+      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ images.contiv_netplugin }} --netmaster http://localhost:9999 net ls
       register: contiv_networks
       run_once: true
 
     - name: create infra network if missing
-      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ contiv_netplugin_img }} --netmaster http://localhost:9999 net create -n infra -s 132.1.1.0/24 -g 132.1.1.1 contivh1 # using defaults from installation script
+      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ images.contiv_netplugin }} --netmaster http://localhost:9999 net create -n infra -s 132.1.1.0/24 -g 132.1.1.1 contivh1 # using defaults from installation script
       when: "'contivh1' not in contiv_networks.stdout"
       run_once: true
 
@@ -128,12 +132,12 @@
       when: desiredPods.stdout|int != readyPods.stdout|int
 
     - name: list existing contiv networks
-      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ contiv_netplugin_img }} --netmaster http://localhost:9999 net ls
+      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ images.contiv_netplugin }} --netmaster http://localhost:9999 net ls
       register: contiv_networks
       run_once: true
 
     - name: create pod network # the name of the network, 'default-net', is a magic string. don't change.
-      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ contiv_netplugin_img }} --netmaster http://localhost:9999 net create -t default --subnet={{ kubernetes_pods_cidr }} --gateway {{ kubernetes_pods_cidr | ipaddr('net') | ipaddr('1') | ipaddr('address') }} default-net
+      command: docker run --net host --rm --entrypoint /contiv/bin/netctl {{ images.contiv_netplugin }} --netmaster http://localhost:9999 net create -t default --subnet={{ kubernetes_pods_cidr }} --gateway {{ kubernetes_pods_cidr | ipaddr('net') | ipaddr('1') | ipaddr('address') }} default-net
       run_once: true
       when:  "'default-net' not in contiv_networks.stdout"
 

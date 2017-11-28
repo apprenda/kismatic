@@ -7,7 +7,7 @@ import (
 )
 
 // NewCmdVolume returns the storage command
-func NewCmdVolume(out io.Writer) *cobra.Command {
+func NewCmdVolume(in io.Reader, out io.Writer) *cobra.Command {
 	var planFile string
 	cmd := &cobra.Command{
 		Use:   "volume",
@@ -19,5 +19,6 @@ func NewCmdVolume(out io.Writer) *cobra.Command {
 	addPlanFileFlag(cmd.PersistentFlags(), &planFile)
 	cmd.AddCommand(NewCmdVolumeAdd(out, &planFile))
 	cmd.AddCommand(NewCmdVolumeList(out, &planFile))
+	cmd.AddCommand(NewCmdVolumeDelete(in, out, &planFile))
 	return cmd
 }

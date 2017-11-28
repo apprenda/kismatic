@@ -200,7 +200,7 @@ func TestDebPackageManagerPackageNotInstalledButAvailable(t *testing.T) {
 		t.Errorf("expected true, got false")
 	}
 	if err != nil {
-		t.Errorf("unexpected error ocurred")
+		t.Errorf("unexpected error occurred")
 	}
 }
 

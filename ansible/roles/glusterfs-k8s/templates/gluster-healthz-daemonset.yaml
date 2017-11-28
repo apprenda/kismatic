@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: tcp-healthz
-          image: "{{ apprenda_tcp_healthz_img }}"
+          image: "{{ images.apprenda_tcp_healthz }}"
           command: ["/exechealthz"]
           args:
             - -port=8081

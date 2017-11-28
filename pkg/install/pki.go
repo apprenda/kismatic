@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/tls"
@@ -19,7 +20,6 @@ const (
 	adminGroup                          = "system:masters"
 	adminCertFilename                   = "admin"
 	adminCertFilenameKETPre133          = "admin"
-	dockerRegistryCertFilename          = "docker-registry"
 	serviceAccountCertFilename          = "service-account"
 	serviceAccountCertCommonName        = "kube-service-account"
 	schedulerCertFilenamePrefix         = "kube-scheduler"
@@ -170,7 +170,7 @@ func certManifestForNode(plan Plan, node Node) ([]certificateSpec, error) {
 		m = append(m, certificateSpec{
 			description:   fmt.Sprintf("%s kubelet", node.Host),
 			filename:      fmt.Sprintf("%s-kubelet", node.Host),
-			commonName:    fmt.Sprintf("%s:%s", kubeletUserPrefix, node.Host),
+			commonName:    fmt.Sprintf("%s:%s", kubeletUserPrefix, strings.ToLower(node.Host)),
 			organizations: []string{kubeletGroup},
 		})
 
@@ -210,21 +210,6 @@ func certManifestForCluster(plan Plan) ([]certificateSpec, error) {
 				m = append(m, s)
 			}
 		}
-	}
-
-	// Certificate for docker registry
-	if plan.DockerRegistry.SetupInternal {
-		dockerRegistryNode := plan.Master.Nodes[0]
-		san := []string{dockerRegistryNode.Host, dockerRegistryNode.IP}
-		if dockerRegistryNode.InternalIP != "" {
-			san = append(san, dockerRegistryNode.InternalIP)
-		}
-		m = append(m, certificateSpec{
-			description:           "internal private docker registry",
-			filename:              dockerRegistryCertFilename,
-			commonName:            dockerRegistryNode.Host,
-			subjectAlternateNames: san,
-		})
 	}
 
 	// Contiv certificates

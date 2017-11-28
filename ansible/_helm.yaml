@@ -4,6 +4,9 @@
     name: "{{ play_name | default('Initialize Helm and Start Tiller') }}"
     become: yes
     run_once: true
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
 
     tasks:
       - name: "create new serviceaccount for tiller"
@@ -14,16 +17,16 @@
         command: "kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller"
         register: out
         failed_when: 'out.rc != 0 and out.stderr is defined and "Error from server (AlreadyExists)" not in out.stderr'
+        
       - name: "run helm init"
-        local_action: command ../../helm init --service-account=tiller -i="{{ helm_img }}" --upgrade
+        local_action: command ../../helm init --service-account=tiller -i="{{ images.helm }}" --upgrade {% if disconnected_installation|bool == true %}--skip-refresh{% endif %}
         become: no
-        environment:
-          KUBECONFIG: "{{ local_kubeconfig_directory }}"
+        environment: "{{ proxy_env|combine({'KUBECONFIG': local_kubeconfig_directory}) }}"
+          
       - name: "add kismatic helm repo"
         local_action: command ../../helm repo add kismatic https://apprenda.github.io/kismatic-charts/
         become: no
-        environment:
-          KUBECONFIG: "{{ local_kubeconfig_directory }}"
+        environment: "{{ proxy_env|combine({'KUBECONFIG': local_kubeconfig_directory}) }}"
         when: disconnected_installation|bool != true
 
       - block:

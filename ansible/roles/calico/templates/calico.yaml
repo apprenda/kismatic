@@ -1,3 +1,10 @@
+# Calico Version v2.6.0
+# https://docs.projectcalico.org/v2.6/releases#v2.6.0
+# This manifest includes the following component versions:
+#   calico/node:v2.6.0
+#   calico/cni:v1.11.0
+#   calico/kube-controllers:v1.0.0
+
 # This ConfigMap is used to configure a self-hosted Calico installation.
 kind: ConfigMap
 apiVersion: v1
@@ -14,12 +21,14 @@ data:
   cni_network_config: |-
     {
         "name": "k8s-pod-network",
+        "cniVersion": "0.1.0",
         "type": "calico",
         "etcd_endpoints": "__ETCD_ENDPOINTS__",
         "etcd_key_file": "{{ kubernetes_certificates.etcd_client_key }}",
         "etcd_cert_file": "{{ kubernetes_certificates.etcd_client }}",
         "etcd_ca_cert_file": "{{ kubernetes_certificates.ca }}",
-        "log_level": "info",
+        "log_level": "{{ cni.options.calico.log_level }}",
+        "mtu": 1500,
         "ipam": {
             "type": "calico-ipam"
         },
@@ -65,17 +74,18 @@ spec:
         k8s-app: calico-node
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
-        scheduler.alpha.kubernetes.io/tolerations: |
-          [{"key": "dedicated", "value": "master", "effect": "NoSchedule" },
-           {"key":"CriticalAddonsOnly", "operator":"Exists"}]
     spec:
       hostNetwork: true
+      serviceAccountName: calico-node
+      tolerations:
+        - effect: NoSchedule
+          operator: Exists
       containers:
         # Runs calico/node container on each Kubernetes node.  This
         # container programs network policy and routes on each
         # host.
         - name: calico-node
-          image: {{ calico_node_img }}
+          image: {{ images.calico_node }}
           imagePullPolicy: IfNotPresent
           env:
             # The location of the Calico etcd cluster.
@@ -93,16 +103,22 @@ spec:
             # Disable file logging so `kubectl logs` works.
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
-            # Set Felix endpoint to host default action to ACCEPT.
-            - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
-              value: ACCEPT
-            - name: FELIX_LOGSEVERITYSCREEN
-              value: "info"
             # Configure the IP Pool from which Pod IPs will be chosen.
             - name: CALICO_IPV4POOL_CIDR
               value: "{{ kubernetes_pods_cidr }}"
             - name: CALICO_IPV4POOL_IPIP
               value: {% if cni.options.calico.mode == 'overlay' %}"always"{% else %}"off"{% endif %}
+            # Disable IPv6 on Kubernetes.
+            - name: FELIX_IPV6SUPPORT
+              value: "false"
+            # Set Felix endpoint to host default action to ACCEPT.
+            - name: FELIX_DEFAULTENDPOINTTOHOSTACTION
+              value: ACCEPT
+            - name: FELIX_LOGSEVERITYSCREEN
+              value: "{{ cni.options.calico.log_level }}"
+            # Set MTU for tunnel device used if ipip is enabled
+            - name: FELIX_IPINIPMTU
+              value: "1440"
             # Location of the CA certificate for etcd.
             - name: ETCD_CA_CERT_FILE
               valueFrom:
@@ -124,11 +140,25 @@ spec:
             # Auto-detect the BGP IP address.
             - name: IP
               value: ""
+            - name: FELIX_HEALTHENABLED
+              value: "true"
           securityContext:
             privileged: true
           resources:
             requests:
               cpu: 250m
+          livenessProbe:
+            httpGet:
+              path: /liveness
+              port: 9099
+            periodSeconds: 10
+            initialDelaySeconds: 10
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 9099
+            periodSeconds: 10
           volumeMounts:
             - mountPath: /lib/modules
               name: lib-modules
@@ -141,7 +171,7 @@ spec:
         # This container installs the Calico CNI binaries
         # and CNI network config file on each node.
         - name: install-cni
-          image: {{ calico_cni_img }}
+          image: {{ images.calico_cni }}
           imagePullPolicy: IfNotPresent
           command: ["/install-cni.sh"]
           env:
@@ -188,3 +218,11 @@ spec:
         - name: etcd-certs
           hostPath:
             path: {{ kubernetes_certificates_dir }}
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: calico-node
+  namespace: kube-system

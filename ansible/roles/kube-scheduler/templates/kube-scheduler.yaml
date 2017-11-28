@@ -4,8 +4,9 @@ metadata:
   labels:
     tier: control-plane
     component: kube-scheduler
+    kismatic/host: {{ inventory_hostname }}
   annotations:
-    version: "{{ kubernetes_version }}"
+    version: "{{ official_images.kube_apiserver.version }}"
     kismatic/version: "{{ kismatic_short_version }}"
   name: kube-scheduler
   namespace: kube-system
@@ -13,13 +14,16 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-scheduler
-    image: {{ kube_scheduler_img }}
+    image: {{ images.kube_scheduler }}
     imagePullPolicy: IfNotPresent
     command:
       - kube-scheduler
-      - --kubeconfig={{ kubernetes_kubeconfig.scheduler }}
-      - --leader-elect=true
-      - --v=2
+{% set combined_options = kube_scheduler_option_defaults | combine(kube_scheduler_option_overrides) -%}
+{% for option in combined_options | dictsort %}
+{% if option[1] is defined and option[1] | string | length > 0 %}
+      - --{{ option[0] }}={{ option[1] }}
+{% endif %}
+{% endfor %}
     volumeMounts:
       - mountPath: "{{ kubernetes_kubeconfig.scheduler }}"
         name: "kubeconfig"

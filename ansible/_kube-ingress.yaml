@@ -4,6 +4,9 @@
     name: "{{ play_name | default('Start Kubernetes Ingress') }}"
     become: yes
     run_once: true
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
 
     roles:
       - kube-ingress

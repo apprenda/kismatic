@@ -7,6 +7,15 @@
     vars_files:
       - group_vars/all.yaml
       - group_vars/etcd-networking.yaml
+      - group_vars/container_images.yaml
+
+    pre_tasks:
+      - name: download etcd image
+        command: docker pull {{ images.etcd }}
+        register: result
+        until: result|succeeded
+        retries: 2
+        delay: 1
 
     roles:
       - role: etcd-backup

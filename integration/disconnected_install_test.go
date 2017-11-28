@@ -3,53 +3,129 @@ package integration
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
-const proxyPort = 3128
+const (
+	proxyPort          = 3128
+	dockerRegistryPort = 8443
+)
 
-var _ = Describe("disconnected install feature", func() {
+var _ = Describe("disconnected installation", func() {
 	BeforeEach(func() {
 		dir := setupTestWorkingDir()
 		os.Chdir(dir)
 	})
 
-	Describe("installing on machines with no internet access", func() {
-		Context("with kismatic packages installed", func() {
+	Context("with an existing package mirror and image registry", func() {
+		Context("on CentOS", func() {
 			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-				WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
-					By("Installing the RPMs on the node")
-					theNode := []NodeDeets{node}
-					nodes := provisionedNodes{
-						etcd:    theNode,
-						master:  theNode,
-						worker:  theNode,
-						ingress: theNode,
-					}
-					InstallKismaticPackages(nodes, CentOS7, sshKey, true)
+				distro := CentOS7
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, distro, aws, func(nodes provisionedNodes, sshKey string) {
+					// One of the workers is used as the repository and registry
+					repoNode := nodes.worker[1]
+					nodes.worker = nodes.worker[0:1]
 
-					By("Verifying connectivity to google.com")
-					err := runViaSSH([]string{"curl --head www.google.com"}, theNode, sshKey, 1*time.Minute)
-					FailIfError(err, "Failed to curl google")
+					By("Creating a package repository")
+					err := createPackageRepositoryMirror(repoNode, distro, sshKey)
+					FailIfError(err, "Error creating local package repo")
 
-					err = disableInternetAccess(theNode, sshKey)
+					By("Deploying a docker registry")
+					caFile, err := deployAuthenticatedDockerRegistry(repoNode, dockerRegistryPort, sshKey)
+					FailIfError(err, "Failed to deploy docker registry")
+
+					By("Seeding the local registry")
+					err = seedRegistry(repoNode, caFile, dockerRegistryPort, sshKey)
+					FailIfError(err, "Error seeding local registry")
+
+					By("Disabling internet access")
+					err = disableInternetAccess(nodes.allNodes(), sshKey)
 					FailIfError(err, "Failed to create iptable rule")
 
-					if err := verifyNoInternetAccess(theNode, sshKey); err == nil {
-						Fail("was able to ping google with outgoing connections blocked")
+					// Configure the repos on the nodes
+					By("Configuring repository on nodes")
+					for _, n := range nodes.allNodes() {
+						err = copyFileToRemote("test-resources/disconnected-installation/configure-rpm-mirrors.sh", "/tmp/configure-rpm-mirrors.sh", n, sshKey, 15*time.Second)
+						FailIfError(err, "Failed to copy script to nodes")
+					}
+					cmds := []string{
+						"chmod +x /tmp/configure-rpm-mirrors.sh",
+						fmt.Sprintf("sudo /tmp/configure-rpm-mirrors.sh http://%s", repoNode.PrivateIP),
+					}
+					err = runViaSSH(cmds, nodes.allNodes(), sshKey, 5*time.Minute)
+					FailIfError(err, "Failed to run mirror configuration script")
+
+					installOpts := installOptions{
+						disablePackageInstallation: false,
+						disconnectedInstallation:   true,
+						modifyHostsFiles:           true,
+						dockerRegistryCAPath:       caFile,
+						dockerRegistryServer:       fmt.Sprintf("%s:%d", repoNode.PrivateIP, dockerRegistryPort),
+						dockerRegistryUsername:     "kismaticuser",
+						dockerRegistryPassword:     "kismaticpassword",
 					}
 
+					// installOpts.disableRegistrySeeding = true
 					By("Running kismatic install apply")
-					installOpts := installOptions{
-						disablePackageInstallation:  true,
-						disconnectedInstallation:    true,
-						modifyHostsFiles:            true,
-						autoConfigureDockerRegistry: true,
+					err = installKismatic(nodes, installOpts, sshKey)
+					Expect(err).ToNot(HaveOccurred())
+				})
+			})
+		})
+
+		Context("on Ubuntu", func() {
+			ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
+				distro := Ubuntu1604LTS
+				WithInfrastructure(NodeCount{1, 1, 2, 1, 1}, distro, aws, func(nodes provisionedNodes, sshKey string) {
+					// One of the workers is used as the repository and registry
+					repoNode := nodes.worker[1]
+					nodes.worker = nodes.worker[0:1]
+
+					By("Creating a package repository")
+					err := createPackageRepositoryMirror(repoNode, distro, sshKey)
+					FailIfError(err, "Error creating local package repo")
+
+					// Deploy a docker registry on the node
+					By("Deploying a docker registry")
+					caFile, err := deployAuthenticatedDockerRegistry(repoNode, dockerRegistryPort, sshKey)
+					FailIfError(err, "Failed to deploy docker registry")
+
+					By("Seeding the local registry")
+					err = seedRegistry(repoNode, caFile, dockerRegistryPort, sshKey)
+					FailIfError(err, "Error seeding local registry")
+
+					By("Disabling internet access")
+					err = disableInternetAccess(nodes.allNodes(), sshKey)
+					FailIfError(err, "Failed to create iptable rule")
+
+					// Configure the repos on the nodes
+					By("Configuring repository on nodes")
+					for _, n := range nodes.allNodes() {
+						err = copyFileToRemote("test-resources/disconnected-installation/configure-deb-mirrors.sh", "/tmp/configure-deb-mirrors.sh", n, sshKey, 15*time.Second)
+						FailIfError(err, "Failed to copy script to nodes")
 					}
+					cmds := []string{
+						"chmod +x /tmp/configure-deb-mirrors.sh",
+						fmt.Sprintf("sudo /tmp/configure-deb-mirrors.sh http://%s", repoNode.PrivateIP),
+					}
+					err = runViaSSH(cmds, nodes.allNodes(), sshKey, 5*time.Minute)
+					FailIfError(err, "Failed to run mirror configuration script")
+
+					installOpts := installOptions{
+						disablePackageInstallation: false,
+						disconnectedInstallation:   true,
+						modifyHostsFiles:           true,
+						dockerRegistryCAPath:       caFile,
+						dockerRegistryServer:       fmt.Sprintf("%s:%d", repoNode.PrivateIP, dockerRegistryPort),
+						dockerRegistryUsername:     "kismaticuser",
+						dockerRegistryPassword:     "kismaticpassword",
+					}
+
+					// installOpts.disableRegistrySeeding = true
+					By("Running kismatic install apply")
 					err = installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 				})
@@ -57,56 +133,7 @@ var _ = Describe("disconnected install feature", func() {
 		})
 	})
 
-	Describe("using an existing private docker registry with images pre-seeded", func() {
-		ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-			WithInfrastructure(NodeCount{1, 1, 1, 0, 0}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
-				dockerRegistryPort := 8443
-				By("Configuring an insecure registry on the master")
-				cmds := []string{
-					"sudo mkdir /etc/docker/",
-					"sudo touch /etc/docker/daemon.json",
-					fmt.Sprintf("printf '{\n  \"insecure-registries\" : [\"%s:%d\"]\n}\n' | sudo tee --append /etc/docker/daemon.json", nodes.etcd[0].PrivateIP, dockerRegistryPort),
-				}
-				err := runViaSSH(cmds, []NodeDeets{nodes.master[0]}, sshKey, 10*time.Minute)
-				FailIfError(err, "Failed to allow insecure registries")
-
-				By("Installing the RPMs on the node")
-				InstallKismaticPackages(nodes, CentOS7, sshKey, true)
-
-				By("Installing an external Docker registry on one of the nodes")
-				caFile, err := deployDockerRegistry(nodes.etcd[0], dockerRegistryPort, sshKey)
-				Expect(err).ToNot(HaveOccurred())
-
-				By("Disabling internet access")
-				err = disableInternetAccess(nodes.allNodes(), sshKey)
-				FailIfError(err, "Failed to create iptable rule")
-
-				// disableRegistrySeeding = false, run step to seed
-				installOpts := installOptions{
-					disablePackageInstallation: true,
-					disconnectedInstallation:   true,
-					modifyHostsFiles:           true,
-					dockerRegistryCAPath:       caFile,
-					dockerRegistryIP:           nodes.etcd[0].PrivateIP,
-					dockerRegistryPort:         dockerRegistryPort,
-				}
-				By("Seeding images")
-				writePlanFile(buildPlan(nodes, installOpts, sshKey))
-				c := exec.Command("./kismatic", "install", "step", "_docker-registry.yaml", "-f", "kismatic-testing.yaml")
-				c.Stdout = os.Stdout
-				c.Stderr = os.Stderr
-				err = c.Run()
-				Expect(err).ToNot(HaveOccurred())
-
-				installOpts.disableRegistrySeeding = true
-				By("Running kismatic install apply")
-				err = installKismatic(nodes, installOpts, sshKey)
-				Expect(err).ToNot(HaveOccurred())
-			})
-		})
-	})
-
-	Describe("installing on machines with no internet access but with a proxy", func() {
+	Context("when there is a proxy between the nodes and the internet", func() {
 		ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
 			WithInfrastructure(NodeCount{2, 1, 1, 1, 1}, CentOS7, aws, func(nodes provisionedNodes, sshKey string) {
 				// setup cluster nodes, and a proxy node
@@ -144,17 +171,12 @@ var _ = Describe("disconnected install feature", func() {
 
 				By("Running kismatic install apply")
 				// don't use the proxy for cluster communication
-				var ips string
-				delimiter := ","
-				for _, n := range clusterNodes.allNodes() {
-					ips = ips + n.Hostname + delimiter + n.PrivateIP + delimiter + n.PublicIP + delimiter
-				}
 
 				installOpts := installOptions{
 					modifyHostsFiles: true,
 					httpProxy:        fmt.Sprintf("%s:%d", proxyNode.PrivateIP, proxyPort),
 					httpsProxy:       fmt.Sprintf("%s:%d", proxyNode.PrivateIP, proxyPort),
-					noProxy:          ips,
+					noProxy:          fmt.Sprintf("%s,%s", "kubernetes-charts.storage.googleapis.com", "apprenda.github.io"),
 				}
 				err = installKismatic(clusterNodes, installOpts, sshKey)
 				Expect(err).ToNot(HaveOccurred())
@@ -165,18 +187,25 @@ var _ = Describe("disconnected install feature", func() {
 
 func disableInternetAccess(nodes []NodeDeets, sshKey string) error {
 	By("Blocking all outbound connections")
-	allowSourcePorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10249,10250,10251,10252,10254" // ports needed/checked by inspector
-	allowDestPorts := "8888,2379,6666,2380,6660,6443,8443,10250"
+	allowSourcePorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10256,10250,10251,10252,10254" // ports needed/checked by inspector
+	allowDestPorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10256,10250,10251,10252,10254"
+	allowedStorgePorts := "8081,111,2049,38465,38466,38467"
 	cmd := []string{
-		"sudo iptables -A OUTPUT -o lo -j ACCEPT",                                                               // allow loopback
-		"sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT",                      // allow SSH
-		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowSourcePorts), // allow inspector
-		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --dports %s -j ACCEPT", allowDestPorts),   // allow internal traffic for: inspector, etcd, docker registry
+		"sudo iptables -A OUTPUT -o lo -j ACCEPT",                                                                 // allow loopback
+		"sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT",                        // allow SSH
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowSourcePorts),   // allow inspector
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --dports %s -j ACCEPT", allowDestPorts),     // allow internal traffic for: inspector, etcd, docker registry
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --sports %s -j ACCEPT", allowedStorgePorts), // storage
+		fmt.Sprintf("sudo iptables -A OUTPUT -p tcp --match multiport --dports %s -j ACCEPT", allowedStorgePorts), // storage
 		"sudo iptables -A OUTPUT -s 172.16.0.0/16 -j ACCEPT",
 		"sudo iptables -A OUTPUT -d 172.16.0.0/16 -j ACCEPT", // Allow pod network
 		"sudo iptables -A OUTPUT -s 172.20.0.0/16 -j ACCEPT",
-		"sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT", // Allow pod service network
-		"sudo iptables -P OUTPUT DROP",                       // drop everything else
+		"sudo iptables -A OUTPUT -d 172.20.0.0/16 -j ACCEPT",                 // Allow pod service network
+		"sudo iptables -A INPUT -p icmp --icmp-type echo-request -j ACCEPT",  // ping outside to inside
+		"sudo iptables -A OUTPUT -p icmp --icmp-type echo-reply -j ACCEPT",   // ping outside to inside
+		"sudo iptables -A OUTPUT -p icmp --icmp-type echo-request -j ACCEPT", // ping inside to outside
+		"sudo iptables -A INPUT -p icmp --icmp-type echo-reply -j ACCEPT",    // ping inside to outside
+		"sudo iptables -P OUTPUT DROP",                                       // drop everything else
 	}
 	return runViaSSH(cmd, nodes, sshKey, 1*time.Minute)
 }

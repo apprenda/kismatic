@@ -1,4 +1,4 @@
-# Kismatic and Persistent Storage
+# Persistent Storage
 
 ## Background
 

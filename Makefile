@@ -13,13 +13,13 @@ HOST_GOOS = $(shell go env GOOS)
 HOST_GOARCH = $(shell go env GOARCH)
 
 # Versions of external dependencies
-GLIDE_VERSION = v0.11.1
+GLIDE_VERSION = v0.13.0
 ANSIBLE_VERSION = 2.3.0.0
-PROVISIONER_VERSION = v1.4.0
-KUBERANG_VERSION = v1.2.1
-GO_VERSION = 1.8.0
-KUBECTL_VERSION = v1.7.3
-HELM_VERSION = v2.5.1
+PROVISIONER_VERSION = v1.6.2
+KUBERANG_VERSION = v1.2.2
+GO_VERSION = 1.8.4
+KUBECTL_VERSION = v1.8.4
+HELM_VERSION = v2.7.0
 
 ifeq ($(origin GLIDE_GOOS), undefined)
 	GLIDE_GOOS := $(HOST_GOOS)
@@ -36,7 +36,7 @@ build: vendor # vendor on host because of some permission issues with glide insi
 	    -e GLIDE_GOOS="linux"                  \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u $$(id -u):$$(id -g)                 \
+	    -u root:root                 \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"      \
 	    -w /go/src/$(PKG)                      \
 	    circleci/golang:$(GO_VERSION)          \
@@ -52,7 +52,7 @@ build-inspector: vendor
 	    -e GLIDE_GOOS="linux"                  \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u $$(id -u):$$(id -g)                 \
+	    -u root:root                 \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w /go/src/$(PKG)                      \
 	    circleci/golang:$(GO_VERSION)          \
@@ -78,18 +78,19 @@ clean:
 	rm -rf bin
 	rm -rf out
 	rm -rf vendor
-	rm -rf vendor-ansible/out
+	rm -rf vendor-ansible
 	rm -rf vendor-provision
 	rm -rf integration/vendor
 	rm -rf vendor-kuberang
 	rm -rf vendor-helm
 	rm -rf vendor-kubectl
+	rm -rf tools
 
 test: vendor
 	@docker run                             \
 	    --rm                                \
 	    -e GLIDE_GOOS="linux"               \
-	    -u $$(id -u):$$(id -g)              \
+	    -u root:root              \
 	    -v "$(shell pwd)":/go/src/$(PKG)    \
 	    -v /tmp:/tmp                        \
 	    -w /go/src/$(PKG)                   \
@@ -97,7 +98,7 @@ test: vendor
 	    make bare-test
 
 bare-test: vendor
-	go test -v ./cmd/... ./pkg/... $(TEST_OPTS)
+	go test ./cmd/... ./pkg/... $(TEST_OPTS)
 
 integration-test: dist just-integration-test
 
@@ -147,7 +148,7 @@ dist: vendor
 	    -e GLIDE_GOOS="linux"                  \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u $$(id -u):$$(id -g)                 \
+	    -u root:root                 \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w "/go/src/$(PKG)"                    \
 	    circleci/golang:$(GO_VERSION)          \
@@ -185,12 +186,18 @@ serial-integration-test: integration/vendor
 	ginkgo -v integration
 
 focus-integration-test: integration/vendor
-	ginkgo --focus $(FOCUS) -v integration
+	ginkgo --focus $(FOCUS) $(GINKGO_OPTS) -v integration
 
 docs/generate-kismatic-cli:
 	mkdir -p docs/kismatic-cli
 	go run cmd/kismatic-docs/main.go
 	cp docs/kismatic-cli/kismatic.md docs/kismatic-cli/README.md
+
+docs/update-plan-file-reference.md:
+	@$(MAKE) docs/generate-plan-file-reference.md > docs/plan-file-reference.md
+
+docs/generate-plan-file-reference.md:
+	@go run cmd/gen-kismatic-ref-docs/*.go -o markdown pkg/install/plan_types.go Plan
 
 version: FORCE
 	@echo VERSION=$(VERSION)
@@ -209,6 +216,11 @@ trigger-ci-slow-tests:
 	@echo Triggering build with slow tests
 	curl -u $(CIRCLE_CI_TOKEN): -X POST --header "Content-Type: application/json"     \
 		-d '{"build_parameters": {"RUN_SLOW_TESTS": "true"}}'                         \
+		$(CIRCLE_ENDPOINT)
+trigger-ci-focused-tests:
+	@echo Triggering focused test
+	curl -u $(CIRCLE_CI_TOKEN): -X POST --header "Content-Type: application/json"     \
+		-d "{\"build_parameters\": {\"FOCUS\": \"$(FOCUS)\"}}"                         \
 		$(CIRCLE_ENDPOINT)
 
 FORCE:

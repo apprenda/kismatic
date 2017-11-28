@@ -11,7 +11,7 @@
       - name: get desired number of calico pods
         command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig_path }}
         register: desiredPods
-        until: desiredPods|success
+        until: desiredPods|success and desiredPods.stdout|int > 0
         retries: 20
         delay: 6
         run_once: true

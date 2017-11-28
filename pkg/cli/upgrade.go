@@ -72,7 +72,7 @@ func NewCmdUpgradeOffline(in io.Reader, out io.Writer, opts *upgradeOpts) *cobra
 		Short: "Perform an offline upgrade of your Kubernetes cluster",
 		Long: `Perform an offline upgrade of your Kubernetes cluster.
 
-The offline upgrade is available for those clusters in which safety and availabilty are not a concern.
+The offline upgrade is available for those clusters in which safety and availability are not a concern.
 In this mode, the safety and availability checks will not be performed, nor will the nodes in the cluster
 be drained of workloads.
 
@@ -199,13 +199,6 @@ func doUpgrade(in io.Reader, out io.Writer, opts *upgradeOpts) error {
 			util.PrettyPrintOk(out, "- %q is at the target version %q", n.Node.Host, n.Version)
 		}
 		fmt.Fprintln(out)
-	}
-
-	if plan.DockerRegistry.ConfigureDockerWithPrivateRegistry() && plan.Cluster.DisconnectedInstallation {
-		util.PrintHeader(out, "Upgrade: Docker Registry", '=')
-		if err = executor.UpgradeDockerRegistry(*plan); err != nil {
-			return fmt.Errorf("Failed to upgrade docker registry: %v", err)
-		}
 	}
 
 	// Print message if there's no work to do
@@ -356,54 +349,18 @@ func upgradeNodes(in io.Reader, out io.Writer, plan install.Plan, opts upgradeOp
 		// upgrade unsafe nodes when --ignoreSafetyChecks
 		if !opts.ignoreSafetyChecks {
 			for _, unsafe := range unsafeNodes {
-				if unsafe.Node == n.Node {
+				if unsafe.Node.Equal(n.Node) {
 					upgrade = false
 				}
 			}
 		}
 		for _, unready := range unreadyNodes {
-			if unready.Node == n.Node {
+			if unready.Node.Equal(n.Node) {
 				upgrade = false
 			}
 		}
 		if upgrade {
 			toUpgrade = append(toUpgrade, n)
-		}
-	}
-
-	// Get all etcd nodes
-	// Nodes >=v1.3.0-alpha.0 do not need to be upgraded from Calico etcd v2
-	// If any of the nodes fail during the Calico etcd v2 upgrade its safe to rerun on all nodes
-	// Plays are idempotent and check etcd version, will skip if are at target
-	etcdToUpgrade := make([]install.ListableNode, 0)
-	for _, n := range install.NodesWithRoles(toUpgrade, "etcd") {
-		// only transition nodes that are not 1.3.0...
-		if install.IsLessThanVersion(n.Version, "v1.3.0-alpha.0") {
-			etcdToUpgrade = append(etcdToUpgrade, n)
-		}
-	}
-	if len(etcdToUpgrade) > 1 {
-		// Run the upgrade on the nodes to Etcd v3.0.x
-		if err := executor.UpgradeEtcd2Nodes(plan, etcdToUpgrade); err != nil {
-			return fmt.Errorf("Failed to upgrade etcd2 nodes: %v", err)
-		}
-	}
-
-	// Nodes >=v1.3.0 with k8s v1.6+ do not need to be migrated
-	// Keep trying untill all etcd nodes have been migrated
-	// This will rerun the migration on all nodes
-	// Plays are idempotent and its safe to rerun `etcdctl migrate`
-	var migrationNeeded bool
-	for _, n := range install.NodesWithRoles(toUpgrade, "master") {
-		if install.IsLessThanVersion(n.Version, "v1.3.0") {
-			migrationNeeded = true
-			break
-		}
-	}
-	if migrationNeeded {
-		util.PrintHeader(out, "Migrate: Kubernetes Etcd Cluster", '=')
-		if err := executor.MigrateEtcdCluster(plan); err != nil {
-			return fmt.Errorf("Failed to migrate kubernetes etcd cluster: %v", err)
 		}
 	}
 

@@ -18,11 +18,10 @@ type PlanAWS struct {
 	HomeDirectory                string
 	DisablePackageInstallation   bool
 	DisconnectedInstallation     bool
-	DisableRegistrySeeding       bool
-	AutoConfiguredDockerRegistry bool
-	DockerRegistryIP             string
-	DockerRegistryPort           int
+	DockerRegistryServer         string
 	DockerRegistryCAPath         string
+	DockerRegistryUsername       string
+	DockerRegistryPassword       string
 	ModifyHostsFiles             bool
 	HTTPProxy                    string
 	HTTPSProxy                   string
@@ -34,6 +33,12 @@ type PlanAWS struct {
 	DisableHelm                  bool
 	HeapsterReplicas             int
 	HeapsterInfluxdbPVC          string
+	CloudProvider                string
+	KubeAPIServerOptions         map[string]string
+	KubeControllerManagerOptions map[string]string
+	KubeSchedulerOptions         map[string]string
+	KubeProxyOptions             map[string]string
+	KubeletOptions               map[string]string
 }
 
 // Certain fields are still present for backwards compatabilty when testing upgrades
@@ -42,7 +47,6 @@ const planAWSOverlay = `cluster:
   admin_password: abbazabba
   disable_package_installation: {{.DisablePackageInstallation}}
   disconnected_installation: {{.DisconnectedInstallation}}
-  disable_registry_seeding: {{.DisableRegistrySeeding}}
   networking:
     type: overlay                                                 # Required for KET <= v1.4.1
     pod_cidr_block: 172.16.0.0/16
@@ -57,9 +61,19 @@ const planAWSOverlay = `cluster:
   ssh:
     user: {{.SSHUser}}
     ssh_key: {{.SSHKeyFile}}
-    ssh_port: 22{{if .UseDirectLVM}}
+    ssh_port: 22
   kube_apiserver:
-    option_overrides: {}
+    option_overrides: { {{ if .KubeAPIServerOptions }}{{ range $k, $v := .KubeAPIServerOptions }}"{{ $k }}": "{{ $v }}"{{end}}{{end}} }
+  kube_controller_manager:
+    option_overrides: { {{if .KubeControllerManagerOptions}}{{ range $k, $v := .KubeControllerManagerOptions }}"{{ $k }}": "{{ $v }}"{{end}}{{end}} }
+  kube_scheduler: 
+    option_overrides: { {{if .KubeSchedulerOptions}}{{ range $k, $v := .KubeSchedulerOptions }}"{{ $k }}": "{{ $v }}"{{end}}{{end}} }
+  kube_proxy: 
+    option_overrides: { {{if .KubeProxyOptions}}{{ range $k, $v := .KubeProxyOptions }}"{{ $k }}": "{{ $v }}"{{end}}{{end}} }
+  kubelet: 
+    option_overrides: { {{if .KubeletOptions}}{{ range $k, $v := .KubeletOptions }}"{{ $k }}": "{{ $v }}"{{end}}{{end}} }
+  cloud_provider:
+    provider: {{.CloudProvider}}{{if .UseDirectLVM}}
 docker:
   storage:
     direct_lvm:
@@ -67,10 +81,10 @@ docker:
       block_device: "/dev/xvdb"
       enable_deferred_deletion: false{{end}}
 docker_registry:
-  setup_internal: {{.AutoConfiguredDockerRegistry}}
-  address: {{.DockerRegistryIP}}
-  port: {{.DockerRegistryPort}}
+  server: {{.DockerRegistryServer}}
   CA: {{.DockerRegistryCAPath}}
+  username: {{.DockerRegistryUsername}}
+  password: {{.DockerRegistryPassword}}
 add_ons:
   cni:
     disable: {{.DisableCNI}}
@@ -78,6 +92,7 @@ add_ons:
     options:
       calico:
         mode: overlay
+        log_level: info
   heapster:
     disable: false
     options:
@@ -91,6 +106,8 @@ add_ons:
   package_manager:
     disable: {{.DisableHelm}}
     provider: helm
+  rescheduler:
+    disable: false
 etcd:
   expected_count: {{len .Etcd}}
   nodes:{{range .Etcd}}
@@ -102,7 +119,9 @@ master:
   nodes:{{range .Master}}
   - host: {{.Hostname}}
     ip: {{.PublicIP}}
-    internalip: {{.PrivateIP}}{{end}}
+    internalip: {{.PrivateIP}}
+    labels:
+      com.integrationtest/master: true{{end}}
   load_balanced_fqdn: {{.MasterNodeFQDN}}
   load_balanced_short_name: {{.MasterNodeShortName}}
 worker:
@@ -110,19 +129,25 @@ worker:
   nodes:{{range .Worker}}
   - host: {{.Hostname}}
     ip: {{.PublicIP}}
-    internalip: {{.PrivateIP}}{{end}}
+    internalip: {{.PrivateIP}}
+    labels:
+      com.integrationtest/worker: true{{end}}
 ingress:
   expected_count: {{len .Ingress}}
   nodes:{{range .Ingress}}
   - host: {{.Hostname}}
     ip: {{.PublicIP}}
-    internalip: {{.PrivateIP}}{{end}}
+    internalip: {{.PrivateIP}}
+    labels:
+      com.integrationtest/ingress: true{{end}}
 storage:
   expected_count: {{len .Storage}}
   nodes:{{range .Storage}}
   - host: {{.Hostname}}
     ip: {{.PublicIP}}
-    internalip: {{.PrivateIP}}{{end}}
+    internalip: {{.PrivateIP}}
+    labels:
+      com.integrationtest/storage: true{{end}}
 nfs:
   nfs_volume:{{range .NFSVolume}}
   - nfs_host: {{.Host}}

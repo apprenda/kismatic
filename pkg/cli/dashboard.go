@@ -1,15 +1,15 @@
 package cli
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	"net/url"
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/install"
-	"github.com/apprenda/kismatic/pkg/util"
 	"github.com/pkg/browser"
 	"github.com/spf13/cobra"
 )
@@ -49,52 +49,57 @@ func doDashboard(out io.Writer, planner install.Planner, opts *dashboardOpts) er
 	if err != nil {
 		return fmt.Errorf("Error reading plan file %q: %v", opts.planFilename, err)
 	}
-	authenticatedURL, err := getAuthenticatedDashboardURL(*plan)
-	if err != nil {
-		return err
-	}
-	unauthURL, err := getDashboardURL(*plan)
+
+	req, err := getDashboardRequest(*plan)
 	if err != nil {
 		return err
 	}
 	// Validate dashboard is accessible
-	if err = verifyDashboardConnectivity(authenticatedURL); err != nil {
+	if err = verifyDashboardConnectivity(req); err != nil {
 		return fmt.Errorf("Error verifying connectivity to cluster dashboard: %v", err)
 	}
 	// Dashboard is accessible.. take action
 	if opts.dashboardURLMode {
-		fmt.Fprintln(out, unauthURL)
+		fmt.Fprintln(out, req.URL)
 		return nil
 	}
-	fmt.Fprintln(os.Stdout, "Opening kubernetes dashboard in default browser...")
-	if err := browser.OpenURL(authenticatedURL); err != nil {
+	fmt.Fprintln(out, "Opening kubernetes dashboard in default browser...")
+	//Not obvious, but this is for escaping userinfo
+	urlFmted := fmt.Sprintf("https://%s@%s:6443/ui", url.UserPassword("admin", plan.Cluster.AdminPassword), plan.Master.LoadBalancedFQDN)
+	if err := browser.OpenURL(urlFmted); err != nil {
 		// Don't error. Just print a message if something goes wrong
-		fmt.Fprintf(os.Stdout, "Unexpected error opening the kubernetes dashboard: %v. You may access it at %q", err, unauthURL)
+		fmt.Fprintf(out, "Unexpected error opening the kubernetes dashboard: %v. You may access it at %q", err, req.URL)
 	}
 	return nil
 }
 
-func verifyDashboardConnectivity(url string) error {
-	status, err := util.HTTPGet(url, 2*time.Second, true)
+func verifyDashboardConnectivity(req *http.Request) error {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		//This was always set to true within the http util, but probably worth adding as a flag?
+	}
+	client := http.Client{
+		Timeout:   2 * time.Second,
+		Transport: tr,
+	}
+	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("request failed with error: %q", err)
 	}
-	if status != http.StatusOK {
-		return fmt.Errorf("Got %d HTTP status code when trying to reach the dashboard at %q", status, url)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("got %d HTTP status code when trying to reach the dashboard at %q", resp.StatusCode, req.URL)
 	}
 	return nil
 }
 
-func getAuthenticatedDashboardURL(plan install.Plan) (string, error) {
+func getDashboardRequest(plan install.Plan) (*http.Request, error) {
 	if plan.Master.LoadBalancedFQDN == "" {
-		return "", errors.New("Master load balanced FQDN is not set in the plan file")
+		return nil, errors.New("master load balanced FQDN is not set in the plan file")
 	}
-	return fmt.Sprintf("https://admin:%s@%s:6443/ui", plan.Cluster.AdminPassword, plan.Master.LoadBalancedFQDN), nil
-}
-
-func getDashboardURL(plan install.Plan) (string, error) {
-	if plan.Master.LoadBalancedFQDN == "" {
-		return "", errors.New("Master load balanced FQDN is not set in the plan file")
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://%s:6443/ui", plan.Master.LoadBalancedFQDN), nil)
+	if err != nil {
+		return nil, fmt.Errorf("request failed with error: %q", err)
 	}
-	return fmt.Sprintf("https://%s:6443/ui", plan.Master.LoadBalancedFQDN), nil
+	req.SetBasicAuth("admin", plan.Cluster.AdminPassword)
+	return req, nil
 }

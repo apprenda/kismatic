@@ -1,51 +1,71 @@
 ---
   # YUM
+  - name: install nfs-utils yum package
+    yum:
+      name: nfs-utils
+      state: present
+    register: nfs_utils_installation_rpm
+    until: nfs_utils_installation_rpm|success
+    retries: 3
+    delay: 3
+    when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
+
   - name: install kubelet yum package
     yum:
-      name: kubelet-{{ kismatic_yum_version }}
+      name: kubelet-{{ kubernetes_yum_version }}
       state: present
-      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
-      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     register: kubelet_installation_rpm
     until: kubelet_installation_rpm|success
     retries: 3
     delay: 3
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
 
   - name: install kubectl yum package
     yum:
-      name: kubectl-{{ kismatic_yum_version }}
+      name: kubectl-{{ kubernetes_yum_version }}
       state: present
-      disablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}*{% endif %}'
-      enablerepo: '{% if package_repository_urls is defined and package_repository_urls != "" %}kismatic-*{% endif %}'
     when: "'master' in group_names"
     register: result
     until: result|success
     retries: 3
     delay: 3
     when: ansible_os_family == 'RedHat'
+    environment: "{{proxy_env}}"
 
   # DEB
+  - name: install nfs-common deb package
+    apt:
+      name: nfs-common
+      state: present
+    register: nfs_common_installation_deb
+    until: nfs_common_installation_deb|success
+    retries: 3
+    delay: 3
+    when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
+
   - name: install kubelet deb package
     apt:
-      name: kubelet={{ kismatic_deb_version }}
+      name: kubelet={{ kubernetes_deb_version }}
       state: present
-      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
-      default_release: kismatic-xenial
+      default_release: kubernetes-xenial
     register: kubelet_installation_deb
     until: kubelet_installation_deb|success
     retries: 3
     delay: 3
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"
 
   - name: install kubectl deb package
     apt:
-      name: kubectl={{ kismatic_deb_version }}
+      name: kubectl={{ kubernetes_deb_version }}
       state: present
-      allow_unauthenticated: '{% if package_repository_urls is defined and package_repository_urls != "" %}yes{% else %}no{% endif %}'
-      default_release: kismatic-xenial
+      default_release: kubernetes-xenial
     register: result
     until: result|success
     retries: 3
     delay: 3
     when: ansible_os_family == 'Debian'
+    environment: "{{proxy_env}}"

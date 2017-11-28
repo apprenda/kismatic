@@ -28,7 +28,8 @@ var validPlan = Plan{
 			Provider: "calico",
 			Options: CNIOptions{
 				Calico: CalicoOptions{
-					Mode: "overlay",
+					Mode:     "overlay",
+					LogLevel: "info",
 				},
 			},
 		},
@@ -640,19 +641,19 @@ func TestValidateNFSVolume(t *testing.T) {
 }
 
 func TestValidatePlanCerts(t *testing.T) {
-	p := &validPlan
+	p := validPlan
 
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
-	ca, err := pki.GenerateClusterCA(p)
+	ca, err := pki.GenerateClusterCA(&p)
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
+	if err := pki.GenerateClusterCertificates(&p, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
-	valid, errs := ValidateCertificates(p, &pki)
+	valid, errs := ValidateCertificates(&p, &pki)
 	if !valid {
 		t.Errorf("expected valid, but got invalid")
 		fmt.Println(errs)
@@ -660,16 +661,16 @@ func TestValidatePlanCerts(t *testing.T) {
 }
 
 func TestValidatePlanBadCerts(t *testing.T) {
-	p := &validPlan
+	p := validPlan
 
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
-	ca, err := pki.GenerateClusterCA(p)
+	ca, err := pki.GenerateClusterCA(&p)
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
+	if err := pki.GenerateClusterCertificates(&p, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 	p.Master.Nodes[0] = Node{
@@ -678,7 +679,7 @@ func TestValidatePlanBadCerts(t *testing.T) {
 		InternalIP: "22.33.44.55",
 	}
 
-	valid, _ := ValidateCertificates(p, &pki)
+	valid, _ := ValidateCertificates(&p, &pki)
 	if valid {
 		t.Errorf("expected an error, but got valid")
 	}
@@ -698,16 +699,16 @@ func TestValidatePlanMissingCerts(t *testing.T) {
 }
 
 func TestValidatePlanMissingSomeCerts(t *testing.T) {
-	p := &validPlan
+	p := validPlan
 
 	pki := getPKI(t)
 	defer cleanup(pki.GeneratedCertsDirectory, t)
 
-	ca, err := pki.GenerateClusterCA(p)
+	ca, err := pki.GenerateClusterCA(&p)
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err := pki.GenerateClusterCertificates(p, ca); err != nil {
+	if err := pki.GenerateClusterCertificates(&p, ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
@@ -718,156 +719,203 @@ func TestValidatePlanMissingSomeCerts(t *testing.T) {
 	}
 	p.Master.Nodes = append(p.Master.Nodes, newNode)
 
-	valid, errs := ValidateCertificates(p, &pki)
+	valid, errs := ValidateCertificates(&p, &pki)
 	if !valid {
 		t.Errorf("expected valid, but got invalid")
 		fmt.Println(errs)
 	}
 }
 
-func TestValidateNodeGroupDuplicateIP(t *testing.T) {
-	ng := NodeGroup{
-		ExpectedCount: 2,
-		Nodes: []Node{
-			{
-				Host: "host1",
-				IP:   "10.0.0.1",
-			},
-			{
-				Host: "host2",
-				IP:   "10.0.0.1",
-			},
-		},
-	}
-	if ok, _ := ng.validate(); ok {
-		t.Errorf("validation passed with duplicate IP")
-	}
-}
-
-func TestValidateNodeGroupDuplicateHostname(t *testing.T) {
-	ng := NodeGroup{
-		ExpectedCount: 2,
-		Nodes: []Node{
-			{
-				Host: "host1",
-				IP:   "10.0.0.1",
-			},
-			{
-				Host: "host1",
-				IP:   "10.0.0.2",
-			},
-		},
-	}
-	if ok, _ := ng.validate(); ok {
-		t.Errorf("validation passed with duplicate hostname")
-	}
-}
-
-func TestValidateNodeGroupDuplicateInternalIPs(t *testing.T) {
-	ng := NodeGroup{
-		ExpectedCount: 2,
-		Nodes: []Node{
-			{
-				Host:       "host1",
-				IP:         "10.0.0.1",
-				InternalIP: "192.168.205.10",
-			},
-			{
-				Host:       "host2",
-				IP:         "10.0.0.2",
-				InternalIP: "192.168.205.10",
-			},
-		},
-	}
-	if ok, _ := ng.validate(); ok {
-		t.Errorf("validation passed with duplicate hostname")
-	}
-}
-
-func TestDisconnectedInstallationPrereq(t *testing.T) {
+func TestValidateNodeListDuplicate(t *testing.T) {
 	tests := []struct {
-		cluster  Cluster
-		registry DockerRegistry
-		valid    bool
+		nl    nodeList
+		valid bool
 	}{
 		{
-			cluster: Cluster{
-				DisconnectedInstallation: true,
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+					},
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+					},
+					{
+						Host: "host2",
+						IP:   "10.0.0.2",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+					},
+					{
+						Host: "host1",
+						IP:   "10.0.0.2",
+					},
+				},
 			},
 			valid: false,
 		},
 		{
-			cluster: Cluster{
-				DisconnectedInstallation: true,
-			},
-			registry: DockerRegistry{
-				SetupInternal: true,
-				Address:       "",
-			},
-			valid: true,
-		},
-		{
-			cluster: Cluster{
-				DisconnectedInstallation: true,
-			},
-			registry: DockerRegistry{
-				SetupInternal: false,
-				Address:       "10.0.0.1",
-			},
-			valid: true,
-		},
-		{
-			registry: DockerRegistry{
-				SetupInternal: true,
-			},
-			valid: true,
-		},
-		{
-			registry: DockerRegistry{
-				Address: "10.0.0.1",
-			},
-			valid: true,
-		},
-		{
-			registry: DockerRegistry{},
-			valid:    true,
-		},
-		{
-			cluster: Cluster{
-				DisconnectedInstallation: true,
-				DisableRegistrySeeding:   true,
-			},
-			registry: DockerRegistry{
-				SetupInternal: true,
-				Address:       "",
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.2",
+					},
+					{
+						Host: "host2",
+						IP:   "10.0.0.2",
+					},
+				},
 			},
 			valid: false,
 		},
 		{
-			cluster: Cluster{
-				DisconnectedInstallation: true,
-				DisableRegistrySeeding:   true,
+			nl: nodeList{
+				[]Node{
+					{
+						Host:       "host1",
+						IP:         "10.0.0.1",
+						InternalIP: "192.168.205.10",
+					},
+					{
+						Host:       "host2",
+						IP:         "10.0.0.2",
+						InternalIP: "192.168.205.10",
+					},
+				},
 			},
-			registry: DockerRegistry{
-				SetupInternal: false,
-				Address:       "10.0.0.1",
-			},
-			valid: true,
-		},
-		{
-			cluster: Cluster{
-				DisconnectedInstallation: false,
-				DisableRegistrySeeding:   true,
-			},
-			registry: DockerRegistry{
-				SetupInternal: true,
-				Address:       "",
-			},
-			valid: true,
+			valid: false,
 		},
 	}
 	for i, test := range tests {
-		ok, _ := disconnectedInstallation{cluster: test.cluster, registry: test.registry}.validate()
+		ok, _ := test.nl.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
+func TestValidatePlanDisconnectedInstallationFailsDueToMissingRegistry(t *testing.T) {
+	plan := validPlan
+	plan.Cluster.DisconnectedInstallation = true
+	ok, errs := plan.validate()
+	if ok {
+		t.Errorf("expected validation to fail due to missing external registry information in plan")
+	}
+	var found bool
+	for _, err := range errs {
+		if err.Error() == "A container image registry is required when disconnected_installation is true" {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("validation did not return the expected failure message")
+	}
+}
+
+func TestValidatePlanDisconnectedInstallationSucceeds(t *testing.T) {
+	plan := validPlan
+	plan.Cluster.DisconnectedInstallation = true
+	plan.DockerRegistry.Server = "localhost:5000"
+	if ok, errs := plan.validate(); !ok {
+		t.Error("expected validation to succeed, but it failed")
+		t.Logf("errors were: %v\n", errs)
+	}
+}
+
+func TestDockerRegistry(t *testing.T) {
+	tests := []struct {
+		d     DockerRegistry
+		valid bool
+	}{
+		{
+			d:     DockerRegistry{},
+			valid: true,
+		},
+		{
+			d: DockerRegistry{
+				Server: "172.0.0.1",
+				CAPath: "/bin/sh",
+			},
+			valid: true,
+		},
+		{
+			d: DockerRegistry{
+				Server:   "172.0.0.1",
+				Username: "user",
+				Password: "password",
+			},
+			valid: true,
+		},
+		{
+			d: DockerRegistry{
+				Address: "172.0.0.1",
+				CAPath:  "/bin/sh",
+			},
+			valid: true,
+		},
+		{
+			d: DockerRegistry{
+				Address:  "172.0.0.1",
+				Username: "user",
+				Password: "password",
+			},
+			valid: true,
+		},
+		{
+			d: DockerRegistry{
+				CAPath: "user",
+			},
+			valid: false,
+		},
+		{
+			d: DockerRegistry{
+				Username: "user",
+			},
+			valid: false,
+		},
+		{
+			d: DockerRegistry{
+				Password: "password",
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.d.validate()
 		if ok != test.valid {
 			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
 		}
@@ -910,64 +958,6 @@ func TestValidateDockerStorageDirectLVM(t *testing.T) {
 		ok, _ := test.config.validate()
 		if ok != test.valid {
 			t.Errorf("test %d: expect valid, but got invalid", i)
-		}
-	}
-}
-
-func TestRepository(t *testing.T) {
-	tests := []struct {
-		config Cluster
-		valid  bool
-	}{
-		{
-			config: Cluster{
-				PackageRepoURLs: "",
-			},
-			valid: true,
-		},
-		{
-			config: Cluster{
-				PackageRepoURLs: "https://repo.com",
-			},
-			valid: true,
-		},
-		{
-			config: Cluster{
-				PackageRepoURLs: "http://repo.com",
-			},
-			valid: true,
-		},
-		{
-			config: Cluster{
-				PackageRepoURLs: "http://192.168.0.1",
-			},
-			valid: true,
-		},
-		{
-			config: Cluster{
-				PackageRepoURLs: "https://repo.com/kismatic,https://repo.com/gluster",
-			},
-			valid: true,
-		},
-		{
-			config: Cluster{
-				PackageRepoURLs: "repo.com",
-			},
-			valid: false,
-		},
-		{
-			config: Cluster{
-				PackageRepoURLs: "https://repo.com/kismatic,repo.com/gluster",
-			},
-			valid: false,
-		},
-	}
-	for i, test := range tests {
-		p := &validPlan
-		p.Cluster.PackageRepoURLs = test.config.PackageRepoURLs
-		ok, _ := p.Cluster.validate()
-		if ok != test.valid {
-			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
 		}
 	}
 }
@@ -1056,6 +1046,78 @@ func TestCNIAddOn(t *testing.T) {
 				},
 			},
 			valid: true,
+		},
+		{
+			n: CNI{
+				Provider: "calico",
+				Options: CNIOptions{
+					Calico: CalicoOptions{
+						Mode:     "overlay",
+						LogLevel: "",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			n: CNI{
+				Provider: "calico",
+				Options: CNIOptions{
+					Calico: CalicoOptions{
+						Mode:     "overlay",
+						LogLevel: "info",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			n: CNI{
+				Provider: "calico",
+				Options: CNIOptions{
+					Calico: CalicoOptions{
+						Mode:     "overlay",
+						LogLevel: "warning",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			n: CNI{
+				Provider: "calico",
+				Options: CNIOptions{
+					Calico: CalicoOptions{
+						Mode:     "overlay",
+						LogLevel: "debug",
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			n: CNI{
+				Provider: "calico",
+				Options: CNIOptions{
+					Calico: CalicoOptions{
+						Mode:     "overlay",
+						LogLevel: "INFO",
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			n: CNI{
+				Provider: "calico",
+				Options: CNIOptions{
+					Calico: CalicoOptions{
+						Mode:     "overlay",
+						LogLevel: "foo",
+					},
+				},
+			},
+			valid: false,
 		},
 	}
 	for i, test := range tests {
@@ -1167,6 +1229,308 @@ func TestPackageManagerAddOn(t *testing.T) {
 	}
 	for i, test := range tests {
 		ok, _ := test.p.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
+func TestCloudProvider(t *testing.T) {
+	tests := []struct {
+		c     CloudProvider
+		valid bool
+	}{
+		{
+			c: CloudProvider{
+				Provider: "",
+			},
+			valid: true,
+		},
+		{
+			c: CloudProvider{
+				Provider: "aws",
+			},
+			valid: true,
+		},
+		{
+			c: CloudProvider{
+				Provider: "awss",
+			},
+			valid: false,
+		},
+		{
+			c: CloudProvider{
+				Provider: "gce",
+				Config:   "/bin/sh",
+			},
+			valid: true,
+		},
+		{
+			c: CloudProvider{
+				Provider: "gce",
+				Config:   "/bin/foo",
+			},
+			valid: false,
+		},
+		{
+			c: CloudProvider{
+				Provider: "gce",
+				Config:   "foo",
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.c.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
+func TestNodeLabels(t *testing.T) {
+	tests := []struct {
+		n     Node
+		valid bool
+	}{
+		{
+			n: Node{
+				Host: "foo",
+				IP:   "192.1.1.1",
+			},
+			valid: true,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{},
+			},
+			valid: true,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"com.foo/bar": ""},
+			},
+			valid: true,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"com.foo/bar": "foobar"},
+			},
+			valid: true,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"com.foo/bar": "foobar", "com.foo/xyz": "xyz"},
+			},
+			valid: true,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"kismatic/foo": "bar"},
+			},
+			valid: false,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"com.foo/kismatic-version": "v1.0.0"},
+			},
+			valid: true,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"": "com.foo/worker"},
+			},
+			valid: false,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"": ""},
+			},
+			valid: false,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"node-type:test": "test"},
+			},
+			valid: false,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"com.foo/invalid": ":test"},
+			},
+			valid: false,
+		},
+		{
+			n: Node{
+				Host:   "foo",
+				IP:     "192.1.1.1",
+				Labels: map[string]string{"node-type:test": ":test"},
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.n.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
+func TestNodeKubeletOptions(t *testing.T) {
+	tests := []struct {
+		nl    nodeList
+		valid bool
+	}{
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "2",
+							},
+						},
+					},
+					{
+						Host: "host2",
+						IP:   "10.0.0.2",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "2",
+							},
+						},
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "2",
+							},
+						},
+					},
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "2",
+							},
+						},
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "2",
+							},
+						},
+					},
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"foo": "bar",
+							},
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "2",
+							},
+						},
+					},
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "3",
+							},
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			nl: nodeList{
+				[]Node{
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v": "2",
+							},
+						},
+					},
+					{
+						Host: "host1",
+						IP:   "10.0.0.1",
+						KubeletOptions: KubeletOptions{
+							Overrides: map[string]string{
+								"v":   "2",
+								"foo": "bar",
+							},
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.nl.validate()
 		if ok != test.valid {
 			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
 		}

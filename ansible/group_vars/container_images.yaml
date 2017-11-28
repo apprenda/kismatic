@@ -1,0 +1,85 @@
+official_images:
+  etcd:
+    name: quay.io/coreos/etcd
+    version: v3.1.10
+  kube_proxy:
+    name: gcr.io/google-containers/kube-proxy-amd64
+    version: v1.8.4
+  kube_controller_manager:
+    name: gcr.io/google-containers/kube-controller-manager-amd64
+    version: v1.8.4
+  kube_scheduler:
+    name: gcr.io/google-containers/kube-scheduler-amd64
+    version: v1.8.4
+  kube_apiserver:
+    name: gcr.io/google-containers/kube-apiserver-amd64
+    version: v1.8.4
+  calico_node:
+    name: calico/node
+    version: v2.6.2
+  calico_ctl:
+    name: calico/ctl
+    version: v1.6.1
+  calico_cni:
+    name: calico/cni
+    version: v1.11.0
+  calico_kube_controller:
+    name: calico/kube-controllers
+    version: v1.0.0
+  cni_bin:
+    name: apprenda/cni-bin
+    version: v0.5.2
+  contiv_netplugin:
+    name: contiv/netplugin
+    version: 1.1.1
+  contiv_authproxy:
+    name: contiv/auth_proxy
+    version: 1.1.1
+  weave:
+    name: weaveworks/weave-kube
+    version: 2.0.5
+  weave_npc:
+    name: weaveworks/weave-npc
+    version: 2.0.5
+  defaultbackend:
+    name: gcr.io/google_containers/defaultbackend
+    version: 1.0
+  nginx_ingress_controller:
+    name: gcr.io/google_containers/nginx-ingress-controller
+    version: 0.8.3
+  nginx:
+    name: nginx
+    version: stable-alpine
+  busybox:
+    name: busybox
+    version: latest
+  pause:
+    name: gcr.io/google_containers/pause-amd64
+    version: 3.0
+  kubedns:
+    name: gcr.io/google_containers/k8s-dns-kube-dns-amd64
+    version: 1.14.5
+  kube_dnsmasq:
+    name: gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64
+    version: 1.14.5
+  kubedns_sidecar: 
+    name: gcr.io/google_containers/k8s-dns-sidecar-amd64
+    version: 1.14.5
+  kubernetes_dashboard: 
+    name: gcr.io/google_containers/kubernetes-dashboard-amd64
+    version: v1.6.3
+  apprenda_tcp_healthz: 
+    name: apprenda/tcp-healthz-amd64
+    version: v1.0.0
+  helm: 
+    name: gcr.io/kubernetes-helm/tiller
+    version: v2.7.0
+  heapster: 
+    name: gcr.io/google_containers/heapster-amd64
+    version: v1.4.3
+  influxdb: 
+    name: gcr.io/google_containers/heapster-influxdb-amd64
+    version: v1.1.1  
+  rescheduler: 
+    name: gcr.io/google-containers/rescheduler
+    version: v0.3.1

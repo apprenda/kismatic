@@ -27,7 +27,7 @@ func TestClient(t *testing.T) {
 		},
 	}
 	fmt.Println("Creating node")
-	nodeID, err := c.CreateNode(Ubuntu1604LTSEast, T2Micro)
+	nodeID, err := c.CreateNode(Ubuntu1604LTSEast, T2Micro, nil)
 	if err != nil {
 		t.Fatalf("Failed to create node: %v", err)
 	}

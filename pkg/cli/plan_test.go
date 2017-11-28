@@ -25,7 +25,7 @@ func TestPlanCmdPlanNotFound(t *testing.T) {
 			expectedIngress: 2,
 		},
 		{
-			// User enteres node countes
+			// User enters node counts
 			in:              strings.NewReader("8\n\n\n\n"),
 			expectedEtcd:    8,
 			expectedMaster:  2,
@@ -33,7 +33,7 @@ func TestPlanCmdPlanNotFound(t *testing.T) {
 			expectedIngress: 2,
 		},
 		{
-			// User enteres node countes
+			// User enters node counts
 			in:              strings.NewReader("8\n\n\n3\n"),
 			expectedEtcd:    8,
 			expectedMaster:  2,
@@ -41,7 +41,7 @@ func TestPlanCmdPlanNotFound(t *testing.T) {
 			expectedIngress: 3,
 		},
 		{
-			// User enteres node countes
+			// User enters node counts
 			in:              strings.NewReader("8\n\n\n0\n"),
 			expectedEtcd:    8,
 			expectedMaster:  2,

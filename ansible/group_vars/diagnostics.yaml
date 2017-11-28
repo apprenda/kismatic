@@ -30,7 +30,7 @@ diagnostics:
     - {msg: "Dumping dnsmasq docker logs", command: "docker logs `docker ps -a -f name=k8s_dnsmasq --format=\\{\\{.ID\\}\\} -l`", file: "logs_dnsmasq.log"}
     - {msg: "Dumping kubedns sidecar docker logs", command: "docker logs `docker ps -a -f name=k8s_sidecar_kube-dns --format=\\{\\{.ID\\}\\} -l`", file: "logs_kubedns_sidecar.log"}
   calico_diagnostics:
-    - {msg: "Dumping calico-node nodes", command: "docker run -i{% if modify_hosts_file is defined and modify_hosts_file|bool == true %} -v /etc/hosts:/etc/hosts{% endif %} -v /etc/kubernetes:/etc/kubernetes -v {{ calicoctl_conf_path }}:{{ calicoctl_conf_path }} {{ calico_ctl_img }} get nodes -o wide", file: "calicoctl_nodes.log"}
+    - {msg: "Dumping calico-node nodes", command: "docker run -i{% if modify_hosts_file is defined and modify_hosts_file|bool == true %} -v /etc/hosts:/etc/hosts{% endif %} -v /etc/kubernetes:/etc/kubernetes -v {{ calicoctl_conf_path }}:{{ calicoctl_conf_path }} {{ images.calico_ctl }} get nodes -o wide", file: "calicoctl_nodes.log"}
     - {msg: "Dumping calico-node docker logs", command: "docker logs `docker ps -a -f name=k8s_calico-node --format=\\{\\{.ID\\}\\} -l`", file: "logs_calico_node.log"}
     - {msg: "Dumping calico-cni docker logs", command: "docker logs `docker ps -a -f name=k8s_install-cni --format=\\{\\{.ID\\}\\} -l`", file: "logs_calico_cni.log"}
     - {msg: "Dumping netstat", command: "netstat --all --numeric", file: "netstat.log"}
@@ -43,9 +43,9 @@ diagnostics:
     - {msg: "Dumping iptables (IPv6)", command: "ip6tables-save", file: "ipv6_tables.log"}
     - {msg: "Dumping ipsets", command: "ipset list", file: "ipsets.log"}
   etcd_diagnostics:
-    - {msg: "Dumping etcd_k8s.service status", command: "systemctl status etcd_k8s", file: "systemd_etcd_k8s.log"}
+    - {msg: "Getting etcd_k8s.service status", command: "systemctl status etcd_k8s", file: "systemd_etcd_k8s.log"}
     - {msg: "Dumping journal for etcd_k8s.service", command: "journalctl -u etcd_k8s.service --no-pager", file: "journalctl_etcd_k8s.log"}
-    - {msg: "Getting etcd_k8s health", command: "/usr/bin/etcdctl --endpoint='https://127.0.0.1:2379/' --cert-file=/etc/etcd_networking/etcd.pem --key-file=/etc/etcd_networking/etcd-key.pem --ca-file=/etc/etcd_networking/ca.pem cluster-health", file: "etcd_k8s_health.log"}
-    - {msg: "Dumping etcd_networking.service status", command: "systemctl status etcd_networking", file: "systemd_etcd_networking.log"}
+    - {msg: "Getting etcd_k8s health", command: "docker run --net=host --volume=/etc/etcd_k8s/:/etc/etcd_k8s/:ro {{ images.etcd }} /usr/local/bin/etcdctl --endpoint='https://127.0.0.1:2379/' --cert-file=/etc/etcd_k8s/etcd.pem --key-file=/etc/etcd_k8s/etcd-key.pem --ca-file=/etc/etcd_k8s/ca.pem cluster-health", file: "etcd_k8s_health.log"}
+    - {msg: "Getting etcd_networking.service status", command: "systemctl status etcd_networking", file: "systemd_etcd_networking.log"}
     - {msg: "Dumping journal for etcd_networking.service", command: "journalctl -u etcd_networking.service --no-pager", file: "journalctl_etcd_networking.log"}
-    - {msg: "Getting etcd_networking health", command: "/usr/bin/etcdctl --endpoint='https://127.0.0.1:6666/' --cert-file=/etc/etcd_networking/etcd.pem --key-file=/etc/etcd_networking/etcd-key.pem --ca-file=/etc/etcd_networking/ca.pem cluster-health", file: "etcd_networking_health.log"}
+    - {msg: "Getting etcd_networking health", command: "docker run --net=host --volume=/etc/etcd_networking/:/etc/etcd_networking/:ro {{ images.etcd }} /usr/local/bin/etcdctl --endpoint='https://127.0.0.1:6666/' --cert-file=/etc/etcd_networking/etcd.pem --key-file=/etc/etcd_networking/etcd-key.pem --ca-file=/etc/etcd_networking/ca.pem cluster-health", file: "etcd_networking_health.log"}

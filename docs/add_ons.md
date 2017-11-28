@@ -40,8 +40,9 @@ In this configuration, KET will skip the cluster smoke test, as it will fail wit
 a working pod network.
 
 ## DNS
-DNS provides service discovery to pods running on the cluster. 
-KET deploys [KubeDNS](https://github.com/kubernetes/dns) as the DNS service on the cluster.
+DNS provides service discovery to pods running on the cluster, and is a required component for a functional cluster. 
+
+There are different options available on the market, though KET deploys [KubeDNS](https://github.com/kubernetes/dns) as the DNS service on the cluster. If you chose to deploy an alternative DNS solution, you can disable the installation and validation of KubeDNS by setting the below flag.
 
 Plan file options:
 

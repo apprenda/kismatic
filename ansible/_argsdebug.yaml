@@ -1,7 +1,0 @@
----
-  - name: Dump arguments
-    hosts: all
-    gather_facts: no
-    tasks:
-     - debug:
-         var: vars

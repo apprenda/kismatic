@@ -60,10 +60,6 @@ func (fe *fakeExecutor) UpgradeNodes(install.Plan, []install.ListableNode, bool,
 	return nil
 }
 
-func (fe *fakeExecutor) UpgradeEtcd2Nodes(install.Plan, []install.ListableNode) error {
-	return nil
-}
-
 func (fe *fakeExecutor) ValidateControlPlane(install.Plan) error {
 	return nil
 }
@@ -76,10 +72,6 @@ func (fe *fakeExecutor) UpgradeClusterServices(install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) MigrateEtcdCluster(install.Plan) error {
-	return nil
-}
-
 func (fe *fakeExecutor) RunSmokeTest(p *install.Plan) error {
 	return nil
 }
@@ -89,6 +81,10 @@ func (fe *fakeExecutor) RunPlay(string, *install.Plan) error {
 }
 
 func (fe *fakeExecutor) AddVolume(*install.Plan, install.StorageVolume) error {
+	return nil
+}
+
+func (fe *fakeExecutor) DeleteVolume(*install.Plan, string) error {
 	return nil
 }
 

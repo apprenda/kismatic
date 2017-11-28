@@ -8,4 +8,4 @@
   # make sure repos cache is updated
   - include: _packages-repo.yaml
     when: allow_package_installation|bool == true
-  - include: _upgrade-preflight.yaml
+  - include: _preflight.yaml upgrading=true

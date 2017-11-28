@@ -1,4 +1,4 @@
-# Docker
+# Docker Configuration
 
 Kismatic supports docker as the underlying container runtime for your cluster. During the installation of your cluster, 
 Kismatic will download and install docker on all nodes except `etcd` nodes.

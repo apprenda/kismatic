@@ -80,7 +80,7 @@ func doCertificatesGenerate(name string, opts *certificatesGenerateOpts, out io.
 	if exists && !opts.overwrite {
 		util.PrettyPrintWarn(out, "Certficate '%s.pem' already exists in '%s' directory, use --overwrite option", name, opts.generatedAssetsDir)
 	} else {
-		util.PrettyPrintOk(out, "Certficate '%s.pem' created succesfully in '%s' directory", name, opts.generatedAssetsDir)
+		util.PrettyPrintOk(out, "Certficate '%s.pem' created successfully in '%s' directory", name, opts.generatedAssetsDir)
 	}
 
 	return nil
