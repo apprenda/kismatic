@@ -360,6 +360,7 @@ func (api Clusters) Delete(w http.ResponseWriter, r *http.Request, p httprouter.
 	}
 	// update the state and put to the store
 	fromStore.DesiredState = "destroyed"
+	fromStore.CanContinue = true
 	if err := putToStore(id, *fromStore, api.Store); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf(err.Error()))
