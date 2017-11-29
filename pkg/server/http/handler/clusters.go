@@ -19,7 +19,55 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
+// ErrClusterNotFound is the error returned by the API when a requested cluster
+// is not found in the server.
 var ErrClusterNotFound = errors.New("cluster details not found in the store")
+
+// The Clusters handler exposes endpoints for managing the lifecycle of clusters
+type Clusters struct {
+	Store     store.ClusterStore
+	AssetsDir string
+	Logger    *log.Logger
+}
+
+// ClusterRequest is the cluster resource defined by the user of the API
+type ClusterRequest struct {
+	Name         string      `json:"name"`
+	DesiredState string      `json:"desiredState"`
+	EtcdCount    int         `json:"etcdCount"`
+	MasterCount  int         `json:"masterCount"`
+	WorkerCount  int         `json:"workerCount"`
+	IngressCount int         `json:"ingressCount"`
+	Provisioner  Provisioner `json:"provisioner"`
+}
+
+// ClusterResponse is the cluster resource returned by the server
+type ClusterResponse struct {
+	Name         string      `json:"name"`
+	DesiredState string      `json:"desiredState"`
+	CurrentState string      `json:"currentState"`
+	ClusterIP    string      `json:"clusterIP"`
+	EtcdCount    int         `json:"etcdCount"`
+	MasterCount  int         `json:"masterCount"`
+	WorkerCount  int         `json:"workerCount"`
+	IngressCount int         `json:"ingressCount"`
+	Provisioner  Provisioner `json:"provisioner"`
+}
+
+// The Provisioner defines the infrastructure provisioner that should be used
+// for hosting the cluster
+type Provisioner struct {
+	// Options: aws
+	Provider   string                 `json:"provider"`
+	AWSOptions *AWSProvisionerOptions `json:"options,omitempty"`
+}
+
+// The AWSProvisionerOptions are options that are specific to the AWS provisioner
+type AWSProvisionerOptions struct {
+	install.AWSProvisionerOptions
+	AccessKeyID     string `json:"accessKeyID,omitempty"`
+	SecretAccessKey string `json:"secretAccessKey,omitempty"`
+}
 
 // TODO should this be extracted from the install pkg?
 type validatable interface {
@@ -146,51 +194,8 @@ func formatErrs(errs []error) []string {
 	return out
 }
 
-type ClusterRequest struct {
-	Name         string      `json:"name"`
-	DesiredState string      `json:"desiredState"`
-	EtcdCount    int         `json:"etcdCount"`
-	MasterCount  int         `json:"masterCount"`
-	WorkerCount  int         `json:"workerCount"`
-	IngressCount int         `json:"ingressCount"`
-	Provisioner  Provisioner `json:"provisioner"`
-}
-
 var validStates = []string{"installed"}
 var validProvisionerProviders = []string{"aws"}
-
-type ClusterResponse struct {
-	Name         string      `json:"name"`
-	DesiredState string      `json:"desiredState"`
-	CurrentState string      `json:"currentState"`
-	ClusterIP    string      `json:"clusterIP"`
-	EtcdCount    int         `json:"etcdCount"`
-	MasterCount  int         `json:"masterCount"`
-	WorkerCount  int         `json:"workerCount"`
-	IngressCount int         `json:"ingressCount"`
-	Provisioner  Provisioner `json:"provisioner"`
-}
-
-type Provisioner struct {
-	// Options: aws
-	Provider   string                 `json:"provider"`
-	AWSOptions *AWSProvisionerOptions `json:"options,omitempty"`
-}
-
-type Cluster struct {
-}
-
-type AWSProvisionerOptions struct {
-	install.AWSProvisionerOptions
-	AccessKeyID     string `json:"accessKeyID,omitempty"`
-	SecretAccessKey string `json:"secretAccessKey,omitempty"`
-}
-
-type Clusters struct {
-	Store     store.ClusterStore
-	AssetsDir string
-	Logger    *log.Logger
-}
 
 func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	req := &ClusterRequest{}

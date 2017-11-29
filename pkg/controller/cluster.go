@@ -64,6 +64,7 @@ func (c *clusterController) run(watch <-chan struct{}) {
 
 // reconcile the cluster / take it to the desired state
 func (c *clusterController) reconcile(cluster store.Cluster) {
+	c.log.Printf("cluster %q - current state: %s, desired state: %s, can continue: %v", c.clusterName, cluster.CurrentState, cluster.DesiredState, cluster.CanContinue)
 	for cluster.CurrentState != cluster.DesiredState && cluster.CanContinue {
 		// transition cluster and update its state in the store
 		cluster = c.transition(cluster)
