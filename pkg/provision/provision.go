@@ -18,11 +18,11 @@ const terraformBinaryPath = "../../bin/terraform"
 
 // Terraform provisioner
 type Terraform struct {
-	Output     io.Writer
-	BinaryPath string
-	Owner      string
-	Version    semver.Version
-	Logger     *log.Logger
+	Output          io.Writer
+	BinaryPath      string
+	ClusterOwner    string
+	KismaticVersion semver.Version
+	Logger          *log.Logger
 }
 
 //An aggregate of different tfNodes (different fields, the same nodes)

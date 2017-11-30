@@ -117,9 +117,9 @@ func doServer(stdout io.Writer, options serverOptions) error {
 
 	// Setup provisioner
 	terraform := provision.Terraform{
-		Output:     os.Stdout,
-		BinaryPath: filepath.Join(pwd, "terraform/bin/terraform"),
-		Version:    install.KismaticVersion,
+		Output:          os.Stdout,
+		BinaryPath:      filepath.Join(pwd, "terraform/bin/terraform"),
+		KismaticVersion: install.KismaticVersion,
 	}
 
 	ctrl := controller.New(
