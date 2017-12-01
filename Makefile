@@ -83,7 +83,6 @@ clean:
 	rm -rf vendor
 	rm -rf vendor-ansible
 	rm -rf vendor-terraform
-	rm -rf integration/vendor
 	rm -rf vendor-kuberang
 	rm -rf vendor-helm
 	rm -rf vendor-kubectl
@@ -181,20 +180,19 @@ bare-dist: vendor-ansible/out vendor-terraform/out vendor-kuberang/$(KUBERANG_VE
 	tar -czf kismatic.tar.gz -C out .
 	mv kismatic.tar.gz out
 
-integration/vendor: tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH)
+get-ginkgo:
 	go get github.com/onsi/ginkgo/ginkgo
-	cd integration && ../tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH) install
 
-just-integration-test: integration/vendor
+just-integration-test: get-ginkgo
 	ginkgo --skip "\[slow\]" -p $(GINKGO_OPTS) -v integration
 
-slow-integration-test: integration/vendor
+slow-integration-test: get-ginkgo
 	ginkgo --focus "\[slow\]" -p $(GINKGO_OPTS) -v integration
 
-serial-integration-test: integration/vendor
+serial-integration-test: get-ginkgo
 	ginkgo -v integration
 
-focus-integration-test: integration/vendor
+focus-integration-test: get-ginkgo
 	ginkgo --focus $(FOCUS) $(GINKGO_OPTS) -v integration
 
 docs/generate-kismatic-cli:

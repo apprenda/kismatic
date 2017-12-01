@@ -1,5 +1,5 @@
-hash: fb3da16a5093d86bb1350dce9f7e44a41591b4b253154dc61a8d3aa35c73e654
-updated: 2017-11-15T09:50:43.005879-05:00
+hash: d7ed159535dd81271076562ba9e50d1a8b64b3a5497f570c25ade5ba8ec16a1d
+updated: 2017-12-01T15:56:14.379987745-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 40f45e34986ba617a372d1590de273a0ca84a53d
@@ -80,7 +80,7 @@ imports:
 - name: github.com/fortytw2/leaktest
   version: 7dad53304f9614c1c365755c1176a8e876fee3e8
 - name: github.com/go-ini/ini
-  version: 3d73f4b845efdf9989fffd4b4e562727744a34ba
+  version: 03e0e7d51a13a91c765d8d0161246bc14a38001a
 - name: github.com/google/certificate-transparency
   version: 6e5648d13b43cdde25cc8274b87675230ffefbd6
   repo: https://github.com/google/certificate-transparency
@@ -118,7 +118,7 @@ imports:
 - name: github.com/nwaples/rardecode
   version: e06696f847aeda6f39a8f0b7cdff193b7690aef6
 - name: github.com/onsi/ginkgo
-  version: 8382b23d18dbaaff8e5f7e83784c53ebb8ec2f47
+  version: 9eda700730cba42af70d53180f9dcce9266bc2bc
   subpackages:
   - config
   - internal/codelocation
@@ -152,7 +152,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/packethost/packngo
-  version: 8ff1de745a8a4fdc5323ffd9ac2bc55195ff671e
+  version: 91a3a4f65e3cd6ee66d919b4e7103ae038ce66ff
 - name: github.com/pkg/browser
   version: c90ca0c84f15f81c982e32665bffd8d7aac8f097
 - name: github.com/russross/blackfriday
@@ -208,5 +208,5 @@ imports:
   - runes
   - transform
 - name: gopkg.in/yaml.v2
-  version: 25c4ec802a7d637f88d584ab26798e94ad14c13b
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

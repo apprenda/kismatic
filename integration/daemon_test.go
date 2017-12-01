@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/apprenda/kismatic/pkg/server/http/handler"
 	. "github.com/onsi/ginkgo"
 	"github.com/onsi/ginkgo/config"
 	. "github.com/onsi/gomega"
@@ -24,43 +25,6 @@ var tlsIgnoringClient = &http.Client{Transport: &http.Transport{TLSClientConfig:
 
 var daemonProcess *os.Process
 var daemonPort int
-
-// Had to redefine these structs instead of reusing the ones in the handler pkg
-// due to some weird import issue with cfssl.
-// See https://circleci.com/gh/apprenda/kismatic/1470
-type clusterRequest struct {
-	Name         string      `json:"name"`
-	DesiredState string      `json:"desiredState"`
-	ClusterIP    string      `json:"clusterIP"`
-	EtcdCount    int         `json:"etcdCount"`
-	MasterCount  int         `json:"masterCount"`
-	WorkerCount  int         `json:"workerCount"`
-	IngressCount int         `json:"ingressCount"`
-	Provisioner  provisioner `json:"provisioner"`
-}
-
-type clusterResponse struct {
-	Name         string      `json:"name"`
-	DesiredState string      `json:"desiredState"`
-	CurrentState string      `json:"currentState"`
-	ClusterIP    string      `json:"clusterIP"`
-	EtcdCount    int         `json:"etcdCount"`
-	MasterCount  int         `json:"masterCount"`
-	WorkerCount  int         `json:"workerCount"`
-	IngressCount int         `json:"ingressCount"`
-	Provisioner  provisioner `json:"provisioner"`
-}
-
-type provisioner struct {
-	// Options: aws
-	Provider   string                 `json:"provider"`
-	AWSOptions *awsProvisionerOptions `json:"options,omitempty"`
-}
-
-type awsProvisionerOptions struct {
-	AccessKeyID     string `json:"accessKeyID,omitempty"`
-	SecretAccessKey string `json:"secretAccessKey,omitempty"`
-}
 
 func skipIfAWSCredsMissing() {
 	if accessKeyID == "" || secretAccessKey == "" {
@@ -108,16 +72,16 @@ The error: %v
 				skipIfAWSCredsMissing()
 
 				clusterName := "test-cluster-" + generateRandomString(8)
-				payload := clusterRequest{
+				payload := handler.ClusterRequest{
 					Name:         clusterName,
 					DesiredState: "installed",
 					EtcdCount:    1,
 					MasterCount:  1,
 					WorkerCount:  1,
 					IngressCount: 1,
-					Provisioner: provisioner{
+					Provisioner: handler.Provisioner{
 						Provider: "aws",
-						AWSOptions: &awsProvisionerOptions{
+						AWSOptions: &handler.AWSProvisionerOptions{
 							AccessKeyID:     accessKeyID,
 							SecretAccessKey: secretAccessKey,
 						},
@@ -146,7 +110,7 @@ The error: %v
 						Expect(err).ToNot(HaveOccurred())
 						Expect(resp.StatusCode).To(Equal(http.StatusOK))
 
-						var c clusterResponse
+						var c handler.ClusterResponse
 						err = json.NewDecoder(resp.Body).Decode(&c)
 						resp.Body.Close()
 						Expect(err).ToNot(HaveOccurred())
@@ -179,7 +143,7 @@ func destroyAllClusters(port int) error {
 	}
 	defer resp.Body.Close()
 
-	var clusters []clusterResponse
+	var clusters []handler.ClusterResponse
 	err = json.NewDecoder(resp.Body).Decode(&clusters)
 	if err != nil {
 		return fmt.Errorf("error decoding server response: %v", err)
@@ -204,7 +168,7 @@ func destroyAllClusters(port int) error {
 	// The only way to exit this loop is to hit the timeout, or for all clusters
 	// to be destroyed
 	for {
-		var clusters []clusterResponse
+		var clusters []handler.ClusterResponse
 		select {
 		case <-tick:
 			resp, err := tlsIgnoringClient.Get(clustersEndpoint)
