@@ -102,6 +102,42 @@ func (p *Provisioner) validate() (bool, []error) {
 	return v.valid()
 }
 
+type clusterUpdate struct {
+	id      string
+	request ClusterRequest
+	inStore store.Cluster
+}
+
+func (c *clusterUpdate) validate() (bool, []error) {
+	v := newValidator()
+	if c.id != c.request.Name || c.request.Name != c.inStore.Plan.Cluster.Name {
+		v.addError(fmt.Errorf("name must match the cluster requested"))
+	}
+	if c.request.DesiredState == "" {
+		v.addError(fmt.Errorf("desiredState cannot be empty"))
+	} else {
+		if !util.Contains(c.request.DesiredState, validStates) {
+			v.addError(fmt.Errorf("%s is not a valid desiredState, options are: %v", c.request.DesiredState, validStates))
+		}
+	}
+	if c.request.EtcdCount != 0 && (c.request.EtcdCount != c.inStore.Plan.Etcd.ExpectedCount) {
+		v.addError(fmt.Errorf("cluster.etcdCount cannot be modified"))
+	}
+	// allow adding/removing of master, worker or ingress nodes
+	if c.request.MasterCount == 0 {
+		v.addError(fmt.Errorf("cluster.masterCount must be greater than 0"))
+	}
+	if c.request.WorkerCount == 0 {
+		v.addError(fmt.Errorf("cluster.workerCount must be greater than 0"))
+	}
+	if c.request.IngressCount < 0 {
+		v.addError(fmt.Errorf("cluster.ingressCount must be greater than or equal to 0"))
+	}
+	// always require provisioner credentials
+	v.validate(&c.request.Provisioner)
+	return v.valid()
+}
+
 func formatErrs(errs []error) []string {
 	out := make([]string, 0, len(errs))
 	for _, err := range errs {
@@ -113,7 +149,6 @@ func formatErrs(errs []error) []string {
 type ClusterRequest struct {
 	Name         string      `json:"name"`
 	DesiredState string      `json:"desiredState"`
-	ClusterIP    string      `json:"clusterIP"`
 	EtcdCount    int         `json:"etcdCount"`
 	MasterCount  int         `json:"masterCount"`
 	WorkerCount  int         `json:"workerCount"`
@@ -187,7 +222,7 @@ func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.
 		w.WriteHeader(http.StatusConflict)
 		return
 	}
-	sc, err := buildStoreCluster(req)
+	sc, err := buildStoreCluster(req, "")
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		api.Logger.Println(errorf(err.Error()))
@@ -200,6 +235,65 @@ func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.
 	}
 	w.WriteHeader(http.StatusAccepted)
 	w.Write([]byte("ok\n"))
+}
+
+func (api Clusters) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+	id := p.ByName("name")
+	fromStore, err := getFromStore(id, api.Store)
+	if err != nil {
+		if err == ErrClusterNotFound {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		api.Logger.Println(errorf(err.Error()))
+		return
+	}
+
+	req := &ClusterRequest{}
+	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+		http.Error(w, fmt.Sprintf("could not decode body: %s\n", err.Error()), http.StatusBadRequest)
+		return
+	}
+	patch := clusterUpdate{id: id, request: *req, inStore: *fromStore}
+	// validate request
+	valid, errs := patch.validate()
+	if !valid {
+		bytes, err := json.MarshalIndent(formatErrs(errs), "", "  ")
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			api.Logger.Println(errorf("could not marshall response: %v", err))
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		http.Error(w, string(bytes), http.StatusBadRequest)
+		return
+	}
+
+	// patch the store with the request
+	updatedInStore, err := buildStoreCluster(req, fromStore.Plan.Cluster.AdminPassword)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
+		return
+	}
+	if err := putToStore(req.Name, *updatedInStore, api.Store); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf(err.Error()))
+		return
+	}
+
+	// respond with the updated request
+	clusterResp := buildResponse(id, *updatedInStore)
+	bytes, err := json.MarshalIndent(clusterResp, "", "  ")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		api.Logger.Println(errorf("could not marshall response: %v", err))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintln(w, string(bytes))
 }
 
 func (api Clusters) Get(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -400,13 +494,14 @@ func getAllFromStore(cs store.ClusterStore) (map[string]store.Cluster, error) {
 	return msc, nil
 }
 
-func buildStoreCluster(req *ClusterRequest) (*store.Cluster, error) {
+func buildStoreCluster(req *ClusterRequest, password string) (*store.Cluster, error) {
 	// build the plan template
 	planTemplate := install.PlanTemplateOptions{
-		EtcdNodes:    req.EtcdCount,
-		MasterNodes:  req.MasterCount,
-		WorkerNodes:  req.WorkerCount,
-		IngressNodes: req.IngressCount,
+		AdminPassword: password,
+		EtcdNodes:     req.EtcdCount,
+		MasterNodes:   req.MasterCount,
+		WorkerNodes:   req.WorkerCount,
+		IngressNodes:  req.IngressCount,
 	}
 	planner := &install.BytesPlanner{}
 	if err := install.WritePlanTemplate(planTemplate, planner); err != nil {
