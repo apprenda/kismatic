@@ -65,7 +65,9 @@ func (tf Terraform) getLoadBalancer(clusterName, lbName string) (string, error) 
 		return "", fmt.Errorf("Error collecting terraform output: %s", stdoutStderrLB)
 	}
 	lbData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrLB, &lbData)
+	if err := json.Unmarshal(stdoutStderrLB, &lbData); err != nil {
+		return "", err
+	}
 	if len(lbData.Value) != 1 {
 		return "", fmt.Errorf("Expect to get 1 load balancer, but got %d", len(lbData.Value))
 	}
@@ -92,7 +94,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPub)
 	}
 	pubIPData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrPub, &pubIPData)
+	if err := json.Unmarshal(stdoutStderrPub, &pubIPData); err != nil {
+		return nil, err
+	}
 	nodes.IPs = pubIPData.Value
 
 	//Private IPs
@@ -103,7 +107,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPriv)
 	}
 	privIPData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrPriv, &privIPData)
+	if err := json.Unmarshal(stdoutStderrPriv, &privIPData); err != nil {
+		return nil, err
+	}
 	nodes.InternalIPs = privIPData.Value
 
 	//Hosts
@@ -114,7 +120,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrHost)
 	}
 	hostData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrHost, &hostData)
+	if err := json.Unmarshal(stdoutStderrHost, &hostData); err != nil {
+		return nil, err
+	}
 	nodes.Hosts = hostData.Value
 
 	if len(nodes.IPs) != len(nodes.Hosts) {
