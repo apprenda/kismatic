@@ -10,10 +10,6 @@ variable "secret_key" {
   default = ""
 }
 
-variable "version" {
-  default = ""
-}
-
 variable "private_ssh_key_path" {
   default = ""
 }
@@ -25,6 +21,10 @@ variable "public_ssh_key_path" {
 
 variable "ssh_user" {
   default = "ubuntu"
+}
+
+variable "version" {
+  default = ""
 }
 
 variable "cluster_name" {

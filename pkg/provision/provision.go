@@ -49,6 +49,31 @@ type Provisioner interface {
 	Destroy(clusterName string) error
 }
 
+func (tf Terraform) getLoadBalancer(clusterName, lbName string) (string, error) {
+	tfOutLB := fmt.Sprintf("%s_lb", lbName)
+	path, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	cmdDir := filepath.Join(path, "/terraform/clusters/", clusterName)
+
+	//load balancer
+	tfCmdOutputLB := exec.Command(tf.BinaryPath, "output", "-json", tfOutLB)
+	tfCmdOutputLB.Dir = cmdDir
+	stdoutStderrLB, err := tfCmdOutputLB.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("Error collecting terraform output: %s", stdoutStderrLB)
+	}
+	lbData := tfOutputVar{}
+	if err := json.Unmarshal(stdoutStderrLB, &lbData); err != nil {
+		return "", err
+	}
+	if len(lbData.Value) != 1 {
+		return "", fmt.Errorf("Expect to get 1 load balancer, but got %d", len(lbData.Value))
+	}
+	return lbData.Value[0], nil
+}
+
 func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, error) {
 	tfOutPubIPs := fmt.Sprintf("%s_pub_ips", role)
 	tfOutPrivIPs := fmt.Sprintf("%s_priv_ips", role)
@@ -69,7 +94,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPub)
 	}
 	pubIPData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrPub, &pubIPData)
+	if err := json.Unmarshal(stdoutStderrPub, &pubIPData); err != nil {
+		return nil, err
+	}
 	nodes.IPs = pubIPData.Value
 
 	//Private IPs
@@ -80,7 +107,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPriv)
 	}
 	privIPData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrPriv, &privIPData)
+	if err := json.Unmarshal(stdoutStderrPriv, &privIPData); err != nil {
+		return nil, err
+	}
 	nodes.InternalIPs = privIPData.Value
 
 	//Hosts
@@ -91,7 +120,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrHost)
 	}
 	hostData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrHost, &hostData)
+	if err := json.Unmarshal(stdoutStderrHost, &hostData); err != nil {
+		return nil, err
+	}
 	nodes.Hosts = hostData.Value
 
 	if len(nodes.IPs) != len(nodes.Hosts) {

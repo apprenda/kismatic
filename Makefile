@@ -45,6 +45,8 @@ build: vendor # vendor on host because of some permission issues with glide insi
 bare-build: bin/$(GOOS)/kismatic
 
 bare-build-update-dist: bare-build
+	cp -r ansible out/ansible/playbooks
+	cp -r terraform/* out/terraform	
 	cp bin/$(GOOS)/kismatic out/
 
 build-inspector: vendor
