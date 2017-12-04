@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -26,6 +27,7 @@ import (
 
 func TestKismaticPlatform(t *testing.T) {
 	if !testing.Short() {
+		rand.Seed(time.Now().UnixNano())
 		RegisterFailHandler(Fail)
 		junitResultsDir := createJUnitResultsDirectory(t)
 		filename := filepath.Join(junitResultsDir, fmt.Sprintf("junit_%d_%d.xml", config.GinkgoConfig.ParallelNode, time.Now().UnixNano()))
