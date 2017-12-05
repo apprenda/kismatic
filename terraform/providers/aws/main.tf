@@ -87,6 +87,7 @@ resource "aws_subnet" "kismatic_public" {
   vpc_id      = "${aws_vpc.kismatic.id}"
   cidr_block  = "10.0.1.0/24"
   map_public_ip_on_launch = "True"
+  availability_zone = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-public"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -106,6 +107,7 @@ resource "aws_subnet" "kismatic_private" {
   cidr_block  = "10.0.2.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
+  availability_zone = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-private"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -125,6 +127,7 @@ resource "aws_subnet" "kismatic_master" {
   cidr_block  = "10.0.3.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
+  availability_zone = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-master"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -144,6 +147,7 @@ resource "aws_subnet" "kismatic_ingress" {
   cidr_block  = "10.0.4.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
+  availability_zone = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-ingress"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -384,6 +388,7 @@ resource "aws_instance" "bastion" {
   // TODO: setup a bastion node for added security
   ami             = "${data.aws_ami.ubuntu.id}"
   instance_type   = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-bastion-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -410,13 +415,14 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "master" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.master_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_master.id}"]
   // TODO: remove from public when bastion is set up
   subnet_id              = "${var.master_count > 1 ? aws_subnet.kismatic_master.id : aws_subnet.kismatic_public.id}"
   key_name               = "${var.cluster_name}"
   count                  = "${var.master_count}"
   ami                    = "${data.aws_ami.ubuntu.id}"
   instance_type          = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-master-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -450,6 +456,7 @@ resource "aws_instance" "etcd" {
   count                   = "${var.etcd_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-etcd-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -483,6 +490,7 @@ resource "aws_instance" "worker" {
   count                   = "${var.worker_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-worker-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -509,13 +517,14 @@ resource "aws_instance" "worker" {
 }
 
 resource "aws_instance" "ingress" {
-  security_groups         = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.ingress_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_ingress.id}"]
   // TODO: remove from public when bastion is set up
   subnet_id               = "${var.ingress_count > 1 ? aws_subnet.kismatic_ingress.id : aws_subnet.kismatic_public.id}"
   key_name                = "${var.cluster_name}"
   count                   = "${var.ingress_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-ingress-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -549,6 +558,7 @@ resource "aws_instance" "storage" {
   count                   = "${var.storage_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-storage-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
