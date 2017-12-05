@@ -172,11 +172,57 @@ resource "aws_security_group" "kismatic_ssh" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    cidr_blocks     = ["0.0.0.0/0"]
+  tags {
+    "Name"                  = "${var.cluster_name}-securityGroup-lb-ingress"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/securityGroup"= "lb-ingress"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+  }
+}
+
+resource "aws_s3_bucket" "lb_logs" {
+  count  = 0
+  //"${var.master_count > 1 || var.ingress_count > 1 ? 1 : 0}"
+  //Conditionally enable if either LB is active.
+  bucket = "${var.cluster_name}-lb_logs"
+  acl    = "log-delivery-write"
+
+  tags {
+    "Name"                  = "${var.cluster_name}-bucket-lb"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/bucket"       = "lb"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+  }
+}
+
+resource "aws_elb" "kismatic_master" {
+  name            = "${var.cluster_name}-lb-master"
+  internal        = false
+  security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_master.id}"]
+  subnets         = ["${aws_subnet.kismatic_public.id}"]
+
+  //access_logs {
+  //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
+  //  bucket_prefix = "${var.cluster_name}/master"
+  //}
+
+  listener {
+    instance_port     = 6443
+    instance_protocol = "tcp"
+    lb_port           = 6443
+    lb_protocol       = "tcp"
   }
 
   tags {
@@ -184,11 +230,53 @@ resource "aws_security_group" "kismatic_ssh" {
   }
 }
 
-resource "aws_instance" "master" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.master_count}"
+resource "aws_elb" "kismatic_ingress" {
+  name            = "${var.cluster_name}-lb-ingress"
+  internal        = false
+  security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_ingress.id}"]
+  subnets         = ["${aws_subnet.kismatic_public.id}"]
+
+  //access_logs {
+  //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
+  //  bucket_prefix = "${var.cluster_name}/ingress"
+  //}
+
+  listener {
+    instance_port     = 6443
+    instance_protocol = "tcp"
+    lb_port           = 443
+    lb_protocol       = "tcp"
+  } 
+
+  listener {
+    instance_port     = 8080
+    instance_protocol = "tcp"
+    lb_port           = 80
+    lb_protocol       = "tcp"
+  }
+
+  instances = ["${aws_instance.ingress.*.id}"]
+
+  tags {
+    "Name"                  = "${var.cluster_name}-lb-ingress"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/loadBalancer" = "ingress"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+  }
+}
+
+resource "aws_instance" "bastion" {
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  subnet_id              = "${aws_subnet.kismatic_public.id}"
+  key_name               = "${var.cluster_name}"
+  count                  = 0
+  // TODO: setup a bastion node for added security
   ami             = "${data.aws_ami.ubuntu.id}"
   instance_type   = "${var.instance_size}"
   availability_zone       = "${var.AZ}"
@@ -218,9 +306,9 @@ resource "aws_instance" "master" {
 }
 
 resource "aws_instance" "master" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.master_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_master.id}"]
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
-  subnet_id              = "${var.master_count > 1 ? aws_subnet.kismatic_master.id : aws_subnet.kismatic_public.id}"
+  subnet_id              = "${aws_subnet.kismatic_master.id}"
   key_name               = "${var.cluster_name}"
   count                  = "${var.master_count}"
   ami                    = "${data.aws_ami.ubuntu.id}"
@@ -302,9 +390,9 @@ resource "aws_instance" "worker" {
 }
 
 resource "aws_instance" "ingress" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.ingress_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_ingress.id}"]
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
-  subnet_id               = "${var.ingress_count > 1 ? aws_subnet.kismatic_ingress.id : aws_subnet.kismatic_public.id}"
+  subnet_id               = "${aws_subnet.kismatic_ingress.id}"
   key_name                = "${var.cluster_name}"
   count                   = "${var.ingress_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
