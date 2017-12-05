@@ -303,8 +303,6 @@ resource "aws_s3_bucket" "lb_logs" {
 }
 
 resource "aws_elb" "kismatic_master" {
-  count           = "${var.master_count > 1 ? 1 : 0}"
-  //Again, only necessary in the multi-master HA cases
   name            = "${var.cluster_name}-lb-master"
   internal        = false
   security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_master.id}"]
@@ -339,7 +337,6 @@ resource "aws_elb" "kismatic_master" {
 }
 
 resource "aws_elb" "kismatic_ingress" {
-  count           = "${var.ingress_count > 1 ? 1 : 0}"
   name            = "${var.cluster_name}-lb-ingress"
   internal        = false
   security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_ingress.id}"]
@@ -415,9 +412,9 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "master" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.master_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_master.id}"]
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
-  subnet_id              = "${var.master_count > 1 ? aws_subnet.kismatic_master.id : aws_subnet.kismatic_public.id}"
+  subnet_id              = "${aws_subnet.kismatic_master.id}"
   key_name               = "${var.cluster_name}"
   count                  = "${var.master_count}"
   ami                    = "${data.aws_ami.ubuntu.id}"
@@ -517,9 +514,9 @@ resource "aws_instance" "worker" {
 }
 
 resource "aws_instance" "ingress" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.ingress_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_ingress.id}"]
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
-  subnet_id               = "${var.ingress_count > 1 ? aws_subnet.kismatic_ingress.id : aws_subnet.kismatic_public.id}"
+  subnet_id               = "${aws_subnet.kismatic_ingress.id}"
   key_name                = "${var.cluster_name}"
   count                   = "${var.ingress_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
