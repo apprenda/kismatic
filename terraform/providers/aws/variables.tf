@@ -1,5 +1,11 @@
 variable "region" {
   default = "us-east-1"
+  //we need to provide some way for the user to interact with this information
+}
+
+variable "AZ" {
+  default = "us-east-1c"
+  //we need to provide some way for the user to interact with this information
 }
 
 variable "access_key" {

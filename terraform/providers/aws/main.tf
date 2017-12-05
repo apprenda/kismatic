@@ -64,13 +64,39 @@ resource "aws_subnet" "kismatic_public" {
   vpc_id      = "${aws_vpc.kismatic.id}"
   cidr_block  = "10.0.1.0/24"
   map_public_ip_on_launch = "True"
+  availability_zone = "${var.AZ}"
+  tags {
+    "Name"                  = "${var.cluster_name}-subnet-public"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/subnet"       = "public"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+  }
 }
 
 resource "aws_subnet" "kismatic_private" {
   vpc_id      = "${aws_vpc.kismatic.id}"
   cidr_block  = "10.0.2.0/24"
   map_public_ip_on_launch = "True"
-  #This needs to be false eventually
+  //TODO: disable when we add bastion support
+  availability_zone = "${var.AZ}"
+  tags {
+    "Name"                  = "${var.cluster_name}-subnet-private"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/subnet"       = "private"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+  }
 }
 
 resource "aws_subnet" "kismatic_master" {
@@ -78,6 +104,7 @@ resource "aws_subnet" "kismatic_master" {
   cidr_block  = "10.0.3.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
+  availability_zone = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-master"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -97,6 +124,7 @@ resource "aws_subnet" "kismatic_ingress" {
   cidr_block  = "10.0.4.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
+  availability_zone = "${var.AZ}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-ingress"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -163,8 +191,52 @@ resource "aws_instance" "master" {
   count           = "${var.master_count}"
   ami             = "${data.aws_ami.ubuntu.id}"
   instance_type   = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
-    Name = "kismatic - master"
+    "Name"                  = "${var.cluster_name}-bastion-${count.index}"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/nodeRoles"    = "bastion"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+  }
+
+  provisioner "remote-exec" {
+    inline = ["echo ready"]
+
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
+    }
+  }
+}
+
+resource "aws_instance" "master" {
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.master_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_master.id}"]
+  // TODO: remove from public when bastion is set up
+  subnet_id              = "${var.master_count > 1 ? aws_subnet.kismatic_master.id : aws_subnet.kismatic_public.id}"
+  key_name               = "${var.cluster_name}"
+  count                  = "${var.master_count}"
+  ami                    = "${data.aws_ami.ubuntu.id}"
+  instance_type          = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
+  tags {
+    "Name"                  = "${var.cluster_name}-master-${count.index}"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/nodeRoles"    = "master"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 
     provisioner "remote-exec" {
@@ -180,12 +252,14 @@ resource "aws_instance" "master" {
 }
 
 resource "aws_instance" "etcd" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.etcd_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  // TODO: remove from public when bastion is set up
+  subnet_id               = "${aws_subnet.kismatic_private.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.etcd_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     Name = "kismatic - etcd"
   }
@@ -203,12 +277,14 @@ resource "aws_instance" "etcd" {
 }
 
 resource "aws_instance" "worker" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.worker_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  security_groups         = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  // TODO: remove from public when bastion is set up
+  subnet_id               = "${aws_subnet.kismatic_private.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.worker_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     Name = "kismatic - worker"
   }
@@ -226,12 +302,14 @@ resource "aws_instance" "worker" {
 }
 
 resource "aws_instance" "ingress" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.ingress_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}", "${var.ingress_count > 1 ? aws_security_group.kismatic_private.id : aws_security_group.kismatic_lb_ingress.id}"]
+  // TODO: remove from public when bastion is set up
+  subnet_id               = "${var.ingress_count > 1 ? aws_subnet.kismatic_ingress.id : aws_subnet.kismatic_public.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.ingress_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     Name = "kismatic - ingress"
   }
@@ -249,12 +327,14 @@ resource "aws_instance" "ingress" {
 }
 
 resource "aws_instance" "storage" {
-  vpc_security_group_ids = ["${aws_security_group.kismatic_sec_group.id}"]
-  subnet_id       = "${aws_subnet.kismatic_public.id}"
-  key_name        = "${var.cluster_name}"
-  count           = "${var.storage_count}"
-  ami             = "${data.aws_ami.ubuntu.id}"
-  instance_type   = "${var.instance_size}"
+  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  // TODO: remove from public when bastion is set up
+  subnet_id               = "${aws_subnet.kismatic_private.id}"
+  key_name                = "${var.cluster_name}"
+  count                   = "${var.storage_count}"
+  ami                     = "${data.aws_ami.ubuntu.id}"
+  instance_type           = "${var.instance_size}"
+  availability_zone       = "${var.AZ}"
   tags {
     Name = "kismatic - storage"
   }
