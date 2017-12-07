@@ -212,7 +212,14 @@ resource "aws_elb" "kismatic_master" {
   internal        = false
   security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_master.id}"]
   subnets         = ["${aws_subnet.kismatic_public.id}"]
-
+  connection_draining = "True"
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:6443"
+    interval            = 30
+  }
   //access_logs {
   //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
   //  bucket_prefix = "${var.cluster_name}/master"
@@ -235,11 +242,19 @@ resource "aws_elb" "kismatic_ingress" {
   internal        = false
   security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_ingress.id}"]
   subnets         = ["${aws_subnet.kismatic_public.id}"]
-
+  connection_draining = "True"
   //access_logs {
   //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
   //  bucket_prefix = "${var.cluster_name}/ingress"
   //}
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:6443"
+    interval            = 30
+  }
 
   listener {
     instance_port     = 6443
