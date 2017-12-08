@@ -232,6 +232,15 @@ resource "aws_elb" "kismatic_master" {
     lb_protocol       = "tcp"
   }
 
+  listener {
+    instance_port     = 8080
+    instance_protocol = "tcp"
+    lb_port           = 8080
+    lb_protocol       = "tcp"
+  }
+
+  instances = ["${aws_instance.master.*.id}"]
+
   tags {
     Name = "kismatic"
   }
@@ -252,19 +261,19 @@ resource "aws_elb" "kismatic_ingress" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "TCP:6443"
+    target              = "TCP:443"
     interval            = 30
   }
 
   listener {
-    instance_port     = 6443
+    instance_port     = 443
     instance_protocol = "tcp"
     lb_port           = 443
     lb_protocol       = "tcp"
   } 
 
   listener {
-    instance_port     = 8080
+    instance_port     = 80
     instance_protocol = "tcp"
     lb_port           = 80
     lb_protocol       = "tcp"
