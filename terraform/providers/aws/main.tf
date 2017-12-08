@@ -143,7 +143,6 @@ resource "aws_subnet" "kismatic_master" {
 }
 
 resource "aws_subnet" "kismatic_ingress" {
-
   vpc_id      = "${aws_vpc.kismatic.id}"
   cidr_block  = "10.0.4.0/24"
   map_public_ip_on_launch = "True"
@@ -438,39 +437,6 @@ resource "aws_instance" "master" {
   ami                    = "${data.aws_ami.ubuntu.id}"
   instance_type          = "${var.instance_size}"
   availability_zone       = "${var.AZ}"
-  tags {
-    "Name"                  = "${var.cluster_name}-master-${count.index}"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/nodeRoles"    = "master"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
-  }
-  lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
-  }
-
-  provisioner "remote-exec" {
-    inline = ["echo ready"]
-
-    connection {
-      type = "ssh"
-      user = "${var.ssh_user}"
-      private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "2m"
-    }
-  }
-}
-
-resource "aws_instance" "master" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
-  // TODO: remove from public when bastion is set up
-  subnet_id              = "${var.master_count > 1 ? aws_subnet.kismatic_master.id : aws_subnet.kismatic_public.id}"
-  key_name               = "${var.cluster_name}"
-  count                  = "${var.master_count}"
-  ami                    = "${data.aws_ami.ubuntu.id}"
-  instance_type          = "${var.instance_size}"
   tags {
     "Name"                  = "${var.cluster_name}-master-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
