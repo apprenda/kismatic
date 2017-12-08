@@ -57,3 +57,11 @@ output "ingress_hosts" {
 output "storage_hosts" {
   value = ["${aws_instance.storage.*.private_dns}"]
 }
+
+output "master_lb" {
+  value = ["${aws_elb.kismatic_master.*.dns_name}"]
+}
+
+output "ingress_lb" {
+  value = ["${aws_elb.kismatic_ingress.*.dns_name}"]
+}

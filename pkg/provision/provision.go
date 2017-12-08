@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/blang/semver"
+
 	"github.com/apprenda/kismatic/pkg/install"
 )
 
@@ -16,9 +18,11 @@ const terraformBinaryPath = "../../bin/terraform"
 
 // Terraform provisioner
 type Terraform struct {
-	Output     io.Writer
-	BinaryPath string
-	Logger     *log.Logger
+	Output          io.Writer
+	BinaryPath      string
+	ClusterOwner    string
+	KismaticVersion semver.Version
+	Logger          *log.Logger
 }
 
 //An aggregate of different tfNodes (different fields, the same nodes)
@@ -90,7 +94,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPub)
 	}
 	pubIPData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrPub, &pubIPData)
+	if err := json.Unmarshal(stdoutStderrPub, &pubIPData); err != nil {
+		return nil, err
+	}
 	nodes.IPs = pubIPData.Value
 
 	//Private IPs
@@ -101,7 +107,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrPriv)
 	}
 	privIPData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrPriv, &privIPData)
+	if err := json.Unmarshal(stdoutStderrPriv, &privIPData); err != nil {
+		return nil, err
+	}
 	nodes.InternalIPs = privIPData.Value
 
 	//Hosts
@@ -112,7 +120,9 @@ func (tf Terraform) getTerraformNodes(clusterName, role string) (*tfNodeGroup, e
 		return nil, fmt.Errorf("Error collecting terraform output: %s", stdoutStderrHost)
 	}
 	hostData := tfOutputVar{}
-	json.Unmarshal(stdoutStderrHost, &hostData)
+	if err := json.Unmarshal(stdoutStderrHost, &hostData); err != nil {
+		return nil, err
+	}
 	nodes.Hosts = hostData.Value
 
 	if len(nodes.IPs) != len(nodes.Hosts) {

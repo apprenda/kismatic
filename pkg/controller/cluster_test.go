@@ -16,12 +16,9 @@ import (
 	"github.com/apprenda/kismatic/pkg/store"
 )
 
-type dummyExec struct {
-	installSleep time.Duration
-}
+type dummyExec struct{}
 
 func (e dummyExec) Install(p *install.Plan, restartServices bool) error {
-	time.Sleep(e.installSleep)
 	return nil
 }
 
@@ -91,11 +88,10 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	// TODO: the store is leaking a goroutine, so can't enable this
 	// defer leaktest.Check(t)()
 
-	ctx, cancel := context.WithCancel(context.Background())
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
 	// Stub out dependencies
-	executorCreator := func(string) (install.Executor, error) { return dummyExec{installSleep: 1 * time.Second}, nil }
+	executorCreator := func(string) (install.Executor, error) { return dummyExec{}, nil }
 
 	tmpFile, err := ioutil.TempFile("", "cluster-controller-tests")
 	if err != nil {
@@ -116,6 +112,9 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	}
 
 	// Start the controller
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	clusterName := "testCluster"
 	c := New(logger, executorCreator, provisioner, clusterStore, 10*time.Minute)
 	go c.Run(ctx)
@@ -124,18 +123,22 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	// We don't have a way to reliably wait until the controller is watching,
 	// so we have to issue multiple writes
 	writerDone := make(chan struct{})
+	defer func() { close(writerDone) }()
 	go func(done <-chan struct{}) {
 		cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
 		err = clusterStore.Put(clusterName, cluster)
 		if err != nil {
 			t.Fatalf("error storing cluster")
 		}
-		tick := time.Tick(1 * time.Second)
+		tick := time.Tick(3 * time.Second)
 		for {
 			select {
 			case <-tick:
-				cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
-				err = clusterStore.Put(clusterName, cluster)
+				c, err := clusterStore.Get(clusterName)
+				if err != nil {
+					t.Fatalf("error getting cluster")
+				}
+				err = clusterStore.Put(clusterName, *c)
 				if err != nil {
 					t.Fatalf("error storing cluster")
 				}
@@ -146,10 +149,11 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	}(writerDone)
 
 	// Assert that the cluster reaches desired state
-	var done bool
-	for !done {
+	tick := time.Tick(100 * time.Millisecond)
+done:
+	for {
 		select {
-		case <-time.Tick(time.Second):
+		case <-tick:
 			var cluster store.Cluster
 			b, err := s.Get(bucketName, clusterName)
 			if err != nil {
@@ -160,18 +164,11 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 				t.Fatalf("error unmarshaling from store")
 			}
 			if cluster.CurrentState == cluster.DesiredState {
-				cancel()
-				close(writerDone)
-				done = true
-				break
+				break done
 			}
 		case <-time.After(5 * time.Second):
 			fmt.Println("tick")
-			cancel()
-			close(writerDone)
-			t.Errorf("did not reach installed state")
-			done = true
-			break
+			t.Fatalf("did not reach installed state")
 		}
 	}
 }
@@ -179,11 +176,10 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 func TestClusterControllerReconciliationLoop(t *testing.T) {
 	// TODO: the store is leaking a goroutine, so can't enable this
 	// defer leaktest.Check(t)()
-	ctx, cancel := context.WithCancel(context.Background())
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
 	// Stub out dependencies
-	executorCreator := func(string) (install.Executor, error) { return dummyExec{installSleep: 1 * time.Second}, nil }
+	executorCreator := func(string) (install.Executor, error) { return dummyExec{}, nil }
 
 	tmpFile, err := ioutil.TempFile("", "cluster-controller-tests")
 	if err != nil {
@@ -213,12 +209,14 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	}
 
 	// Start the controller
-	c := New(logger, executorCreator, provisioner, clusterStore, 3*time.Second)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	c := New(logger, executorCreator, provisioner, clusterStore, 1*time.Second)
 	go c.Run(ctx)
 
 	// Assert that the cluster reaches desired state
-	var done bool
-	for !done {
+done:
+	for {
 		select {
 		case <-time.Tick(time.Second):
 			var cluster store.Cluster
@@ -231,16 +229,10 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 				t.Fatalf("error unmarshaling from store")
 			}
 			if cluster.CurrentState == cluster.DesiredState {
-				cancel()
-				done = true
-				break
+				break done
 			}
 		case <-time.After(5 * time.Second):
-			fmt.Println("tick")
-			cancel()
-			t.Errorf("did not reach installed state")
-			done = true
-			break
+			t.Fatalf("did not reach installed state")
 		}
 	}
 }

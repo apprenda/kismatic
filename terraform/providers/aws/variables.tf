@@ -25,12 +25,25 @@ variable "public_ssh_key_path" {
   default = ""
 }
 
+variable "ssh_user" {
+  default = "ubuntu"
+}
+
+variable "version" {
+  default = ""
+}
+
 variable "cluster_name" {
   default = "kismatic-cluster"
 }
 
+variable "cluster_owner" {
+  default = ""
+}
+
 variable "ami" {
   default = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
+  //These will have to change when we want to also support RHEL/CentOS
 }
 
 variable "instance_size" {

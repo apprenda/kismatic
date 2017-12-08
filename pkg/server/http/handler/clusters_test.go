@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/store"
 	"github.com/julienschmidt/httprouter"
 )
@@ -221,6 +222,420 @@ func TestValidationShouldError(t *testing.T) {
 	}
 }
 
+func TestUpdateValidationShouldError(t *testing.T) {
+	tests := []struct {
+		cu    clusterUpdate
+		valid bool
+	}{
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  2,
+					WorkerCount:  5,
+					IngressCount: 2,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  2,
+					WorkerCount:  5,
+					IngressCount: 0,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID_NEW",
+							SecretAccessKey: "SECRET_NEW",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  3,
+					WorkerCount:  6,
+					IngressCount: 3,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: true,
+		},
+		{
+			cu: clusterUpdate{
+				id: "bar",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  2,
+					WorkerCount:  5,
+					IngressCount: 2,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "bar",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  2,
+					WorkerCount:  5,
+					IngressCount: 2,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  2,
+					WorkerCount:  5,
+					IngressCount: 2,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "bar",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    5,
+					MasterCount:  2,
+					WorkerCount:  5,
+					IngressCount: 2,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  0,
+					WorkerCount:  5,
+					IngressCount: 2,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  2,
+					WorkerCount:  0,
+					IngressCount: 2,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+		{
+			cu: clusterUpdate{
+				id: "foo",
+				request: ClusterRequest{
+					Name:         "foo",
+					DesiredState: "installed",
+					Provisioner: Provisioner{
+						Provider: "aws",
+						AWSOptions: &AWSProvisionerOptions{
+							AccessKeyID:     "ACCESS_ID",
+							SecretAccessKey: "SECRET",
+						},
+					},
+					EtcdCount:    3,
+					MasterCount:  2,
+					WorkerCount:  5,
+					IngressCount: -1,
+				},
+				inStore: store.Cluster{
+					Plan: install.Plan{
+						Cluster: install.Cluster{
+							Name: "foo",
+						},
+						Etcd: install.NodeGroup{
+							ExpectedCount: 3,
+						},
+						Master: install.MasterNodeGroup{
+							ExpectedCount: 2,
+						},
+						Worker: install.NodeGroup{
+							ExpectedCount: 5,
+						},
+						Ingress: install.OptionalNodeGroup{
+							ExpectedCount: 2,
+						},
+					},
+				},
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, errs := test.cu.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t: %v", i, test.valid, ok, errs)
+		}
+	}
+}
+
 func TestValidation(t *testing.T) {
 	if testing.Short() {
 		return
@@ -271,7 +686,7 @@ func TestValidation(t *testing.T) {
 	}
 }
 
-func TestCreateGetGetandDelete(t *testing.T) {
+func TestCreateUpdateGetGetAllandDelete(t *testing.T) {
 	if testing.Short() {
 		return
 	}
@@ -323,6 +738,50 @@ func TestCreateGetGetandDelete(t *testing.T) {
 			rr.Body.String(), expected)
 	}
 
+	// should update
+	c = &ClusterRequest{
+		Name:         "foo",
+		DesiredState: "installed",
+		Provisioner: Provisioner{
+			Provider: "aws",
+			AWSOptions: &AWSProvisionerOptions{
+				AccessKeyID:     "ACCESS_ID",
+				SecretAccessKey: "SECRET",
+			},
+		},
+		EtcdCount:    3,
+		MasterCount:  2,
+		WorkerCount:  6,
+		IngressCount: 2,
+	}
+	encoded, err = json.Marshal(c)
+	if err != nil {
+		t.Fatalf("could not encode body to json %v", err)
+	}
+	// Create a request to pass to our handler
+	req, err = http.NewRequest("PUT", "/clusters/foo", bytes.NewBuffer(encoded))
+	if err != nil {
+		t.Error(err)
+	}
+	rr = httptest.NewRecorder()
+	r = httprouter.New()
+	r.PUT("/clusters/:name", clustersAPI.Update)
+	r.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusAccepted {
+		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+			status, http.StatusAccepted, rr.Body.String())
+	}
+	resp := &ClusterResponse{}
+	err = json.NewDecoder(rr.Body).Decode(resp)
+	if err != nil {
+		t.Error(err)
+	}
+	if resp.CurrentState != "planned" || resp.WorkerCount != 6 {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), resp)
+	}
+
 	// should get 404
 	req, err = http.NewRequest("GET", "/clusters/bar", nil)
 	if err != nil {
@@ -365,14 +824,14 @@ func TestCreateGetGetandDelete(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusOK, rr.Body.String())
 	}
-	resp := make([]ClusterResponse, 0)
-	err = json.NewDecoder(rr.Body).Decode(&resp)
+	respAll := make([]ClusterResponse, 0)
+	err = json.NewDecoder(rr.Body).Decode(&respAll)
 	if err != nil {
 		t.Error(err)
 	}
-	if len(resp) != 1 {
+	if len(respAll) != 1 {
 		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
+			rr.Body.String(), resp)
 	}
 
 	// should delete
@@ -407,14 +866,14 @@ func TestCreateGetGetandDelete(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v: %s",
 			status, http.StatusOK, rr.Body.String())
 	}
-	resp = make([]ClusterResponse, 0)
-	err = json.NewDecoder(rr.Body).Decode(&resp)
+	respAll = make([]ClusterResponse, 0)
+	err = json.NewDecoder(rr.Body).Decode(&respAll)
 	if err != nil {
 		t.Error(err)
 	}
-	if len(resp) != 1 && resp[0].DesiredState != "destroyed" {
+	if len(respAll) != 1 && respAll[0].DesiredState != "destroyed" {
 		t.Errorf("handler returned unexpected body: got %v want %v",
-			rr.Body.String(), expected)
+			rr.Body.String(), respAll)
 	}
 }
 

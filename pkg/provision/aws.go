@@ -49,13 +49,16 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 
 	// Write out the terraform variables
 	data := AWSTerraformData{
+		Version:           aws.Terraform.KismaticVersion.String(),
 		Region:            plan.Provisioner.AWSOptions.Region,
 		ClusterName:       plan.Cluster.Name,
+		ClusterOwner:      aws.Terraform.ClusterOwner,
 		MasterCount:       plan.Master.ExpectedCount,
 		EtcdCount:         plan.Etcd.ExpectedCount,
 		WorkerCount:       plan.Worker.ExpectedCount,
 		IngressCount:      plan.Ingress.ExpectedCount,
 		StorageCount:      plan.Storage.ExpectedCount,
+		SSHUser:           plan.Cluster.SSH.User,
 		PrivateSSHKeyPath: privKeyPath,
 		PublicSSHKeyPath:  pubKeyPath,
 	}
@@ -117,7 +120,6 @@ func (aws *AWS) buildPopulatedPlan(plan install.Plan) (*install.Plan, error) {
 		ExpectedCount: masterNodes.ExpectedCount,
 		Nodes:         masterNodes.Nodes,
 	}
-
 	mlb, err := aws.getLoadBalancer(plan.Cluster.Name, "master")
 	if err != nil {
 		return nil, err
