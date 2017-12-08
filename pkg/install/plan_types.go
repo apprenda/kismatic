@@ -19,6 +19,10 @@ func InfrastructureProviders() []string {
 	return []string{"aws", ""}
 }
 
+func CompatibleOSes() []string {
+	return []string{"ubuntu", "centos", ""}
+}
+
 func packageManagerProviders() []string {
 	return []string{"helm", ""}
 }
@@ -81,6 +85,9 @@ type Provisioner struct {
 	// The provisioner will expect provider specific ENV variables to be set.
 	// Options: aws
 	Provider string
+	// The OS to be used for provisioning.
+	// Options: ubuntu, centos
+	OS string
 	// AWS specific options.
 	// Only set if using "aws" provider
 	AWSOptions *AWSProvisionerOptions `yaml:"options,omitempty"`

@@ -162,6 +162,9 @@ func (p *Provisioner) validate() (bool, []error) {
 	if !util.Contains(p.Provider, InfrastructureProviders()) {
 		v.addError(fmt.Errorf("%q is not a valid provisioner provider. Options are %v", p.Provider, InfrastructureProviders()))
 	}
+	if !util.Contains(p.OS, CompatibleOSes()) {
+		v.addError(fmt.Errorf("%q is not a valid OS. Options are %v", p.OS, CompatibleOSes()))
+	}
 	return v.valid()
 }
 

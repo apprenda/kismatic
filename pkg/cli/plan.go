@@ -43,6 +43,13 @@ func doPlan(in io.Reader, out io.Writer, planner install.FilePlanner) error {
 	case "aws":
 		fmt.Fprintln(out, "Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY prior to running, otherwise provisioner validation will fail.")
 	}
+	var os string
+	if provisioner != "" {
+		os, err = util.PromptForString(in, out, "Desired operating system", "ubuntu", install.CompatibleOSes())
+		if err != nil {
+			return fmt.Errorf("Error setting desired OS: %v", err)
+		}
+	}
 	etcdNodes, err := util.PromptForInt(in, out, "Number of etcd nodes", 3)
 	if err != nil {
 		return fmt.Errorf("Error reading number of etcd nodes: %v", err)
@@ -105,6 +112,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.FilePlanner) error {
 
 	planTemplate := install.PlanTemplateOptions{
 		ClusterName:               name,
+		ClusterOS:                 os,
 		InfrastructureProvisioner: provisioner,
 		EtcdNodes:                 etcdNodes,
 		MasterNodes:               masterNodes,

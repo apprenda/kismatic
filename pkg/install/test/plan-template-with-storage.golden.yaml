@@ -1,5 +1,6 @@
 provisioner:
   provider: aws
+  os: ubuntu
   options:
     region: ""
 
@@ -53,7 +54,7 @@ cluster:
   ssh:
 
     # This user must be able to sudo without password.
-    user: ""
+    user: ubuntu
 
     # Absolute path to the ssh private key we should use to manage nodes.
     ssh_key: ""

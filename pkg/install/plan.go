@@ -28,6 +28,7 @@ const (
 // a plan file template.
 type PlanTemplateOptions struct {
 	ClusterName               string
+	ClusterOS                 string
 	InfrastructureProvisioner string
 	EtcdNodes                 int
 	MasterNodes               int
@@ -297,12 +298,6 @@ func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) e
 // template options
 func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p := Plan{}
-	p.Provisioner.Provider = templateOpts.InfrastructureProvisioner
-	// set provisioner's provider specific options
-	switch templateOpts.InfrastructureProvisioner {
-	case "aws":
-		p.Provisioner.AWSOptions = &AWSProvisionerOptions{}
-	}
 
 	p.Cluster.Name = templateOpts.ClusterName
 	p.Cluster.AdminPassword = templateOpts.AdminPassword
@@ -314,6 +309,19 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p.Cluster.SSH.Key = ""
 	p.Cluster.SSH.Port = 22
 
+	p.Provisioner.Provider = templateOpts.InfrastructureProvisioner
+	// set provisioner's provider specific options
+	switch templateOpts.InfrastructureProvisioner {
+	case "aws":
+		p.Provisioner.AWSOptions = &AWSProvisionerOptions{}
+	}
+	p.Provisioner.OS = templateOpts.ClusterOS
+	switch templateOpts.ClusterOS {
+	case "ubuntu":
+		p.Cluster.SSH.User = "ubuntu"
+	case "centos":
+		p.Cluster.SSH.User = "root"
+	}
 	// Set Networking defaults
 	p.Cluster.Networking.PodCIDRBlock = "172.16.0.0/16"
 	p.Cluster.Networking.ServiceCIDRBlock = "172.20.0.0/16"

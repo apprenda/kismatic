@@ -10,6 +10,10 @@ variable "secret_key" {
   default = ""
 }
 
+variable "version" {
+  default = ""
+}
+
 variable "private_ssh_key_path" {
   default = ""
 }
@@ -19,12 +23,20 @@ variable "public_ssh_key_path" {
   default = ""
 }
 
+variable "ssh_user" {
+  default = ""
+}
+
 variable "cluster_name" {
   default = "kismatic-cluster"
 }
 
-variable "ami" {
-  default = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
+variable "cluster_owner" {
+  default = ""
+}
+
+variable "cluster_os" {
+  default = ""
 }
 
 variable "instance_size" {

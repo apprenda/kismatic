@@ -2,6 +2,7 @@
 ## Index
 * [provisioner](#provisioner)
   * [provider](#provisionerprovider)
+  * [os](#provisioneros)
   * [options](#provisioneroptions)
     * [region](#provisioneroptionsregion)
 * [cluster](#cluster)
@@ -142,6 +143,16 @@
 ###  provisioner.provider
 
  The provider where the infrastructue will be provisioned to. The provisioner will expect provider specific ENV variables to be set. Options: aws 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | ` ` | 
+
+###  provisioner.os
+
+ The OS to be used for provisioning. Options: ubuntu, centos 
 
 | | |
 |----------|-----------------|

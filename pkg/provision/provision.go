@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/blang/semver"
+
 	"github.com/apprenda/kismatic/pkg/install"
 )
 
@@ -16,9 +18,11 @@ const terraformBinaryPath = "../../bin/terraform"
 
 // Terraform provisioner
 type Terraform struct {
-	Output     io.Writer
-	BinaryPath string
-	Logger     *log.Logger
+	Output          io.Writer
+	BinaryPath      string
+	ClusterOwner    string
+	KismaticVersion semver.Version
+	Logger          *log.Logger
 }
 
 //An aggregate of different tfNodes (different fields, the same nodes)

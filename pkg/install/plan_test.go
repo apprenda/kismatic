@@ -34,6 +34,7 @@ func TestWritePlanTemplate(t *testing.T) {
 			template: PlanTemplateOptions{
 				ClusterName:               "kubernetes",
 				InfrastructureProvisioner: "aws",
+				ClusterOS:                 "ubuntu",
 				EtcdNodes:                 3,
 				MasterNodes:               2,
 				WorkerNodes:               3,

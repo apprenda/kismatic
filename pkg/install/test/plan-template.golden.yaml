@@ -1,5 +1,6 @@
 provisioner:
   provider: ""
+  os: ""
 
 cluster:
   name: kismatic

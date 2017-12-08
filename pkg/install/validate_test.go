@@ -1545,6 +1545,7 @@ func TestProvisioner(t *testing.T) {
 		{
 			p: Provisioner{
 				Provider: "",
+				OS:       "",
 			},
 			valid: true,
 		},
@@ -1557,6 +1558,7 @@ func TestProvisioner(t *testing.T) {
 		{
 			p: Provisioner{
 				Provider: "aws",
+				OS:       "ubuntu",
 				AWSOptions: &AWSProvisionerOptions{
 					Region: "us-east-1",
 				},
