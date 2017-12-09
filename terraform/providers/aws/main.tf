@@ -121,7 +121,6 @@ resource "aws_subnet" "kismatic_private" {
 }
 
 resource "aws_subnet" "kismatic_master" {
-  //Only needed if we have more than a single master, else just use public.
   vpc_id      = "${aws_vpc.kismatic.id}"
   cidr_block  = "10.0.3.0/24"
   map_public_ip_on_launch = "True"
@@ -345,14 +344,14 @@ resource "aws_elb" "kismatic_ingress" {
   //}
 
   listener {
-    instance_port     = 6443
+    instance_port     = 443
     instance_protocol = "tcp"
     lb_port           = 443
     lb_protocol       = "tcp"
   } 
 
   listener {
-    instance_port     = 8080
+    instance_port     = 80
     instance_protocol = "tcp"
     lb_port           = 80
     lb_protocol       = "tcp"
