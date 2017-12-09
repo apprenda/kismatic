@@ -1,5 +1,5 @@
-hash: d7ed159535dd81271076562ba9e50d1a8b64b3a5497f570c25ade5ba8ec16a1d
-updated: 2017-12-01T15:56:14.379987745-05:00
+hash: fb3da16a5093d86bb1350dce9f7e44a41591b4b253154dc61a8d3aa35c73e654
+updated: 2017-12-08T17:26:37.510514-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: 40f45e34986ba617a372d1590de273a0ca84a53d
@@ -68,7 +68,7 @@ imports:
   subpackages:
   - md2man
 - name: github.com/dsnet/compress
-  version: c4dbed65594871659ea7347a85e1b8dcd97b9990
+  version: c57be8a27eb955bb314e404d40f9adde726dc6c8
   subpackages:
   - bzip2
   - bzip2/internal/sais

@@ -148,6 +148,7 @@ resource "aws_subnet" "kismatic_ingress" {
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
   availability_zone = "${var.AZ}"
+
   tags {
     "Name"                  = "${var.cluster_name}-subnet-ingress"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -173,6 +174,25 @@ resource "aws_security_group" "kismatic_ssh" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags {
+    "Name"                  = "${var.cluster_name}-securityGroup-ssh"
+    "kismatic/clusterName"  = "${var.cluster_name}"
+    "kismatic/clusterOwner" = "${var.cluster_owner}"
+    "kismatic/dateCreated"  = "${timestamp()}"
+    "kismatic/version"      = "${var.version}"
+    "kismatic/securityGroup"= "ssh"
+    "kubernetes.io/cluster" = "${var.cluster_name}"
+  }
+  lifecycle {
+    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+  }
+}
+
+resource "aws_security_group" "kismatic_private" {
+  name        = "${var.cluster_name}-private"
+  description = "Allow all communication between nodes."
+  vpc_id      = "${aws_vpc.kismatic.id}"
 
   tags {
     "Name"                  = "${var.cluster_name}-securityGroup-ssh"
@@ -260,13 +280,6 @@ resource "aws_security_group" "kismatic_lb_ingress" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags {
     "Name"                  = "${var.cluster_name}-securityGroup-lb-ingress"
     "kismatic/clusterName"  = "${var.cluster_name}"
@@ -327,15 +340,22 @@ resource "aws_elb" "kismatic_master" {
     lb_protocol       = "tcp"
   }
 
+  listener {
+    instance_port     = 8080
+    instance_protocol = "tcp"
+    lb_port           = 8080
+    lb_protocol       = "tcp"
+  }
+
   instances = ["${aws_instance.master.*.id}"]
 
   tags {
-    "Name"                  = "${var.cluster_name}-lb-master"
+    "Name"                  = "${var.cluster_name}-securityGroup-lb-ingress"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
     "kismatic/version"      = "${var.version}"
-    "kismatic/loadBalancer" = "master"
+    "kismatic/securityGroup"= "lb-ingress"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
   lifecycle {
@@ -358,19 +378,19 @@ resource "aws_elb" "kismatic_ingress" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "TCP:6443"
+    target              = "TCP:443"
     interval            = 30
   }
 
   listener {
-    instance_port     = 6443
+    instance_port     = 443
     instance_protocol = "tcp"
     lb_port           = 443
     lb_protocol       = "tcp"
   } 
 
   listener {
-    instance_port     = 8080
+    instance_port     = 80
     instance_protocol = "tcp"
     lb_port           = 80
     lb_protocol       = "tcp"
