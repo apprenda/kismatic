@@ -46,6 +46,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 		return nil, fmt.Errorf("error generating SSH key pair: %v", err)
 	}
 	plan.Cluster.SSH.Key = privKeyPath
+	plan.Cluster.SSH.User = "ubuntu"
 
 	// Write out the terraform variables
 	data := AWSTerraformData{
@@ -160,8 +161,6 @@ func (aws *AWS) buildPopulatedPlan(plan install.Plan) (*install.Plan, error) {
 		plan.Storage = install.OptionalNodeGroup(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
 	}
 
-	// SSH
-	plan.Cluster.SSH.User = "ubuntu"
 	return &plan, nil
 }
 

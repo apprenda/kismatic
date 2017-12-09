@@ -11,9 +11,10 @@ type AWS struct {
 type AWSTerraformData struct {
 	Version           string `json:"version"`
 	Region            string `json:"region,omitempty"`
+	AvailabilityZone  string `json:"AZ,omitempty"`
 	PrivateSSHKeyPath string `json:"private_ssh_key_path"`
 	PublicSSHKeyPath  string `json:"public_ssh_key_path"`
-	SSHUser           string `json:"ssh_user,omitempty"`
+	SSHUser           string `json:"ssh_user"`
 	ClusterName       string `json:"cluster_name"`
 	ClusterOwner      string `json:"cluster_owner"`
 	MasterCount       int    `json:"master_count"`

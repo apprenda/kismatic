@@ -2,6 +2,10 @@ variable "region" {
   default = "us-east-1"
 }
 
+variable "AZ" {
+  default = "us-east-1c"
+}
+
 variable "access_key" {
   default = ""
 }
