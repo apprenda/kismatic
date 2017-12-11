@@ -35,6 +35,9 @@
     * [provider](#clustercloud_providerprovider)
     * [config](#clustercloud_providerconfig)
 * [docker](#docker)
+  * [logs](#dockerlogs)
+    * [max_size](#dockerlogsmax_size)
+    * [max_file](#dockerlogsmax_file)
   * [storage](#dockerstorage)
     * [direct_lvm](#dockerstoragedirect_lvm)
       * [enabled](#dockerstoragedirect_lvmenabled)
@@ -416,6 +419,30 @@
 ##  docker
 
  Configuration for the docker engine installed by KET 
+
+###  docker.logs
+
+Log configuration for the "json-file" log driver of the docker engine.
+
+### docker.logs.max_size
+
+ The size a docker log file can reach before it is rolled. Should be a positive integer with a suffix for unit of measure (k, m or g). 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `1m` | 
+
+### docker.logs.max_file
+
+ The maximum number of logs files to keep when the logs are rolled. When there are excess files the oldest is removed.  
+
+| | |
+|----------|-----------------|
+| **Kind** |  int |
+| **Required** |  No |
+| **Default** | `3` | 
 
 ###  docker.storage
 

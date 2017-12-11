@@ -98,6 +98,7 @@ func readDeprecatedFields(p *Plan) {
 	}
 }
 
+// Support older plan files without newer options
 func setDefaults(p *Plan) {
 	if p.AddOns.CNI == nil {
 		p.AddOns.CNI = &CNI{}
@@ -139,6 +140,14 @@ func setDefaults(p *Plan) {
 
 	if p.AddOns.Dashboard == nil {
 		p.AddOns.Dashboard = &Dashboard{}
+	}
+
+	if p.Docker.Logs.MaxFile == 0 {
+		p.Docker.Logs.MaxFile = 1
+	}
+
+	if p.Docker.Logs.MaxSize == "" {
+		p.Docker.Logs.MaxSize = "-1"
 	}
 }
 
@@ -289,6 +298,10 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p.Cluster.Certificates.Expiry = "17520h"
 	p.Cluster.Certificates.CAExpiry = defaultCAExpiry
 
+	// Set docker log option defaults
+	p.Docker.Logs.MaxSize = "10m"
+	p.Docker.Logs.MaxFile = 1
+
 	// Add-Ons
 	// CNI
 	p.AddOns.CNI = &CNI{}
@@ -421,6 +434,8 @@ var commentMap = map[string][]string{
 	"storage":                                            []string{"Storage nodes will be used to create a distributed storage cluster that can", "be consumed by your workloads."},
 	"master.load_balanced_fqdn":                          []string{"If you have set up load balancing for master nodes, enter the FQDN name here.", "Otherwise, use the IP address of a single master node."},
 	"master.load_balanced_short_name":                    []string{"If you have set up load balancing for master nodes, enter the short name here.", "Otherwise, use the IP address of a single master node."},
+	"docker.logs.max_size":                               []string{"The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g)."},
+	"docker.logs.max_file":                               []string{"The maximum number of log files that can be present. If rolling the logs creates excess files, the oldest file is removed."},
 	"docker.storage.direct_lvm":                          []string{"Configure devicemapper in direct-lvm mode (RHEL/CentOS only)."},
 	"docker.storage.direct_lvm.block_device":             []string{"Path to the block device that will be used for direct-lvm mode. This", "device will be wiped and used exclusively by docker."},
 	"docker.storage.direct_lvm.enable_deferred_deletion": []string{"Set to true if you want to enable deferred deletion when using", "direct-lvm mode."},

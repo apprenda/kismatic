@@ -1,8 +1,15 @@
 {
+{% if docker_direct_lvm_enabled %}
   "storage-driver": "devicemapper",
    "storage-opts": [
      "dm.thinpooldev=/dev/mapper/docker-thinpool",
      "dm.use_deferred_removal=true",
      "dm.use_deferred_deletion={{docker_direct_lvm_deferred_deletion_enabled}}"
    ]
+{% endif %}
+  "log-driver": "json-file",
+  "log-opts": {
+    "max-size": "{{docker_log_opts_max_size}}"
+    "max-file": "{{docker_log_opts_max_file}}"
+  }
 }

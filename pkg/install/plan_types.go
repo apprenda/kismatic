@@ -212,8 +212,18 @@ type CloudProvider struct {
 
 // Docker includes the configuration for the docker installation owned by KET.
 type Docker struct {
+	// Log configuration for the docker engine
+	Logs DockerLogs
 	// Storage configuration for the docker engine
 	Storage DockerStorage
+}
+
+// DockerLogs includes the log-specific configuration for docker.
+type DockerLogs struct {
+	// The maximum size of the log before it is rolled. A positive integer plus a modifier representing the unit of measure (k, m, or g).
+	MaxSize string `yaml:"max_size"`
+	// The maximum number of log files that can be present. If rolling the logs creates excess files, the oldest file is removed.
+	MaxFile int `yaml:"max_file"`
 }
 
 // DockerStorage includes the storage-specific configuration for docker.

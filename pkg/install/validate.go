@@ -501,6 +501,7 @@ func (dr *DockerRegistry) validate() (bool, []error) {
 
 func (d Docker) validate() (bool, []error) {
 	v := newValidator()
+	v.validateWithErrPrefix("Logs", d.Logs)
 	v.validateWithErrPrefix("Storage", d.Storage)
 	return v.valid()
 }
