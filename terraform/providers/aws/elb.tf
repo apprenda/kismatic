@@ -1,7 +1,5 @@
 resource "aws_s3_bucket" "lb_logs" {
   count  = 0
-  //"${var.master_count > 1 || var.ingress_count > 1 ? 1 : 0}"
-  //Conditionally enable if either LB is active.
   bucket = "${var.cluster_name}-lb_logs"
   acl    = "log-delivery-write"
 
@@ -29,7 +27,13 @@ resource "aws_elb" "kismatic_master" {
   //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
   //  bucket_prefix = "${var.cluster_name}/master"
   //}
-
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:6443"
+    interval            = 10
+  }
   listener {
     instance_port     = 6443
     instance_protocol = "tcp"
@@ -63,6 +67,14 @@ resource "aws_elb" "kismatic_ingress" {
   //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
   //  bucket_prefix = "${var.cluster_name}/ingress"
   //}
+
+  health_check {
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    timeout             = 3
+    target              = "TCP:443"
+    interval            = 10
+  }
 
   listener {
     instance_port     = 443

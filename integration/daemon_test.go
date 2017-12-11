@@ -99,8 +99,8 @@ The error: %v
 				// Destroy the cluster once the test is done
 				defer requestClusterDeletion(clustersEndpoint, clusterName)
 
-				// Wait up to 15 minutes for the cluster to be up
-				deadline := time.After(15 * time.Minute)
+				// Wait up to 20 minutes for the cluster to be up
+				deadline := time.After(20 * time.Minute)
 				tick := time.Tick(10 * time.Second)
 				for {
 					select {
