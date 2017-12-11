@@ -23,6 +23,7 @@ resource "aws_elb" "kismatic_master" {
   security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_master.id}"]
   subnets         = ["${aws_subnet.kismatic_public.id}"]
   connection_draining = "True"
+  cross_zone_load_balancing = "True"
   //access_logs {
   //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
   //  bucket_prefix = "${var.cluster_name}/master"
@@ -62,7 +63,8 @@ resource "aws_elb" "kismatic_ingress" {
   internal        = false
   security_groups = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_lb_ingress.id}"]
   subnets         = ["${aws_subnet.kismatic_public.id}"]
-
+  connection_draining = "True"
+  cross_zone_load_balancing = "True"
   //access_logs {
   //  bucket = "${aws_s3_bucket.lb_logs.bucket}"
   //  bucket_prefix = "${var.cluster_name}/ingress"
