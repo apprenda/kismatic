@@ -42,11 +42,22 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	}
 	pubKeyPath := filepath.Join(absPath, fmt.Sprintf("/terraform/clusters/%s/%s-ssh.pub", plan.Cluster.Name, plan.Cluster.Name))
 	privKeyPath := filepath.Join(absPath, fmt.Sprintf("/terraform/clusters/%s/%s-ssh.pem", plan.Cluster.Name, plan.Cluster.Name))
-	if err := ssh.NewKeyPair(pubKeyPath, privKeyPath); err != nil {
-		return nil, fmt.Errorf("error generating SSH key pair: %v", err)
+
+	privFlag := true
+	pubFlag := true
+	if _, err := os.Stat(pubKeyPath); err == nil {
+		pubFlag = false
 	}
-	plan.Cluster.SSH.Key = privKeyPath
-	plan.Cluster.SSH.User = "ubuntu"
+	if _, err := os.Stat(privKeyPath); err == nil {
+		privFlag = false
+	}
+	if privFlag && pubFlag {
+		if err := ssh.NewKeyPair(pubKeyPath, privKeyPath); err != nil {
+			return nil, fmt.Errorf("error generating SSH key pair: %v", err)
+		}
+		plan.Cluster.SSH.Key = privKeyPath
+		plan.Cluster.SSH.User = "ubuntu"
+	}
 
 	// Write out the terraform variables
 	data := AWSTerraformData{
