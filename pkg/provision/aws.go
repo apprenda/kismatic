@@ -52,7 +52,10 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	}
 
 	if pubKeyExists != privKeyExists {
-		return nil, fmt.Errorf("Only one valid SSH key was found. Both are required for operation. Please either remove the remaining key, or replace the missing one.")
+		if !pubKeyExists {
+			return nil, fmt.Errorf("%s could not be found, please remove or delete %s from its directory", pubKeyPath, privKeyPath)
+		}
+		return nil, fmt.Errorf("%s could not be found, please remove or delete %s from its directory", privKeyPath, pubKeyPath)
 	}
 
 	if !privKeyExists && !pubKeyExists {
