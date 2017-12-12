@@ -45,10 +45,10 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 
 	privKeyExists := false
 	pubKeyExists := false
-	if _, err := os.Stat(pubKeyPath); err != nil {
+	if _, err := os.Stat(pubKeyPath); err == nil {
 		pubKeyExists = true
 	}
-	if _, err := os.Stat(privKeyPath); err != nil {
+	if _, err := os.Stat(privKeyPath); err == nil {
 		privKeyExists = true
 	}
 
