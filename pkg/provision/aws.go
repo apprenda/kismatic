@@ -43,15 +43,20 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	pubKeyPath := filepath.Join(absPath, fmt.Sprintf("/terraform/clusters/%s/%s-ssh.pub", plan.Cluster.Name, plan.Cluster.Name))
 	privKeyPath := filepath.Join(absPath, fmt.Sprintf("/terraform/clusters/%s/%s-ssh.pem", plan.Cluster.Name, plan.Cluster.Name))
 
-	privKeyMissing := true
-	pubKeyMissing := true
-	if _, err := os.Stat(pubKeyPath); err == nil {
-		pubKeyMissing = false
+	privKeyExists := false
+	pubKeyExists := false
+	if _, err := os.Stat(pubKeyPath); err != nil {
+		pubKeyExists = true
 	}
-	if _, err := os.Stat(privKeyPath); err == nil {
-		privKeyMissing = false
+	if _, err := os.Stat(privKeyPath); err != nil {
+		privKeyExists = true
 	}
-	if privKeyMissing && pubKeyMissing {
+
+	if (!pubKeyExists && privKeyExists) || (pubKeyExists && !privKeyExists) {
+		return nil, fmt.Errorf("Only one valid SSH key was found. Both are required for operation. Please either remove the remaining key, or replace the missing one.")
+	}
+
+	if !privKeyExists && !pubKeyExists {
 		if err := ssh.NewKeyPair(pubKeyPath, privKeyPath); err != nil {
 			return nil, fmt.Errorf("error generating SSH key pair: %v", err)
 		}
