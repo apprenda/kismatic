@@ -53,9 +53,9 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 
 	if pubKeyExists != privKeyExists {
 		if !pubKeyExists {
-			return nil, fmt.Errorf("%s could not be found, please remove or delete %s from its directory", pubKeyPath, privKeyPath)
+			return nil, fmt.Errorf("found an existing public key at %s, but did not find the corresponding private key at %s. The corresponding key must be recovered if possible. Otherwise, the existing key must be deleted", pubKeyPath, privKeyPath)
 		}
-		return nil, fmt.Errorf("%s could not be found, please remove or delete %s from its directory", privKeyPath, pubKeyPath)
+		return nil, fmt.Errorf("found an existing private key at %s, but did not find the corresponding public key at %s. The corresponding key must be recovered if possible. Otherwise, the existing key must be deleted", privKeyPath, pubKeyPath)
 	}
 
 	if !privKeyExists && !pubKeyExists {
