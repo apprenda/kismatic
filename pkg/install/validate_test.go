@@ -7,8 +7,7 @@ import (
 
 var validPlan = Plan{
 	Cluster: Cluster{
-		Name:          "test",
-		AdminPassword: "password",
+		Name: "test",
 		Networking: NetworkConfig{
 			Type:             "overlay",
 			PodCIDRBlock:     "172.16.0.0/16",
@@ -132,12 +131,6 @@ func TestValidatePlanEmptyServicesCIDR(t *testing.T) {
 func TestValidatePlanInvalidServicesCIDR(t *testing.T) {
 	p := validPlan
 	p.Cluster.Networking.ServiceCIDRBlock = "foo"
-	assertInvalidPlan(t, p)
-}
-
-func TestValidatePlanEmptyPassword(t *testing.T) {
-	p := validPlan
-	p.Cluster.AdminPassword = ""
 	assertInvalidPlan(t, p)
 }
 
