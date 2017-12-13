@@ -76,9 +76,11 @@ type Cluster struct {
 	// cluster name, such as kubeconfig files and certificates.
 	// +required
 	Name string
-	// The password for the admin user. This is mainly used to access the Kubernetes Dashboard.
-	// +required
-	AdminPassword string `yaml:"admin_password"`
+	// The password for the admin user.
+	// If provided, ABAC will be enabled in the cluster.
+	// This field will be removed completely in a future release.
+	// +deprecated
+	AdminPassword string `yaml:"admin_password,omitempty"`
 	// Whether KET should install the packages on the cluster nodes.
 	// When true, KET will not install the required packages.
 	// Instead, it will verify that the packages have been installed by the operator.

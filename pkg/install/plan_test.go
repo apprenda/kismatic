@@ -70,13 +70,6 @@ func TestWritePlanTemplate(t *testing.T) {
 	}
 }
 
-func TestGenerateAlphaNumericPassword(t *testing.T) {
-	_, err := generateAlphaNumericPassword()
-	if err != nil {
-		t.Error(err)
-	}
-}
-
 func TestReadWithDeprecated(t *testing.T) {
 	pm := &DeprecatedPackageManager{
 		Enabled: true,

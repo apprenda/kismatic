@@ -161,9 +161,6 @@ func (c *Cluster) validate() (bool, []error) {
 	if c.Name == "" {
 		v.addError(errors.New("Cluster name cannot be empty"))
 	}
-	if c.AdminPassword == "" {
-		v.addError(errors.New("Admin password cannot be empty"))
-	}
 	v.validate(&c.Networking)
 	v.validate(&c.Certificates)
 	v.validate(&c.SSH)

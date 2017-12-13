@@ -6,14 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/apprenda/kismatic/pkg/util"
-	garbler "github.com/michaelbironneau/garbler/lib"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -267,13 +265,6 @@ func (fp *FilePlanner) PlanExists() bool {
 
 // WritePlanTemplate writes an installation plan with pre-filled defaults.
 func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) error {
-	if planTemplateOpts.AdminPassword == "" {
-		pw, err := generateAlphaNumericPassword()
-		if err != nil {
-			return fmt.Errorf("error generating random password: %v", err)
-		}
-		planTemplateOpts.AdminPassword = pw
-	}
 	p := buildPlanFromTemplateOptions(planTemplateOpts)
 	if err := w.Write(&p); err != nil {
 		return fmt.Errorf("error writing installation plan template: %v", err)
@@ -387,31 +378,6 @@ func getDNSServiceIP(p *Plan) (string, error) {
 		return "", fmt.Errorf("error getting DNS service IP: %v", err)
 	}
 	return ip.To4().String(), nil
-}
-
-func generateAlphaNumericPassword() (string, error) {
-	attempts := 0
-	for {
-		reqs := &garbler.PasswordStrengthRequirements{
-			MinimumTotalLength: 16,
-			Uppercase:          rand.Intn(6),
-			Digits:             rand.Intn(6),
-			Punctuation:        -1, // disable punctuation
-		}
-		pass, err := garbler.NewPassword(reqs)
-		if err != nil {
-			return "", err
-		}
-		// validate that the library actually returned an alphanumeric password
-		re := regexp.MustCompile("^[a-zA-Z1-9]+$")
-		if re.MatchString(pass) {
-			return pass, nil
-		}
-		if attempts == 5 {
-			return "", errors.New("failed to generate alphanumeric password")
-		}
-		attempts++
-	}
 }
 
 // The comment map contains is keyed by the value that should be commented
