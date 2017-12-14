@@ -109,61 +109,6 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	return provisionedPlan, nil
 }
 
-// updatePlan
-func (aws *AWS) buildPopulatedPlan(plan install.Plan) (*install.Plan, error) {
-	// Masters
-	tfNodes, err := aws.getTerraformNodes(plan.Cluster.Name, "master")
-	if err != nil {
-		return nil, err
-	}
-	masterNodes := nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
-	mng := install.MasterNodeGroup{
-		ExpectedCount: masterNodes.ExpectedCount,
-		Nodes:         masterNodes.Nodes,
-	}
-	mlb, err := aws.getLoadBalancer(plan.Cluster.Name, "master")
-	if err != nil {
-		return nil, err
-	}
-	mng.LoadBalancedFQDN = mlb
-	mng.LoadBalancedShortName = mlb
-	plan.Master = mng
-
-	// Etcds
-	tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "etcd")
-	if err != nil {
-		return nil, err
-	}
-	plan.Etcd = nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
-
-	// Workers
-	tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "worker")
-	if err != nil {
-		return nil, err
-	}
-	plan.Worker = nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
-
-	// Ingress
-	if plan.Ingress.ExpectedCount > 0 {
-		tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "ingress")
-		if err != nil {
-			return nil, fmt.Errorf("error getting ingress node information: %v", err)
-		}
-		plan.Ingress = install.OptionalNodeGroup(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
-	}
-
-	// Storage
-	if plan.Storage.ExpectedCount > 0 {
-		tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "storage")
-		if err != nil {
-			return nil, fmt.Errorf("error getting storage node information: %v", err)
-		}
-		plan.Storage = install.OptionalNodeGroup(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
-	}
-
-	return &plan, nil
-}
-
 // Destroy destroys a provisioned cluster (using -force by default)
 func (aws AWS) Destroy(clusterName string) error {
 	cmd := exec.Command(aws.BinaryPath, "destroy", "-force")
@@ -179,21 +124,4 @@ func (aws AWS) Destroy(clusterName string) error {
 		return errors.New("Error destroying infrastructure with Terraform")
 	}
 	return nil
-}
-
-func nodeGroupFromSlices(ips, internalIPs, hosts []string) install.NodeGroup {
-	ng := install.NodeGroup{}
-	ng.ExpectedCount = len(ips)
-	ng.Nodes = []install.Node{}
-	for i := range ips {
-		n := install.Node{
-			IP:   ips[i],
-			Host: hosts[i],
-		}
-		if len(internalIPs) != 0 {
-			n.InternalIP = internalIPs[i]
-		}
-		ng.Nodes = append(ng.Nodes, n)
-	}
-	return ng
 }

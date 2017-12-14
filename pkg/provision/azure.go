@@ -13,16 +13,18 @@ import (
 	"github.com/apprenda/kismatic/pkg/ssh"
 )
 
-func (aws AWS) getCommandEnvironment() []string {
-	key := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", aws.AccessKeyID)
-	secret := fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", aws.SecretAccessKey)
-	return []string{key, secret}
+func (azure Azure) getCommandEnvironment() []string {
+	subID := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", azure.SubscriptionID)
+	clientID := fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", azure.ClientID)
+	clientSecret := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", azure.ClientSecret)
+	tenantID := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", azure.TenantID)
+	return []string{subID, clientID, clientSecret, tenantID}
 }
 
 // Provision the necessary infrastructure as described in the plan
 func (azure Azure) Provision(plan install.Plan) (*install.Plan, error) {
 	// Create directory for keeping cluster state
-	clusterStateDir, err := aws.getClusterStateDir(plan.Cluster.Name)
+	clusterStateDir, err := azure.getClusterStateDir(plan.Cluster.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +33,7 @@ func (azure Azure) Provision(plan install.Plan) (*install.Plan, error) {
 	}
 
 	// Setup the environment for all Terraform commands.
-	cmdEnv := append(os.Environ(), aws.getCommandEnvironment()...)
+	cmdEnv := append(os.Environ(), azure.getCommandEnvironment()...)
 	cmdDir := clusterStateDir
 	providerDir := fmt.Sprintf("../../providers/%s", plan.Provisioner.Provider)
 
@@ -49,11 +51,11 @@ func (azure Azure) Provision(plan install.Plan) (*install.Plan, error) {
 	plan.Cluster.SSH.User = "ubuntu"
 
 	// Write out the terraform variables
-	data := AzureTerraformData{
-		Version:           aws.Terraform.KismaticVersion.String(),
+	data := AWSTerraformData{
+		Version:           azure.Terraform.KismaticVersion.String(),
 		Region:            plan.Provisioner.AWSOptions.Region,
 		ClusterName:       plan.Cluster.Name,
-		ClusterOwner:      aws.Terraform.ClusterOwner,
+		ClusterOwner:      azure.Terraform.ClusterOwner,
 		MasterCount:       plan.Master.ExpectedCount,
 		EtcdCount:         plan.Etcd.ExpectedCount,
 		WorkerCount:       plan.Worker.ExpectedCount,
@@ -73,28 +75,28 @@ func (azure Azure) Provision(plan install.Plan) (*install.Plan, error) {
 	}
 
 	// Terraform init
-	initCmd := exec.Command(aws.BinaryPath, "init", providerDir)
+	initCmd := exec.Command(azure.BinaryPath, "init", providerDir)
 	initCmd.Env = cmdEnv
 	initCmd.Dir = cmdDir
 	if out, err := initCmd.CombinedOutput(); err != nil {
-		fmt.Fprintln(aws.Output, string(out))
+		fmt.Fprintln(azure.Output, string(out))
 		return nil, fmt.Errorf("Error initializing terraform: %s", err)
 	}
 
 	// Terraform plan
-	planCmd := exec.Command(aws.BinaryPath, "plan", fmt.Sprintf("-out=%s", plan.Cluster.Name), providerDir)
+	planCmd := exec.Command(azure.BinaryPath, "plan", fmt.Sprintf("-out=%s", plan.Cluster.Name), providerDir)
 	planCmd.Env = cmdEnv
 	planCmd.Dir = cmdDir
 
 	if out, err := planCmd.CombinedOutput(); err != nil {
-		fmt.Fprintln(aws.Output, string(out))
+		fmt.Fprintln(azure.Output, string(out))
 		return nil, fmt.Errorf("Error running terraform plan: %s", out)
 	}
 
 	// Terraform apply
-	applyCmd := exec.Command(aws.BinaryPath, "apply", plan.Cluster.Name)
-	applyCmd.Stdout = aws.Terraform.Output
-	applyCmd.Stderr = aws.Terraform.Output
+	applyCmd := exec.Command(azure.BinaryPath, "apply", plan.Cluster.Name)
+	applyCmd.Stdout = azure.Terraform.Output
+	applyCmd.Stderr = azure.Terraform.Output
 	applyCmd.Env = cmdEnv
 	applyCmd.Dir = cmdDir
 	if err := applyCmd.Run(); err != nil {
@@ -102,75 +104,20 @@ func (azure Azure) Provision(plan install.Plan) (*install.Plan, error) {
 	}
 
 	// Update plan
-	provisionedPlan, err := aws.buildPopulatedPlan(plan)
+	provisionedPlan, err := azure.buildPopulatedPlan(plan)
 	if err != nil {
 		return nil, err
 	}
 	return provisionedPlan, nil
 }
 
-// updatePlan
-func (aws *AWS) buildPopulatedPlan(plan install.Plan) (*install.Plan, error) {
-	// Masters
-	tfNodes, err := aws.getTerraformNodes(plan.Cluster.Name, "master")
-	if err != nil {
-		return nil, err
-	}
-	masterNodes := nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
-	mng := install.MasterNodeGroup{
-		ExpectedCount: masterNodes.ExpectedCount,
-		Nodes:         masterNodes.Nodes,
-	}
-	mlb, err := aws.getLoadBalancer(plan.Cluster.Name, "master")
-	if err != nil {
-		return nil, err
-	}
-	mng.LoadBalancedFQDN = mlb
-	mng.LoadBalancedShortName = mlb
-	plan.Master = mng
-
-	// Etcds
-	tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "etcd")
-	if err != nil {
-		return nil, err
-	}
-	plan.Etcd = nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
-
-	// Workers
-	tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "worker")
-	if err != nil {
-		return nil, err
-	}
-	plan.Worker = nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)
-
-	// Ingress
-	if plan.Ingress.ExpectedCount > 0 {
-		tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "ingress")
-		if err != nil {
-			return nil, fmt.Errorf("error getting ingress node information: %v", err)
-		}
-		plan.Ingress = install.OptionalNodeGroup(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
-	}
-
-	// Storage
-	if plan.Storage.ExpectedCount > 0 {
-		tfNodes, err = aws.getTerraformNodes(plan.Cluster.Name, "storage")
-		if err != nil {
-			return nil, fmt.Errorf("error getting storage node information: %v", err)
-		}
-		plan.Storage = install.OptionalNodeGroup(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
-	}
-
-	return &plan, nil
-}
-
 // Destroy destroys a provisioned cluster (using -force by default)
-func (aws AWS) Destroy(clusterName string) error {
-	cmd := exec.Command(aws.BinaryPath, "destroy", "-force")
-	cmd.Stdout = aws.Terraform.Output
-	cmd.Stderr = aws.Terraform.Output
-	cmd.Env = append(os.Environ(), aws.getCommandEnvironment()...)
-	dir, err := aws.getClusterStateDir(clusterName)
+func (azure Azure) Destroy(clusterName string) error {
+	cmd := exec.Command(azure.BinaryPath, "destroy", "-force")
+	cmd.Stdout = azure.Terraform.Output
+	cmd.Stderr = azure.Terraform.Output
+	cmd.Env = append(os.Environ(), azure.getCommandEnvironment()...)
+	dir, err := azure.getClusterStateDir(clusterName)
 	cmd.Dir = dir
 	if err != nil {
 		return err
@@ -179,21 +126,4 @@ func (aws AWS) Destroy(clusterName string) error {
 		return errors.New("Error destroying infrastructure with Terraform")
 	}
 	return nil
-}
-
-func nodeGroupFromSlices(ips, internalIPs, hosts []string) install.NodeGroup {
-	ng := install.NodeGroup{}
-	ng.ExpectedCount = len(ips)
-	ng.Nodes = []install.Node{}
-	for i := range ips {
-		n := install.Node{
-			IP:   ips[i],
-			Host: hosts[i],
-		}
-		if len(internalIPs) != 0 {
-			n.InternalIP = internalIPs[i]
-		}
-		ng.Nodes = append(ng.Nodes, n)
-	}
-	return ng
 }

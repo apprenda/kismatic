@@ -1,8 +1,20 @@
-variable "access_key" {
+variable "region" {
+  default = "East US"
+}
+
+variable "sub_id" {
   default = ""
 }
 
-variable "secret_key" {
+variable "tenant_id" {
+  default = ""
+}
+
+variable "client_id" {
+  default = ""
+}
+
+variable "client_secret" {
   default = ""
 }
 
@@ -30,12 +42,8 @@ variable "cluster_owner" {
   default = ""
 }
 
-variable "image" {
-  default = ""
-}
-
 variable "instance_size" {
-  default = ""
+  default = "Standard_B2s"
 }
 
 variable master_count {

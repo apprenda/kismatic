@@ -3,15 +3,16 @@ package provision
 // Azure provisioner for creating and destroying infrastructure on Azure.
 type Azure struct {
 	Terraform
-	AccessKeyID     string
-	SecretAccessKey string
+	SubscriptionID string
+	ClientID       string
+	ClientSecret   string
+	TenantID       string
 }
 
-// AWSTerraformData provider for creating and destroying infrastructure on Azure
+// AzureTerraformData provider for creating and destroying infrastructure on Azure
 type AzureTerraformData struct {
 	Version           string `json:"version"`
-	Region            string `json:"region,omitempty"`
-	AvailabilityZone  string `json:"AZ,omitempty"`
+	Location          string `json:"location,omitempty"`
 	PrivateSSHKeyPath string `json:"private_ssh_key_path"`
 	PublicSSHKeyPath  string `json:"public_ssh_key_path"`
 	SSHUser           string `json:"ssh_user"`
