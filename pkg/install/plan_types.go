@@ -83,10 +83,10 @@ type Provisioner struct {
 	Provider string
 	// AWS specific options.
 	// Only set if using "aws" provider
-	AWSOptions *AWSProvisionerOptions `yaml:"options,omitempty"`
+	AWSOptions *AWSProvisionerOptions `yaml:"aws_options,omitempty"`
 	// Azure specific options.
 	// Only set if using "azure" provider
-	AzureOptions *AzureProvisionerOptions `yaml:"options,omitempty"`
+	AzureOptions *AzureProvisionerOptions `yaml:"azure_options,omitempty"`
 }
 
 // AWSProvisionerOptions contains specific options used when provisioning infrastructue on AWS
@@ -101,7 +101,7 @@ type AWSProvisionerOptions struct {
 type AzureProvisionerOptions struct {
 	// The Azure region to deploy in
 	// +required
-	Region string `yaml:"region"`
+	Location string `yaml:"region"`
 }
 
 // Cluster describes a Kubernetes cluster

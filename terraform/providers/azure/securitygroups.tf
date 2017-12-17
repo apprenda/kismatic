@@ -41,15 +41,15 @@ resource "azurerm_network_security_group" "kismatic_private" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-securityGroup-private"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/securityGroup"= "private"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.securityGroup"= "private"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -97,15 +97,15 @@ resource "azurerm_network_security_group" "kismatic_lb_master" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-securityGroup-lb-master"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/securityGroup"= "lb-master"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.securityGroup"= "lb-master"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -165,14 +165,14 @@ resource "azurerm_network_security_group" "kismatic_lb_ingress" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-securityGroup-lb-ingress"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/securityGroup"= "lb-ingress"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.securityGroup"= "lb-ingress"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }

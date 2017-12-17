@@ -14,11 +14,11 @@ import (
 )
 
 func (azure Azure) getCommandEnvironment() []string {
-	subID := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", azure.SubscriptionID)
-	clientID := fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", azure.ClientID)
-	clientSecret := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", azure.ClientSecret)
-	tenantID := fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", azure.TenantID)
-	return []string{subID, clientID, clientSecret, tenantID}
+	subID := os.Getenv("ARM_SUBSCRIPTION_ID")
+	cID := os.Getenv("ARM_CLIENT_ID")
+	cSecret := os.Getenv("ARM_CLIENT_SECRET")
+	tID := os.Getenv("ARM_TENANT_ID")
+	return []string{subID, cID, cSecret, tID}
 }
 
 // Provision the necessary infrastructure as described in the plan
@@ -51,9 +51,9 @@ func (azure Azure) Provision(plan install.Plan) (*install.Plan, error) {
 	plan.Cluster.SSH.User = "ubuntu"
 
 	// Write out the terraform variables
-	data := AWSTerraformData{
+	data := AzureTerraformData{
 		Version:           azure.Terraform.KismaticVersion.String(),
-		Region:            plan.Provisioner.AWSOptions.Region,
+		Location:          plan.Provisioner.AzureOptions.Location,
 		ClusterName:       plan.Cluster.Name,
 		ClusterOwner:      azure.Terraform.ClusterOwner,
 		MasterCount:       plan.Master.ExpectedCount,

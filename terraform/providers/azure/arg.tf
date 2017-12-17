@@ -3,14 +3,14 @@ resource "azurerm_resource_group" "kismatic" {
   location = "${var.region}"
   tags {
     "Name"                  = "${var.cluster_name}-rg"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -21,14 +21,14 @@ resource "azurerm_virtual_network" "kismatic" {
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
   tags {
     "Name"                  = "${var.cluster_name}-vnet"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -38,14 +38,14 @@ resource "azurerm_route_table" "kismatic" {
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
   tags {
     "Name"                  = "${var.cluster_name}-router"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 

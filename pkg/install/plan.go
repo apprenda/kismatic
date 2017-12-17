@@ -313,6 +313,8 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	switch templateOpts.InfrastructureProvisioner {
 	case "aws":
 		p.Provisioner.AWSOptions = &AWSProvisionerOptions{}
+	case "azure":
+		p.Provisioner.AzureOptions = &AzureProvisionerOptions{}
 	}
 
 	// Set Networking defaults

@@ -56,7 +56,26 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 					return fmt.Errorf("error writing updated plan file to %s: %v", opts.planFilename, err)
 				}
 				return nil
-
+			case "azure":
+				subID := os.Getenv("ARM_SUBSCRIPTION_ID")
+				cID := os.Getenv("ARM_CLIENT_ID")
+				cSecret := os.Getenv("ARM_CLIENT_SECRET")
+				tID := os.Getenv("ARM_TENANT_ID")
+				azure := provision.Azure{
+					Terraform:      tf,
+					SubscriptionID: subID,
+					ClientID:       cID,
+					ClientSecret:   cSecret,
+					TenantID:       tID,
+				}
+				updatedPlan, err := azure.Provision(*plan)
+				if err != nil {
+					return err
+				}
+				if err := fp.Write(updatedPlan); err != nil {
+					return fmt.Errorf("error writing updated plan file to %s: %v", opts.planFilename, err)
+				}
+				return nil
 			default:
 				return fmt.Errorf("provider %s not yet supported", plan.Provisioner.Provider)
 			}
@@ -94,6 +113,19 @@ func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comman
 					SecretAccessKey: secret,
 				}
 				return aws.Destroy(plan.Cluster.Name)
+			case "azure":
+				subID := os.Getenv("ARM_SUBSCRIPTION_ID")
+				cID := os.Getenv("ARM_CLIENT_ID")
+				cSecret := os.Getenv("ARM_CLIENT_SECRET")
+				tID := os.Getenv("ARM_TENANT_ID")
+				azure := provision.Azure{
+					Terraform:      tf,
+					SubscriptionID: subID,
+					ClientID:       cID,
+					ClientSecret:   cSecret,
+					TenantID:       tID,
+				}
+				return azure.Destroy(plan.Cluster.Name)
 			default:
 				return fmt.Errorf("provider %s not yet supported", plan.Provisioner.Provider)
 			}

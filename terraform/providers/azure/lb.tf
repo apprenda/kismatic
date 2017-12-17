@@ -10,15 +10,15 @@ resource "azurerm_lb" "kismatic_master" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-lb-master"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/loadBalancer" = "master"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.loadBalancer" = "master"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -61,15 +61,15 @@ resource "azurerm_lb" "kismatic_ingress" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-lb-ingress"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/loadBalancer" = "ingress"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.loadBalancer" = "ingress"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 

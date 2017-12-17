@@ -13,15 +13,15 @@ resource "azurerm_network_interface" "bastion" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-bastion-${count.index}"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/nic"          = "bastion"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.nic"          = "bastion"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -40,15 +40,15 @@ resource "azurerm_network_interface" "master" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-master-${count.index}"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/nic"          = "master"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.nic"          = "master"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -66,15 +66,15 @@ resource "azurerm_network_interface" "etcd" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-etcd-${count.index}"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/nic"          = "etcd"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.nic"          = "etcd"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -92,15 +92,15 @@ resource "azurerm_network_interface" "worker" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-bastion-${count.index}"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/nic"          = "bastion"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.nic"          = "bastion"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -118,15 +118,15 @@ resource "azurerm_network_interface" "ingress" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-bastion-${count.index}"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/nic"          = "bastion"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.nic"          = "bastion"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
 
@@ -144,14 +144,14 @@ resource "azurerm_network_interface" "storage" {
   }
   tags {
     "Name"                  = "${var.cluster_name}-bastion-${count.index}"
-    "kismatic/clusterName"  = "${var.cluster_name}"
-    "kismatic/clusterOwner" = "${var.cluster_owner}"
-    "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
-    "kismatic/nic"          = "bastion"
-    "kubernetes.io/cluster" = "${var.cluster_name}"
+    "kismatic.clusterName"  = "${var.cluster_name}"
+    "kismatic.clusterOwner" = "${var.cluster_owner}"
+    "kismatic.dateCreated"  = "${timestamp()}"
+    "kismatic.version"      = "${var.version}"
+    "kismatic.nic"          = "bastion"
+    "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
-    ignore_changes = ["tags.kismatic/dateCreated", "tags.Owner", "tags.PrincipalID"]
+    ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
   }
 }
