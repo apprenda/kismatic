@@ -2,8 +2,10 @@
 ## Index
 * [provisioner](#provisioner)
   * [provider](#provisionerprovider)
-  * [options](#provisioneroptions)
-    * [region](#provisioneroptionsregion)
+  * [aws_options](#provisioneraws_options)
+    * [region](#provisioneraws_optionsregion)
+  * [azure_options](#provisionerazure_options)
+    * [region](#provisionerazure_optionsregion)
 * [cluster](#cluster)
   * [name](#clustername)
   * [admin_password](#clusteradmin_password)
@@ -141,7 +143,7 @@
 
 ###  provisioner.provider
 
- The provider where the infrastructue will be provisioned to. The provisioner will expect provider specific ENV variables to be set. Options: aws 
+ The provider where the infrastructue will be provisioned to. The provisioner will expect provider specific ENV variables to be set. Options: aws, azure, "" 
 
 | | |
 |----------|-----------------|
@@ -149,13 +151,27 @@
 | **Required** |  No |
 | **Default** | ` ` | 
 
-###  provisioner.options
+###  provisioner.aws_options
 
  AWS specific options. Only set if using "aws" provider 
 
-###  provisioner.options.region
+###  provisioner.aws_options.region
 
  The AWS region to deploy in 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  Yes |
+| **Default** | ` ` | 
+
+###  provisioner.azure_options
+
+ Azure specific options. Only set if using "azure" provider 
+
+###  provisioner.azure_options.region
+
+ The Azure region to deploy in 
 
 | | |
 |----------|-----------------|
