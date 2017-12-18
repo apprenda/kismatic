@@ -1,5 +1,5 @@
 resource "azurerm_network_interface" "bastion" {
-  count                     = "${var.master_count}"
+  count                     = 0
   name                      = "${var.cluster_name}-bastion-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
@@ -53,6 +53,7 @@ resource "azurerm_network_interface" "master" {
 }
 
 resource "azurerm_network_interface" "etcd" {
+  count                     = "${var.etcd_count}"
   name                      = "${var.cluster_name}-etcd-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
@@ -62,7 +63,7 @@ resource "azurerm_network_interface" "etcd" {
     name                          = "${var.cluster_name}-etcd-${count.index}"
     subnet_id                     = "${azurerm_subnet.kismatic_private.id}"
     private_ip_address_allocation = "dynamic"
-    public_ip_address_id          = "${azurerm_public_ip.bastion.id}"
+    public_ip_address_id          = "${azurerm_public_ip.etcd.id}"
   }
   tags {
     "Name"                  = "${var.cluster_name}-etcd-${count.index}"
@@ -79,24 +80,25 @@ resource "azurerm_network_interface" "etcd" {
 }
 
 resource "azurerm_network_interface" "worker" {
-  name                      = "bastion"
+  count                     = "${var.worker_count}"
+  name                      = "${var.cluster_name}-worker-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
   network_security_group_id = "${azurerm_network_security_group.kismatic_private.id}"
 
   ip_configuration {
-    name                          = "bastion"
+    name                          = "${var.cluster_name}-worker-${count.index}"
     subnet_id                     = "${azurerm_subnet.kismatic_private.id}"
     private_ip_address_allocation = "dynamic"
-    public_ip_address_id          = "${azurerm_public_ip.bastion.id}"
+    public_ip_address_id          = "${azurerm_public_ip.worker.id}"
   }
   tags {
-    "Name"                  = "${var.cluster_name}-bastion-${count.index}"
+    "Name"                  = "${var.cluster_name}-worker-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
     "kismatic.version"      = "${var.version}"
-    "kismatic.nic"          = "bastion"
+    "kismatic.nic"          = "worker"
     "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
@@ -105,24 +107,25 @@ resource "azurerm_network_interface" "worker" {
 }
 
 resource "azurerm_network_interface" "ingress" {
-  name                      = "bastion"
+  count                     = "${var.ingress_count}"
+  name                      = "${var.cluster_name}-ingress-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
   network_security_group_id = "${azurerm_network_security_group.kismatic_private.id}"
 
   ip_configuration {
-    name                          = "bastion"
+    name                          = "${var.cluster_name}-ingress-${count.index}"
     subnet_id                     = "${azurerm_subnet.kismatic_private.id}"
     private_ip_address_allocation = "dynamic"
-    public_ip_address_id          = "${azurerm_public_ip.bastion.id}"
+    public_ip_address_id          = "${azurerm_public_ip.ingress.id}"
   }
   tags {
-    "Name"                  = "${var.cluster_name}-bastion-${count.index}"
+    "Name"                  = "${var.cluster_name}-ingress-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
     "kismatic.version"      = "${var.version}"
-    "kismatic.nic"          = "bastion"
+    "kismatic.nic"          = "ingress"
     "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {
@@ -131,24 +134,25 @@ resource "azurerm_network_interface" "ingress" {
 }
 
 resource "azurerm_network_interface" "storage" {
-  name                      = "bastion"
+  count                     = "${var.storage_count}"
+  name                      = "${var.cluster_name}-storage-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
   network_security_group_id = "${azurerm_network_security_group.kismatic_private.id}"
 
   ip_configuration {
-    name                          = "bastion"
+    name                          = "${var.cluster_name}-storage-${count.index}"
     subnet_id                     = "${azurerm_subnet.kismatic_private.id}"
     private_ip_address_allocation = "dynamic"
-    public_ip_address_id          = "${azurerm_public_ip.bastion.id}"
+    public_ip_address_id          = "${azurerm_public_ip.storage.id}"
   }
   tags {
-    "Name"                  = "${var.cluster_name}-bastion-${count.index}"
+    "Name"                  = "${var.cluster_name}-storage-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
     "kismatic.version"      = "${var.version}"
-    "kismatic.nic"          = "bastion"
+    "kismatic.nic"          = "storage"
     "kubernetes.io.cluster" = "${var.cluster_name}"
   }
   lifecycle {

@@ -80,6 +80,16 @@ resource "azurerm_virtual_machine" "master" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
+  provisioner "remote-exec" {
+    inline = ["echo ready"]
+
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
+    }
+  }
   tags {
     "Name"                  = "${var.cluster_name}-master-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"

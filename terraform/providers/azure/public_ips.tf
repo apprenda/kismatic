@@ -1,4 +1,5 @@
 resource "azurerm_public_ip" "bastion" {
+  count                        = 0 
   name                         = "${var.cluster_name}-bastion-${count.index}"
   location                     = "${azurerm_resource_group.kismatic.location}"
   resource_group_name          = "${azurerm_resource_group.kismatic.name}"

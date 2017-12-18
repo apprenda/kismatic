@@ -1,6 +1,6 @@
 provisioner:
   provider: aws
-  options:
+  aws_options:
     region: ""
 
 cluster:
