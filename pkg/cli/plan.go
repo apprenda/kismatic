@@ -42,6 +42,8 @@ func doPlan(in io.Reader, out io.Writer, planner install.FilePlanner) error {
 	switch provisioner {
 	case "aws":
 		fmt.Fprintln(out, "Set AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY prior to running, otherwise provisioner validation will fail.")
+	case "azure":
+		fmt.Fprintln(out, "Set ARM_SUBSCRIPTION_ID, ARM_CLIENT_ID, ARM_CLIENT_SECRET, ARM_TENANT_ID prior to running, otherwise provisioner valiation will fail.")
 	}
 	etcdNodes, err := util.PromptForInt(in, out, "Number of etcd nodes", 3)
 	if err != nil {

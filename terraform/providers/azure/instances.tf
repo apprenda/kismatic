@@ -138,6 +138,16 @@ resource "azurerm_virtual_machine" "etcd" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
+  provisioner "remote-exec" {
+    inline = ["echo ready"]
+
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
+    }
+  }
   tags {
     "Name"                  = "${var.cluster_name}-etcd-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
@@ -184,6 +194,16 @@ resource "azurerm_virtual_machine" "worker" {
     ssh_keys {
         path     = "/home/${var.ssh_user}/.ssh/authorized_keys"
         key_data = "${file("${var.public_ssh_key_path}")}"
+    }
+  }
+  provisioner "remote-exec" {
+    inline = ["echo ready"]
+
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
     }
   }
   tags {
@@ -234,6 +254,16 @@ resource "azurerm_virtual_machine" "ingress" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
+  provisioner "remote-exec" {
+    inline = ["echo ready"]
+
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
+    }
+  }
   tags {
     "Name"                  = "${var.cluster_name}-ingress-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
@@ -253,7 +283,7 @@ resource "azurerm_virtual_machine" "storage" {
   name                  = "${var.cluster_name}-storage-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
-  network_interface_ids = ["${azurerm_network_interface.storage.*.id}"]
+  network_interface_ids = ["${element(azurerm_network_interface.storage.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
 
   delete_os_disk_on_termination = true
@@ -280,6 +310,16 @@ resource "azurerm_virtual_machine" "storage" {
     ssh_keys {
         path     = "/home/${var.ssh_user}/.ssh/authorized_keys"
         key_data = "${file("${var.public_ssh_key_path}")}"
+    }
+  }
+  provisioner "remote-exec" {
+    inline = ["echo ready"]
+
+    connection {
+      type = "ssh"
+      user = "${var.ssh_user}"
+      private_key = "${file("${var.private_ssh_key_path}")}"
+      timeout = "2m"
     }
   }
   tags {

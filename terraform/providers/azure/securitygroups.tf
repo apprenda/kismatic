@@ -5,7 +5,7 @@ resource "azurerm_network_security_group" "kismatic_private" {
   security_rule {
     name                       = "${var.cluster_name}-ssh"
     description                = "Allow inbound SSH for kismatic."
-    priority                   = 100
+    priority                   = 101
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
