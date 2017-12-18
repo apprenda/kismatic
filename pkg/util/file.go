@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-// BackupDirectory checks for existance of the $sourceDir and backs it up to backupDir
+// BackupDirectory checks for existence of the $sourceDir and backs it up to backupDir
 func BackupDirectory(sourceDir string, backupDir string) (bool, error) {
 	_, err := os.Stat(sourceDir)
 	var backedup bool

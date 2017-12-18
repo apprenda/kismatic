@@ -3,7 +3,7 @@
 ## Overview
 Certificates (and their corresponding private keys) are used to secure all communication endpoints
 exposed by the components of the Kubernetes cluster. In this way, messages between
-components are encrypted, and only the parties involved in the communicatoin
+components are encrypted, and only the parties involved in the communication
 are able to decrypt them.
 
 Certificates are also used to authenticate the parties involved in the 

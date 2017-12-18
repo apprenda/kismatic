@@ -40,6 +40,7 @@ type catchAllRule struct {
 	AnyVersion        bool     `yaml:"anyVersion"`
 	Executable        string   `yaml:"executable"`
 	Port              int      `yaml:"port"`
+	ProcName          string   `yaml:"procName"`
 	File              string   `yaml:"file"`
 	ContentRegex      string   `yaml:"contentRegex"`
 	Timeout           string   `yaml:"timeout"`
@@ -103,7 +104,8 @@ func buildRule(catchAll catchAllRule) (Rule, error) {
 		return r, nil
 	case "tcpportavailable":
 		r := TCPPortAvailable{
-			Port: catchAll.Port,
+			Port:     catchAll.Port,
+			ProcName: catchAll.ProcName,
 		}
 		r.Meta = meta
 		return r, nil

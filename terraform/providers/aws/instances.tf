@@ -1,5 +1,5 @@
 resource "aws_instance" "bastion" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  vpc_security_group_ids        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   subnet_id              = "${aws_subnet.kismatic_public.id}"
   key_name               = "${var.cluster_name}"
   count                  = 0
@@ -33,7 +33,7 @@ resource "aws_instance" "bastion" {
 }
 
 resource "aws_instance" "master" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  vpc_security_group_ids        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
   subnet_id              = "${aws_subnet.kismatic_master.id}"
   key_name               = "${var.cluster_name}"
@@ -67,7 +67,7 @@ resource "aws_instance" "master" {
 }
 
 resource "aws_instance" "etcd" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  vpc_security_group_ids        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
   subnet_id               = "${aws_subnet.kismatic_private.id}"
   key_name                = "${var.cluster_name}"
@@ -101,7 +101,7 @@ resource "aws_instance" "etcd" {
 }
 
 resource "aws_instance" "worker" {
-  security_groups         = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  vpc_security_group_ids         = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
   subnet_id               = "${aws_subnet.kismatic_private.id}"
   key_name                = "${var.cluster_name}"
@@ -135,7 +135,7 @@ resource "aws_instance" "worker" {
 }
 
 resource "aws_instance" "ingress" {
-  security_groups         = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  vpc_security_group_ids         = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
   subnet_id               = "${aws_subnet.kismatic_ingress.id}"
   key_name                = "${var.cluster_name}"
@@ -169,7 +169,7 @@ resource "aws_instance" "ingress" {
 }
 
 resource "aws_instance" "storage" {
-  security_groups        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
+  vpc_security_group_ids        = ["${aws_security_group.kismatic_private.id}", "${aws_security_group.kismatic_ssh.id}"]
   // TODO: remove from public when bastion is set up
   subnet_id               = "${aws_subnet.kismatic_private.id}"
   key_name                = "${var.cluster_name}"

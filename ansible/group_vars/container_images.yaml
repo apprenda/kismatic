@@ -4,28 +4,28 @@ official_images:
     version: v3.1.10
   kube_proxy:
     name: gcr.io/google-containers/kube-proxy-amd64
-    version: v1.8.1
+    version: v1.8.4
   kube_controller_manager:
     name: gcr.io/google-containers/kube-controller-manager-amd64
-    version: v1.8.1
+    version: v1.8.4
   kube_scheduler:
     name: gcr.io/google-containers/kube-scheduler-amd64
-    version: v1.8.1
+    version: v1.8.4
   kube_apiserver:
     name: gcr.io/google-containers/kube-apiserver-amd64
-    version: v1.8.1
+    version: v1.8.4
   calico_node:
     name: calico/node
-    version: v2.6.1
+    version: v2.6.3
   calico_ctl:
     name: calico/ctl
-    version: v1.6.1
+    version: v1.6.2
   calico_cni:
     name: calico/cni
-    version: v1.11.0
+    version: v1.11.1
   calico_kube_controller:
     name: calico/kube-controllers
-    version: v1.0.0
+    version: v1.0.1
   cni_bin:
     name: apprenda/cni-bin
     version: v0.5.2
@@ -37,16 +37,16 @@ official_images:
     version: 1.1.1
   weave:
     name: weaveworks/weave-kube
-    version: 2.0.4
+    version: 2.0.5
   weave_npc:
     name: weaveworks/weave-npc
-    version: 2.0.4
+    version: 2.0.5
   defaultbackend:
     name: gcr.io/google_containers/defaultbackend
-    version: 1.0
+    version: 1.4
   nginx_ingress_controller:
-    name: gcr.io/google_containers/nginx-ingress-controller
-    version: 0.8.3
+    name: quay.io/kubernetes-ingress-controller/nginx-ingress-controller
+    version: 0.9.0
   nginx:
     name: nginx
     version: stable-alpine
@@ -62,24 +62,24 @@ official_images:
   kube_dnsmasq:
     name: gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64
     version: 1.14.5
-  kubedns_sidecar: 
+  kubedns_sidecar:
     name: gcr.io/google_containers/k8s-dns-sidecar-amd64
     version: 1.14.5
-  kubernetes_dashboard: 
+  kubernetes_dashboard:
     name: gcr.io/google_containers/kubernetes-dashboard-amd64
     version: v1.6.3
-  apprenda_tcp_healthz: 
+  apprenda_tcp_healthz:
     name: apprenda/tcp-healthz-amd64
     version: v1.0.0
-  helm: 
+  helm:
     name: gcr.io/kubernetes-helm/tiller
-    version: v2.6.1
-  heapster: 
+    version: v2.7.0
+  heapster:
     name: gcr.io/google_containers/heapster-amd64
-    version: v1.4.0
-  influxdb: 
+    version: v1.4.3
+  influxdb:
     name: gcr.io/google_containers/heapster-influxdb-amd64
-    version: v1.1.1  
-  rescheduler: 
+    version: v1.1.1
+  rescheduler:
     name: gcr.io/google-containers/rescheduler
     version: v0.3.1

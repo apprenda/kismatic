@@ -35,15 +35,19 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["etcd"]
   port: 2379
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
   when: ["etcd"]
   port: 6666
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
   when: ["etcd"]
   port: 2380
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 - kind: TCPPortAvailable
   when: ["etcd"]
   port: 6660
+  procName: docker-proxy # docker sets up a proxy for the etcd container
 
 # Ports used by etcd are accessible
 - kind: TCPPortAccessible
@@ -67,17 +71,21 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["master"]
   port: 6443
+  procName: kube-apiserver
 - kind: TCPPortAvailable
   when: ["master"]
   port: 8080
+  procName: kube-apiserver
 # kube-scheduler
 - kind: TCPPortAvailable
   when: ["master"]
   port: 10251
+  procName: kube-scheduler
 # kube-controller-manager
 - kind: TCPPortAvailable
   when: ["master"]
   port: 10252
+  procName: kube-controller
 
 # Ports used by K8s master are accessible
 # Port 8080 is not accessible from outside
@@ -101,26 +109,32 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["master","worker","ingress","storage"]
   port: 4194
+  procName: kubelet
 # kubelet localhost healthz
 - kind: TCPPortAvailable
   when: ["master","worker","ingress","storage"]
   port: 10248
+  procName: kubelet
 # kube-proxy metrics
 - kind: TCPPortAvailable
   when: ["master","worker","ingress","storage"]
   port: 10249
+  procName: kube-proxy
 # kube-proxy health
 - kind: TCPPortAvailable
   when: ["master","worker","ingress","storage"]
   port: 10256
+  procName: kube-proxy
 # kubelet
 - kind: TCPPortAvailable
   when: ["master","worker","ingress","storage"]
   port: 10250
+  procName: kubelet
 # kubelet no auth
 - kind: TCPPortAvailable
   when: ["master","worker","ingress","storage"]
   port: 10255
+  procName: kubelet
 
 # Ports used by K8s worker are accessible
 # cAdvisor
@@ -143,6 +157,7 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["ingress"]
   port: 80
+  procName: nginx
 - kind: TCPPortAccessible
   when: ["ingress"]
   port: 80
@@ -150,6 +165,7 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["ingress"]
   port: 443
+  procName: nginx
 - kind: TCPPortAccessible
   when: ["ingress"]
   port: 443
@@ -158,6 +174,7 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["ingress"]
   port: 10254
+  procName: nginx-ingress-c
 - kind: TCPPortAccessible
   when: ["ingress"]
   port: 10254
@@ -171,7 +188,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: nfs-common
@@ -179,7 +196,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: docker-engine
@@ -199,7 +216,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: nfs-common
@@ -207,7 +224,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: nfs-common
@@ -215,7 +232,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: nfs-common
@@ -223,15 +240,15 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 
 
 - kind: PackageDependency
@@ -241,7 +258,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: nfs-utils
@@ -249,7 +266,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: docker-engine
@@ -269,7 +286,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: nfs-utils
@@ -277,7 +294,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: nfs-utils
@@ -285,7 +302,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: nfs-utils
@@ -293,15 +310,15 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 
 
 - kind: PackageDependency
@@ -311,7 +328,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: nfs-utils
@@ -319,7 +336,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: docker-engine
@@ -339,7 +356,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: nfs-utils
@@ -347,7 +364,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["ingress","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","rhel"]
   packageName: nfs-utils
@@ -355,7 +372,7 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["storage","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","rhel"]
   packageName: nfs-utils
@@ -363,15 +380,15 @@ const defaultRuleSet = `---
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 
 
 # Gluster packages
@@ -392,23 +409,17 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["storage"]
   port: 8081
+  procName: exechealthz
 - kind: TCPPortAccessible
   when: ["storage"]
   port: 8081
   timeout: 5s
 
 # Ports required for NFS
-# Removed due to https://github.com/apprenda/kismatic/issues/784
-#- kind: TCPPortAvailable
-#  when: ["storage"]
-#  port: 111
-#- kind: TCPPortAccessible
-#  when: ["storage"]
-#  port: 111
-#  timeout: 5s
 - kind: TCPPortAvailable
   when: ["storage"]
   port: 2049
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: ["storage"]
   port: 2049
@@ -416,6 +427,7 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["storage"]
   port: 38465
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: ["storage"]
   port: 38465
@@ -423,6 +435,7 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["storage"]
   port: 38466
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: ["storage"]
   port: 38466
@@ -430,6 +443,7 @@ const defaultRuleSet = `---
 - kind: TCPPortAvailable
   when: ["storage"]
   port: 38467
+  procName: glusterfs
 - kind: TCPPortAccessible
   when: ["storage"]
   port: 38467
@@ -448,7 +462,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: nfs-common
@@ -456,7 +470,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["master","ubuntu"]
   packageName: docker-engine
@@ -476,7 +490,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: nfs-common
@@ -484,7 +498,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: nfs-common
@@ -492,7 +506,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: kubelet
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: nfs-common
@@ -500,15 +514,15 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["ingress","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 - kind: PackageDependency
   when: ["storage","ubuntu"]
   packageName: kubectl
-  packageVersion: 1.8.1-00
+  packageVersion: 1.8.4-00
 
 - kind: PackageDependency
   when: ["etcd","centos"]
@@ -517,7 +531,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: nfs-utils
@@ -525,7 +539,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","centos"]
   packageName: docker-engine
@@ -545,7 +559,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: nfs-utils
@@ -553,7 +567,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: nfs-utils
@@ -561,7 +575,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: nfs-utils
@@ -569,15 +583,15 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","centos"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 
 - kind: PackageDependency
   when: ["etcd","rhel"]
@@ -586,7 +600,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: nfs-utils
@@ -594,7 +608,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["master","rhel"]
   packageName: docker-engine
@@ -614,7 +628,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: nfs-utils
@@ -622,7 +636,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["ingress","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","rhel"]
   packageName: nfs-utils
@@ -630,7 +644,7 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["storage","rhel"]
   packageName: kubelet
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","rhel"]
   packageName: nfs-utils
@@ -638,15 +652,15 @@ const upgradeRuleSet = `---
 - kind: PackageDependency
   when: ["worker","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["ingress","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 - kind: PackageDependency
   when: ["storage","rhel"]
   packageName: kubectl
-  packageVersion: 1.8.1-0
+  packageVersion: 1.8.4-0
 
 # Gluster packages
 - kind: PackageDependency

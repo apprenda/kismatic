@@ -6,7 +6,7 @@ import (
 )
 
 func ContainsOverrides(nodes provisionedNodes, sshKey string) error {
-	// The installer defaults to --v=2, check if was overriden to --v=3
+	// The installer defaults to --v=2, check if was overridden to --v=3
 	tests := []struct {
 		nodes []NodeDeets
 		text  string

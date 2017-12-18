@@ -3,7 +3,7 @@ package rule
 import "testing"
 
 func TestTCPPortAvailableRuleValidation(t *testing.T) {
-	p := TCPPortAvailable{}
+	p := TCPPortAvailable{ProcName: "foo"}
 	if errs := p.Validate(); len(errs) != 1 {
 		t.Errorf("expected 1 error, but got %d", len(errs))
 	}
@@ -18,6 +18,10 @@ func TestTCPPortAvailableRuleValidation(t *testing.T) {
 	p.Port = 1024
 	if errs := p.Validate(); len(errs) != 0 {
 		t.Errorf("expected 0 error, but got %d", len(errs))
+	}
+	p.ProcName = ""
+	if errs := p.Validate(); len(errs) != 1 {
+		t.Errorf("expected 1 error, but got %d", len(errs))
 	}
 }
 

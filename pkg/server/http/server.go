@@ -107,9 +107,12 @@ func (s *HttpServer) Init() error {
 	return nil
 }
 
-// RunTLS support
-func (s *HttpServer) RunTLS() error {
+// Run starts the HTTP server
+func (s *HttpServer) Run(disableTLS bool) error {
 	s.Logger.Printf("Listening on 0.0.0.0%s\n", s.httpServer.Addr)
+	if disableTLS {
+		return s.httpServer.ListenAndServe()
+	}
 	return s.httpServer.ListenAndServeTLS("", "")
 }
 

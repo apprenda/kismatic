@@ -23,17 +23,19 @@ import (
 )
 
 const (
-	loggerPrefix   = "[kismatic] "
-	defaultTimeout = 10 * time.Second
-	clustersBucket = "kismatic"
-	assetsFolder   = "assets"
+	defaultTimeout      = 10 * time.Second
+	clustersBucket      = "kismatic"
+	assetsFolder        = "assets"
+	defaultInsecurePort = "8080"
+	defaultSecurePort   = "8443"
 )
 
 type serverOptions struct {
-	port     string
-	certFile string
-	keyFile  string
-	dbFile   string
+	port       string
+	certFile   string
+	keyFile    string
+	dbFile     string
+	disableTLS bool
 }
 
 // NewCmdServer returns the server command
@@ -56,10 +58,11 @@ If cert-file or key-file are not provided, a self-signed CA will be used to crea
 			return doServer(stdout, options)
 		},
 	}
-	cmd.Flags().StringVarP(&options.port, "port", "p", "443", "port to start the server on")
+	cmd.Flags().StringVarP(&options.port, "port", "p", "", "port to start the server on. Defaults to 8443, or 8080 when TLS is disabled.")
 	cmd.Flags().StringVar(&options.certFile, "cert-file", "", "path to the TLS cert file")
 	cmd.Flags().StringVar(&options.keyFile, "key-file", "", "path to the TLS key file")
 	cmd.Flags().StringVar(&options.dbFile, "db-file", "./server.db", "path to the database file")
+	cmd.Flags().BoolVar(&options.disableTLS, "insecure-disable-tls", false, "set to true to disable TLS")
 	return cmd
 }
 
@@ -94,10 +97,18 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	// create handlers
 	clusterAPI := handler.Clusters{Store: clusterStore, AssetsDir: assetsDir, Logger: logger}
 
+	port := defaultSecurePort
+	if options.disableTLS {
+		port = defaultInsecurePort
+	}
+	if options.port != "" {
+		port = options.port
+	}
+
 	// Setup the HTTP server
 	server := http.HttpServer{
 		Logger:       logger,
-		Port:         options.port,
+		Port:         port,
 		ClustersAPI:  clusterAPI,
 		ReadTimeout:  defaultTimeout,
 		WriteTimeout: defaultTimeout,
@@ -110,7 +121,7 @@ func doServer(stdout io.Writer, options serverOptions) error {
 	}
 	go func() {
 		logger.Println("Starting server...")
-		if err := server.RunTLS(); err != nethttp.ErrServerClosed {
+		if err := server.Run(options.disableTLS); err != nethttp.ErrServerClosed {
 			logger.Fatalf("Error starting server: %v", err)
 		}
 	}()

@@ -5,8 +5,8 @@ by default, or they might want to override the value of certain flags that are p
 to the Kubernetes components. 
 
 Each Kubernetes component has a corresponding section in the plan file, through which
-specific configuration flags can be set or overriden. There is a subset of protected flags 
-that cannot be overriden, as they depend on configuration that is managed by KET.
+specific configuration flags can be set or overridden. There is a subset of protected flags 
+that cannot be overridden, as they depend on configuration that is managed by KET.
 
 When using this feature, you must keep in mind that an invalid configuration could
 prevent the cluster from functioning properly.
@@ -28,15 +28,15 @@ cluster:
 ```
 
 ## Configuring the Controller Manager
-The Kubernetes Controller Manager options can be set or overriden in the plan file 
+The Kubernetes Controller Manager options can be set or overridden in the plan file 
 using the [cluster.kube_controller_manager.option_overrides](./plan-file-reference.md#clusterkube_controller_manageroption_overrides) field.
 
 ## Configuring the Scheduler
-The Kubernetes Scheduler options can be set or overriden in the plan file using the 
+The Kubernetes Scheduler options can be set or overridden in the plan file using the 
 [cluster.kube_scheduler.option_overrides](./plan-file-reference.md#clusterkube_scheduleroption_overrides) field.
 
 ## Configuring the Kubelet
-The Kubelet options can be set or overriden in the plan file using the 
+The Kubelet options can be set or overridden in the plan file using the 
 [cluster.kubelet.option_overrides](./plan-file-reference.md#clusterkubeletoption_overrides) field.
 This configuration is applied to all Kubelets in the cluster.
 
@@ -62,5 +62,5 @@ worker:
 ```
 
 ## Configuring the Kube Proxy
-The Kube Proxy options can be set or overriden in the plan file using the 
+The Kube Proxy options can be set or overridden in the plan file using the 
 [cluster.kube_proxy.option_overrides](./plan-file-reference.md#clusterkube_proxyoption_overrides) field.

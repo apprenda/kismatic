@@ -72,7 +72,7 @@ func NewCmdUpgradeOffline(in io.Reader, out io.Writer, opts *upgradeOpts) *cobra
 		Short: "Perform an offline upgrade of your Kubernetes cluster",
 		Long: `Perform an offline upgrade of your Kubernetes cluster.
 
-The offline upgrade is available for those clusters in which safety and availabilty are not a concern.
+The offline upgrade is available for those clusters in which safety and availability are not a concern.
 In this mode, the safety and availability checks will not be performed, nor will the nodes in the cluster
 be drained of workloads.
 

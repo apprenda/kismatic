@@ -767,7 +767,7 @@ func TestValidateClusterCertificatesInvalidCerts(t *testing.T) {
 			plan := test.plan(*p)
 			warn, errs := pki.ValidateClusterCertificates(&plan)
 			if len(errs) != 0 {
-				t.Fatalf("unexpected error ocurred validating certs: %v", err)
+				t.Fatalf("unexpected error occurred validating certs: %v", err)
 			}
 			if len(warn) != test.expectedWarnings {
 				t.Errorf("expected %d warnings, but got %d. warnings were: %v", test.expectedWarnings, len(warn), warn)

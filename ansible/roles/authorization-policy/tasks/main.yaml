@@ -9,7 +9,9 @@
     template:
       src: basicauth.csv
       dest: "{{ kubernetes_auth_dir }}/basicauth.csv"
+      force: no
   - name: copy authorization-policy.json to remote
     copy:
       src: authorization-policy.json
       dest: "{{ kubernetes_auth_dir }}/authorization-policy.json"
+      force: no

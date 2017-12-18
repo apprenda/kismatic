@@ -65,7 +65,8 @@ func main() {
 
 	go func() {
 		logger.Println("Starting server...")
-		if err := server.RunTLS(); err != nethttp.ErrServerClosed {
+		disableTLS := true
+		if err := server.Run(disableTLS); err != nethttp.ErrServerClosed {
 			logger.Fatalf("Error starting server: %v", err)
 		}
 	}()

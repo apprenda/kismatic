@@ -102,10 +102,7 @@ func ValidateKismaticMini(node NodeDeets, user, sshKey string) PlanAWS {
 
 	// Run validation
 	By("Validate our plan")
-	ver := exec.Command("./kismatic", "install", "validate", "-f", f.Name())
-	ver.Stdout = os.Stdout
-	ver.Stderr = os.Stderr
-	err = ver.Run()
+	err = runValidate(f.Name())
 	FailIfError(err, "Error validating plan")
 	return plan
 }
@@ -141,10 +138,7 @@ func ValidateKismaticMiniDenyPkgInstallation(node NodeDeets, sshUser, sshKey str
 
 	// Run validation
 	By("Validate our plan")
-	cmd := exec.Command("./kismatic", "install", "validate", "-f", f.Name())
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return runValidate(f.Name())
 }
 
 func ValidateKismaticMiniWithBadSSH(node NodeDeets, user, sshKey string) PlanAWS {
@@ -175,10 +169,7 @@ func ValidateKismaticMiniWithBadSSH(node NodeDeets, user, sshKey string) PlanAWS
 
 	// Run validation
 	By("Validate our plan")
-	ver := exec.Command("./kismatic", "install", "validate", "-f", f.Name())
-	ver.Stdout = os.Stdout
-	ver.Stderr = os.Stderr
-	err = ver.Run()
+	err = runValidate(f.Name())
 	FailIfSuccess(err)
 	return plan
 }
@@ -195,4 +186,11 @@ func getBadSSHKeyFile() (string, error) {
 	}
 
 	return filepath.Join(dir, ".ssh", "bad.pem"), nil
+}
+
+func runValidate(planFile string) error {
+	cmd := exec.Command("./kismatic", "install", "validate", "-f", planFile)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }

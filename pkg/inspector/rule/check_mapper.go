@@ -38,7 +38,7 @@ func (m DefaultCheckMapper) GetCheckForRule(rule Rule) (check.Check, error) {
 	case FileContentMatches:
 		c = check.FileContentCheck{File: r.File, SearchString: r.ContentRegex}
 	case TCPPortAvailable:
-		c = &check.TCPPortServerCheck{PortNumber: r.Port}
+		c = &check.TCPPortServerCheck{PortNumber: r.Port, ProcName: r.ProcName}
 	case TCPPortAccessible:
 		timeout, err := time.ParseDuration(r.Timeout)
 		if err != nil {

@@ -7,11 +7,15 @@ import (
 )
 
 // TCPPortAvailable is a rule that ensures that a given port is available
-// on the node. Available means that the port is not being used by another
-// process.
+// on the node. The port is considered available if:
+// - The port is free and ready to be bound by a new process, or
+// - The port is bound to the process defined in ProcName
 type TCPPortAvailable struct {
 	Meta
+	// The port number to verify
 	Port int
+	// The name of the process that owns this port after KET installation
+	ProcName string
 }
 
 // Name is the name of the rule
@@ -24,10 +28,14 @@ func (p TCPPortAvailable) IsRemoteRule() bool { return false }
 
 // Validate the rule
 func (p TCPPortAvailable) Validate() []error {
+	var errs []error
 	if p.Port < 1 || p.Port > 65535 {
-		return []error{fmt.Errorf("Invalid port number %d specified", p.Port)}
+		errs = append(errs, fmt.Errorf("Invalid port number %d specified", p.Port))
 	}
-	return nil
+	if p.ProcName == "" {
+		errs = append(errs, fmt.Errorf("ProcName cannot be empty"))
+	}
+	return errs
 }
 
 // TCPPortAccessible is a rule that ensures the given port on a remote node

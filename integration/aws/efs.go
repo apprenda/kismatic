@@ -50,7 +50,7 @@ func (c Client) BuildEFSDisk(which string) *EFSDisk {
 	fsId := blockForFileSystemId(which, svc, 30)
 
 	if fsId == nil {
-		fmt.Println("Could not retreive File System Id")
+		fmt.Println("Could not retrieve File System Id")
 		return nil
 	}
 	disk.FileSystemId = *fsId
@@ -75,7 +75,7 @@ func (c Client) BuildEFSDisk(which string) *EFSDisk {
 	ipAdd := blockForMountTargetIpAddress(disk.FileSystemId, svc, 90)
 
 	if ipAdd == nil {
-		fmt.Println("Could not retreive Mount Target IP Address")
+		fmt.Println("Could not retrieve Mount Target IP Address")
 		return nil
 	}
 

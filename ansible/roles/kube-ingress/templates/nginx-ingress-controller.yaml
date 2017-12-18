@@ -10,6 +10,8 @@ spec:
         name: ingress
       annotations:
         kismatic/version: "{{ kismatic_short_version }}"
+        prometheus.io/port: "10254"
+        prometheus.io/scrape: "true"
     spec:
       terminationGracePeriodSeconds: 60
       hostNetwork: true # required in a CNI networkd
@@ -49,3 +51,21 @@ spec:
         args:
         - /nginx-ingress-controller
         - --default-backend-service=kube-system/default-http-backend
+        - --configmap=$(POD_NAMESPACE)/nginx-conf
+        - --profiling=false
+        - --annotations-prefix=ingress.kubernetes.io
+---
+apiVersion: v1
+data:
+  enable-vts-status: "true"
+  access-log-path: "/dev/stdout"
+  error-log-path: "/dev/stdout"
+  error-log-level: "warn"
+  proxy-connect-timeout: "60"
+  proxy-read-timeout: "60"
+  proxy-send-timeout: "60"
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+  namespace: kube-system
+

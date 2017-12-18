@@ -74,7 +74,7 @@ var _ = Describe("kismatic", func() {
 	})
 
 	Describe("calling install apply", func() {
-		Context("when targetting non-existent infrastructure", func() {
+		Context("when targeting non-existent infrastructure", func() {
 			It("should fail in a reasonable amount of time", func() {
 				if !completesInTime(installKismaticWithABadNode, 600*time.Second) {
 					Fail("It shouldn't take 600 seconds for Kismatic to fail with bad nodes.")
@@ -128,28 +128,37 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
-		Context("when targetting CentOS", func() {
+		Context("when targeting CentOS", func() {
 			ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 				WithMiniInfrastructure(CentOS7, aws, func(node NodeDeets, sshKey string) {
 					err := installKismaticMini(node, sshKey)
 					Expect(err).ToNot(HaveOccurred())
-				})
-			})
-		})
-
-		Context("when targetting RHEL", func() {
-			ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
-				WithMiniInfrastructure(RedHat7, aws, func(node NodeDeets, sshKey string) {
-					err := installKismaticMini(node, sshKey)
+					// Ensure preflight checks are idempotent on CentOS7
+					err = runValidate("kismatic-testing.yaml")
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
 		})
 
-		Context("when targetting Ubuntu", func() {
+		Context("when targeting RHEL", func() {
+			ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
+				WithMiniInfrastructure(RedHat7, aws, func(node NodeDeets, sshKey string) {
+					err := installKismaticMini(node, sshKey)
+					Expect(err).ToNot(HaveOccurred())
+					// Ensure preflight checks are idempotent on RedHat7
+					err = runValidate("kismatic-testing.yaml")
+					Expect(err).ToNot(HaveOccurred())
+				})
+			})
+		})
+
+		Context("when targeting Ubuntu", func() {
 			ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 				WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
 					err := installKismaticMini(node, sshKey)
+					Expect(err).ToNot(HaveOccurred())
+					// Ensure preflight checks are idempotent on Ubuntu 1604
+					err = runValidate("kismatic-testing.yaml")
 					Expect(err).ToNot(HaveOccurred())
 				})
 			})
@@ -159,7 +168,7 @@ var _ = Describe("kismatic", func() {
 			installOpts := installOptions{
 				useDirectLVM: true,
 			}
-			Context("when targetting CentOS", func() {
+			Context("when targeting CentOS", func() {
 				ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 					WithMiniInfrastructureAndBlockDevice(CentOS7, aws, func(node NodeDeets, sshKey string) {
 						theNode := []NodeDeets{node}
@@ -175,7 +184,7 @@ var _ = Describe("kismatic", func() {
 				})
 			})
 
-			Context("when targetting RHEL", func() {
+			Context("when targeting RHEL", func() {
 				ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 					WithMiniInfrastructureAndBlockDevice(RedHat7, aws, func(node NodeDeets, sshKey string) {
 						theNode := []NodeDeets{node}
@@ -272,6 +281,10 @@ var _ = Describe("kismatic", func() {
 						sub.It("nodes should contain expected component overrides", func() error {
 							return ContainsOverrides(nodes, sshKey)
 						})
+
+						sub.It("should allow for running preflight checks idempotently", func() error {
+							return runValidate("kismatic-testing.yaml")
+						})
 					})
 				})
 			})
@@ -325,6 +338,10 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("nodes should contain expected labels", func() error {
 							return containsLabels(nodes, sshKey)
+						})
+
+						sub.It("should allow for running preflight checks idempotently", func() error {
+							return runValidate("kismatic-testing.yaml")
 						})
 					})
 				})

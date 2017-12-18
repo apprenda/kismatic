@@ -42,8 +42,26 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	}
 	pubKeyPath := filepath.Join(absPath, fmt.Sprintf("/terraform/clusters/%s/%s-ssh.pub", plan.Cluster.Name, plan.Cluster.Name))
 	privKeyPath := filepath.Join(absPath, fmt.Sprintf("/terraform/clusters/%s/%s-ssh.pem", plan.Cluster.Name, plan.Cluster.Name))
-	if err := ssh.NewKeyPair(pubKeyPath, privKeyPath); err != nil {
-		return nil, fmt.Errorf("error generating SSH key pair: %v", err)
+
+	var privKeyExists, pubKeyExists bool
+	if _, err := os.Stat(pubKeyPath); err == nil {
+		pubKeyExists = true
+	}
+	if _, err := os.Stat(privKeyPath); err == nil {
+		privKeyExists = true
+	}
+
+	if pubKeyExists != privKeyExists {
+		if !privKeyExists {
+			return nil, fmt.Errorf("found an existing public key at %s, but did not find the corresponding private key at %s. The corresponding key must be recovered if possible. Otherwise, the existing key must be deleted", pubKeyPath, privKeyPath)
+		}
+		return nil, fmt.Errorf("found an existing private key at %s, but did not find the corresponding public key at %s. The corresponding key must be recovered if possible. Otherwise, the existing key must be deleted", privKeyPath, pubKeyPath)
+	}
+
+	if !privKeyExists && !pubKeyExists {
+		if err := ssh.NewKeyPair(pubKeyPath, privKeyPath); err != nil {
+			return nil, fmt.Errorf("error generating SSH key pair: %v", err)
+		}
 	}
 	plan.Cluster.SSH.Key = privKeyPath
 	plan.Cluster.SSH.User = "ubuntu"

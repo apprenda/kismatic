@@ -1,12 +1,12 @@
 package check
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net"
+	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -34,41 +34,29 @@ func (c *TCPPortClientCheck) Check() (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("Port %d on host %q is unreachable. Error was: %v", c.PortNumber, c.IPAddress, err)
 	}
-
-	testMsg := "ECHO\n"
-	fmt.Fprint(conn, testMsg)
-	resp, err := bufio.NewReader(conn).ReadString('\n')
-	if err == io.EOF {
-		return false, nil // The server sent an empty response
-	}
-	if err != nil {
-		return false, fmt.Errorf("error reading from TCP socket: %v", err)
-	}
-	if resp != testMsg {
-		return false, nil
-	}
+	conn.Close()
 	return true, nil
 }
 
-// TCPPortServerCheck ensures that the given port is free, and stands up a TCP server that can be used to
-// check TCP connectivity to the host using TCPPortClientCheck
+// TCPPortServerCheck ensures that the given port is free, or bound to the right
+// process. In the case that it is free, it stands up a TCP server that can be
+// used to check TCP connectivity to the host using TCPPortClientCheck
 type TCPPortServerCheck struct {
 	PortNumber     int
+	ProcName       string
 	started        bool
 	closeListener  func() error
 	listenerClosed chan interface{}
 }
 
-// Check returns true if the port is available for the server. Otherwise returns false
-// and an error message
+// Check returns true if the port is free, or taken by the expected process.
 func (c *TCPPortServerCheck) Check() (bool, error) {
 	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", c.PortNumber))
 	if err != nil && strings.Contains(err.Error(), "address already in use") {
-		return false, nil
+		return portTakenByProc(c.PortNumber, c.ProcName)
 	}
 	if err != nil {
-		// TODO: We could check if the port is being used here..
-		return false, fmt.Errorf("error listening on port %d", c.PortNumber)
+		return false, fmt.Errorf("error listening on port %d: %v", c.PortNumber, err)
 	}
 	c.closeListener = ln.Close
 	// Setup go routine for accepting connections
@@ -98,11 +86,64 @@ func (c *TCPPortServerCheck) Check() (bool, error) {
 	return true, nil
 }
 
-// Close the TCP server
+// Close the TCP server if it was started. Otherwise this is a noop.
 func (c *TCPPortServerCheck) Close() error {
 	if c.started {
 		close(c.listenerClosed)
 		return c.closeListener()
 	}
-	return errors.New("called close on a TCPPortServerCheck that is not started")
+	return nil
+}
+
+// Returns true if the port is taken by a process with the given name.
+func portTakenByProc(port int, procName string) (bool, error) {
+	// Use `ss` (sockstat) to find the process listening on the given port.
+	// Sample output:
+	// ~# ss -tpln state listening src :6443  | strings
+	// Recv-Q Send-Q Local Address:Port               Peer Address:Port
+	// 0      128              :::6443                         :::*                   users:(("kube-apiserver",pid=21199,fd=59))
+	//
+	// ~# ss -tpln state listening src :80  | strings
+	// Recv-Q Send-Q Local Address:Port               Peer Address:Port
+	// 0      128               *:80                            *:*                   users:(("nginx",pid=30729,fd=10),("nginx",pid=30728,fd=10),("nginx",pid=30721,fd=10))
+	//
+	cmd := exec.Command("ss", "-tpln", "state", "listening", "src", fmt.Sprintf(":%d", port))
+	out, err := cmd.Output()
+	if err != nil {
+		return false, fmt.Errorf("error running ss: %v", err)
+	}
+	lines := strings.Split(string(out), "\n")
+	if len(lines) < 2 {
+		return false, fmt.Errorf("expected ss to return at least 2 lines, but returned %d", len(lines))
+	}
+	boundProc, err := getProcNameFromTCPSockStatLine(lines[1])
+	if err != nil {
+		return false, err
+	}
+	return boundProc == procName, nil
+}
+
+// given an entry returned by sockstat (ss), return the name of the process using the port.
+// assumes ss was run with flags: -tpln
+func getProcNameFromTCPSockStatLine(line string) (string, error) {
+	ssFields := strings.Fields(line)
+	// The fifth field includes information about the process using the port
+	if len(ssFields) != 5 {
+		return "", fmt.Errorf("unexpected output returned from ss command. output was: %s", line)
+	}
+	// users:(("nginx",pid=30729,fd=10),("nginx",pid=30728,fd=10),("nginx",pid=30721,fd=10))
+	usersField := ssFields[4]
+
+	// This regular expression contains a single capturing group that will fish
+	// out the process name from the `ss` output. In the case that `ss` returns
+	// a list with multiple users, the left-most user will be matched.
+	re := regexp.MustCompile(`^users:\(\("([^"]+)",pid=\d+,fd=\d+\)`)
+	matched := re.FindSubmatch([]byte(usersField))
+	if len(matched) < 2 {
+		return "", fmt.Errorf("unable to determine the process from ss line %q", usersField)
+	}
+	// We are interested in the subexpression (capturing group). The first item
+	// in the matched list is the match of the full regexp, not the capturing
+	// group.
+	return string(matched[1]), nil
 }
