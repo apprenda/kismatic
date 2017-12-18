@@ -67,7 +67,7 @@ jobs:
           command: make just-integration-test
           no_output_timeout: 30m
           environment:
-            GINKGO_OPTS: "-nodes=64 --flakeAttempts=2"
+            GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
             ANSIBLE_SSH_CONTROL_PATH: "/run/user/1026/ssh-%%r-%%h-%%p"
             ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/run/user/1026/ssh-%r-%h-%p"    
       - run:
@@ -79,7 +79,7 @@ jobs:
             fi
           no_output_timeout: 90m
           environment:
-            GINKGO_OPTS: "-nodes=64 --flakeAttempts=2"
+            GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
             ANSIBLE_SSH_CONTROL_PATH: "/run/user/1026/ssh-%%r-%%h-%%p"
             ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/run/user/1026/ssh-%r-%h-%p"
       - store_test_results:
