@@ -7,7 +7,7 @@ resource "aws_vpc" "kismatic" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
   lifecycle {
@@ -22,7 +22,7 @@ resource "aws_internet_gateway" "kismatic_gateway" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
   lifecycle {
@@ -43,7 +43,7 @@ resource "aws_default_route_table" "kismatic_router" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
   lifecycle {

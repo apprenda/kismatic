@@ -68,7 +68,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 
 	// Write out the terraform variables
 	data := AWSTerraformData{
-		Version:           aws.Terraform.KismaticVersion.String(),
+		KismaticVersion:   aws.Terraform.KismaticVersion.String(),
 		Region:            plan.Provisioner.AWSOptions.Region,
 		ClusterName:       plan.Cluster.Name,
 		ClusterOwner:      aws.Terraform.ClusterOwner,

@@ -6,13 +6,13 @@ resource "aws_instance" "bastion" {
   // TODO: setup a bastion node for added security
   ami             = "${data.aws_ami.ubuntu.id}"
   instance_type   = "${var.instance_size}"
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-bastion-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/nodeRoles"    = "bastion"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -40,13 +40,13 @@ resource "aws_instance" "master" {
   count                  = "${var.master_count}"
   ami                    = "${data.aws_ami.ubuntu.id}"
   instance_type          = "${var.instance_size}"
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-master-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/nodeRoles"    = "master"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -74,13 +74,13 @@ resource "aws_instance" "etcd" {
   count                   = "${var.etcd_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-etcd-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/nodeRoles"    = "etcd"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -108,13 +108,13 @@ resource "aws_instance" "worker" {
   count                   = "${var.worker_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-worker-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/nodeRoles"    = "worker"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -142,13 +142,13 @@ resource "aws_instance" "ingress" {
   count                   = "${var.ingress_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-ingress-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/nodeRoles"    = "ingress"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -176,13 +176,13 @@ resource "aws_instance" "storage" {
   count                   = "${var.storage_count}"
   ami                     = "${data.aws_ami.ubuntu.id}"
   instance_type           = "${var.instance_size}"
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-storage-${count.index}"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/nodeRoles"    = "storage"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }

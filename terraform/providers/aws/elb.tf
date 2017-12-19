@@ -8,7 +8,7 @@ resource "aws_s3_bucket" "lb_logs" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/bucket"       = "lb"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -49,7 +49,7 @@ resource "aws_elb" "kismatic_master" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/loadBalancer" = "master"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -99,7 +99,7 @@ resource "aws_elb" "kismatic_ingress" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/loadBalancer" = "ingress"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
