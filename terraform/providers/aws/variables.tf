@@ -23,10 +23,9 @@ variable "kismatic_version" {}
 variable "cluster_name" {}
 
 variable "cluster_owner" {}
-}
 
 variable "ami" {
-  //These will have to change when we want to also support RHEL/CentOS
+  // These will have to change when we want to also support RHEL/CentOS
   default = "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-*"
 }
 
