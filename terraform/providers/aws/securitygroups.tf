@@ -15,7 +15,7 @@ resource "aws_security_group" "kismatic_ssh" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/securityGroup"= "ssh"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -48,7 +48,7 @@ resource "aws_security_group" "kismatic_private" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/securityGroup"= "private"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -75,7 +75,7 @@ resource "aws_security_group" "kismatic_lb_master" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/securityGroup"= "lb-master"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -108,7 +108,7 @@ resource "aws_security_group" "kismatic_lb_ingress" {
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/securityGroup"= "lb-ingress"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }

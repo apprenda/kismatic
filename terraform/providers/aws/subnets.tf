@@ -2,13 +2,13 @@ resource "aws_subnet" "kismatic_public" {
   vpc_id      = "${aws_vpc.kismatic.id}"
   cidr_block  = "10.0.1.0/24"
   map_public_ip_on_launch = "True"
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-public"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/subnet"       = "public"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -22,13 +22,13 @@ resource "aws_subnet" "kismatic_private" {
   cidr_block  = "10.0.2.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-private"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/subnet"       = "private"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -42,13 +42,13 @@ resource "aws_subnet" "kismatic_master" {
   cidr_block  = "10.0.3.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-master"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/subnet"       = "master"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
@@ -62,13 +62,13 @@ resource "aws_subnet" "kismatic_ingress" {
   cidr_block  = "10.0.4.0/24"
   map_public_ip_on_launch = "True"
   //TODO: disable when we add bastion support
-  availability_zone = "${var.AZ}"
+  availability_zone = "${var.availability_zone}"
   tags {
     "Name"                  = "${var.cluster_name}-subnet-ingress"
     "kismatic/clusterName"  = "${var.cluster_name}"
     "kismatic/clusterOwner" = "${var.cluster_owner}"
     "kismatic/dateCreated"  = "${timestamp()}"
-    "kismatic/version"      = "${var.version}"
+    "kismatic/version"      = "${var.kismatic_version}"
     "kismatic/subnet"       = "ingress"
     "kubernetes.io/cluster" = "${var.cluster_name}"
   }
