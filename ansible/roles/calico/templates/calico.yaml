@@ -64,8 +64,6 @@ metadata:
     k8s-app: calico-node
   annotations:
     kismatic/version: "{{ kismatic_short_version }}"
-    prometheus.io/port: "9091"
-    prometheus.io/scrape: "true"
 spec:
   selector:
     matchLabels:
@@ -76,6 +74,8 @@ spec:
         k8s-app: calico-node
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
+        prometheus.io/port: "9091"
+        prometheus.io/scrape: "true"
     spec:
       hostNetwork: true
       serviceAccountName: calico-node

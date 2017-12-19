@@ -30,8 +30,6 @@ metadata:
   annotations:
     version: "{{ official_images.kube_apiserver.version }}"
     kismatic/version: "{{ kismatic_short_version }}"
-    prometheus.io/port: "10249"
-    prometheus.io/scrape: "true"
   name: kube-proxy
   namespace: kube-system
 spec:
@@ -48,6 +46,8 @@ spec:
         kismatic/version: "{{ kismatic_short_version }}"
         k8s-app: kube-proxy
         scheduler.alpha.kubernetes.io/critical-pod: ''
+        prometheus.io/port: "10249"
+        prometheus.io/scrape: "true"
     spec:
       hostNetwork: true
       nodeSelector:
