@@ -64,6 +64,8 @@ metadata:
     k8s-app: calico-node
   annotations:
     kismatic/version: "{{ kismatic_short_version }}"
+    prometheus.io/port: "9091"
+    prometheus.io/scrape: "true"
 spec:
   selector:
     matchLabels:
