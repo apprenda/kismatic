@@ -1,4 +1,5 @@
 resource "azurerm_public_ip" "bastion" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   count                        = 0 
   name                         = "${var.cluster_name}-bastion-${count.index}"
   location                     = "${azurerm_resource_group.kismatic.location}"
@@ -20,6 +21,7 @@ resource "azurerm_public_ip" "bastion" {
 }
 
 resource "azurerm_public_ip" "master" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   count                        = "${var.master_count}"
   name                         = "${var.cluster_name}-master-${count.index}"
   location                     = "${azurerm_resource_group.kismatic.location}"
@@ -42,6 +44,7 @@ resource "azurerm_public_ip" "master" {
 
 
 resource "azurerm_public_ip" "etcd" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   count                        = "${var.etcd_count}"
   name                         = "${var.cluster_name}-etcd-${count.index}"
   location                     = "${azurerm_resource_group.kismatic.location}"
@@ -63,6 +66,7 @@ resource "azurerm_public_ip" "etcd" {
 }
 
 resource "azurerm_public_ip" "worker" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   count                        = "${var.worker_count}"
   name                         = "${var.cluster_name}-worker-${count.index}"
   location                     = "${azurerm_resource_group.kismatic.location}"
@@ -84,6 +88,7 @@ resource "azurerm_public_ip" "worker" {
 }
 
 resource "azurerm_public_ip" "ingress" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   count                        = "${var.ingress_count}"
   name                         = "${var.cluster_name}-ingress-${count.index}"
   location                     = "${azurerm_resource_group.kismatic.location}"
@@ -105,6 +110,7 @@ resource "azurerm_public_ip" "ingress" {
 }
 
 resource "azurerm_public_ip" "storage" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   count                        = "${var.storage_count}"
   name                         = "${var.cluster_name}-storage-${count.index}"
   location                     = "${azurerm_resource_group.kismatic.location}"

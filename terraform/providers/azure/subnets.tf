@@ -1,4 +1,5 @@
 resource "azurerm_subnet" "kismatic_public" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_virtual_network.kismatic", "azurerm_route_table.kismatic"]
   name                      = "${var.cluster_name}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
   virtual_network_name      = "${azurerm_virtual_network.kismatic.name}"
@@ -7,6 +8,7 @@ resource "azurerm_subnet" "kismatic_public" {
 }
 
 resource "azurerm_subnet" "kismatic_private" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_virtual_network.kismatic", "azurerm_route_table.kismatic"]
   name                      = "${var.cluster_name}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
   virtual_network_name      = "${azurerm_virtual_network.kismatic.name}"
@@ -15,6 +17,7 @@ resource "azurerm_subnet" "kismatic_private" {
 }
 
 resource "azurerm_subnet" "kismatic_master" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_virtual_network.kismatic", "azurerm_route_table.kismatic"]
   name                      = "${var.cluster_name}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
   virtual_network_name      = "${azurerm_virtual_network.kismatic.name}"
@@ -23,6 +26,7 @@ resource "azurerm_subnet" "kismatic_master" {
 }
 
 resource "azurerm_subnet" "kismatic_ingress" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_virtual_network.kismatic", "azurerm_route_table.kismatic"]
   name                      = "${var.cluster_name}"
   resource_group_name       = "${azurerm_resource_group.kismatic.name}"
   virtual_network_name      = "${azurerm_virtual_network.kismatic.name}"

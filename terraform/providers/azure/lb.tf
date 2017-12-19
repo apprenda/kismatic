@@ -1,5 +1,6 @@
 resource "azurerm_lb" "kismatic_master" {
-  name                = "${var.cluster_name}-lb-master"
+  depends_on                   = ["azurerm_resource_group.kismatic", "azurerm_public_ip.lb_master"]  
+  name                         = "${var.cluster_name}-lb-master"
   location                     = "${azurerm_resource_group.kismatic.location}"
   resource_group_name          = "${azurerm_resource_group.kismatic.name}"
 
@@ -23,6 +24,7 @@ resource "azurerm_lb" "kismatic_master" {
 }
 
 resource "azurerm_lb_rule" "kismatic_master" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_lb.kismatic_master", "azurerm_lb_backend_address_pool.kismatic_master", "azurerm_lb_probe.kismatic_master"]  
   name                    = "${var.cluster_name}-lb-master"
   resource_group_name     = "${azurerm_resource_group.kismatic.name}"
   loadbalancer_id         = "${azurerm_lb.kismatic_master.id}"
@@ -36,6 +38,7 @@ resource "azurerm_lb_rule" "kismatic_master" {
 }
 
 resource "azurerm_lb_probe" "kismatic_master" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_lb.kismatic_master"]  
   name                = "${var.cluster_name}-lb-master"
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
   loadbalancer_id     = "${azurerm_lb.kismatic_master.id}"
@@ -44,12 +47,14 @@ resource "azurerm_lb_probe" "kismatic_master" {
 }
 
 resource "azurerm_lb_backend_address_pool" "kismatic_master" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_lb.kismatic_master"]  
   name                = "${var.cluster_name}-lb-master"
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
   loadbalancer_id     = "${azurerm_lb.kismatic_master.id}"
 }
 
 resource "azurerm_lb" "kismatic_ingress" {
+  depends_on                  = ["azurerm_resource_group.kismatic", "azurerm_public_ip.lb_ingress"]  
   name                         = "${var.cluster_name}-lb-ingress"
   location                     = "${azurerm_resource_group.kismatic.location}"
   resource_group_name          = "${azurerm_resource_group.kismatic.name}"
@@ -74,6 +79,7 @@ resource "azurerm_lb" "kismatic_ingress" {
 }
 
 resource "azurerm_lb_rule" "kismatic_ingress_443" {
+  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_lb.kismatic_ingress", "azurerm_lb_backend_address_pool.kismatic_ingress", "azurerm_lb_probe.kismatic_ingress"]
   name                    = "${var.cluster_name}-lb-ingress"
   resource_group_name     = "${azurerm_resource_group.kismatic.name}"
   loadbalancer_id         = "${azurerm_lb.kismatic_ingress.id}"
@@ -87,6 +93,7 @@ resource "azurerm_lb_rule" "kismatic_ingress_443" {
 }
 
 resource "azurerm_lb_rule" "kismatic_ingress_80" {
+  depends_on              = ["azurerm_resource_group.kismatic", "azurerm_lb.kismatic_ingress", "azurerm_lb_backend_address_pool.kismatic_ingress", "azurerm_lb_probe.kismatic_ingress"] 
   name                    = "${var.cluster_name}-lb-ingress"
   resource_group_name     = "${azurerm_resource_group.kismatic.name}"
   loadbalancer_id         = "${azurerm_lb.kismatic_ingress.id}"
@@ -100,6 +107,7 @@ resource "azurerm_lb_rule" "kismatic_ingress_80" {
 }
 
 resource "azurerm_lb_probe" "kismatic_ingress" {
+  depends_on          = ["azurerm_resource_group.kismatic", "azurerm_lb.kismatic_ingress"] 
   name                = "${var.cluster_name}-lb-ingress"
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
   loadbalancer_id     = "${azurerm_lb.kismatic_ingress.id}"
@@ -108,6 +116,7 @@ resource "azurerm_lb_probe" "kismatic_ingress" {
 }
 
 resource "azurerm_lb_backend_address_pool" "kismatic_ingress" {
+  depends_on          = ["azurerm_resource_group.kismatic", "azurerm_lb.kismatic_ingress"] 
   name                = "${var.cluster_name}-lb-ingress"
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
   loadbalancer_id     = "${azurerm_lb.kismatic_ingress.id}"

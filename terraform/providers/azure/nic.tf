@@ -1,4 +1,5 @@
 resource "azurerm_network_interface" "bastion" {
+  depends_on                = ["azurerm_resource_group.kismatic", "azurerm_subnet.kismatic_public", "azurerm_network_security_group.kismatic_private", "azurerm_public_ip.bastion"] 
   count                     = 0
   name                      = "${var.cluster_name}-bastion-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
@@ -26,6 +27,7 @@ resource "azurerm_network_interface" "bastion" {
 }
 
 resource "azurerm_network_interface" "master" {
+  depends_on                = ["azurerm_resource_group.kismatic", "azurerm_subnet.kismatic_master", "azurerm_network_security_group.kismatic_private", "azurerm_public_ip.master"] 
   count                     = "${var.master_count}"
   name                      = "${var.cluster_name}-master-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
@@ -53,6 +55,7 @@ resource "azurerm_network_interface" "master" {
 }
 
 resource "azurerm_network_interface" "etcd" {
+  depends_on                = ["azurerm_resource_group.kismatic", "azurerm_subnet.kismatic_private", "azurerm_network_security_group.kismatic_private", "azurerm_public_ip.etcd"] 
   count                     = "${var.etcd_count}"
   name                      = "${var.cluster_name}-etcd-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
@@ -80,6 +83,7 @@ resource "azurerm_network_interface" "etcd" {
 }
 
 resource "azurerm_network_interface" "worker" {
+  depends_on                = ["azurerm_resource_group.kismatic", "azurerm_subnet.kismatic_private", "azurerm_network_security_group.kismatic_private", "azurerm_public_ip.worker"] 
   count                     = "${var.worker_count}"
   name                      = "${var.cluster_name}-worker-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
@@ -107,6 +111,7 @@ resource "azurerm_network_interface" "worker" {
 }
 
 resource "azurerm_network_interface" "ingress" {
+  depends_on                = ["azurerm_resource_group.kismatic", "azurerm_subnet.kismatic_private", "azurerm_network_security_group.kismatic_private", "azurerm_public_ip.ingress"] 
   count                     = "${var.ingress_count}"
   name                      = "${var.cluster_name}-ingress-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
@@ -134,6 +139,7 @@ resource "azurerm_network_interface" "ingress" {
 }
 
 resource "azurerm_network_interface" "storage" {
+  depends_on                = ["azurerm_resource_group.kismatic", "azurerm_subnet.kismatic_private", "azurerm_network_security_group.kismatic_private", "azurerm_public_ip.storage"] 
   count                     = "${var.storage_count}"
   name                      = "${var.cluster_name}-storage-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"

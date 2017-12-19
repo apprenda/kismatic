@@ -1,4 +1,5 @@
 resource "azurerm_network_security_group" "kismatic_private" {
+  depends_on            = ["azurerm_resource_group.kismatic"]  
   name                = "${var.cluster_name}-private"
   location            = "${azurerm_resource_group.kismatic.location}"
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
@@ -54,6 +55,7 @@ resource "azurerm_network_security_group" "kismatic_private" {
 }
 
 resource "azurerm_network_security_group" "kismatic_lb_master" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   name                = "${var.cluster_name}-lb-master"
   location            = "${azurerm_resource_group.kismatic.location}"
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
@@ -110,6 +112,7 @@ resource "azurerm_network_security_group" "kismatic_lb_master" {
 }
 
 resource "azurerm_network_security_group" "kismatic_lb_ingress" {
+  depends_on            = ["azurerm_resource_group.kismatic"]
   name                = "${var.cluster_name}-lb-ingress"
   location            = "${azurerm_resource_group.kismatic.location}"
   resource_group_name = "${azurerm_resource_group.kismatic.name}"
