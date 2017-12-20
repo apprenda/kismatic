@@ -50,15 +50,9 @@ func (azure Azure) Provision(plan install.Plan) (*install.Plan, error) {
 	plan.Cluster.SSH.Key = privKeyPath
 	plan.Cluster.SSH.User = "ubuntu"
 
-	vals := azure.getCommandEnvironment()
-	sID, cID, cSec, tID := vals[0], vals[1], vals[2], vals[3]
 	// Write out the terraform variables
 	data := AzureTerraformData{
-		SubscriptionID:    sID,
-		ClientID:          cID,
-		ClientSecret:      cSec,
-		TenantID:          tID,
-		Version:           azure.Terraform.KismaticVersion.String(),
+		KismaticVersion:   azure.Terraform.KismaticVersion.String(),
 		Location:          plan.Provisioner.AzureOptions.Location,
 		ClusterName:       plan.Cluster.Name,
 		ClusterOwner:      azure.Terraform.ClusterOwner,
