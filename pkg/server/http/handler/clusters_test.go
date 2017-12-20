@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/apprenda/kismatic/pkg/install"
 	"github.com/apprenda/kismatic/pkg/store"
 	"github.com/julienschmidt/httprouter"
 )
@@ -224,10 +223,12 @@ func TestValidationShouldError(t *testing.T) {
 
 func TestUpdateValidationShouldError(t *testing.T) {
 	tests := []struct {
+		name  string
 		cu    clusterUpdate
 		valid bool
 	}{
 		{
+			name: "updating with no changes is valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -246,28 +247,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 2,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: true,
 		},
 		{
+			name: "updating the number of ingress nodes is valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -286,28 +277,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 0,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: true,
 		},
 		{
+			name: "updating the number of worker nodes is valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -326,28 +307,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 3,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: true,
 		},
 		{
+			name: "updating the name of the cluster is not valid",
 			cu: clusterUpdate{
 				id: "bar",
 				request: ClusterRequest{
@@ -366,28 +337,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 2,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: false,
 		},
 		{
+			name: "updating the name of the cluster is not valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -406,68 +367,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 2,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: false,
 		},
 		{
-			cu: clusterUpdate{
-				id: "foo",
-				request: ClusterRequest{
-					Name:         "foo",
-					DesiredState: "installed",
-					Provisioner: Provisioner{
-						Provider: "aws",
-						AWSOptions: &AWSProvisionerOptions{
-							AccessKeyID:     "ACCESS_ID",
-							SecretAccessKey: "SECRET",
-						},
-					},
-					EtcdCount:    3,
-					MasterCount:  2,
-					WorkerCount:  5,
-					IngressCount: 2,
-				},
-				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "bar",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
-					},
-				},
-			},
-			valid: false,
-		},
-		{
+			name: "updating the number of etcd nodes is not valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -486,28 +397,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 2,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: false,
 		},
 		{
+			name: "updating master nodes to zero is not valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -526,28 +427,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 2,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: false,
 		},
 		{
+			name: "updating the worker nodes to zero is not valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -566,28 +457,18 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: 2,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
 			valid: false,
 		},
 		{
+			name: "updating the number of ingress nodes to < 0 is not valid",
 			cu: clusterUpdate{
 				id: "foo",
 				request: ClusterRequest{
@@ -606,22 +487,11 @@ func TestUpdateValidationShouldError(t *testing.T) {
 					IngressCount: -1,
 				},
 				inStore: store.Cluster{
-					Plan: install.Plan{
-						Cluster: install.Cluster{
-							Name: "foo",
-						},
-						Etcd: install.NodeGroup{
-							ExpectedCount: 3,
-						},
-						Master: install.MasterNodeGroup{
-							ExpectedCount: 2,
-						},
-						Worker: install.NodeGroup{
-							ExpectedCount: 5,
-						},
-						Ingress: install.OptionalNodeGroup{
-							ExpectedCount: 2,
-						},
+					Spec: store.ClusterSpec{
+						EtcdCount:    3,
+						MasterCount:  2,
+						WorkerCount:  5,
+						IngressCount: 2,
 					},
 				},
 			},
@@ -629,10 +499,12 @@ func TestUpdateValidationShouldError(t *testing.T) {
 		},
 	}
 	for i, test := range tests {
-		ok, errs := test.cu.validate()
-		if ok != test.valid {
-			t.Errorf("test %d: expect %t, but got %t: %v", i, test.valid, ok, errs)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			ok, errs := test.cu.validate()
+			if ok != test.valid {
+				t.Errorf("test %d: expect %t, but got %t: %v", i, test.valid, ok, errs)
+			}
+		})
 	}
 }
 
@@ -777,7 +649,7 @@ func TestCreateUpdateGetGetAllandDelete(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if resp.CurrentState != "planned" || resp.WorkerCount != 6 {
+	if resp.WorkerCount != 6 {
 		t.Errorf("handler returned unexpected body: got %v want %v",
 			rr.Body.String(), resp)
 	}
@@ -844,7 +716,7 @@ func TestCreateUpdateGetGetAllandDelete(t *testing.T) {
 	r.DELETE("/clusters/:name", clustersAPI.Delete)
 	r.ServeHTTP(rr, req)
 	if status := rr.Code; status != http.StatusAccepted {
-		t.Errorf("handler returned wrong status code: got %v want %v: %s",
+		t.Errorf("handler returned wrong status code: got %d want %v: %d",
 			status, http.StatusAccepted, rr.Code)
 	}
 	expected = "ok\n"

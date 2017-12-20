@@ -135,10 +135,11 @@ func doServer(stdout io.Writer, options serverOptions) error {
 
 	ctrl := controller.New(
 		logger,
-		controller.DefaultExecutorCreator(assetsDir),
+		controller.DefaultExecutorCreator(),
 		controller.DefaultProvisionerCreator(terraform),
 		clusterStore,
 		10*time.Minute,
+		assetsDir,
 	)
 	ctx, cancel := context.WithCancel(context.Background())
 	go ctrl.Run(ctx)

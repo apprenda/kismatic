@@ -90,6 +90,13 @@ imports:
   - go/client
   - go/x509
   - go/x509/pkix
+- name: github.com/google/go-cmp
+  version: 8099a9787ce5dc5984ed879a3bda47dc730a8e97
+  subpackages:
+  - cmp
+  - cmp/internal/diff
+  - cmp/internal/function
+  - cmp/internal/value
 - name: github.com/gosuri/uilive
   version: ac356e6e42cd31fcef8e6aec13ae9ed6fe87713e
 - name: github.com/inconshreveable/mousetrap

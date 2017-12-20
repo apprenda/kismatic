@@ -81,7 +81,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 		PrivateSSHKeyPath: privKeyPath,
 		PublicSSHKeyPath:  pubKeyPath,
 	}
-	b, err := json.Marshal(data)
+	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func (aws AWS) Provision(plan install.Plan) (*install.Plan, error) {
 	}
 
 	// Terraform apply
-	applyCmd := exec.Command(aws.BinaryPath, "apply", plan.Cluster.Name)
+	applyCmd := exec.Command(aws.BinaryPath, "apply", "-input=false", plan.Cluster.Name)
 	applyCmd.Stdout = aws.Terraform.Output
 	applyCmd.Stderr = aws.Terraform.Output
 	applyCmd.Env = cmdEnv

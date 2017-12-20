@@ -20,16 +20,23 @@ type ClusterController interface {
 
 // ExecutorCreator creates executors that can be used for executing actions
 // against a specific cluster.
-type ExecutorCreator func(clusterName string) (install.Executor, error)
+type ExecutorCreator func(clusterName, assetsRootDir string) (install.Executor, error)
 
 // ProvisionerCreator creates provisioners that can be used for standing up
 // infrastructure for a specific cluster.
 type ProvisionerCreator func(store.Cluster) provision.Provisioner
 
 // New returns a cluster controller
-func New(l *log.Logger, execCreator ExecutorCreator, provisionerCreator ProvisionerCreator, cs store.ClusterStore, reconFreq time.Duration) ClusterController {
+func New(
+	logger *log.Logger,
+	execCreator ExecutorCreator,
+	provisionerCreator ProvisionerCreator,
+	cs store.ClusterStore,
+	reconFreq time.Duration,
+	assetsRootDir string) ClusterController {
 	return &multiClusterController{
-		log:                l,
+		assetsRootDir:      assetsRootDir,
+		log:                logger,
 		newExecutor:        execCreator,
 		clusterStore:       cs,
 		reconcileFreq:      reconFreq,
@@ -48,8 +55,8 @@ func New(l *log.Logger, execCreator ExecutorCreator, provisionerCreator Provisio
 //     - kismatic.log
 //     - assets/
 //     - runs/
-func DefaultExecutorCreator(rootDir string) ExecutorCreator {
-	return func(clusterName string) (install.Executor, error) {
+func DefaultExecutorCreator() ExecutorCreator {
+	return func(clusterName string, rootDir string) (install.Executor, error) {
 		err := os.MkdirAll(filepath.Join(rootDir, clusterName), 0700)
 		if err != nil {
 			return nil, fmt.Errorf("error creating directories for executor: %v", err)
@@ -76,16 +83,16 @@ func DefaultExecutorCreator(rootDir string) ExecutorCreator {
 // on the clouds we support.
 func DefaultProvisionerCreator(terraform provision.Terraform) ProvisionerCreator {
 	return func(cluster store.Cluster) provision.Provisioner {
-		switch cluster.Plan.Provisioner.Provider {
+		switch cluster.Spec.Provisioner.Provider {
 		case "aws":
 			p := provision.AWS{
-				AccessKeyID:     cluster.ProvisionerCredentials.AWS.AccessKeyId,
-				SecretAccessKey: cluster.ProvisionerCredentials.AWS.SecretAccessKey,
+				AccessKeyID:     cluster.Spec.Provisioner.Credentials.AWS.AccessKeyId,
+				SecretAccessKey: cluster.Spec.Provisioner.Credentials.AWS.SecretAccessKey,
 				Terraform:       terraform,
 			}
 			return p
 		default:
-			panic(fmt.Sprintf("provider not supported: %q", cluster.Plan.Provisioner.Provider))
+			panic(fmt.Sprintf("provider not supported: %q", cluster.Spec.Provisioner.Provider))
 		}
 	}
 }

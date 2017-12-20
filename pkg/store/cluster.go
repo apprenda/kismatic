@@ -3,22 +3,46 @@ package store
 import (
 	"context"
 	"encoding/json"
-
-	"github.com/apprenda/kismatic/pkg/install"
 )
 
+// Cluster defines a Kubernetes cluster in KET
 type Cluster struct {
-	DesiredState           string
-	CurrentState           string
-	CanContinue            bool
-	Plan                   install.Plan
-	ProvisionerCredentials ProvisionerCredentials
+	Spec   ClusterSpec
+	Status ClusterStatus
 }
 
+// The ClusterSpec describes the specifications for the cluster. In other words,
+// the desired state and desired configuration of the cluster.
+type ClusterSpec struct {
+	DesiredState string
+	EtcdCount    int
+	MasterCount  int
+	WorkerCount  int
+	IngressCount int
+	Provisioner  Provisioner
+}
+
+// The ClusterStatus is the current status of the cluster.
+type ClusterStatus struct {
+	CurrentState          string
+	WaitingForManualRetry bool
+	ClusterIP             string
+}
+
+// The Provisioner specifies the infrastructure provisioner that should be used
+// for the cluster.
+type Provisioner struct {
+	Provider    string
+	Credentials ProvisionerCredentials
+}
+
+// ProvisionerCredentials are the credentials necessary for connecting to the
+// infrastructure provisioner.
 type ProvisionerCredentials struct {
 	AWS AWSCredentials
 }
 
+// AWSCredentials are the credentials for interacting with the AWS API.
 type AWSCredentials struct {
 	AccessKeyId     string
 	SecretAccessKey string
@@ -40,6 +64,8 @@ type cs struct {
 	Store  WatchedStore
 }
 
+// NewClusterStore returns a ClusterStore that manages clusters under the given
+// bucket.
 func NewClusterStore(store WatchedStore, bucket string) ClusterStore {
 	return cs{Store: store, Bucket: bucket}
 }

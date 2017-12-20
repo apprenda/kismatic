@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/apprenda/kismatic/pkg/provision"
@@ -31,6 +32,7 @@ const clusterControllerNotificationBuffer = 10
 // When a cluster is deleted from the store, the corresponding worker is
 // terminated.
 type multiClusterController struct {
+	assetsRootDir      string
 	log                *log.Logger
 	newExecutor        ExecutorCreator
 	provisionerCreator func(store.Cluster) provision.Provisioner
@@ -61,29 +63,31 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 			// Create a new controller if this is the first time we hear about
 			// this cluster
 			if !found {
+				var cluster store.Cluster
+				err := json.Unmarshal(resp.Value, &cluster)
+				if err != nil {
+					mcc.log.Printf("error unmarshaling watch event value for cluster %q: %v", clusterName, err)
+					continue
+				}
+
 				newChan := make(chan struct{}, clusterControllerNotificationBuffer)
 				ch = newChan
 				mcc.clusterControllers[clusterName] = newChan
-				executor, err := mcc.newExecutor(clusterName)
+				executor, err := mcc.newExecutor(clusterName, mcc.assetsRootDir)
 				if err != nil {
 					mcc.log.Printf("error creating executor for new cluster: %v", err)
 					continue
 				}
 				cc := clusterController{
-					clusterName:    clusterName,
-					log:            mcc.log,
-					executor:       executor,
-					clusterStore:   mcc.clusterStore,
-					newProvisioner: mcc.provisionerCreator,
+					clusterName:      clusterName,
+					clusterSpec:      cluster.Spec,
+					clusterAssetsDir: filepath.Join(mcc.assetsRootDir, clusterName),
+					log:              mcc.log,
+					executor:         executor,
+					clusterStore:     mcc.clusterStore,
+					newProvisioner:   mcc.provisionerCreator,
 				}
 				go cc.run(newChan)
-			}
-
-			var cluster store.Cluster
-			err := json.Unmarshal(resp.Value, &cluster)
-			if err != nil {
-				mcc.log.Printf("error unmarshaling watch event value for cluster %q: %v", clusterName, err)
-				continue
 			}
 
 			// Don't block if the cluster controller's buffer is full.
@@ -101,22 +105,24 @@ func (mcc *multiClusterController) Run(ctx context.Context) {
 				continue
 			}
 			// Make sure we have workers for all the clusters that are defined in the store
-			for clusterName := range definedClusters {
+			for clusterName, cluster := range definedClusters {
 				_, found := mcc.clusterControllers[clusterName]
 				if !found {
 					newChan := make(chan struct{}, clusterControllerNotificationBuffer)
 					mcc.clusterControllers[clusterName] = newChan
-					executor, err := mcc.newExecutor(clusterName)
+					executor, err := mcc.newExecutor(clusterName, mcc.assetsRootDir)
 					if err != nil {
 						mcc.log.Printf("error creating executor for new cluster: %v", err)
 						continue
 					}
 					cc := clusterController{
-						clusterName:    clusterName,
-						log:            mcc.log,
-						executor:       executor,
-						clusterStore:   mcc.clusterStore,
-						newProvisioner: mcc.provisionerCreator,
+						clusterName:      clusterName,
+						clusterSpec:      cluster.Spec,
+						clusterAssetsDir: filepath.Join(mcc.assetsRootDir, clusterName),
+						log:              mcc.log,
+						executor:         executor,
+						clusterStore:     mcc.clusterStore,
+						newProvisioner:   mcc.provisionerCreator,
 					}
 					go cc.run(newChan)
 				}

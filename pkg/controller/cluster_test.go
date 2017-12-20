@@ -91,7 +91,7 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
 	// Stub out dependencies
-	executorCreator := func(string) (install.Executor, error) { return dummyExec{}, nil }
+	executorCreator := func(string, string) (install.Executor, error) { return dummyExec{}, nil }
 
 	tmpFile, err := ioutil.TempFile("", "cluster-controller-tests")
 	if err != nil {
@@ -116,7 +116,11 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	defer cancel()
 
 	clusterName := "testCluster"
-	c := New(logger, executorCreator, provisioner, clusterStore, 10*time.Minute)
+	assetsDir, err := ioutil.TempDir("", "cluster-controller-tests-assets")
+	if err != nil {
+		t.Fatalf("failed to create assets dir: %v", err)
+	}
+	c := New(logger, executorCreator, provisioner, clusterStore, 10*time.Minute, assetsDir)
 	go c.Run(ctx)
 
 	// Create a new cluster in the store
@@ -125,7 +129,9 @@ func TestClusterControllerTriggeredByWatch(t *testing.T) {
 	writerDone := make(chan struct{})
 	defer func() { close(writerDone) }()
 	go func(done <-chan struct{}) {
-		cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
+		cluster := store.Cluster{
+			Spec: store.ClusterSpec{DesiredState: installed},
+		}
 		err = clusterStore.Put(clusterName, cluster)
 		if err != nil {
 			t.Fatalf("error storing cluster")
@@ -163,7 +169,7 @@ done:
 			if err != nil {
 				t.Fatalf("error unmarshaling from store")
 			}
-			if cluster.CurrentState == cluster.DesiredState {
+			if cluster.Status.CurrentState == cluster.Spec.DesiredState {
 				break done
 			}
 		case <-time.After(5 * time.Second):
@@ -179,7 +185,7 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	logger := log.New(os.Stdout, "[cluster controller] ", log.Ldate|log.Ltime)
 
 	// Stub out dependencies
-	executorCreator := func(string) (install.Executor, error) { return dummyExec{}, nil }
+	executorCreator := func(string, string) (install.Executor, error) { return dummyExec{}, nil }
 
 	tmpFile, err := ioutil.TempFile("", "cluster-controller-tests")
 	if err != nil {
@@ -198,7 +204,9 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	// Create a new cluster in the store before starting the controller.
 	// The controller should pick it up in the reconciliation loop.
 	clusterName := "testCluster"
-	cluster := store.Cluster{CurrentState: planned, DesiredState: installed, CanContinue: true}
+	cluster := store.Cluster{
+		Spec: store.ClusterSpec{DesiredState: installed},
+	}
 	err = clusterStore.Put(clusterName, cluster)
 	if err != nil {
 		t.Fatalf("error storing cluster")
@@ -211,7 +219,11 @@ func TestClusterControllerReconciliationLoop(t *testing.T) {
 	// Start the controller
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	c := New(logger, executorCreator, provisioner, clusterStore, 1*time.Second)
+	assetsDir, err := ioutil.TempDir("", "cluster-controller-tests-assets")
+	if err != nil {
+		t.Fatalf("failed to create assets dir: %v", err)
+	}
+	c := New(logger, executorCreator, provisioner, clusterStore, 1*time.Second, assetsDir)
 	go c.Run(ctx)
 
 	// Assert that the cluster reaches desired state
@@ -228,7 +240,7 @@ done:
 			if err != nil {
 				t.Fatalf("error unmarshaling from store")
 			}
-			if cluster.CurrentState == cluster.DesiredState {
+			if cluster.Status.CurrentState == cluster.Spec.DesiredState {
 				break done
 			}
 		case <-time.After(5 * time.Second):
