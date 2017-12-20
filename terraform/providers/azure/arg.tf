@@ -6,8 +6,8 @@ resource "azurerm_resource_group" "kismatic" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    "kismatic.version"      = "${var.kismatic_version}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -25,8 +25,8 @@ resource "azurerm_virtual_network" "kismatic" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    "kismatic.version"      = "${var.kismatic_version}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -43,8 +43,8 @@ resource "azurerm_route_table" "kismatic" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    "kismatic.version"      = "${var.kismatic_version}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]

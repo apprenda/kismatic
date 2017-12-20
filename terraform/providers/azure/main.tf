@@ -5,10 +5,6 @@ provider "azurerm" {
   $ export ARM_CLIENT_SECRET = your_client_secret
   $ export ARM_TENANT_ID= your_tenant_id
   */
-  subscription_id = "${var.sub_id}"
-  client_id       = "${var.client_id}"
-  client_secret   = "${var.client_secret}"
-  tenant_id       = "${var.tenant_id}"
 }
 
 

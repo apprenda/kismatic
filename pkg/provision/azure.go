@@ -14,10 +14,10 @@ import (
 )
 
 func (azure Azure) getCommandEnvironment() []string {
-	subID := os.Getenv("ARM_SUBSCRIPTION_ID")
-	cID := os.Getenv("ARM_CLIENT_ID")
-	cSecret := os.Getenv("ARM_CLIENT_SECRET")
-	tID := os.Getenv("ARM_TENANT_ID")
+	subID := fmt.Sprintf("ARM_SUBSCRIPTION_ID=%s", azure.SubscriptionID)
+	cID := fmt.Sprintf("ARM_CLIENT_ID=%s", azure.ClientID)
+	cSecret := fmt.Sprintf("ARM_CLIENT_SECRET=%s", azure.ClientSecret)
+	tID := fmt.Sprintf("ARM_TENANT_ID=%s", azure.TenantID)
 	return []string{subID, cID, cSecret, tID}
 }
 

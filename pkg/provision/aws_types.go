@@ -9,7 +9,7 @@ type AWS struct {
 
 // AWSTerraformData provider for creating and destroying infrastructure on AWS
 type AWSTerraformData struct {
-	Version           string `json:"version"`
+	KismaticVersion   string `json:"kismatic_version"`
 	Region            string `json:"region,omitempty"`
 	AvailabilityZone  string `json:"AZ,omitempty"`
 	PrivateSSHKeyPath string `json:"private_ssh_key_path"`

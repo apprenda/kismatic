@@ -11,11 +11,7 @@ type Azure struct {
 
 // AzureTerraformData provider for creating and destroying infrastructure on Azure
 type AzureTerraformData struct {
-	SubscriptionID    string `json:"sub_id"`
-	ClientID          string `json:"client_id"`
-	ClientSecret      string `json:"client_secret"`
-	TenantID          string `json:"tenant_id"`
-	Version           string `json:"version"`
+	KismaticVersion   string `json:"kismatic_version"`
 	Location          string `json:"location,omitempty"`
 	PrivateSSHKeyPath string `json:"private_ssh_key_path"`
 	PublicSSHKeyPath  string `json:"public_ssh_key_path"`

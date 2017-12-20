@@ -45,7 +45,7 @@ resource "azurerm_network_security_group" "kismatic_private" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.securityGroup"= "private"
     "kubernetes.io.cluster" = "${var.cluster_name}"
   }
@@ -63,7 +63,7 @@ resource "azurerm_network_security_group" "kismatic_lb_master" {
   security_rule {
     name                       = "${var.cluster_name}-lb-master"
     description                = "Allow inbound on 6443 for kube-apiserver load balancer."
-    priority                   = 101
+    priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "TCP"
@@ -72,37 +72,12 @@ resource "azurerm_network_security_group" "kismatic_lb_master" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-  security_rule {
-    name                       = "${var.cluster_name}-private-in"
-    description                = "Allow all communication between nodes."
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "10.0.0.0/16"
-    // The address space of the resource group
-    destination_address_prefix = "*"
-  }
-  security_rule {
-    name                       = "${var.cluster_name}-private-out"
-    description                = "Allow all communication between nodes."
-    priority                   = 100
-    direction                  = "Outbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
   tags {
     "Name"                  = "${var.cluster_name}-securityGroup-lb-master"
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.securityGroup"= "lb-master"
     "kubernetes.io.cluster" = "${var.cluster_name}"
   }
@@ -120,7 +95,7 @@ resource "azurerm_network_security_group" "kismatic_lb_ingress" {
   security_rule {
     name                       = "${var.cluster_name}-lb-ingress-80"
     description                = "Allow inbound on 80 for nginx."
-    priority                   = 102
+    priority                   = 101
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "TCP"
@@ -132,7 +107,7 @@ resource "azurerm_network_security_group" "kismatic_lb_ingress" {
     security_rule {
     name                       = "${var.cluster_name}-lb-ingress-443"
     description                = "Allow inbound on 443 for nginx."
-    priority                   = 101
+    priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "TCP"
@@ -141,37 +116,12 @@ resource "azurerm_network_security_group" "kismatic_lb_ingress" {
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
-    security_rule {
-    name                       = "${var.cluster_name}-private-in"
-    description                = "Allow all communication between nodes."
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "10.0.0.0/16"
-    // The address space of the resource group
-    destination_address_prefix = "*"
-  }
-  security_rule {
-    name                       = "${var.cluster_name}-private-out"
-    description                = "Allow all communication between nodes."
-    priority                   = 100
-    direction                  = "Outbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
   tags {
     "Name"                  = "${var.cluster_name}-securityGroup-lb-ingress"
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.securityGroup"= "lb-ingress"
     "kubernetes.io.cluster" = "${var.cluster_name}"
   }

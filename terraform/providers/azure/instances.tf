@@ -41,9 +41,9 @@ resource "azurerm_virtual_machine" "bastion" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nodeRoles"    = "bastion"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -56,7 +56,7 @@ resource "azurerm_virtual_machine" "master" {
   name                  = "${var.cluster_name}-master-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
-  network_interface_ids = ["${azurerm_network_interface.master.*.id}"]
+  network_interface_ids = ["${element(azurerm_network_interface.master.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
 
   delete_os_disk_on_termination = true
@@ -103,9 +103,9 @@ resource "azurerm_virtual_machine" "master" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nodeRoles"    = "master"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -118,7 +118,7 @@ resource "azurerm_virtual_machine" "etcd" {
   name                  = "${var.cluster_name}-etcd-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
-  network_interface_ids = ["${azurerm_network_interface.etcd.*.id}"]
+  network_interface_ids = ["${element(azurerm_network_interface.etcd.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
 
   delete_os_disk_on_termination = true
@@ -165,9 +165,9 @@ resource "azurerm_virtual_machine" "etcd" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nodeRoles"    = "etcd"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -180,7 +180,7 @@ resource "azurerm_virtual_machine" "worker" {
   name                  = "${var.cluster_name}-worker-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
-  network_interface_ids = ["${azurerm_network_interface.worker.*.id}"]
+  network_interface_ids = ["${element(azurerm_network_interface.worker.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
 
   delete_os_disk_on_termination = true
@@ -227,9 +227,9 @@ resource "azurerm_virtual_machine" "worker" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nodeRoles"    = "worker"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -242,7 +242,7 @@ resource "azurerm_virtual_machine" "ingress" {
   name                  = "${var.cluster_name}-ingress-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
-  network_interface_ids = ["${azurerm_network_interface.ingress.*.id}"]
+  network_interface_ids = ["${element(azurerm_network_interface.ingress.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
 
   delete_os_disk_on_termination = true
@@ -289,9 +289,9 @@ resource "azurerm_virtual_machine" "ingress" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nodeRoles"    = "ingress"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -351,9 +351,9 @@ resource "azurerm_virtual_machine" "storage" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nodeRoles"    = "storage"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]

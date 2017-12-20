@@ -11,9 +11,9 @@ resource "azurerm_public_ip" "bastion" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "bastion"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -33,9 +33,9 @@ resource "azurerm_public_ip" "master" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "master"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -56,9 +56,9 @@ resource "azurerm_public_ip" "etcd" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "etcd"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -78,9 +78,9 @@ resource "azurerm_public_ip" "worker" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "worker"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -100,9 +100,9 @@ resource "azurerm_public_ip" "ingress" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "ingress"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -122,9 +122,9 @@ resource "azurerm_public_ip" "storage" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "storage"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -142,9 +142,9 @@ resource "azurerm_public_ip" "lb_master" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "lb-master"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -162,9 +162,9 @@ resource "azurerm_public_ip" "lb_ingress" {
     "kismatic.clusterName"  = "${var.cluster_name}"
     "kismatic.clusterOwner" = "${var.cluster_owner}"
     "kismatic.dateCreated"  = "${timestamp()}"
-    "kismatic.version"      = "${var.version}"
+    "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.nic"          = "lb-ingress"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+    
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
