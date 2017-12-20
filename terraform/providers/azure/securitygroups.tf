@@ -30,7 +30,7 @@ resource "azurerm_network_security_group" "kismatic_private" {
   }
   security_rule {
     name                       = "${var.cluster_name}-private-out"
-    description                = "Allow all communication between nodes."
+    description                = "Allow all outbound communication from nodes."
     priority                   = 100
     direction                  = "Outbound"
     access                     = "Allow"
@@ -47,7 +47,7 @@ resource "azurerm_network_security_group" "kismatic_private" {
     "kismatic.dateCreated"  = "${timestamp()}"
     "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.securityGroup"= "private"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+     
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -79,7 +79,7 @@ resource "azurerm_network_security_group" "kismatic_lb_master" {
     "kismatic.dateCreated"  = "${timestamp()}"
     "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.securityGroup"= "lb-master"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+     
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
@@ -123,7 +123,7 @@ resource "azurerm_network_security_group" "kismatic_lb_ingress" {
     "kismatic.dateCreated"  = "${timestamp()}"
     "kismatic.version"      = "${var.kismatic_version}"
     "kismatic.securityGroup"= "lb-ingress"
-    "kubernetes.io.cluster" = "${var.cluster_name}"
+     
   }
   lifecycle {
     ignore_changes = ["tags.kismatic.dateCreated", "tags.Owner", "tags.PrincipalID"]
