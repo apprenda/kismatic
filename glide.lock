@@ -1,8 +1,8 @@
-hash: d7ed159535dd81271076562ba9e50d1a8b64b3a5497f570c25ade5ba8ec16a1d
-updated: 2017-12-16T20:03:54.819614-05:00
+hash: b174a6695087d737a5f02f4435b439f906186dadbca817f51a8f54c738c2ee3c
+updated: 2017-12-21T13:15:23.570518-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
-  version: 40f45e34986ba617a372d1590de273a0ca84a53d
+  version: afe97f91ead47c4a10f1e816c5a1cc8967fb70f9
   subpackages:
   - aws
   - aws/awserr
@@ -68,7 +68,7 @@ imports:
   subpackages:
   - md2man
 - name: github.com/dsnet/compress
-  version: c57be8a27eb955bb314e404d40f9adde726dc6c8
+  version: cc9eb1d7ad760af14e8f918698f745e80377af4f
   subpackages:
   - bzip2
   - bzip2/internal/sais
@@ -80,7 +80,7 @@ imports:
 - name: github.com/fortytw2/leaktest
   version: 7dad53304f9614c1c365755c1176a8e876fee3e8
 - name: github.com/go-ini/ini
-  version: 03e0e7d51a13a91c765d8d0161246bc14a38001a
+  version: 32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a
 - name: github.com/google/certificate-transparency
   version: 6e5648d13b43cdde25cc8274b87675230ffefbd6
   repo: https://github.com/google/certificate-transparency
@@ -102,11 +102,11 @@ imports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
-  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+  version: dd801d4f4ce7ac746e7e7b4489d2fa600b3b096b
 - name: github.com/julienschmidt/httprouter
   version: 8c199fb6259ffc1af525cc3ad52ee60ba8359669
 - name: github.com/mattn/go-colorable
-  version: 3fa8c76f9daed4067e4a806fb7e4dc86455c6d6a
+  version: 6fcc0c1fd9b620311d821b106a400b35dc95c497
 - name: github.com/mattn/go-isatty
   version: 0360b2af4f38e8d38c7fce2a9f4e702702d73a39
 - name: github.com/mholt/archiver
@@ -159,18 +159,18 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/packethost/packngo
-  version: 91a3a4f65e3cd6ee66d919b4e7103ae038ce66ff
+  version: f1be085ecd6fca1b0a0e25eda71f208dcfcee5ab
 - name: github.com/pkg/browser
   version: c90ca0c84f15f81c982e32665bffd8d7aac8f097
 - name: github.com/russross/blackfriday
-  version: 067529f716f4c3f5e37c8c95ddd59df1007290ae
+  version: 6d1ef893fcb01b4f50cb6e57ed7df3e2e627b6b2
 - name: github.com/spf13/cobra
-  version: 34594c771f2c18301dc152640ad40ece28795373
+  version: ccaecb155a2177302cb56cae929251a256d0f646
   subpackages:
   - cobra
   - doc
 - name: github.com/spf13/pflag
-  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+  version: 4c012f6dcd9546820e378d0bdda4d8fc772cdfea
 - name: github.com/ulikunitz/xz
   version: 0c6b41e72360850ca4f98dc341fd999726ea007f
   subpackages:
@@ -187,17 +187,17 @@ imports:
   - pkcs12/internal/rc2
   - ssh
 - name: golang.org/x/net
-  version: ab5485076ff3407ad2d02db054635913f017b0ed
+  version: d866cfc389cec985d6fda2859936a575a55a3ab6
   subpackages:
   - html
   - html/atom
   - html/charset
 - name: golang.org/x/sys
-  version: 85d149506305e7abe0aca5ad5ac4b1fce82ccd11
+  version: d818ba11af4465e00c1998bd3f8a55603b422290
   subpackages:
   - unix
 - name: golang.org/x/text
-  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720
+  version: eb22672bea55af56d225d4e35405f4d2e9f062a0
   subpackages:
   - encoding
   - encoding/charmap
@@ -215,5 +215,5 @@ imports:
   - runes
   - transform
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
 testImports: []

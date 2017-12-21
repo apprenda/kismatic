@@ -1,5 +1,5 @@
 resource "azurerm_virtual_machine" "bastion" {
-  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_network_interface.bastion"]  
+  
   count                 = 0
   name                  = "${var.cluster_name}-bastion-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
@@ -51,7 +51,7 @@ resource "azurerm_virtual_machine" "bastion" {
 }
 
 resource "azurerm_virtual_machine" "master" {
-  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_network_interface.master"]  
+  
   count                 = "${var.master_count}"
   name                  = "${var.cluster_name}-master-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
@@ -95,7 +95,7 @@ resource "azurerm_virtual_machine" "master" {
       type = "ssh"
       user = "${var.ssh_user}"
       private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "2m"
+      timeout = "5m"
     }
   }
   tags {
@@ -113,7 +113,7 @@ resource "azurerm_virtual_machine" "master" {
 }
 
 resource "azurerm_virtual_machine" "etcd" {
-  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_network_interface.etcd"]  
+  
   count                 = "${var.etcd_count}"
   name                  = "${var.cluster_name}-etcd-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
@@ -157,7 +157,7 @@ resource "azurerm_virtual_machine" "etcd" {
       type = "ssh"
       user = "${var.ssh_user}"
       private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "2m"
+      timeout = "5m"
     }
   }
   tags {
@@ -175,7 +175,7 @@ resource "azurerm_virtual_machine" "etcd" {
 }
 
 resource "azurerm_virtual_machine" "worker" {
-  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_network_interface.worker"]  
+  
   count                 = "${var.worker_count}"
   name                  = "${var.cluster_name}-worker-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
@@ -219,7 +219,7 @@ resource "azurerm_virtual_machine" "worker" {
       type = "ssh"
       user = "${var.ssh_user}"
       private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "2m"
+      timeout = "5m"
     }
   }
   tags {
@@ -237,7 +237,7 @@ resource "azurerm_virtual_machine" "worker" {
 }
 
 resource "azurerm_virtual_machine" "ingress" {
-  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_network_interface.ingress"]  
+  
   count                 = "${var.ingress_count}"
   name                  = "${var.cluster_name}-ingress-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
@@ -281,7 +281,7 @@ resource "azurerm_virtual_machine" "ingress" {
       type = "ssh"
       user = "${var.ssh_user}"
       private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "2m"
+      timeout = "5m"
     }
   }
   tags {
@@ -299,7 +299,7 @@ resource "azurerm_virtual_machine" "ingress" {
 }
 
 resource "azurerm_virtual_machine" "storage" {
-  depends_on            = ["azurerm_resource_group.kismatic", "azurerm_network_interface.storage"]  
+  
   count                 = "${var.storage_count}"
   name                  = "${var.cluster_name}-storage-${count.index}"
   location              = "${azurerm_resource_group.kismatic.location}"
@@ -343,7 +343,7 @@ resource "azurerm_virtual_machine" "storage" {
       type = "ssh"
       user = "${var.ssh_user}"
       private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "2m"
+      timeout = "5m"
     }
   }
   tags {
