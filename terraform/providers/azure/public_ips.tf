@@ -136,7 +136,7 @@ resource "azurerm_public_ip" "lb_master" {
   location                     = "${azurerm_resource_group.kismatic.location}"
   resource_group_name          = "${azurerm_resource_group.kismatic.name}"
   public_ip_address_allocation = "static"
-  domain_name_label            = "${var.cluster_name}"
+  domain_name_label            = "${var.cluster_name}-master"
 
   tags {
     "Name"                  = "${var.cluster_name}-lb-master"
@@ -157,7 +157,7 @@ resource "azurerm_public_ip" "lb_ingress" {
   location                     = "${azurerm_resource_group.kismatic.location}"
   resource_group_name          = "${azurerm_resource_group.kismatic.name}"
   public_ip_address_allocation = "static"
-  domain_name_label            = "${var.cluster_name}"
+  domain_name_label            = "${var.cluster_name}-ingress"
 
   tags {
     "Name"                  = "${var.cluster_name}-lb-ingress"

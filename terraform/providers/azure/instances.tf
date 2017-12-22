@@ -36,6 +36,16 @@ resource "azurerm_virtual_machine" "bastion" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
+  # provisioner "remote-exec" {
+  #   inline = ["echo ready"]
+
+  #   connection {
+  #     type = "ssh"
+  #     user = "${var.ssh_user}"
+  #     private_key = "${file("${var.private_ssh_key_path}")}"
+  #     timeout = "5m"
+  #   }
+  # }
   tags {
     "Name"                  = "${var.cluster_name}-bastion-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
@@ -88,16 +98,16 @@ resource "azurerm_virtual_machine" "master" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
-  provisioner "remote-exec" {
-    inline = ["echo ready"]
+  # provisioner "remote-exec" {
+  #   inline = ["echo ready"]
 
-    connection {
-      type = "ssh"
-      user = "${var.ssh_user}"
-      private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "5m"
-    }
-  }
+  #   connection {
+  #     type = "ssh"
+  #     user = "${var.ssh_user}"
+  #     private_key = "${file("${var.private_ssh_key_path}")}"
+  #     timeout = "5m"
+  #   }
+  # }
   tags {
     "Name"                  = "${var.cluster_name}-master-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
@@ -150,16 +160,16 @@ resource "azurerm_virtual_machine" "etcd" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
-  provisioner "remote-exec" {
-    inline = ["echo ready"]
+  # provisioner "remote-exec" {
+  #   inline = ["echo ready"]
 
-    connection {
-      type = "ssh"
-      user = "${var.ssh_user}"
-      private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "5m"
-    }
-  }
+  #   connection {
+  #     type = "ssh"
+  #     user = "${var.ssh_user}"
+  #     private_key = "${file("${var.private_ssh_key_path}")}"
+  #     timeout = "5m"
+  #   }
+  # }
   tags {
     "Name"                  = "${var.cluster_name}-etcd-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
@@ -212,16 +222,16 @@ resource "azurerm_virtual_machine" "worker" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
-  provisioner "remote-exec" {
-    inline = ["echo ready"]
+  # provisioner "remote-exec" {
+  #   inline = ["echo ready"]
 
-    connection {
-      type = "ssh"
-      user = "${var.ssh_user}"
-      private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "5m"
-    }
-  }
+  #   connection {
+  #     type = "ssh"
+  #     user = "${var.ssh_user}"
+  #     private_key = "${file("${var.private_ssh_key_path}")}"
+  #     timeout = "5m"
+  #   }
+  # }
   tags {
     "Name"                  = "${var.cluster_name}-worker-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
@@ -274,16 +284,16 @@ resource "azurerm_virtual_machine" "ingress" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
-  provisioner "remote-exec" {
-    inline = ["echo ready"]
+  # provisioner "remote-exec" {
+  #   inline = ["echo ready"]
 
-    connection {
-      type = "ssh"
-      user = "${var.ssh_user}"
-      private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "5m"
-    }
-  }
+  #   connection {
+  #     type = "ssh"
+  #     user = "${var.ssh_user}"
+  #     private_key = "${file("${var.private_ssh_key_path}")}"
+  #     timeout = "5m"
+  #   }
+  # }
   tags {
     "Name"                  = "${var.cluster_name}-ingress-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"
@@ -336,16 +346,16 @@ resource "azurerm_virtual_machine" "storage" {
         key_data = "${file("${var.public_ssh_key_path}")}"
     }
   }
-  provisioner "remote-exec" {
-    inline = ["echo ready"]
+  # provisioner "remote-exec" {
+  #   inline = ["echo ready"]
 
-    connection {
-      type = "ssh"
-      user = "${var.ssh_user}"
-      private_key = "${file("${var.private_ssh_key_path}")}"
-      timeout = "5m"
-    }
-  }
+  #   connection {
+  #     type = "ssh"
+  #     user = "${var.ssh_user}"
+  #     private_key = "${file("${var.private_ssh_key_path}")}"
+  #     timeout = "5m"
+  #   }
+  # }
   tags {
     "Name"                  = "${var.cluster_name}-storage-${count.index}"
     "kismatic.clusterName"  = "${var.cluster_name}"

@@ -6,37 +6,12 @@ resource "azurerm_network_security_group" "kismatic_private" {
   security_rule {
     name                       = "${var.cluster_name}-ssh"
     description                = "Allow inbound SSH for kismatic."
-    priority                   = 101
+    priority                   = 100
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "22"
     destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-  security_rule {
-    name                       = "${var.cluster_name}-private-in"
-    description                = "Allow all communication between nodes."
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "10.0.0.0/16"
-    // The address space of the resource group
-    destination_address_prefix = "*"
-  }
-  security_rule {
-    name                       = "${var.cluster_name}-private-out"
-    description                = "Allow all outbound communication from nodes."
-    priority                   = 100
-    direction                  = "Outbound"
-    access                     = "Allow"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
   }
