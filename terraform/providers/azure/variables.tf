@@ -15,7 +15,7 @@ variable "cluster_name" {}
 variable "cluster_owner" {}
 
 variable "instance_size" {
-  default = "Standard_D1"
+  default = "Standard_D2"
 }
 
 variable master_count {}
