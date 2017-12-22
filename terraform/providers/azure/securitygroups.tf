@@ -10,9 +10,21 @@ resource "azurerm_network_security_group" "kismatic_private" {
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "Tcp"
-    source_port_range          = "22"
+    source_port_range          = "*"
     destination_port_range     = "22"
     source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+  security_rule {
+    name                       = "${var.cluster_name}-in"
+    description                = "Allow inbound traffic from all other nodes."
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "10.0.0.0/16"
     destination_address_prefix = "*"
   }
   tags {
