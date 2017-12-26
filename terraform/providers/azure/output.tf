@@ -1,21 +1,21 @@
 output "etcd_pub_ips" {
-  value = ["${azurerm_public_ip.etcd.*.ip_address}"]
+  value = ["${data.azurerm_public_ip.etcd.*.ip_address}"]
 }
 
 output "master_pub_ips" {
-  value = ["${azurerm_public_ip.master.*.ip_address}"]
+  value = ["${data.azurerm_public_ip.master.*.ip_address}"]
 }
 
 output "worker_pub_ips" {
-  value = ["${azurerm_public_ip.worker.*.ip_address}"]
+  value = ["${data.azurerm_public_ip.worker.*.ip_address}"]
 }
 
 output "ingress_pub_ips" {
-  value = ["${azurerm_public_ip.ingress.*.ip_address}"]
+  value = ["${data.azurerm_public_ip.ingress.*.ip_address}"]
 }
 
 output "storage_pub_ips" {
-  value = ["${azurerm_public_ip.storage.*.ip_address}"]
+  value = ["${data.azurerm_public_ip.storage.*.ip_address}"]
 }
 
 output "etcd_priv_ips" {
