@@ -39,23 +39,23 @@ output "storage_priv_ips" {
 }
 
 output "etcd_hosts" {
-  value = ["${azurerm_network_interface.etcd.*.internal_fqdn}"]
+  value = ["${azurerm_network_interface.etcd.*.internal_dns_name_label}"]
 }
 
 output "master_hosts" {
-  value = ["${azurerm_network_interface.master.*.internal_fqdn}"]
+  value = ["${azurerm_network_interface.master.*.internal_dns_name_label}"]
 }
 
 output "worker_hosts" {
-  value = ["${azurerm_network_interface.worker.*.internal_fqdn}"]
+  value = ["${azurerm_network_interface.worker.*.internal_dns_name_label}"]
 }
 
 output "ingress_hosts" {
-  value = ["${azurerm_network_interface.ingress.*.internal_fqdn}"]
+  value = ["${azurerm_network_interface.ingress.*.internal_dns_name_label}"]
 }
 
 output "storage_hosts" {
-  value = ["${azurerm_network_interface.storage.*.internal_fqdn}"]
+  value = ["${azurerm_network_interface.storage.*.internal_dns_name_label}"]
 }
 
 output "master_lb" {
