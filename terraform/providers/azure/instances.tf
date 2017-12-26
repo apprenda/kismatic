@@ -69,6 +69,7 @@ resource "azurerm_virtual_machine" "master" {
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
   network_interface_ids = ["${element(azurerm_network_interface.master.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
+  availability_set_id   = "${azurerm_availability_set.master.id}"
 
   delete_os_disk_on_termination = true
   delete_data_disks_on_termination = true
@@ -132,6 +133,7 @@ resource "azurerm_virtual_machine" "etcd" {
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
   network_interface_ids = ["${element(azurerm_network_interface.etcd.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
+  availability_set_id   = "${azurerm_availability_set.etcd.id}"
 
   delete_os_disk_on_termination = true
   delete_data_disks_on_termination = true
@@ -195,6 +197,7 @@ resource "azurerm_virtual_machine" "worker" {
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
   network_interface_ids = ["${element(azurerm_network_interface.worker.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
+  availability_set_id   = "${azurerm_availability_set.worker.id}"
 
   delete_os_disk_on_termination = true
   delete_data_disks_on_termination = true
@@ -258,6 +261,7 @@ resource "azurerm_virtual_machine" "ingress" {
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
   network_interface_ids = ["${element(azurerm_network_interface.ingress.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
+  availability_set_id   = "${azurerm_availability_set.ingress.id}"
 
   delete_os_disk_on_termination = true
   delete_data_disks_on_termination = true
@@ -321,6 +325,7 @@ resource "azurerm_virtual_machine" "storage" {
   resource_group_name   = "${azurerm_resource_group.kismatic.name}"
   network_interface_ids = ["${element(azurerm_network_interface.storage.*.id, count.index)}"]
   vm_size               = "${var.instance_size}"
+  availability_set_id   = "${azurerm_availability_set.storage.id}"
 
   delete_os_disk_on_termination = true
   delete_data_disks_on_termination = true
