@@ -329,9 +329,15 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	// Add-Ons
 	// CNI
 	p.AddOns.CNI = &CNI{}
-	p.AddOns.CNI.Provider = cniProviderCalico
-	p.AddOns.CNI.Options.Calico.Mode = "overlay"
-	p.AddOns.CNI.Options.Calico.LogLevel = "info"
+	switch templateOpts.InfrastructureProvisioner {
+	case "azure":
+		p.AddOns.CNI.Provider = cniProviderWeave
+	default:
+		p.AddOns.CNI.Provider = cniProviderCalico
+		p.AddOns.CNI.Options.Calico.Mode = "overlay"
+		p.AddOns.CNI.Options.Calico.LogLevel = "info"
+	}
+
 	// Heapster
 	p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
 	p.AddOns.HeapsterMonitoring.Options.Heapster.Replicas = 2

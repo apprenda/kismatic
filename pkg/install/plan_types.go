@@ -346,7 +346,7 @@ type CNI struct {
 // CNIOptions that can be configured for each CNI provider.
 type CNIOptions struct {
 	// The options that can be configured for the Calico CNI provider.
-	Calico CalicoOptions
+	Calico CalicoOptions `yaml:"calico,omitempty"`
 }
 
 // The CalicoOptions that can be configured for the Calico CNI provider.
