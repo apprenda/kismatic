@@ -101,7 +101,7 @@ type AWSProvisionerOptions struct {
 type AzureProvisionerOptions struct {
 	// The Azure region to deploy in
 	// +required
-	Location string `yaml:"region"`
+	Location string `yaml:"location"`
 }
 
 // Cluster describes a Kubernetes cluster

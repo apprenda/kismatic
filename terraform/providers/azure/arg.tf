@@ -1,6 +1,6 @@
 resource "azurerm_resource_group" "kismatic" {
   name     = "${var.cluster_name}"
-  location = "${var.region}"
+  location = "${var.location}"
   tags {
     "Name"                  = "${var.cluster_name}-rg"
     "kismatic.clusterName"  = "${var.cluster_name}"

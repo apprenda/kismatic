@@ -1,5 +1,5 @@
 resource "azurerm_network_interface" "bastion" {
-  internal_dns_name_label   = "${var.cluster_name}"
+  internal_dns_name_label   = "${var.cluster_name}-bastion"
   count                     = 0
   name                      = "${var.cluster_name}-bastion-${count.index}"
   location                  = "${azurerm_resource_group.kismatic.location}"
