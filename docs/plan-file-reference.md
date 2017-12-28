@@ -5,7 +5,7 @@
   * [aws_options](#provisioneraws_options)
     * [region](#provisioneraws_optionsregion)
   * [azure_options](#provisionerazure_options)
-    * [region](#provisionerazure_optionsregion)
+    * [location](#provisionerazure_optionslocation)
 * [cluster](#cluster)
   * [name](#clustername)
   * [admin_password](#clusteradmin_password)
@@ -169,7 +169,7 @@
 
  Azure specific options. Only set if using "azure" provider 
 
-###  provisioner.azure_options.region
+###  provisioner.azure_options.location
 
  The Azure region to deploy in 
 
