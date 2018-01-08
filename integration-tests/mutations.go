@@ -90,7 +90,7 @@ The error: %v
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Start()
-				Expect(err).ToNot(HaveOccurred())
+				Expect(err).To(HaveOccurred())
 			})
 		})
 	})
