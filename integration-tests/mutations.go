@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/apprenda/kismatic/pkg/install"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Mutations", func() {
@@ -22,10 +24,10 @@ var _ = Describe("Mutations", func() {
 		Expect(err).ToNot(HaveOccurred())
 
 		skipIfAWSCredsMissing()
-		cmd := exec.Command("./kismatic", "install", "provision")
+		cmd = exec.Command("./kismatic", "install", "provision")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err := cmd.Start()
+		err = cmd.Start()
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterEach(func() {
@@ -57,11 +59,11 @@ The error: %v
 				cmd := exec.Command("./kismatic", "install", "provision")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				err := cmd.Start()
+				err = cmd.Start()
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
-		Contxt("by scaling the cluster down with the override", func() {
+		Context("by scaling the cluster down with the override", func() {
 			It("should scale down with -allow-destruction", func() {
 				planFileName := "kismatic-cluster.yaml"
 				fp := &install.FilePlanner{File: planFileName}
@@ -72,7 +74,7 @@ The error: %v
 				cmd := exec.Command("./kismatic", "install", "provision", "-allow-destruction")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				err := cmd.Start()
+				err = cmd.Start()
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
@@ -87,7 +89,7 @@ The error: %v
 				cmd := exec.Command("./kismatic", "install", "provision")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				err := cmd.Start()
+				err = cmd.Start()
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
