@@ -197,17 +197,14 @@ etcd:
   - host: ""
     ip: ""
     internalip: ""
-    labels: {}
 
   - host: ""
     ip: ""
     internalip: ""
-    labels: {}
 
   - host: ""
     ip: ""
     internalip: ""
-    labels: {}
 
 # Master nodes are the ones that run the Kubernetes control plane components.
 master:

@@ -186,11 +186,21 @@ func (fp *FilePlanner) Write(p *Plan) error {
 	scanner := bufio.NewScanner(bytes.NewReader(bytez))
 	prevIndent := -1
 	addNewLineBeforeComment := true
+	var etcdBlock bool
 	for scanner.Scan() {
 		text := scanner.Text()
 		matched := yamlKeyRE.FindStringSubmatch(text)
 		if matched != nil && len(matched) > 1 {
 			indent := strings.Count(matched[0], " ") / 2
+
+			// Figure out if we are in the etcd block
+			if indent == 0 {
+				etcdBlock = (text == "etcd:")
+			}
+			// Don't print labels: {} for etcd group
+			if etcdBlock && strings.Contains(text, "labels: {}") {
+				continue
+			}
 
 			// Add a new line if we are leaving a major indentation block
 			// (leaving a struct)..
