@@ -1,12 +1,38 @@
+# ######################################################################################################################
+# For more information on Docker storage drivers see:
+# https://docs.docker.com/engine/userguide/storagedriver/selectadriver/#supported-storage-drivers-per-linux-distribution
+# ######################################################################################################################
+
 ---
   - name: create /etc/docker directory
     file:
       path: /etc/docker
       state: directory
-  - name: write docker config file
+
+  # The overlay2 docker storage driver will be used for the following operating systems:
+  # - RHEL 7.4
+  # - Centos 7.4.1708
+  # - Ubuntu 16 and higher
+  - name: write overlay2 docker config file
     template:
-      src: daemon.json
+      src: overlay2-daemon.json
       dest: /etc/docker/daemon.json
+    when: (ansible_distribution == "Red Hat Enterprise Linux" and ansible_lsb.release == '7.4') or
+          (ansible_distribution == "CentOS" and ansible_distribution_version == '7.4.1708') or
+          (ansible_distribution == "Ubuntu" and ansible_distribution_major_version >= '16')
+
+  # The devicemapper docker storage driver will be used for the following operating systems:
+  # - All RHEL versions other than 7.4
+  # - All CentOS versions which aren't 7.4.1708
+  # - All Ubuntu versions lower than 16
+  - name: write devicemapper docker config file
+    template:
+      src: devicemapper-daemon.json
+      dest: /etc/docker/daemon.json
+    when: (ansible_distribution == "Red Hat Enterprise Linux" and ansible_lsb.release != '7.4') or
+          (ansible_distribution == "CentOS" and ansible_distribution_version != '7.4.1708') or
+          (ansible_distribution == "Ubuntu" and ansible_distribution_major_version < '16')
+
   # start and verify that Docker installed successfully and is running
   - name: start docker service
     service:

@@ -13,7 +13,7 @@
 
 {% if docker.logs.opts | length > 0 %}
   "log-opts": 
-{{ docker.logs.opts | to_nice_json(indent=4) }}
+    {{ docker.logs.opts | to_nice_json(indent=4) }}
 {% endif %}
 {% endif %}
 }

@@ -1,0 +1,17 @@
+{
+  "storage-driver": "overlay2",
+{% if ansible_distribution == 'CentOS' %}
+  "storage-opts": [
+  "overlay2.override_kernel_check=true"
+  ],
+{% endif %}
+  "icc": false,
+  "disable-legacy-registry": true,
+  "live-restore": true,
+  "log-driver": "{{ docker.logs.driver }}"{% if docker.logs.opts | length > 0 %},{% endif %}
+
+{% if docker.logs.opts | length > 0 %}
+  "log-opts":
+  {{ docker.logs.opts | to_nice_json(indent=4) }}
+{% endif %}
+}
