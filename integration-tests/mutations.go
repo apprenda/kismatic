@@ -73,7 +73,7 @@ The error: %v
 				Expect(err).NotTo(HaveOccurred())
 				plan.Worker.ExpectedCount--
 				fp.Write(plan)
-				cmd := exec.Command("./kismatic", "install", "provision", "-allow-destruction")
+				cmd := exec.Command("./kismatic", "install", "provision", "--allow-destruction")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
 				err = cmd.Run()
