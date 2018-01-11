@@ -2,7 +2,6 @@ package integration_tests
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 
@@ -16,24 +15,21 @@ var _ = Describe("Mutations", func() {
 		dir := setupTestWorkingDir()
 		os.Chdir(dir)
 
-		cmd := exec.Command("./kismatic", "install", "plan")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		stdin, err := cmd.StdinPipe()
-		Expect(err).ToNot(HaveOccurred())
-		go func() {
-			defer stdin.Close()
-			io.WriteString(stdin, "test-cluster-"+generateRandomString(8)+"\naws\n\n\n\n\n\n\n\n\n")
-		}()
-
-		err = cmd.Start()
-		Expect(err).ToNot(HaveOccurred())
-
+		fp := install.FilePlanner{File: "kismatic-cluster.yaml"}
+		planOpts := install.PlanTemplateOptions{
+			ClusterName:               "test-cluster-" + generateRandomString(8),
+			InfrastructureProvisioner: "aws",
+			EtcdNodes:                 2,
+			MasterNodes:               2,
+			WorkerNodes:               2,
+			IngressNodes:              2,
+		}
+		install.WritePlanTemplate(planOpts, &fp)
 		skipIfAWSCredsMissing()
-		cmd = exec.Command("./kismatic", "install", "provision")
+		cmd := exec.Command("./kismatic", "install", "provision")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err = cmd.Start()
+		err := cmd.Start()
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterEach(func() {
