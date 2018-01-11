@@ -19,8 +19,14 @@ var _ = Describe("Mutations", func() {
 		cmd := exec.Command("./kismatic", "install", "plan")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Stdin = strings.NewReader("test-cluster-" + generateRandomString(8) + "\naws\n\n\n\n\n\n\n\n\n")
-		err := cmd.Start()
+		stdin, err := cmd.StdinPipe()
+		Expect(err).ToNot(HaveOccurred())
+		go func() {
+			defer stdin.Close()
+			io.WriteString(stdin, "test-cluster-" + generateRandomString(8) + "\naws\n\n\n\n\n\n\n\n\n")
+		}
+
+		err = cmd.Start()
 		Expect(err).ToNot(HaveOccurred())
 
 		skipIfAWSCredsMissing()
