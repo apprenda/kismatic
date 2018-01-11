@@ -29,14 +29,14 @@ var _ = Describe("Mutations", func() {
 		cmd := exec.Command("./kismatic", "install", "provision")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err := cmd.Start()
+		err := cmd.Run()
 		Expect(err).ToNot(HaveOccurred())
 	})
 	AfterEach(func() {
 		cmd := exec.Command("./kismatic", "install", "destroy")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		err := cmd.Start()
+		err := cmd.Run()
 		if err != nil {
 			fmt.Printf(`+++++++++++++++++++++++++++++++++++++
 
@@ -61,7 +61,7 @@ The error: %v
 				cmd := exec.Command("./kismatic", "install", "provision")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				err = cmd.Start()
+				err = cmd.Run()
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
@@ -76,7 +76,7 @@ The error: %v
 				cmd := exec.Command("./kismatic", "install", "provision", "-allow-destruction")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				err = cmd.Start()
+				err = cmd.Run()
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
@@ -91,7 +91,7 @@ The error: %v
 				cmd := exec.Command("./kismatic", "install", "provision")
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
-				err = cmd.Start()
+				err = cmd.Run()
 				Expect(err).To(HaveOccurred())
 			})
 		})
