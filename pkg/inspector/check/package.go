@@ -2,6 +2,7 @@ package check
 
 import (
 	"fmt"
+	"strings"
 )
 
 // PackageQuery is a query for finding a package
@@ -17,9 +18,10 @@ func (p PackageQuery) String() string {
 // The PackageCheck uses the operating system to determine whether a
 // package is installed.
 type PackageCheck struct {
-	PackageQuery         PackageQuery
-	PackageManager       PackageManager
-	InstallationDisabled bool
+	PackageQuery               PackageQuery
+	PackageManager             PackageManager
+	InstallationDisabled       bool
+	DockerInstallationDisabled bool
 }
 
 // Check returns true if the package is installed. If pkg installation is disabled,
@@ -28,6 +30,11 @@ type PackageCheck struct {
 // For this reason, this check is a no-op when package installation is disabled.
 func (c PackageCheck) Check() (bool, error) {
 	if !c.InstallationDisabled {
+		return true, nil
+	}
+	// When docker installation is disabled do not check for any packages that contain "docker" in the name
+	// The package name could be different, we will only validate the docker executable is present
+	if c.DockerInstallationDisabled && strings.Contains(c.PackageQuery.Name, "docker") {
 		return true, nil
 	}
 	installed, err := c.PackageManager.IsInstalled(c.PackageQuery)

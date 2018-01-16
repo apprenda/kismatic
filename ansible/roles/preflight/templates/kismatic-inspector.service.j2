@@ -8,6 +8,7 @@ ExecStart={{ bin_dir }}/kismatic-inspector server \
   --node-roles={{ group_names|join(",") }} \
   --port=8888 \
   --pkg-installation-disabled={% if allow_package_installation|bool %}false{% else %}true{% endif %} \
+  --docker-installation-disabled={% if docker.enabled|bool %}false{% else %}true{% endif %} \
   --disconnected-installation={% if disconnected_installation|bool %}true{% else %}false{% endif %}
 
 [Install]

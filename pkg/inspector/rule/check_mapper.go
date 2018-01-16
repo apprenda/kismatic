@@ -21,6 +21,10 @@ type DefaultCheckMapper struct {
 	TargetNodeIP string
 	// PackageInstallationDisabled determines whether Kismatic is allowed to install packages on the node
 	PackageInstallationDisabled bool
+
+	// DockerInstallationDisabled determines whether Kismatic is expected to install docker
+	// If set to false, Kismatic will validate that a docker executable is present on the machine
+	DockerInstallationDisabled bool
 }
 
 // GetCheckForRule returns the check for the given rule. If the rule
@@ -32,12 +36,14 @@ func (m DefaultCheckMapper) GetCheckForRule(rule Rule) (check.Check, error) {
 		return nil, fmt.Errorf("Rule of type %T is not supported", r)
 	case PackageDependency:
 		pkgQuery := check.PackageQuery{Name: r.PackageName, Version: r.PackageVersion}
-		c = &check.PackageCheck{PackageQuery: pkgQuery, PackageManager: m.PackageManager, InstallationDisabled: m.PackageInstallationDisabled}
+		c = &check.PackageCheck{PackageQuery: pkgQuery, PackageManager: m.PackageManager, InstallationDisabled: m.PackageInstallationDisabled, DockerInstallationDisabled: m.DockerInstallationDisabled}
 	case PackageNotInstalled:
 		pkgQuery := check.PackageQuery{Name: r.PackageName, Version: r.PackageVersion}
-		c = check.PackageNotInstalledCheck{PackageQuery: pkgQuery, AcceptablePackageVersion: r.AcceptablePackageVersion, PackageManager: m.PackageManager, InstallationDisabled: m.PackageInstallationDisabled}
+		c = check.PackageNotInstalledCheck{PackageQuery: pkgQuery, AcceptablePackageVersion: r.AcceptablePackageVersion, PackageManager: m.PackageManager, InstallationDisabled: m.PackageInstallationDisabled, DockerInstallationDisabled: m.DockerInstallationDisabled}
 	case ExecutableInPath:
 		c = &check.ExecutableInPathCheck{Name: r.Executable}
+	case DockerInPath:
+		c = &check.DockerInPathCheck{InstallationDisabled: m.DockerInstallationDisabled}
 	case FileContentMatches:
 		c = check.FileContentCheck{File: r.File, SearchString: r.ContentRegex}
 	case TCPPortAvailable:

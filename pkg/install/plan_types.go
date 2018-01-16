@@ -15,12 +15,21 @@ const (
 	cniProviderCustom = "custom"
 )
 
+const (
+	dnsProviderKubedns = "kubedns"
+	dnsProviderCoredns = "coredns"
+)
+
 func packageManagerProviders() []string {
 	return []string{"helm", ""}
 }
 
 func cniProviders() []string {
 	return []string{cniProviderCalico, cniProviderContiv, cniProviderWeave, cniProviderCustom}
+}
+
+func dnsProviders() []string {
+	return []string{dnsProviderKubedns, dnsProviderCoredns}
 }
 
 func calicoMode() []string {
@@ -214,6 +223,10 @@ type CloudProvider struct {
 
 // Docker includes the configuration for the docker installation owned by KET.
 type Docker struct {
+	// Set to true to disable the installation of docker container runtime on the nodes.
+	// The installer will validate that docker is installed and running prior to proceeding.
+	// Use this option if a different version of docker from the included one is required.
+	Disable bool
 	// Log configuration for the docker engine
 	Logs DockerLogs
 	// Storage configuration for the docker engine
@@ -351,6 +364,11 @@ type DNS struct {
 	// Whether the DNS add-on should be disabled.
 	// When set to true, no DNS solution will be deployed on the cluster.
 	Disable bool
+	// This property indicates the in-cluster DNS provider.
+	// +required
+	// +options=kubedns,coredns
+	// +default=kubedns
+	Provider string
 }
 
 // The HeapsterMonitoring add-on configuration

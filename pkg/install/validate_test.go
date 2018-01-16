@@ -32,6 +32,9 @@ var validPlan = Plan{
 				},
 			},
 		},
+		DNS: DNS{
+			Provider: "kubedns",
+		},
 		HeapsterMonitoring: &HeapsterMonitoring{
 			Options: HeapsterOptions{
 				Heapster: Heapster{
@@ -1115,6 +1118,45 @@ func TestCNIAddOn(t *testing.T) {
 	}
 	for i, test := range tests {
 		ok, _ := test.n.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
+func TestDNSProvider(t *testing.T) {
+	tests := []struct {
+		d     DNS
+		valid bool
+	}{
+		{
+			d: DNS{
+				Provider: "kubedns",
+			},
+			valid: true,
+		},
+		{
+			d: DNS{
+				Provider: "coredns",
+			},
+			valid: true,
+		},
+		{
+			d: DNS{
+				Disable:  true,
+				Provider: "foo",
+			},
+			valid: true,
+		},
+		{
+			d: DNS{
+				Provider: "foo",
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.d.validate()
 		if ok != test.valid {
 			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
 		}

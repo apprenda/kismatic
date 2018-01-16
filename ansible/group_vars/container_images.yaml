@@ -65,6 +65,9 @@ official_images:
   kubedns_sidecar:
     name: gcr.io/google_containers/k8s-dns-sidecar-amd64
     version: 1.14.7
+  coredns:
+    name: coredns/coredns
+    version: 1.0.2
   kubernetes_dashboard:
     name: gcr.io/google_containers/kubernetes-dashboard-amd64
     version: v1.8.0

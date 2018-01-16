@@ -54,7 +54,7 @@ class CallbackModule(CallbackBase):
 
     def __init__(self):
         named_pipe_file = os.environ["ANSIBLE_JSON_LINES_PIPE"]
-        self.named_pipe = open(named_pipe_file, 'w')
+        self.named_pipe = open(named_pipe_file, 'w', 0)
         super(CallbackModule, self).__init__()
 
     # This gets called when the playbook ends. Close the pipe.

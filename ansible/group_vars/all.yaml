@@ -124,7 +124,7 @@ kubernetes_master_apiserver_count: "{{ groups['master'] | length }}"
 local_kubernetes_master_ip: https://127.0.0.1:{{ kubernetes_master_secure_port }}
 kubernetes_master_ip: https://{{ kubernetes_load_balanced_fqdn }}:{{ kubernetes_master_secure_port }}
 kubernetes_schedulable: "{% if 'worker' in group_names %}true{% else %}false{% endif %}"
-kube_dns_replicas: "{{ [2, groups['worker'] | length] | min }}"
+cluster_dns_replicas: "{{ [2, groups['worker'] | length] | min }}"
 # cloud provider
 cloud_config: "{% if cloud_config_local is defined and cloud_config_local != '' %}{{ kubernetes_install_dir }}/cloud-provider.conf{% else %}{% endif %}"
 
@@ -256,6 +256,7 @@ official_versioned_images:
   kubedns: "{{official_images.kubedns.name}}:{{official_images.kubedns.version}}"
   kube_dnsmasq: "{{official_images.kube_dnsmasq.name}}:{{official_images.kube_dnsmasq.version}}"
   kubedns_sidecar: "{{official_images.kubedns_sidecar.name}}:{{official_images.kubedns_sidecar.version}}"
+  coredns: "{{official_images.coredns.name}}:{{official_images.coredns.version}}"
   kubernetes_dashboard: "{{official_images.kubernetes_dashboard.name}}:{{official_images.kubernetes_dashboard.version}}"
   apprenda_tcp_healthz: "{{official_images.apprenda_tcp_healthz.name}}:{{official_images.apprenda_tcp_healthz.version}}"
   helm: "{{official_images.helm.name}}:{{official_images.helm.version}}"
@@ -286,6 +287,7 @@ images:
   kubedns: "{{ official_versioned_images.kubedns | final_image(docker_registry_full_url, load_private_images) }}"
   kube_dnsmasq: "{{ official_versioned_images.kube_dnsmasq | final_image(docker_registry_full_url, load_private_images) }}"
   kubedns_sidecar: "{{ official_versioned_images.kubedns_sidecar | final_image(docker_registry_full_url, load_private_images) }}"
+  coredns: "{{ official_versioned_images.coredns | final_image(docker_registry_full_url, load_private_images) }}"
   kubernetes_dashboard: "{{ official_versioned_images.kubernetes_dashboard | final_image(docker_registry_full_url, load_private_images) }}"
   apprenda_tcp_healthz: "{{ official_versioned_images.apprenda_tcp_healthz | final_image(docker_registry_full_url, load_private_images) }}"
   helm: "{{ official_versioned_images.helm | final_image(docker_registry_full_url, load_private_images) }}"

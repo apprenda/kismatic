@@ -45,6 +45,11 @@ const defaultRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   executable: iptables-restore
 
+# Docker should be installed when installation is disabled
+- kind: DockerInPath
+  when:
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  
 # Ports used by etcd are available
 - kind: TCPPortAvailable
   when: 
@@ -312,27 +317,27 @@ const defaultRuleSet = `---
   packageName: kubectl
   packageVersion: 1.9.1-00
 # https://docs.docker.com/engine/installation/linux/docker-ee/ubuntu/#uninstall-old-versions
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["ubuntu"]
-#   packageName: docker
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["ubuntu"]
-#   packageName: docker-engine
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["ubuntu"]
-#   packageName: docker-ce
-#   acceptablePackageVersion: 17.03.2~ce-0~ubuntu-xenial
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["ubuntu"]
-#   packageName: docker-ee
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker-engine
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker-ce
+  acceptablePackageVersion: 17.03.2~ce-0~ubuntu-xenial
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["ubuntu"]
+  packageName: docker-ee
 
 - kind: PackageDependency
   when: 
@@ -358,42 +363,42 @@ const defaultRuleSet = `---
   packageName: kubectl
   packageVersion: 1.9.1-0
 # https://docs.docker.com/engine/installation/linux/docker-ee/centos/
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["centos"]
-#   packageName: docker
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["centos"]
-#   packageName: docker-common
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["centos"]
-#   packageName: docker-selinux
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["centos"]
-#   packageName: docker-engine-selinux
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["centos"]
-#   packageName: docker-engine
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["centos"]
-#   packageName: docker-ce
-#   acceptablePackageVersion: 17.03.2.ce-1.el7.centos
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["centos"]
-#   packageName: docker-ee
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-common
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-engine-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-engine
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-ce
+  acceptablePackageVersion: 17.03.2.ce-1.el7.centos
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["centos"]
+  packageName: docker-ee
 
 - kind: PackageDependency
   when: 
@@ -419,42 +424,42 @@ const defaultRuleSet = `---
   packageName: kubectl
   packageVersion: 1.9.1-0
 # https://docs.docker.com/engine/installation/linux/docker-ee/rhel/#os-requirements
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["rhel"]
-#   packageName: docker
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["rhel"]
-#   packageName: docker-common
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["rhel"]
-#   packageName: docker-selinux
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["rhel"]
-#   packageName: docker-engine-selinux
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["rhel"]
-#   packageName: docker-engine
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["rhel"]
-#   packageName: docker-ce
-#   acceptablePackageVersion: 17.03.2.ce-1.el7.centos
-# - kind: PackageNotInstalled
-#   when: 
-#   - ["etcd", "master", "worker", "ingress", "storage"]
-#   - ["rhel"]
-#   packageName: docker-ee
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-common
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-engine-selinux
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-engine
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-ce
+  acceptablePackageVersion: 17.03.2.ce-1.el7.centos
+- kind: PackageNotInstalled
+  when: 
+  - ["etcd", "master", "worker", "ingress", "storage"]
+  - ["rhel"]
+  packageName: docker-ee
 
 # Gluster packages
 - kind: PackageDependency

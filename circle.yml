@@ -2,7 +2,7 @@ version: 2
 defaults: &defaults
   working_directory: /go/src/github.com/apprenda/kismatic
   docker:
-    - image: golang:1.8
+    - image: circleci/golang:1.9.2
 
 jobs:
   build:
@@ -40,9 +40,6 @@ jobs:
           name: Copy linux pkg to release dir # Used for releasing to GH
           command: cp out/kismatic.tar.gz release/kismatic-${CIRCLE_TAG}-linux-amd64.tar.gz
       - run:
-          name: Create dir in tmpfs for ansible inside docker
-          command: mkdir -p /run/user/1026 && chown 1026:1026 /run/user/1026
-      - run:
           name: Set integration test SSH Key 
           command: echo "$KISMATIC_INT_TEST_KEY" | base64 -d > ~/.ssh/kismatic-integration-testing.pem
       - run:
@@ -57,16 +54,16 @@ jobs:
             fi
           no_output_timeout: 30m
           environment:
-            ANSIBLE_SSH_CONTROL_PATH: "/run/user/1026/ssh-%%r-%%h-%%p"
-            ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/run/user/1026/ssh-%r-%h-%p"    
+            ANSIBLE_SSH_CONTROL_PATH: "/tmp/ssh-%%r-%%h-%%p"
+            ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/tmp/ssh-%r-%h-%p"    
       - run:
           name: Integration tests
           command: make just-integration-test
           no_output_timeout: 30m
           environment:
             GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
-            ANSIBLE_SSH_CONTROL_PATH: "/run/user/1026/ssh-%%r-%%h-%%p"
-            ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/run/user/1026/ssh-%r-%h-%p"    
+            ANSIBLE_SSH_CONTROL_PATH: "/tmp/ssh-%%r-%%h-%%p"
+            ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/tmp/ssh-%r-%h-%p"    
       - run:
           name: Slow integration tests
           command: |
@@ -77,8 +74,8 @@ jobs:
           no_output_timeout: 90m
           environment:
             GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
-            ANSIBLE_SSH_CONTROL_PATH: "/run/user/1026/ssh-%%r-%%h-%%p"
-            ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/run/user/1026/ssh-%r-%h-%p"
+            ANSIBLE_SSH_CONTROL_PATH: "/tmp/ssh-%%r-%%h-%%p"
+            ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/tmp/ssh-%r-%h-%p"
       - store_test_results:
           path: /tmp/ket-junit-results
       - run:

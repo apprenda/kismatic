@@ -713,6 +713,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 	}
 
 	// Setup docker options
+	cc.Docker.Enabled = !p.Docker.Disable
 	cc.Docker.Logs.Driver = p.Docker.Logs.Driver
 	cc.Docker.Logs.Opts = p.Docker.Logs.Opts
 
@@ -761,6 +762,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 
 	// DNS
 	cc.DNS.Enabled = !p.AddOns.DNS.Disable
+	cc.DNS.Provider = p.AddOns.DNS.Provider
 
 	// heapster
 	if p.AddOns.HeapsterMonitoring != nil && !p.AddOns.HeapsterMonitoring.Disable {

@@ -18,6 +18,7 @@ type PlanAWS struct {
 	SSHKeyFile                   string
 	HomeDirectory                string
 	DisablePackageInstallation   bool
+	DisableDockerInstallation    bool
 	DisconnectedInstallation     bool
 	DockerRegistryServer         string
 	DockerRegistryCAPath         string
@@ -31,6 +32,7 @@ type PlanAWS struct {
 	ServiceCIDR                  string
 	DisableCNI                   bool
 	CNIProvider                  string
+	DNSProvider                  string
 	DisableHelm                  bool
 	HeapsterReplicas             int
 	HeapsterInfluxdbPVC          string
@@ -74,8 +76,9 @@ const planAWSOverlay = `cluster:
   kubelet: 
     option_overrides: { {{if .KubeletOptions}}{{ range $k, $v := .KubeletOptions }}"{{ $k }}": "{{ $v }}"{{end}}{{end}} }
   cloud_provider:
-    provider: {{.CloudProvider}}{{if .UseDirectLVM}}
+    provider: {{.CloudProvider}}
 docker:
+  disable: {{.DisableDockerInstallation}}{{if .UseDirectLVM}}
   storage:
     direct_lvm:
       enabled: true
@@ -99,6 +102,9 @@ add_ons:
       calico:
         mode: overlay
         log_level: info
+  dns:
+    disable: false
+    provider: {{if .DNSProvider}}{{.DNSProvider}}{{else}}kubedns{{end}}
   heapster:
     disable: false
     options:

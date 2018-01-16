@@ -109,6 +109,10 @@ func buildRule(catchAll catchAllRule) (Rule, error) {
 		}
 		r.Meta = meta
 		return r, nil
+	case "dockerinpath":
+		r := DockerInPath{}
+		r.Meta = meta
+		return r, nil
 	case "tcpportavailable":
 		r := TCPPortAvailable{
 			Port:     catchAll.Port,

@@ -35,6 +35,7 @@
     * [provider](#clustercloud_providerprovider)
     * [config](#clustercloud_providerconfig)
 * [docker](#docker)
+  * [disable](#dockerdisable)
   * [logs](#dockerlogs)
     * [driver](#dockerlogsdriver)
     * [opts](#dockerlogsopts)
@@ -62,6 +63,7 @@
         * [felix_input_mtu](#add_onscnioptionscalicofelix_input_mtu)
   * [dns](#add_onsdns)
     * [disable](#add_onsdnsdisable)
+    * [provider](#add_onsdnsprovider)
   * [heapster](#add_onsheapster)
     * [disable](#add_onsheapsterdisable)
     * [options](#add_onsheapsteroptions)
@@ -422,6 +424,16 @@
 
  Configuration for the docker engine installed by KET 
 
+###  docker.disable
+
+ Set to true to disable the installation of docker container runtime on the nodes. The installer will validate that docker is installed and running prior to proceeding. Use this option if a different version of docker from the included one is required. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  bool |
+| **Required** |  No |
+| **Default** | `false` | 
+
 ###  docker.logs
 
  Log configuration for the docker engine 
@@ -640,6 +652,17 @@
 | **Kind** |  bool |
 | **Required** |  No |
 | **Default** | `false` | 
+
+###  add_ons.dns.provider
+
+ This property indicates the in-cluster DNS provider. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  Yes |
+| **Default** | `kubedns` | 
+| **Options** |  `kubedns`, `coredns`
 
 ###  add_ons.heapster
 

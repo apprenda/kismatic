@@ -1,0 +1,15 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "{{ play_name | default('Start Kubernetes DNS') }}"
+    become: yes
+    run_once: true
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+      
+    roles:
+      - role: kube-dns
+        when: dns.provider == "kubedns"
+      - role: coredns
+        when: dns.provider == "coredns"

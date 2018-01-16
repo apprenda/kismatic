@@ -47,7 +47,7 @@ var _ = Describe("hosts file modification feature", func() {
 				}
 
 				By("Installing kismatic with bogus hostnames that are added to hosts files")
-				err := installKismaticWithPlan(plan, sshKey)
+				err := installKismaticWithPlan(plan)
 				FailIfError(err)
 
 				By("Adding a worker with a bogus hostname that is added to hosts files")

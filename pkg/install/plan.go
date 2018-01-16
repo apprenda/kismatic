@@ -126,6 +126,10 @@ func setDefaults(p *Plan) {
 		p.AddOns.CNI.Options.Calico.WorkloadMTU = 1500
 	}
 
+	if p.AddOns.DNS.Provider == "" {
+		p.AddOns.DNS.Provider = "kubedns"
+	}
+
 	if p.AddOns.HeapsterMonitoring == nil {
 		p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
 	}
@@ -182,11 +186,21 @@ func (fp *FilePlanner) Write(p *Plan) error {
 	scanner := bufio.NewScanner(bytes.NewReader(bytez))
 	prevIndent := -1
 	addNewLineBeforeComment := true
+	var etcdBlock bool
 	for scanner.Scan() {
 		text := scanner.Text()
 		matched := yamlKeyRE.FindStringSubmatch(text)
 		if matched != nil && len(matched) > 1 {
 			indent := strings.Count(matched[0], " ") / 2
+
+			// Figure out if we are in the etcd block
+			if indent == 0 {
+				etcdBlock = (text == "etcd:")
+			}
+			// Don't print labels: {} for etcd group
+			if etcdBlock && strings.Contains(text, "labels: {}") {
+				continue
+			}
 
 			// Add a new line if we are leaving a major indentation block
 			// (leaving a struct)..
@@ -312,6 +326,8 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p.AddOns.CNI.Options.Calico.LogLevel = "info"
 	p.AddOns.CNI.Options.Calico.WorkloadMTU = 1500
 	p.AddOns.CNI.Options.Calico.FelixInputMTU = 1440
+	// DNS
+	p.AddOns.DNS.Provider = "kubedns"
 	// Heapster
 	p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
 	p.AddOns.HeapsterMonitoring.Options.Heapster.Replicas = 2
@@ -401,10 +417,11 @@ var commentMap = map[string][]string{
 	"cluster.ssh.user":                                   []string{"This user must be able to sudo without password."},
 	"cluster.ssh.ssh_key":                                []string{"Absolute path to the ssh private key we should use to manage nodes."},
 	"cluster.kube_apiserver":                             []string{"Override configuration of Kubernetes components."},
-	"cluster.cloud_provider":                             []string{"Kubernetes cloud provider integration"},
+	"cluster.cloud_provider":                             []string{"Kubernetes cloud provider integration."},
 	"cluster.cloud_provider.provider":                    []string{"Options: 'aws','azure','cloudstack','fake','gce','mesos','openstack',", "'ovirt','photon','rackspace','vsphere'.", "Leave empty for bare metal setups or other unsupported providers."},
 	"cluster.cloud_provider.config":                      []string{"Path to the config file, leave empty if provider does not require it."},
-	"docker":                                             []string{"Docker daemon configuration of all cluster nodes"},
+	"docker":                                             []string{"Docker daemon configuration of all cluster nodes."},
+	"docker.disable":                                     []string{"Set to true if docker is already installed and configured."},
 	"etcd":                                               []string{"Etcd nodes are the ones that run the etcd distributed key-value database."},
 	"etcd.nodes":                                         []string{"Provide the hostname and IP of each node. If the node has an IP for internal", "traffic, provide it in the internalip field. Otherwise, that field can be", "left blank."},
 	"master":                                             []string{"Master nodes are the ones that run the Kubernetes control plane components."},
@@ -422,18 +439,19 @@ var commentMap = map[string][]string{
 	"docker_registry.username":                           []string{"Leave blank for unauthenticated access."},
 	"docker_registry.password":                           []string{"Leave blank for unauthenticated access."},
 	"add_ons":                                            []string{"Add-ons are additional components that KET installs on the cluster."},
-	"nfs":                                                []string{"A set of NFS volumes for use by on-cluster persistent workloads"},
+	"nfs":                                                []string{"A set of NFS volumes for use by on-cluster persistent workloads."},
 	"nfs.nfs_host":                                       []string{"The host name or ip address of an NFS server."},
-	"nfs.mount_path":                                     []string{"The mount path of an NFS share. Must start with /"},
+	"nfs.mount_path":                                     []string{"The mount path of an NFS share. Must start with '/'."},
 	"add_ons.cni.provider":                               []string{"Selecting 'custom' will result in a CNI ready cluster, however it is up to", "you to configure a plugin after the install.", "Options: 'calico','weave','contiv','custom'."},
 	"add_ons.cni.options.calico.mode":                    []string{"Options: 'overlay','routed'."},
 	"add_ons.cni.options.calico.log_level":               []string{"Options: 'warning','info','debug'."},
 	"add_ons.cni.options.calico.workload_mtu":            []string{"MTU for the workload interface, configures the CNI config."},
 	"add_ons.cni.options.calico.felix_input_mtu":         []string{"MTU for the tunnel device used if IPIP is enabled."},
+	"add_ons.dns.provider":                               []string{"Options: 'kubedns','coredns'."},
 	"add_ons.heapster.options.influxdb.pvc_name":         []string{"Provide the name of the persistent volume claim that you will create", "after installation. If not specified, the data will be stored in", "ephemeral storage."},
 	"add_ons.heapster.options.heapster.service_type":     []string{"Specify kubernetes ServiceType. Defaults to 'ClusterIP'.", "Options: 'ClusterIP','NodePort','LoadBalancer','ExternalName'."},
 	"add_ons.heapster.options.heapster.sink":             []string{"Specify the sink to store heapster data. Defaults to an influxdb pod", "running on the cluster."},
-	"add_ons.package_manager.provider":                   []string{"Options: 'helm'"},
+	"add_ons.package_manager.provider":                   []string{"Options: 'helm'."},
 	"add_ons.rescheduler":                                []string{"The rescheduler ensures that critical add-ons remain running on the cluster."},
 }
 

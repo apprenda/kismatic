@@ -70,7 +70,8 @@ type ClusterCatalog struct {
 	DiagnosticsDateTime  string `yaml:"diagnostics_date_time"`
 
 	Docker struct {
-		Logs struct {
+		Enabled bool
+		Logs    struct {
 			Driver string            `yaml:"driver"`
 			Opts   map[string]string `yaml:"opts"`
 		}
@@ -89,7 +90,8 @@ type ClusterCatalog struct {
 	CloudConfig   string `yaml:"cloud_config_local"`
 
 	DNS struct {
-		Enabled bool
+		Enabled  bool
+		Provider string
 	}
 
 	RunPodValidation bool `yaml:"run_pod_validation"`

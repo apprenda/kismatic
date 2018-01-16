@@ -149,6 +149,25 @@ func InstallKismaticPackages(nodes provisionedNodes, distro linuxDistro, sshKey 
 	}
 }
 
+func InstallDockerPackage(nodes provisionedNodes, distro linuxDistro, sshKey string) {
+	prep := getPrepForDistro(distro)
+	dockerNodes := append(nodes.etcd, nodes.master...)
+	dockerNodes = append(dockerNodes, nodes.worker...)
+	dockerNodes = append(dockerNodes, nodes.ingress...)
+	dockerNodes = append(dockerNodes, nodes.storage...)
+	By("Configuring docker repository")
+	err := retry.WithBackoff(func() error {
+		return runViaSSH(prep.CommandsToPrepDockerRepo, dockerNodes, sshKey, 5*time.Minute)
+	}, 3)
+	FailIfError(err, "failed to configure package repository over SSH")
+
+	By("Installing Docker")
+	err = retry.WithBackoff(func() error {
+		return runViaSSH(prep.CommandsToInstallDocker, dockerNodes, sshKey, 10*time.Minute)
+	}, 3)
+	FailIfError(err, "failed to install docker")
+}
+
 func getPrepForDistro(distro linuxDistro) nodePrep {
 	switch distro {
 	case Ubuntu1604LTS:

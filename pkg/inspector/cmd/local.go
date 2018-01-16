@@ -15,6 +15,7 @@ type localOpts struct {
 	nodeRoles                   string
 	rulesFile                   string
 	packageInstallationDisabled bool
+	dockerInstallationDisabled  bool
 	useUpgradeDefaults          bool
 }
 
@@ -37,6 +38,7 @@ func NewCmdLocal(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&opts.nodeRoles, "node-roles", "", "comma-separated list of the node's roles. Valid roles are 'etcd', 'master', 'worker'")
 	cmd.Flags().StringVarP(&opts.rulesFile, "file", "f", "", "the path to an inspector rules file. If blank, the inspector uses the default rules")
 	cmd.Flags().BoolVar(&opts.packageInstallationDisabled, "pkg-installation-disabled", false, "when true, the inspector will ensure that the necessary packages are installed on the node")
+	cmd.Flags().BoolVar(&opts.dockerInstallationDisabled, "docker-installation-disabled", false, "when true, the inspector will check for docker packages to be installed")
 	cmd.Flags().BoolVarP(&opts.useUpgradeDefaults, "upgrade", "u", false, "use defaults for upgrade, rather than install")
 	return cmd
 }
@@ -72,6 +74,7 @@ func runLocal(out io.Writer, opts localOpts) error {
 		RuleCheckMapper: rule.DefaultCheckMapper{
 			PackageManager:              pkgMgr,
 			PackageInstallationDisabled: opts.packageInstallationDisabled,
+			DockerInstallationDisabled:  opts.dockerInstallationDisabled,
 		},
 	}
 	labels := append(roles, string(distro))
