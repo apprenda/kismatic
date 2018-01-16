@@ -67,7 +67,7 @@ official_images:
     version: 1.14.7
   coredns:
     name: coredns/coredns
-    version: 1.0.2
+    version: 1.0.3
   kubernetes_dashboard:
     name: gcr.io/google_containers/kubernetes-dashboard-amd64
     version: v1.8.0
