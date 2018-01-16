@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -197,6 +198,756 @@ func TestReadDeprecatedDashboard(t *testing.T) {
 
 		if plan.AddOns.Dashboard.Disable != test.expectDisabled {
 			t.Errorf("name: %s: expected disabled to be %v, but got %v.", test.name, test.expectDisabled, plan.AddOns.Dashboard.Disable)
+		}
+	}
+
+}
+
+// In general, NewGroup represents the inbound Terraform NodeGroup
+// And should never be labelled.
+func TestMerge(t *testing.T) {
+	tests := []struct {
+		name          string
+		OldGroup      NodeGroup
+		NewGroup      NodeGroup
+		ExpectedGroup NodeGroup
+	}{
+		{
+			name: "should overwrite labels",
+			NewGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+			OldGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+				},
+			},
+			ExpectedGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should merge labels",
+			OldGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+			NewGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this other override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this other override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this other override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this other override": "should remain",
+							},
+						},
+					},
+				},
+			},
+			ExpectedGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label":       "should remain",
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override":       "should remain",
+								"this other override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label":       "should remain",
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override":       "should remain",
+								"this other override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label":       "should remain",
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override":       "should remain",
+								"this other override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label":       "should remain",
+							"this other label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override":       "should remain",
+								"this other override": "should remain",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should scale up and maintain order",
+			OldGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should NOT remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should NOT remain",
+							},
+						},
+					},
+				},
+			},
+			NewGroup: NodeGroup{
+				ExpectedCount: 6,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "5",
+						IP:         "5",
+						Host:       "5",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "6",
+						IP:         "6",
+						Host:       "6",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+			ExpectedGroup: NodeGroup{
+				ExpectedCount: 6,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "5",
+						IP:         "5",
+						Host:       "5",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "6",
+						IP:         "6",
+						Host:       "6",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should scale down and maintain order",
+			OldGroup: NodeGroup{
+				ExpectedCount: 3,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+			NewGroup: NodeGroup{
+				ExpectedCount: 3,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+			ExpectedGroup: NodeGroup{
+				ExpectedCount: 3,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		merged := Merge(test.NewGroup, test.OldGroup)
+		if !reflect.DeepEqual(merged, test.ExpectedGroup) {
+			t.Errorf("Merge of group %v failed. Got %v, expected %v.", test.name, merged, test.ExpectedGroup)
 		}
 	}
 

@@ -505,9 +505,63 @@ type Node struct {
 	KubeletOptions KubeletOptions `yaml:"kubelet,omitempty"`
 }
 
-// Equal returns true of 2 nodes have the same host, IP and InternalIP
+// mapMerge merges two map[string]strings. If both maps have some identical key, the value from the first map provided will be used.
+func mapMerge(l, r map[string]string) map[string]string {
+	ret := make(map[string]string, 0)
+	for k, v := range l {
+		ret[k] = v
+	}
+	for k, v := range r {
+		if _, ok := ret[k]; ok {
+			continue
+		}
+		ret[k] = v
+	}
+	return ret
+}
+
+func Merge(l, r NodeGroup) NodeGroup {
+	var ret NodeGroup
+	lmin := len(l.Nodes)
+	rmin := len(r.Nodes)
+	if l.ExpectedCount <= len(l.Nodes) {
+		lmin = l.ExpectedCount
+	}
+	if r.ExpectedCount <= len(r.Nodes) {
+		rmin = r.ExpectedCount
+	}
+
+Outer:
+	for i := 0; i < lmin; i++ {
+		for j := 0; j < rmin; j++ {
+			fmt.Println(i, j, l.Nodes[i], r.Nodes[j])
+			if l.Nodes[i].Equal(r.Nodes[j]) {
+				ret.Nodes = append(ret.Nodes, Node{
+					IP:         l.Nodes[i].IP,
+					InternalIP: l.Nodes[i].InternalIP,
+					Host:       l.Nodes[i].Host,
+					Labels:     mapMerge(l.Nodes[i].Labels, r.Nodes[j].Labels),
+					KubeletOptions: KubeletOptions{
+						Overrides: mapMerge(l.Nodes[i].KubeletOptions.Overrides, r.Nodes[j].KubeletOptions.Overrides),
+					},
+				})
+				//significantly faster than just axing the single element
+				//messes with the order, though.
+				r.Nodes[len(r.Nodes)-1], r.Nodes[j] = r.Nodes[j], r.Nodes[len(r.Nodes)-1]
+				r.Nodes = r.Nodes[:len(r.Nodes)-1]
+				rmin--
+				continue Outer
+			}
+		}
+		ret.Nodes = append(ret.Nodes, l.Nodes[i])
+	}
+	ret.ExpectedCount = len(ret.Nodes)
+	return ret
+}
+
+// Equal returns true of 2 nodes have the same HashCode
 func (node Node) Equal(other Node) bool {
-	return node.Host == other.Host && node.IP == other.IP && node.InternalIP == other.InternalIP
+	return node.HashCode() == other.HashCode()
 }
 
 // HashCode is crude implementation for the Node struct
