@@ -137,7 +137,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: coredns
+  name: kube-dns
   namespace: kube-system
   labels:
     k8s-app: coredns
