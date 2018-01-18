@@ -94,17 +94,20 @@ docker:
 
   storage:
 
-    # Configure devicemapper in direct-lvm mode (RHEL/CentOS only).
-    direct_lvm:
-      enabled: false
+    # Leave empty to have docker automatically select the driver.
+    driver: ""
+    opts: {}
 
-      # Path to the block device that will be used for direct-lvm mode. This
-      # device will be wiped and used exclusively by docker.
-      block_device: ""
+    # Used for setting up Device Mapper storage driver in direct-lvm mode.
+    direct_lvm_block_device:
 
-      # Set to true if you want to enable deferred deletion when using
-      # direct-lvm mode.
-      enable_deferred_deletion: false
+      # Absolute path to the block device that will be used for direct-lvm mode.
+      # This device will be wiped and used exclusively by docker.
+      path: ""
+      thinpool_percent: "95"
+      thinpool_metapercent: "1"
+      thinpool_autoextend_threshold: "80"
+      thinpool_autoextend_percent: "20"
 
 # If you want to use an internal registry for the installation or upgrade, you
 # must provide its information here. You must seed this registry before the

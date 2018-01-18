@@ -716,12 +716,21 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 	cc.Docker.Enabled = !p.Docker.Disable
 	cc.Docker.Logs.Driver = p.Docker.Logs.Driver
 	cc.Docker.Logs.Opts = p.Docker.Logs.Opts
-
-	cc.Docker.Storage.DirectLVM.Enabled = p.Docker.Storage.DirectLVM.Enabled
-	if cc.Docker.Storage.DirectLVM.Enabled {
-		cc.Docker.Storage.DirectLVM.BlockDevice = p.Docker.Storage.DirectLVM.BlockDevice
-		cc.Docker.Storage.DirectLVM.EnableDeferredDeletion = p.Docker.Storage.DirectLVM.EnableDeferredDeletion
+	cc.Docker.Storage.Driver = p.Docker.Storage.Driver
+	cc.Docker.Storage.Opts = p.Docker.Storage.Opts
+	cc.Docker.Storage.OptsList = []string{}
+	// A formatted list to set in docker daemon.json
+	for k, v := range p.Docker.Storage.Opts {
+		cc.Docker.Storage.OptsList = append(cc.Docker.Storage.OptsList, fmt.Sprintf("%s=%s", k, v))
 	}
+	cc.Docker.Storage.DirectLVMBlockDevice = ansible.DirectLVMBlockDevice{
+		Path:                        p.Docker.Storage.DirectLVMBlockDevice.Path,
+		ThinpoolPercent:             p.Docker.Storage.DirectLVMBlockDevice.ThinpoolPercent,
+		ThinpoolMetaPercent:         p.Docker.Storage.DirectLVMBlockDevice.ThinpoolMetaPercent,
+		ThinpoolAutoextendThreshold: p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendThreshold,
+		ThinpoolAutoextendPercent:   p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendPercent,
+	}
+
 	if ae.options.RestartServices {
 		cc.EnableRestart()
 	}

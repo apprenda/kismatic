@@ -1,7 +1,7 @@
 ---
   - name: stat the block device path
     stat:
-      path: "{{ docker.storage.directlvm.block_device }}"
+      path: "{{ docker.storage.direct_lvm_block_device.path }}"
     register: block_device_stat
   - name: fail if the block device does not exists
     fail:
@@ -9,10 +9,10 @@
     when: block_device_stat.stat.exists == False
   - name: fail if the provided path is not a block device
     fail:
-      msg: "{{ docker.storage.directlvm.block_device }} is not a block device."
+      msg: "{{ docker.storage.direct_lvm_block_device.path }} is not a block device."
     when: block_device_stat.stat.isblk == False
   - name: fail if the block device is already mounted
     fail:
       msg: "Block deviced specified for docker storage is currently mounted. This should be an unmounted, unused device"
     with_items: "{{ ansible_mounts }}"
-    when: item.device == "{{ docker.storage.directlvm.block_device }}"
+    when: item.device == "{{ docker.storage.direct_lvm_block_device.path }}"

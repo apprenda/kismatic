@@ -23,7 +23,7 @@
 
   - name: validate devicemapper direct-lvm block device
     include: direct_lvm_preflight.yaml
-    when: "ansible_os_family == 'RedHat' and docker.storage.directlvm.enabled|bool == true"
+    when: "ansible_os_family == 'RedHat' and docker.storage.driver == 'devicemapper' and docker.storage.direct_lvm_block_device.path != ''"
 
   # Every etcd node should be able to reach all etcd nodes. This is quadratic,
   # but we can live with it because etcd count is usually <= 5

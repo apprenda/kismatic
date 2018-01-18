@@ -10,7 +10,6 @@
     roles:
       - role: packages-docker
         when: allow_package_installation|bool == true
-      - role: docker-storage
       - role: docker-registry-cert
         when: configure_docker_with_private_registry is defined and configure_docker_with_private_registry|bool == true
       - role: docker-proxy

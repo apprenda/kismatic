@@ -55,11 +55,6 @@ docker_certificates_cert_path: "{{ docker_install_dir }}/{{ docker_certificates_
 docker_certificates_key_path: "{{ docker_install_dir }}/{{ docker_certificates_key_file_name }}"
 #===============================================================================
 # docker configuration
-# docker.storage.directlvm.enabled: no default
-# docker.storage.directlvm.block_device: no default
-# docker.storage.directlvm.enable_deferred_deletion: no default
-docker_device_mapper_thin_pool_autoextend_threshold: 80
-docker_device_mapper_thin_pool_autoextend_percent: 20
 docker_system_d: /etc/systemd/system/docker.service.d
 #===============================================================================
 # calico

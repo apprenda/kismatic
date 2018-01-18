@@ -227,30 +227,57 @@ type Docker struct {
 	// The installer will validate that docker is installed and running prior to proceeding.
 	// Use this option if a different version of docker from the included one is required.
 	Disable bool
-	// Log configuration for the docker engine
+	// Log configuration for the docker engine.
 	Logs DockerLogs
-	// Storage configuration for the docker engine
+	// Storage configuration for the docker engine.
 	Storage DockerStorage
 }
 
 // DockerLogs includes the log-specific configuration for docker.
 type DockerLogs struct {
-	// Docker logging driver, more details https://docs.docker.com/engine/admin/logging/overview/
+	// Docker logging driver, more details https://docs.docker.com/engine/admin/logging/overview/.
 	// +default=json-file
 	Driver string
-	// Driver specific options
+	// Driver specific options.
 	Opts map[string]string
 }
 
 // DockerStorage includes the storage-specific configuration for docker.
 type DockerStorage struct {
-	// DirectLVM is the configuration required for setting up device mapper in direct-lvm mode
-	DirectLVM DockerStorageDirectLVM `yaml:"direct_lvm"`
+	// Docker storage driver, more details https://docs.docker.com/engine/userguide/storagedriver/.
+	// Leave empty to have docker automatically select the driver.
+	// +default='empty'
+	Driver string
+	// Driver specific options
+	Opts map[string]string
+	// DirectLVMBlockDevice is the configuration required for setting up Device Mapper storage driver in direct-lvm mode.
+	// Refer to https://docs.docker.com/v17.03/engine/userguide/storagedriver/device-mapper-driver/#manage-devicemapper docs.
+	DirectLVMBlockDevice DirectLVMBlockDevice `yaml:"direct_lvm_block_device"`
+	// DirectLVM is the configuration required for setting up device mapper in direct-lvm mode.
+	// +deprecated
+	DirectLVM *DockerStorageDirectLVMDeprecated `yaml:"direct_lvm,omitempty"`
 }
 
-// DockerStorageDirectLVM includes the configuration required for setting up
-// device mapper in direct-lvm mode
-type DockerStorageDirectLVM struct {
+type DirectLVMBlockDevice struct {
+	// The path to the block device.
+	Path string
+	// The percentage of space to use for storage from the passed in block device.
+	// +default=95
+	ThinpoolPercent string `yaml:"thinpool_percent"`
+	// The percentage of space to for metadata storage from the passed in block device.
+	// +default=1
+	ThinpoolMetaPercent string `yaml:"thinpool_metapercent"`
+	// The threshold for when lvm should automatically extend the thin pool as a percentage of the total storage space.
+	// +default=80
+	ThinpoolAutoextendThreshold string `yaml:"thinpool_autoextend_threshold"`
+	// The percentage to increase the thin pool by when an autoextend is triggered.
+	// +default=20
+	ThinpoolAutoextendPercent string `yaml:"thinpool_autoextend_percent"`
+}
+
+// DockerStorageDirectLVMDeprecated includes the configuration required for setting up
+// device mapper in direct-lvm mode.
+type DockerStorageDirectLVMDeprecated struct {
 	// Whether the direct_lvm mode of the devicemapper storage driver should be enabled.
 	// When set to true, a dedicated block storage device must be available on each cluster node.
 	// +default=false

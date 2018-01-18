@@ -76,11 +76,10 @@ type ClusterCatalog struct {
 			Opts   map[string]string `yaml:"opts"`
 		}
 		Storage struct {
-			DirectLVM struct {
-				Enabled                bool   `yaml:"enabled"`
-				BlockDevice            string `yaml:"block_device"`
-				EnableDeferredDeletion bool   `yaml:"enable_deferred_deletion"`
-			}
+			Driver               string               `yaml:"driver"`
+			Opts                 map[string]string    `yaml:"opts"`
+			OptsList             []string             `yaml:"opts_list"`
+			DirectLVMBlockDevice DirectLVMBlockDevice `yaml:"direct_lvm_block_device"`
 		}
 	}
 
@@ -145,6 +144,13 @@ type ClusterCatalog struct {
 	KubeletNodeOptions map[string]map[string]string `yaml:"kubelet_node_overrides"`
 }
 
+type DirectLVMBlockDevice struct {
+	Path                        string
+	ThinpoolPercent             string `yaml:"thinpool_percent"`
+	ThinpoolMetaPercent         string `yaml:"thinpool_metapercent"`
+	ThinpoolAutoextendThreshold string `yaml:"thinpool_autoextend_threshold"`
+	ThinpoolAutoextendPercent   string `yaml:"thinpool_autoextend_percent"`
+}
 type NFSVolume struct {
 	Host string
 	Path string

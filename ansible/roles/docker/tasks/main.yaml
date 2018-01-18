@@ -1,4 +1,8 @@
 ---
+  - name: configure docker storage driver devicemapper in direct-lvm mode
+    include: direct_lvm.yaml
+    when: "ansible_os_family == 'RedHat' and docker.storage.driver == 'devicemapper' and docker.storage.direct_lvm_block_device.path != ''"
+
   - name: create /etc/docker directory
     file:
       path: /etc/docker

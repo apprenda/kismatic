@@ -516,12 +516,18 @@ func (d Docker) validate() (bool, []error) {
 func (ds DockerStorage) validate() (bool, []error) {
 	v := newValidator()
 	v.validateWithErrPrefix("Direct LVM", ds.DirectLVM)
+	if ds.DirectLVMBlockDevice.Path != "" && ds.Driver != "devicemapper" {
+		v.addError(errors.New("DirectLVMBlockDevice Path can only be used with 'devicemapper' storage driver"))
+	}
+	if ds.DirectLVMBlockDevice.Path != "" && !filepath.IsAbs(ds.DirectLVMBlockDevice.Path) {
+		v.addError(errors.New("DirectLVMBlockDevice Path must be absolute"))
+	}
 	return v.valid()
 }
 
-func (dlvm DockerStorageDirectLVM) validate() (bool, []error) {
+func (dlvm *DockerStorageDirectLVMDeprecated) validate() (bool, []error) {
 	v := newValidator()
-	if dlvm.Enabled {
+	if dlvm != nil && dlvm.Enabled {
 		if dlvm.BlockDevice == "" {
 			v.addError(errors.New("DirectLVM is enabled, but no block device was specified"))
 		}

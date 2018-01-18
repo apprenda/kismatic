@@ -918,32 +918,100 @@ func TestDockerRegistry(t *testing.T) {
 	}
 }
 
+func TestValidateDockerStorage(t *testing.T) {
+	tests := []struct {
+		storage DockerStorage
+		valid   bool
+	}{
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "overlay2",
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "foo",
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "",
+				},
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "foo",
+				},
+			},
+			valid: false,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "/foo/bar",
+				},
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "foo",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "/foo/bar",
+				},
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.storage.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect valid, but got invalid", i)
+		}
+	}
+}
+
 func TestValidateDockerStorageDirectLVM(t *testing.T) {
 	tests := []struct {
-		config DockerStorageDirectLVM
+		config DockerStorageDirectLVMDeprecated
 		valid  bool
 	}{
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled: false,
 			},
 			valid: true,
 		},
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled: true,
 			},
 			valid: false,
 		},
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled:     true,
 				BlockDevice: "foo",
 			},
 			valid: false,
 		},
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled:     true,
 				BlockDevice: "/dev/sdb",
 			},
