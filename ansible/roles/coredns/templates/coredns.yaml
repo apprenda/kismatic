@@ -79,13 +79,14 @@ spec:
       k8s-app: coredns
   template:
     metadata:
+      annotations:
+        prometheus.io/port: "9153"
+        prometheus.io/scrape: "true"
       labels:
         k8s-app: coredns
     spec:
       serviceAccountName: coredns
       tolerations:
-        - key: node-role.kubernetes.io/master
-          effect: NoSchedule
         - key: "CriticalAddonsOnly"
           operator: "Exists"
       affinity:
@@ -115,9 +116,6 @@ spec:
         - containerPort: 53
           name: dns-tcp
           protocol: TCP
-        - containerPort: 9153
-          name: metrics
-          protocol: TCP
         livenessProbe:
           httpGet:
             path: /health
@@ -145,8 +143,6 @@ metadata:
     k8s-app: coredns
     kubernetes.io/cluster-service: "true"
     kubernetes.io/name: "CoreDNS"
-    prometheus.io/port: "9153"
-    prometheus.io/scrape: "true"
 spec:
   selector:
     k8s-app: coredns
@@ -157,7 +153,4 @@ spec:
     protocol: UDP
   - name: dns-tcp
     port: 53
-    protocol: TCP
-  - name: metrics
-    port: 9153
     protocol: TCP
