@@ -178,7 +178,7 @@ var _ = Describe("kismatic", func() {
 
 		Context("when using direct-lvm docker storage", func() {
 			installOpts := installOptions{
-				useDirectLVM: true,
+				dockerStorageDriver: "devicemapper",
 			}
 			Context("when targeting CentOS", func() {
 				ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
@@ -199,6 +199,27 @@ var _ = Describe("kismatic", func() {
 			Context("when targeting RHEL", func() {
 				ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
 					WithMiniInfrastructureAndBlockDevice(RedHat7, aws, func(node NodeDeets, sshKey string) {
+						theNode := []NodeDeets{node}
+						nodes := provisionedNodes{
+							etcd:    theNode,
+							master:  theNode,
+							worker:  theNode,
+							ingress: theNode,
+						}
+						err := installKismatic(nodes, installOpts, sshKey)
+						Expect(err).ToNot(HaveOccurred())
+					})
+				})
+			})
+		})
+
+		Context("when using overlay2 docker storage", func() {
+			installOpts := installOptions{
+				dockerStorageDriver: "overlay2",
+			}
+			Context("when targeting Ubuntu", func() {
+				ItOnAWS("should install successfully", func(aws infrastructureProvisioner) {
+					WithMiniInfrastructureAndBlockDevice(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
 						theNode := []NodeDeets{node}
 						nodes := provisionedNodes{
 							etcd:    theNode,

@@ -28,7 +28,7 @@ type PlanAWS struct {
 	HTTPProxy                    string
 	HTTPSProxy                   string
 	NoProxy                      string
-	UseDirectLVM                 bool
+	DockerStorageDriver          string
 	ServiceCIDR                  string
 	DisableCNI                   bool
 	CNIProvider                  string
@@ -78,12 +78,16 @@ const planAWSOverlay = `cluster:
   cloud_provider:
     provider: {{.CloudProvider}}
 docker:
-  disable: {{.DisableDockerInstallation}}{{if .UseDirectLVM}}
+  disable: {{.DisableDockerInstallation}}
   storage:
-    direct_lvm:
-      enabled: true
-      block_device: "/dev/xvdb"
-      enable_deferred_deletion: false{{end}}
+    driver: "{{.DockerStorageDriver}}"
+    opts: {}
+    direct_lvm_block_device:
+      path: {{if eq .DockerStorageDriver "devicemapper"}}"/dev/xvdb"{{end}}
+      thinpool_percent: "95"
+      thinpool_metapercent: "1"
+      thinpool_autoextend_threshold: "80"
+      thinpool_autoextend_percent: "20"
   logs:
     driver: "json-file"
     opts: 

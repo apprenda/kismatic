@@ -41,7 +41,7 @@ type installOptions struct {
 	httpProxy                    string
 	httpsProxy                   string
 	noProxy                      string
-	useDirectLVM                 bool
+	dockerStorageDriver          string
 	serviceCIDR                  string
 	disableCNI                   bool
 	cniProvider                  string
@@ -112,7 +112,7 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		HTTPProxy:                    installOpts.httpProxy,
 		HTTPSProxy:                   installOpts.httpsProxy,
 		NoProxy:                      installOpts.noProxy,
-		UseDirectLVM:                 installOpts.useDirectLVM,
+		DockerStorageDriver:          installOpts.dockerStorageDriver,
 		ServiceCIDR:                  installOpts.serviceCIDR,
 		DisableCNI:                   installOpts.disableCNI,
 		CNIProvider:                  installOpts.cniProvider,
