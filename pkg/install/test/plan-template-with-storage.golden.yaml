@@ -184,6 +184,9 @@ add_ons:
 
     # Options: 'helm'.
     provider: helm
+    options:
+      helm:
+        namespace: kube-system
 
   # The rescheduler ensures that critical add-ons remain running on the cluster.
   rescheduler:

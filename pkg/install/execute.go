@@ -788,6 +788,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		default:
 			cc.Helm.Enabled = true
 		}
+		cc.Helm.Namespace = p.AddOns.PackageManager.Options.Helm.Namespace
 	}
 
 	cc.Rescheduler.Enabled = !p.AddOns.Rescheduler.Disable

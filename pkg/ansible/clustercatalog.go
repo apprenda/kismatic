@@ -128,7 +128,8 @@ type ClusterCatalog struct {
 	}
 
 	Helm struct {
-		Enabled bool
+		Enabled   bool
+		Namespace string
 	}
 
 	Rescheduler struct {

@@ -82,6 +82,9 @@
   * [package_manager](#add_onspackage_manager)
     * [disable](#add_onspackage_managerdisable)
     * [provider](#add_onspackage_managerprovider)
+    * [options](#add_onspackage_manageroptions)
+      * [helm](#add_onspackage_manageroptionshelm)
+        * [namespace](#add_onspackage_manageroptionshelmnamespace)
   * [rescheduler](#add_onsrescheduler)
     * [disable](#add_onsreschedulerdisable)
 * [features _(deprecated)_](#features-deprecated)
@@ -803,6 +806,24 @@
 | **Required** |  Yes |
 | **Default** | ` ` | 
 | **Options** |  `helm`
+
+###  add_ons.package_manager.options
+
+ The PackageManager options. 
+
+###  add_ons.package_manager.options.helm
+
+ Helm PackageManager options 
+
+###  add_ons.package_manager.options.helm.namespace
+
+ Namespace to deploy tiller 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `kube-system` | 
 
 ###  add_ons.rescheduler
 

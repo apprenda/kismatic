@@ -437,6 +437,21 @@ type PackageManager struct {
 	// +required
 	// +options=helm
 	Provider string
+	// The PackageManager options.
+	Options PackageManagerOptions `yaml:"options"`
+}
+
+// The PackageManagerOptions for the PackageManager add-on
+type PackageManagerOptions struct {
+	// Helm PackageManager options
+	Helm HelmOptions
+}
+
+// HelmOptions for the helm PackageManager add-on
+type HelmOptions struct {
+	// Namespace to deploy tiller
+	// +default=kube-system
+	Namespace string
 }
 
 // Rescheduler add-on configuration

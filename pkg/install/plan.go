@@ -157,6 +157,10 @@ func setDefaults(p *Plan) {
 	if p.AddOns.Dashboard == nil {
 		p.AddOns.Dashboard = &Dashboard{}
 	}
+
+	if p.AddOns.PackageManager.Options.Helm.Namespace == "" {
+		p.AddOns.PackageManager.Options.Helm.Namespace = "kube-system"
+	}
 }
 
 var yamlKeyRE = regexp.MustCompile(`[^a-zA-Z]*([a-z_\-A-Z]+)[ ]*:`)
@@ -336,6 +340,7 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 
 	// Package Manager
 	p.AddOns.PackageManager.Provider = "helm"
+	p.AddOns.PackageManager.Options.Helm.Namespace = "kube-system"
 
 	p.AddOns.Dashboard = &Dashboard{}
 	p.AddOns.Dashboard.Disable = false
