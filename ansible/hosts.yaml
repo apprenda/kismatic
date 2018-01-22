@@ -1,0 +1,3 @@
+---
+  - include: _all.yaml
+  - include: _hosts.yaml

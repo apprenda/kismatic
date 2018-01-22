@@ -44,7 +44,7 @@ type ClusterCatalog struct {
 
 	KismaticPreflightCheckerLinux string `yaml:"kismatic_preflight_checker"`
 
-	WorkerNode string `yaml:"worker_node"`
+	NewNode string `yaml:"new_node"`
 
 	NFSVolumes []NFSVolume `yaml:"nfs_volumes"`
 

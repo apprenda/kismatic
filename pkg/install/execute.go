@@ -22,7 +22,7 @@ import (
 type PreFlightExecutor interface {
 	RunPreFlightCheck(*Plan) error
 	CopyInspector(*Plan) error
-	RunNewWorkerPreFlightCheck(Plan, Node) error
+	RunNewNodePreFlightCheck(Plan, Node) error
 	RunUpgradePreFlightCheck(*Plan, ListableNode) error
 }
 
@@ -32,7 +32,7 @@ type Executor interface {
 	Install(p *Plan) error
 	GenerateCertificates(p *Plan, useExistingCA bool) error
 	RunSmokeTest(*Plan) error
-	AddWorker(*Plan, Node) (*Plan, error)
+	AddNode(*Plan, Node, []string) (*Plan, error)
 	RunPlay(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
 	DeleteVolume(*Plan, string) error
@@ -355,8 +355,8 @@ func (ae *ansibleExecutor) CopyInspector(p *Plan) error {
 	return ae.execute(t)
 }
 
-// RunNewWorkerPreFlightCheck runs the preflight checks against a new worker node
-func (ae *ansibleExecutor) RunNewWorkerPreFlightCheck(p Plan, node Node) error {
+// RunNewNodePreFlightCheck runs the preflight checks against a new node
+func (ae *ansibleExecutor) RunNewNodePreFlightCheck(p Plan, node Node) error {
 	cc, err := ae.buildClusterCatalog(&p)
 	if err != nil {
 		return err
@@ -368,7 +368,7 @@ func (ae *ansibleExecutor) RunNewWorkerPreFlightCheck(p Plan, node Node) error {
 	p.Worker.ExpectedCount++
 	p.Worker.Nodes = append(p.Worker.Nodes, node)
 	t := task{
-		name:           "add-worker-preflight",
+		name:           "add-node-preflight",
 		playbook:       "preflight.yaml",
 		inventory:      buildInventoryFromPlan(&p),
 		clusterCatalog: *cc,

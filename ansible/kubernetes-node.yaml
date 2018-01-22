@@ -1,7 +1,5 @@
 ---
   - include: _all.yaml
-  - include: _hosts.yaml
-    when: modify_hosts_file|bool == true
   - include: _certs.yaml
   - include: _kubeconfig.yaml
   - include: _packages-repo.yaml
@@ -21,4 +19,8 @@
     when: cni.enabled|bool == true and cni.provider == "weave"
   - include: _contiv.yaml
     when: cni.enabled|bool == true and cni.provider == "contiv"
+  - include: _nginx-ingress.yaml
+    when: configure_ingress|bool == true
+  - include: _storage.yaml
+    when: configure_storage|bool == true
   - include: _update-version.yaml

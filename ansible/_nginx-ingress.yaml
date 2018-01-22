@@ -1,5 +1,5 @@
 ---
-  - hosts: master[0]
+  - hosts: ingress
     any_errors_fatal: true
     name: "{{ play_name | default('Start Kubernetes Ingress') }}"
     become: yes

@@ -31,7 +31,7 @@ type fakeExecutor struct {
 	err           error
 }
 
-func (fe *fakeExecutor) AddWorker(p *install.Plan, newWorker install.Node) (*install.Plan, error) {
+func (fe *fakeExecutor) AddNode(p *install.Plan, newWorker install.Node, roles []string) (*install.Plan, error) {
 	return nil, nil
 }
 
@@ -52,7 +52,7 @@ func (fe *fakeExecutor) CopyInspector(p *install.Plan) error {
 	return nil
 }
 
-func (fe *fakeExecutor) RunNewWorkerPreFlightCheck(install.Plan, install.Node) error {
+func (fe *fakeExecutor) RunNewNodePreFlightCheck(install.Plan, install.Node) error {
 	return nil
 }
 
