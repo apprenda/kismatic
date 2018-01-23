@@ -70,7 +70,7 @@ official_images:
     version: 1.0.4
   kubernetes_dashboard:
     name: gcr.io/google_containers/kubernetes-dashboard-amd64
-    version: v1.8.0
+    version: v1.8.2
   apprenda_tcp_healthz: 
     name: apprenda/tcp-healthz-amd64
     version: v1.0.0
