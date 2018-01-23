@@ -239,10 +239,10 @@ var _ = Describe("kismatic", func() {
 		Context("when deploying a skunkworks cluster", func() {
 			Context("with Calico as the CNI provider", func() {
 				ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-					WithInfrastructure(NodeCount{3, 2, 3, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+					WithInfrastructure(NodeCount{3, 2, 5, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 						// reserve one of the workers for the add-worker test
 						allWorkers := nodes.worker
-						nodes.worker = allWorkers[0 : len(nodes.worker)-1]
+						nodes.worker = allWorkers[0 : len(nodes.worker)-3]
 
 						// install cluster
 						installOpts := installOptions{
@@ -262,7 +262,17 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("should allow adding a worker node", func() error {
 							newWorker := allWorkers[len(allWorkers)-1]
-							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"})
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{})
+						})
+
+						sub.It("should allow adding a ingress node", func() error {
+							newWorker := allWorkers[len(allWorkers)-2]
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"ingress"})
+						})
+
+						sub.It("should allow adding a storage node", func() error {
+							newWorker := allWorkers[len(allWorkers)-3]
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"storage"})
 						})
 
 						sub.It("should be able to deploy a workload with ingress", func() error {
@@ -305,10 +315,10 @@ var _ = Describe("kismatic", func() {
 		Context("when deploying a skunkworks cluster", func() {
 			Context("with Weave as the CNI provider", func() {
 				ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-					WithInfrastructure(NodeCount{3, 2, 3, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+					WithInfrastructure(NodeCount{3, 2, 5, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 						// reserve one of the workers for the add-worker test
 						allWorkers := nodes.worker
-						nodes.worker = allWorkers[0 : len(nodes.worker)-1]
+						nodes.worker = allWorkers[0 : len(nodes.worker)-3]
 
 						// install cluster
 						installOpts := installOptions{
@@ -324,7 +334,17 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("should allow adding a worker node", func() error {
 							newWorker := allWorkers[len(allWorkers)-1]
-							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"})
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{})
+						})
+
+						sub.It("should allow adding a ingress node", func() error {
+							newWorker := allWorkers[len(allWorkers)-2]
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"ingress"})
+						})
+
+						sub.It("should allow adding a storage node", func() error {
+							newWorker := allWorkers[len(allWorkers)-3]
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"storage"})
 						})
 
 						sub.It("should be able to deploy a workload with ingress", func() error {
@@ -416,10 +436,10 @@ var _ = Describe("kismatic", func() {
 		Context("when deploying a skunkworks cluster", func() {
 			Context("with CoreDNS as the DNS provider", func() {
 				ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
-					WithInfrastructure(NodeCount{3, 2, 3, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+					WithInfrastructure(NodeCount{3, 2, 5, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 						// reserve one of the workers for the add-worker test
 						allWorkers := nodes.worker
-						nodes.worker = allWorkers[0 : len(nodes.worker)-1]
+						nodes.worker = allWorkers[0 : len(nodes.worker)-3]
 
 						// install cluster
 						installOpts := installOptions{
@@ -435,7 +455,17 @@ var _ = Describe("kismatic", func() {
 
 						sub.It("should allow adding a worker node", func() error {
 							newWorker := allWorkers[len(allWorkers)-1]
-							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"})
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{})
+						})
+
+						sub.It("should allow adding a ingress node", func() error {
+							newWorker := allWorkers[len(allWorkers)-2]
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"ingress"})
+						})
+
+						sub.It("should allow adding a storage node", func() error {
+							newWorker := allWorkers[len(allWorkers)-3]
+							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"storage"})
 						})
 
 						sub.It("should be able to deploy a workload with ingress", func() error {
