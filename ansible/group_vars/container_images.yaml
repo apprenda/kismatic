@@ -58,13 +58,13 @@ official_images:
     version: 3.0
   kubedns:
     name: gcr.io/google_containers/k8s-dns-kube-dns-amd64
-    version: 1.14.7
+    version: 1.14.8
   kube_dnsmasq:
     name: gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64
-    version: 1.14.7
+    version: 1.14.8
   kubedns_sidecar:
     name: gcr.io/google_containers/k8s-dns-sidecar-amd64
-    version: 1.14.7
+    version: 1.14.8
   coredns:
     name: coredns/coredns
     version: 1.0.4
