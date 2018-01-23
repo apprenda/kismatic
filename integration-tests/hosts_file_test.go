@@ -51,7 +51,7 @@ var _ = Describe("hosts file modification feature", func() {
 				FailIfError(err)
 
 				By("Adding a worker with a bogus hostname that is added to hosts files")
-				err = addWorkerToCluster(nodes.worker[3], sshKey, []string{}, []string{})
+				err = addNodeToCluster(nodes.worker[3], sshKey, []string{}, []string{})
 				FailIfError(err)
 			})
 		})

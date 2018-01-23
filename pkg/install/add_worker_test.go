@@ -12,7 +12,7 @@ import (
 )
 
 func mustGetTempDir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "add-worker-test")
+	dir, err := ioutil.TempDir("", "add-node-test")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}

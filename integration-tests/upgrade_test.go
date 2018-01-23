@@ -42,7 +42,7 @@ var _ = Describe("Upgrade", func() {
 			Context("Using a skunkworks cluster", func() {
 				ItOnAWS("should result in an upgraded cluster [slow] [upgrade]", func(aws infrastructureProvisioner) {
 					WithInfrastructureAndDNS(NodeCount{Etcd: 3, Master: 2, Worker: 5, Ingress: 2, Storage: 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
-						// reserve one of the workers for the add-worker test
+						// reserve 3 of the workers for the add-node test
 						allWorkers := nodes.worker
 						nodes.worker = allWorkers[0 : len(nodes.worker)-3]
 
@@ -66,17 +66,17 @@ var _ = Describe("Upgrade", func() {
 
 						sub.It("should allow adding a worker node", func() error {
 							newWorker := allWorkers[len(allWorkers)-1]
-							return addWorkerToCluster(newWorker, sshKey, []string{}, []string{})
+							return addNodeToCluster(newWorker, sshKey, []string{}, []string{})
 						})
 
 						sub.It("should allow adding a ingress node", func() error {
 							newWorker := allWorkers[len(allWorkers)-2]
-							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"ingress"})
+							return addNodeToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"ingress"})
 						})
 
 						sub.It("should allow adding a storage node", func() error {
 							newWorker := allWorkers[len(allWorkers)-3]
-							return addWorkerToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"storage"})
+							return addNodeToCluster(newWorker, sshKey, []string{"com.integrationtest/worker=true"}, []string{"storage"})
 						})
 
 						sub.It("should be able to deploy a workload with ingress", func() error {
