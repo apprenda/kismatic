@@ -46,7 +46,7 @@ official_images:
     version: 1.4
   nginx_ingress_controller:
     name: quay.io/kubernetes-ingress-controller/nginx-ingress-controller
-    version: 0.9.0
+    version: 0.10.0
   nginx:
     name: nginx
     version: stable-alpine

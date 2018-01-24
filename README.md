@@ -33,7 +33,7 @@ KET operational tools include:
 | Calico | v2.6.5 |
 | Weave | v2.1.3 |
 | Contiv | v1.1.1 |
-|NGINX Ingress Controller|v0.9.0|
+|NGINX Ingress Controller|v0.10.0|
 
 
 [Download KET here](https://github.com/apprenda/kismatic/releases)
