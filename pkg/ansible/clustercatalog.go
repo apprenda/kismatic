@@ -7,6 +7,12 @@ import (
 )
 
 type ClusterCatalog struct {
+	Versions struct {
+		Kubernetes    string `yaml:"kubernetes"`
+		KubernetesYum string `yaml:"kubernetes_yum"`
+		KubernetesDeb string `yaml:"kubernetes_deb"`
+	}
+
 	ClusterName               string `yaml:"kubernetes_cluster_name"`
 	AdminPassword             string `yaml:"kubernetes_admin_password"`
 	TLSDirectory              string `yaml:"tls_directory"`

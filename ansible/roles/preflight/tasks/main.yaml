@@ -121,11 +121,11 @@
   # Run the pre-flights checks, and always stop the checker regardless of result
   - block:
       - name: run pre-flight checks using Kismatic Inspector from the master
-        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %}'
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %} --additional-vars kubernetes_yum_version={{ kubernetes_yum_version }},kubernetes_deb_version={{ kubernetes_deb_version }}'
         delegate_to: "{{ groups['master'][0] }}"
         register: out
       - name: run pre-flight checks using Kismatic Inspector from the worker
-        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %}'
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %} --additional-vars kubernetes_yum_version={{ kubernetes_yum_version }},kubernetes_deb_version={{ kubernetes_deb_version }}'
         delegate_to: "{{ groups['worker'][0] }}"
         register: out
     always:

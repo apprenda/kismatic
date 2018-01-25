@@ -185,7 +185,9 @@ func doUpgrade(in io.Reader, out io.Writer, opts *upgradeOpts) error {
 	var toUpgrade []install.ListableNode
 	var toSkip []install.ListableNode
 	for _, n := range cv.Nodes {
-		if install.IsOlderVersion(n.Version) {
+		// run if KET version or component versions are different
+		// don't check component versions if the node has only "etcd" role
+		if install.IsOlderVersion(n.Version) || (!(len(n.Roles) == 1 && n.Roles[0] == "etcd") && plan.Cluster.Version != n.ComponentVersions.Kubernetes) {
 			toUpgrade = append(toUpgrade, n)
 		} else {
 			toSkip = append(toSkip, n)

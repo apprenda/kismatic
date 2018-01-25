@@ -673,6 +673,11 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		KubeletOptions:               p.Cluster.KubeletOptions.Overrides,
 	}
 
+	// set versions
+	cc.Versions.Kubernetes = p.Cluster.Version
+	cc.Versions.KubernetesYum = p.Cluster.Version[1:] + "-0"
+	cc.Versions.KubernetesDeb = p.Cluster.Version[1:] + "-00"
+
 	cc.NoProxy = p.AllAddresses()
 	if p.Cluster.Networking.NoProxy != "" {
 		cc.NoProxy = cc.NoProxy + "," + p.Cluster.Networking.NoProxy

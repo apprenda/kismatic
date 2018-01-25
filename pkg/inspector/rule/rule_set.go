@@ -1,8 +1,11 @@
 package rule
 
 import (
+	"bytes"
+	"fmt"
 	"io"
 	"strings"
+	"text/template"
 )
 
 /*
@@ -292,7 +295,7 @@ const defaultRuleSet = `---
   - ["storage"]
   port: 38467
   timeout: 5s
-
+  
 - kind: PackageDependency
   when: 
   - ["etcd", "master", "worker", "ingress", "storage"]
@@ -304,7 +307,7 @@ const defaultRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   - ["ubuntu"]
   packageName: kubelet
-  packageVersion: 1.9.2-00
+  packageVersion: {{.kubernetes_deb_version}}
 - kind: PackageDependency
   when: 
   - ["master", "worker", "ingress", "storage"]
@@ -315,7 +318,7 @@ const defaultRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   - ["ubuntu"]
   packageName: kubectl
-  packageVersion: 1.9.2-00
+  packageVersion: {{.kubernetes_deb_version}}
 # https://docs.docker.com/engine/installation/linux/docker-ee/ubuntu/#uninstall-old-versions
 - kind: PackageNotInstalled
   when: 
@@ -350,7 +353,7 @@ const defaultRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   - ["centos"]
   packageName: kubelet
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 - kind: PackageDependency
   when: 
   - ["master", "worker", "ingress", "storage"]
@@ -361,7 +364,7 @@ const defaultRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   - ["centos"]
   packageName: kubectl
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 # https://docs.docker.com/engine/installation/linux/docker-ee/centos/
 - kind: PackageNotInstalled
   when: 
@@ -411,7 +414,7 @@ const defaultRuleSet = `---
   - [master", "worker", "ingress", "storage"]
   - ["rhel"]
   packageName: kubelet
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 - kind: PackageDependency
   when: 
   - [master", "worker", "ingress", "storage"]
@@ -422,7 +425,7 @@ const defaultRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   - ["rhel"]
   packageName: kubectl
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 # https://docs.docker.com/engine/installation/linux/docker-ee/rhel/#os-requirements
 - kind: PackageNotInstalled
   when: 
@@ -486,7 +489,7 @@ const upgradeRuleSet = `---
 - kind: FreeSpace
   path: /
   minimumBytes: 1000000000
-
+  
 - kind: PackageDependency
   when: 
   - ["etcd", "master", "worker", "ingress", "storage"]
@@ -498,7 +501,7 @@ const upgradeRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   - ["ubuntu"]
   packageName: kubelet
-  packageVersion: 1.9.2-00
+  packageVersion: {{.kubernetes_deb_version}}
 - kind: PackageDependency
   when: 
   - ["master", "worker", "ingress", "storage"]
@@ -509,7 +512,7 @@ const upgradeRuleSet = `---
   - ["master", "worker", "ingress", "storage"]
   - ["ubuntu"]
   packageName: kubectl
-  packageVersion: 1.9.2-00
+  packageVersion: {{.kubernetes_deb_version}}
 
 - kind: PackageDependency
   when: 
@@ -519,21 +522,21 @@ const upgradeRuleSet = `---
   packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: 
-  - ["master", "worker", "ingress, storage"]
+  - ["master", "worker", "ingress", "storage"]
   - ["centos"]
   packageName: kubelet
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 - kind: PackageDependency
   when: 
-  - ["master", "worker", "ingress, storage"]
+  - ["master", "worker", "ingress", "storage"]
   - ["centos"]
   packageName: nfs-utils
 - kind: PackageDependency
   when: 
-  - ["master", "worker", "ingress, storage"]
+  - ["master", "worker", "ingress", "storage"]
   - ["centos"]
   packageName: kubectl
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 
 - kind: PackageDependency
   when: 
@@ -543,46 +546,55 @@ const upgradeRuleSet = `---
   packageVersion: 17.03.2.ce-1.el7.centos
 - kind: PackageDependency
   when: 
-  - ["master", "worker", "ingress, storage"]
+  - [master", "worker", "ingress", "storage"]
   - ["rhel"]
   packageName: kubelet
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 - kind: PackageDependency
   when: 
-  - ["master", "worker", "ingress, storage"]
+  - [master", "worker", "ingress", "storage"]
   - ["rhel"]
   packageName: nfs-utils
 - kind: PackageDependency
   when: 
-  - ["master", "worker", "ingress, storage"]
+  - ["master", "worker", "ingress", "storage"]
   - ["rhel"]
   packageName: kubectl
-  packageVersion: 1.9.2-0
+  packageVersion: {{.kubernetes_yum_version}}
 
 # Gluster packages
+- kind: PackageDependency
+  when: 
+  - ["storage"]
+  - ["centos"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.15-2.el7
+- kind: PackageDependency
+  when: 
+  - ["storage"]
+  - ["rhel"]
+  packageName: glusterfs-server
+  packageVersion: 3.8.15-2.el7
 - kind: PackageDependency
   when: 
   - ["storage"] 
   - ["ubuntu"]
   packageName: glusterfs-server
   packageVersion: 3.8.15-ubuntu1~xenial1
-- kind: PackageDependency
-  when: 
-  - ["storage"] 
-  - ["centos"]
-  packageName: glusterfs-server
-  packageVersion: 3.8.15-2.el7
-- kind: PackageDependency
-  when: 
-  - ["storage"] 
-  - ["rhel"]
-  packageName: glusterfs-server
-  packageVersion: 3.8.15-2.el7
 `
 
 // DefaultRules returns the list of rules that are built into the inspector
-func DefaultRules() []Rule {
-	rules, err := UnmarshalRulesYAML([]byte(defaultRuleSet))
+func DefaultRules(vars map[string]string) []Rule {
+	tmpl, err := template.New("").Parse(defaultRuleSet)
+	if err != nil {
+		panic(fmt.Errorf("error parsing rules: %v", err))
+	}
+	var rawRules bytes.Buffer
+	err = tmpl.Execute(&rawRules, vars)
+	if err != nil {
+		panic(fmt.Errorf("error reading rules from: %v", err))
+	}
+	rules, err := UnmarshalRulesYAML(rawRules.Bytes())
 	if err != nil {
 		// The default rules should not contain errors
 		// If they do, panic so that we catch them during tests
@@ -600,8 +612,19 @@ func DumpDefaultRules(writer io.Writer) error {
 	return nil
 }
 
-func UpgradeRules() []Rule {
-	rules, err := UnmarshalRulesYAML([]byte(upgradeRuleSet))
+func UpgradeRules(vars map[string]string) []Rule {
+	tmpl, err := template.New("").Parse(upgradeRuleSet)
+	if err != nil {
+		panic(fmt.Errorf("error parsing rules: %v", err))
+	}
+	fmt.Printf("template: %v+\n", tmpl.Tree)
+	var rawRules bytes.Buffer
+	err = tmpl.Execute(&rawRules, vars)
+	if err != nil {
+		panic(fmt.Errorf("error reading rules from: %v", err))
+	}
+	fmt.Printf("raw rules: %v\n", rawRules.String())
+	rules, err := UnmarshalRulesYAML(rawRules.Bytes())
 	if err != nil {
 		// The upgrade rules should not contain errors
 		// If they do, panic so that we catch them during tests

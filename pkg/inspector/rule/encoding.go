@@ -1,25 +1,31 @@
 package rule
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
+	"text/template"
 
 	yaml "gopkg.in/yaml.v2"
 )
 
 // ReadFromFile returns the list of rules contained in the specified file
-func ReadFromFile(file string) ([]Rule, error) {
+func ReadFromFile(file string, vars map[string]string) ([]Rule, error) {
 	if _, err := os.Stat(file); os.IsNotExist(err) {
 		return nil, fmt.Errorf("%q does not exist", file)
 	}
-	rawRules, err := ioutil.ReadFile(file)
+	tmpl, err := template.ParseFiles(file)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing file %q: %v", file, err)
+	}
+	var rawRules bytes.Buffer
+	err = tmpl.Execute(&rawRules, vars)
 	if err != nil {
 		return nil, fmt.Errorf("error reading rules from %q: %v", file, err)
 	}
-	rules, err := UnmarshalRulesYAML(rawRules)
+	rules, err := UnmarshalRulesYAML(rawRules.Bytes())
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshaling rules from %q: %v", file, err)
 	}

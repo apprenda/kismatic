@@ -2,6 +2,7 @@
 ## Index
 * [cluster](#cluster)
   * [name](#clustername)
+  * [version](#clusterversion)
   * [admin_password _(deprecated)_](#clusteradmin_password-deprecated)
   * [disable_package_installation](#clusterdisable_package_installation)
   * [allow_package_installation _(deprecated)_](#clusterallow_package_installation-deprecated)
@@ -162,6 +163,16 @@
 | **Kind** |  string |
 | **Required** |  Yes |
 | **Default** | ` ` | 
+
+###  cluster.version
+
+ The Kubernetes version to install. If left blank will be set to the latest tested version. Only a single Minor version is supported with. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `v1.9.2` | 
 
 ###  cluster.admin_password _(deprecated)_
 

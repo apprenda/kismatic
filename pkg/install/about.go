@@ -2,10 +2,13 @@ package install
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/ssh"
 	"github.com/apprenda/kismatic/pkg/util"
 	"github.com/blang/semver"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 // ClusterVersion contains version information about the cluster
@@ -18,9 +21,14 @@ type ClusterVersion struct {
 
 // ListableNode contains version and role information about a given node
 type ListableNode struct {
-	Node    Node
-	Roles   []string
-	Version semver.Version
+	Node              Node
+	Roles             []string
+	Version           semver.Version
+	ComponentVersions ComponentVersions
+}
+
+type ComponentVersions struct {
+	Kubernetes string
 }
 
 // KismaticVersion contains the version information of the currently running binary
@@ -51,19 +59,6 @@ func IsLessThanVersion(this semver.Version, that string) bool {
 	return this.LT(thatVersion)
 }
 
-func parseVersion(versionString string) (semver.Version, error) {
-	// Support a 'v' prefix
-	verString := versionString
-	if versionString[0] == 'v' {
-		verString = versionString[1:len(versionString)]
-	}
-	v, err := semver.Make(verString)
-	if err != nil {
-		return semver.Version{}, fmt.Errorf("Unable to parse version %q: %v", verString, err)
-	}
-	return v, nil
-}
-
 // ListVersions connects to the cluster described in the plan file and
 // gathers version information about it.
 func ListVersions(plan *Plan) (ClusterVersion, error) {
@@ -73,26 +68,45 @@ func ListVersions(plan *Plan) (ClusterVersion, error) {
 	}
 
 	sshDeets := plan.Cluster.SSH
-	verFile := "/etc/kismatic-version"
+	ketVerFile := "/etc/kismatic-version"
+	componentVerFile := "/etc/component-versions"
 	for i, node := range nodes {
 		client, err := ssh.NewClient(node.IP, sshDeets.Port, sshDeets.User, sshDeets.Key)
 		if err != nil {
 			return cv, fmt.Errorf("error creating SSH client: %v", err)
 		}
 
-		output, err := client.Output(false, fmt.Sprintf("cat %s", verFile))
+		// get KET version
+		ketOutput, err := client.Output(false, fmt.Sprintf("cat %s", ketVerFile))
 		if err != nil {
 			// the output var contains the actual error message from the cat command, which has
 			// more meaningful info
-			return cv, fmt.Errorf("error getting version for node %q: %q", node.Host, output)
+			return cv, fmt.Errorf("error getting KET version for node %q: %q", node.Host, ketOutput)
 		}
 
-		thisVersion, err := parseVersion(output)
+		thisVersion, err := parseVersion(ketOutput)
 		if err != nil {
-			return cv, fmt.Errorf("invalid version %q found in version file %q of node %s", output, verFile, node.Host)
+			return cv, fmt.Errorf("invalid version %q found in version file %q of node %s", ketOutput, ketVerFile, node.Host)
 		}
 
-		cv.Nodes = append(cv.Nodes, ListableNode{node, plan.GetRolesForIP(node.IP), thisVersion})
+		// get component versions
+		versionsOutput, err := client.Output(false, fmt.Sprintf("cat %s", componentVerFile))
+		// don't fail if the file is not found, will default to empty
+		// TODO remove
+		if err != nil && !strings.Contains(versionsOutput, "No such file or directory") {
+			// the output var contains the actual error message from the cat command, which has
+			// more meaningful info
+			return cv, fmt.Errorf("error getting component versions for node %q: %q", node.Host, versionsOutput)
+		}
+		versions := ComponentVersions{}
+		if !strings.Contains(versionsOutput, "No such file or directory") {
+			err = yaml.Unmarshal([]byte(versionsOutput), &versions)
+			if err != nil {
+				return cv, fmt.Errorf("error unmarshalling component versions file: %q", componentVerFile)
+			}
+		}
+
+		cv.Nodes = append(cv.Nodes, ListableNode{node, plan.GetRolesForIP(node.IP), thisVersion, versions})
 
 		// If looking at the first node, set the versions and move on
 		if i == 0 {

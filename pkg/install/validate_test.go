@@ -7,7 +7,8 @@ import (
 
 var validPlan = Plan{
 	Cluster: Cluster{
-		Name: "test",
+		Name:    "test",
+		Version: "v1.9.2",
 		Networking: NetworkConfig{
 			Type:             "overlay",
 			PodCIDRBlock:     "172.16.0.0/16",
@@ -111,6 +112,193 @@ func TestValidateValidPlan(t *testing.T) {
 		t.Errorf("expected valid, but got invalid")
 	}
 	fmt.Println(errs)
+}
+
+func TestClusterVersion(t *testing.T) {
+	tests := []struct {
+		c     Cluster
+		valid bool
+	}{
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.9.2",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: true,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.9.2",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: true,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "foo",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.9.200",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.8.0",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.10.0",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:                     "test",
+			Version:                  "v1.9.200",
+			DisconnectedInstallation: true,
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: true,
+		},
+		{c: Cluster{
+			Name:                     "test",
+			Version:                  "v1.8.0",
+			DisconnectedInstallation: true,
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:                     "test",
+			Version:                  "v1.10.0",
+			DisconnectedInstallation: true,
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+	}
+	for _, test := range tests {
+		if valid, _ := test.c.validate(); valid != test.valid {
+			t.Errorf("expected %v with %+v, but got %v - %q", test.valid, test.c, !test.valid)
+		}
+	}
 }
 
 func TestValidatePlanEmptyPodCIDR(t *testing.T) {

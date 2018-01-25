@@ -112,6 +112,11 @@ func readDeprecatedFields(p *Plan) {
 }
 
 func setDefaults(p *Plan) {
+	// Set to either the latest version or the tested one if an error occurs
+	if p.Cluster.Version == "" {
+		p.Cluster.Version = kubernetesVersionString
+	}
+
 	if p.Docker.Logs.Driver == "" {
 		p.Docker.Logs.Driver = "json-file"
 		p.Docker.Logs.Opts = map[string]string{
@@ -336,6 +341,7 @@ func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) e
 func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p := Plan{}
 	p.Cluster.Name = "kubernetes"
+	p.Cluster.Version = kubernetesVersionString
 	p.Cluster.AdminPassword = templateOpts.AdminPassword
 	p.Cluster.DisablePackageInstallation = false
 	p.Cluster.DisconnectedInstallation = false
@@ -451,6 +457,7 @@ func getDNSServiceIP(p *Plan) (string, error) {
 // separate lines.
 var commentMap = map[string][]string{
 	"cluster.admin_password":                         []string{"This password is used to login to the Kubernetes Dashboard and can also be", "used for administration without a security certificate."},
+	"cluster.version":                                []string{fmt.Sprintf("Kubernetes cluster version (supported minor version %q).", kubernetesMinorVersionString)},
 	"cluster.disable_package_installation":           []string{"Set to true if the nodes have the required packages installed."},
 	"cluster.disconnected_installation":              []string{"Set to true if you are performing a disconnected installation."},
 	"cluster.networking":                             []string{"Networking configuration of your cluster."},

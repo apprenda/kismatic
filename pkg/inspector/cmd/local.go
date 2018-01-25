@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/inspector/check"
 	"github.com/apprenda/kismatic/pkg/inspector/rule"
@@ -17,6 +18,7 @@ type localOpts struct {
 	packageInstallationDisabled bool
 	dockerInstallationDisabled  bool
 	useUpgradeDefaults          bool
+	additionalVariables         map[string]string
 }
 
 var localExample = `# Run with a custom rules file
@@ -26,11 +28,20 @@ kismatic-inspector local --node-roles master -f inspector-rules.yaml
 // NewCmdLocal returns the "local" command
 func NewCmdLocal(out io.Writer) *cobra.Command {
 	opts := localOpts{}
+	var additionalVars []string
 	cmd := &cobra.Command{
 		Use:     "local",
 		Short:   "Run the inspector checks against the local host",
 		Example: localExample,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			opts.additionalVariables = make(map[string]string)
+			for _, v := range additionalVars {
+				kv := strings.Split(v, "=")
+				if len(kv) != 2 {
+					return fmt.Errorf("invalid key-value %q", v)
+				}
+				opts.additionalVariables[kv[0]] = kv[1]
+			}
 			return runLocal(out, opts)
 		},
 	}
@@ -40,6 +51,7 @@ func NewCmdLocal(out io.Writer) *cobra.Command {
 	cmd.Flags().BoolVar(&opts.packageInstallationDisabled, "pkg-installation-disabled", false, "when true, the inspector will ensure that the necessary packages are installed on the node")
 	cmd.Flags().BoolVar(&opts.dockerInstallationDisabled, "docker-installation-disabled", false, "when true, the inspector will check for docker packages to be installed")
 	cmd.Flags().BoolVarP(&opts.useUpgradeDefaults, "upgrade", "u", false, "use defaults for upgrade, rather than install")
+	cmd.Flags().StringSliceVar(&additionalVars, "additional-vars", []string{}, "provide a key=value list to template ruleset")
 	return cmd
 }
 
@@ -55,7 +67,7 @@ func runLocal(out io.Writer, opts localOpts) error {
 		return err
 	}
 	// Gather rules
-	rules, err := getRulesFromFileOrDefault(out, opts.rulesFile, opts.useUpgradeDefaults)
+	rules, err := getRulesFromFileOrDefault(out, opts.rulesFile, opts.useUpgradeDefaults, opts.additionalVariables)
 	if err != nil {
 		return err
 	}

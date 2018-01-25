@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/inspector/rule"
 	"github.com/spf13/cobra"
@@ -19,7 +20,7 @@ func NewCmdRules(out io.Writer) *cobra.Command {
 			return cmd.Help()
 		},
 	}
-	cmd.Flags().StringVarP(&file, "file", "f", "inspector-rules.yaml", "file where inspector rules are to be written")
+	cmd.PersistentFlags().StringVarP(&file, "file", "f", "inspector-rules.yaml", "file where inspector rules are to be written")
 	cmd.AddCommand(NewCmdDumpRules(out, file))
 	cmd.AddCommand(NewCmdValidateRules(out, file))
 	return cmd
@@ -50,6 +51,7 @@ func NewCmdDumpRules(out io.Writer, file string) *cobra.Command {
 }
 
 func NewCmdValidateRules(out io.Writer, file string) *cobra.Command {
+	var additionalVars []string
 	cmd := &cobra.Command{
 		Use:   "validate",
 		Short: "Validate the inspector rules",
@@ -57,7 +59,15 @@ func NewCmdValidateRules(out io.Writer, file string) *cobra.Command {
 			if _, err := os.Stat(file); os.IsNotExist(err) {
 				return fmt.Errorf("%q does not exist", file)
 			}
-			rules, err := rule.ReadFromFile(file)
+			additionalVarsM := make(map[string]string)
+			for _, v := range additionalVars {
+				kv := strings.Split(v, "=")
+				if len(kv) != 2 {
+					return fmt.Errorf("invalid key-value %q", v)
+				}
+				additionalVarsM[kv[0]] = kv[1]
+			}
+			rules, err := rule.ReadFromFile(file, additionalVarsM)
 			if err != nil {
 				return err
 			}
@@ -68,6 +78,7 @@ func NewCmdValidateRules(out io.Writer, file string) *cobra.Command {
 			return nil
 		},
 	}
+	cmd.Flags().StringSliceVar(&additionalVars, "additional-vars", []string{}, "provide a key=value list to template ruleset")
 	return cmd
 }
 

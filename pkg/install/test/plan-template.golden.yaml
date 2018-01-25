@@ -1,6 +1,9 @@
 cluster:
   name: kubernetes
 
+  # Kubernetes cluster version (supported minor version "v1.9.x").
+  version: v1.9.2
+
   # This password is used to login to the Kubernetes Dashboard and can also be
   # used for administration without a security certificate.
   admin_password: password
