@@ -118,6 +118,10 @@ func TestReadWithNil(t *testing.T) {
 	if p.Cluster.Certificates.CAExpiry != defaultCAExpiry {
 		t.Errorf("expected ca cert expiry to be %s, but got %s", defaultCAExpiry, p.Cluster.Certificates.CAExpiry)
 	}
+
+	if p.Cluster.Version != kubernetesVersionString {
+		t.Errorf("expected cluster version to be %s, but got %s", kubernetesVersionString, p.Cluster.Version)
+	}
 }
 
 func TestReadDeprecatedDashboard(t *testing.T) {

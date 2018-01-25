@@ -1,6 +1,12 @@
 ---
-  - name: write version file
+  - name: write KET version file
     template:
       src: kismatic-version.j2
       dest: "/etc/kismatic-version"
+      mode: 0644
+
+  - name: write component versions file
+    template:
+      src: component-versions.j2
+      dest: "/etc/component-versions"
       mode: 0644

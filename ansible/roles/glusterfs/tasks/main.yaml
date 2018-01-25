@@ -20,9 +20,12 @@
       enabled: yes
     when: ansible_os_family == 'RedHat'
   - name: probe peer nodes from the first node
-    command: gluster peer probe {{ item }}
-    with_items: "{{ groups['storage'][1:] }}" # avoid probing itself
-    when: "{{ inventory_hostname == groups['storage'][0] }}" # Do the probing on the first storage node
-  - name: probe the first peer from the second peer
-    command: gluster peer probe {{ groups['storage'][1] }}
-    when: "{{ groups['storage'] | length > 1 and inventory_hostname == groups['storage'][1] }}"
+    command: gluster peer probe {{ inventory_hostname }}
+    delegate_to: "{{ groups['storage'][0] }}" # Do the probing on the first storage node
+    when: groups['storage'] | length > 1 and inventory_hostname != groups['storage'] | first # Do not probe itself
+    
+  - name: probe the first peer from the last peer
+    command: gluster peer probe {{ groups['storage'] | first }}
+    delegate_to: "{{ groups['storage'] | last }}"
+    run_once: true
+    when: groups['storage'] | length > 1

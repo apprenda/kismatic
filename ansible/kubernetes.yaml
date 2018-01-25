@@ -10,6 +10,7 @@
     when: allow_package_installation|bool == true
   # docker
   - include: _docker.yaml
+    when: docker.enabled|bool == true
   # etcd
   - include: _etcd-k8s.yaml
   - include: _etcd-networking.yaml
@@ -39,7 +40,7 @@
     when: cni.enabled|bool == true and cni.provider == "contiv"
   - include: _rescheduler.yaml
     when: rescheduler.enabled|bool == true
-  - include: _kube-dns.yaml
+  - include: _cluster-dns.yaml
     when: dns.enabled|bool == true
   - include: _heapster.yaml
     when: heapster.enabled|bool == true
@@ -47,7 +48,7 @@
     when: dashboard.enabled|bool == true
   - include: _helm.yaml
     when: helm.enabled|bool == true
-  - include: _kube-ingress.yaml
+  - include: _nginx-ingress.yaml
     when: configure_ingress|bool == true
   - include: _storage.yaml
     when: configure_storage|bool == true

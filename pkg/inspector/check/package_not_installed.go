@@ -1,12 +1,16 @@
 package check
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type PackageNotInstalledCheck struct {
-	PackageQuery             PackageQuery
-	AcceptablePackageVersion string
-	PackageManager           PackageManager
-	InstallationDisabled     bool
+	PackageQuery               PackageQuery
+	AcceptablePackageVersion   string
+	PackageManager             PackageManager
+	InstallationDisabled       bool
+	DockerInstallationDisabled bool
 }
 
 // Check returns true if the specified package is not installed.
@@ -15,6 +19,11 @@ type PackageNotInstalledCheck struct {
 func (c PackageNotInstalledCheck) Check() (bool, error) {
 	// don't check when installation is disabled
 	if c.InstallationDisabled {
+		return true, nil
+	}
+	// When docker installation is disabled do not check for any packages that contain "docker" in the name
+	// The package name could be different, we will only validate the docker executable is present
+	if c.DockerInstallationDisabled && strings.Contains(c.PackageQuery.Name, "docker") {
 		return true, nil
 	}
 	// check for the package with optional version is installed

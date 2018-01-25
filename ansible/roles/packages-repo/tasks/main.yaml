@@ -7,7 +7,7 @@
       baseurl: "{{ docker_yum_repository_url }}"
       gpgkey: "{{ docker_yum_gpg_key_url }}"
       gpgcheck: yes
-    when: ansible_os_family == 'RedHat'
+    when: ansible_os_family == 'RedHat' and docker.enabled|bool == true
 
   - name: add Kubernetes yum repository
     yum_repository:
@@ -51,7 +51,7 @@
   - name: add Docker deb key
     apt_key:
       url: "{{ docker_deb_gpg_key_url }}"
-    when: ansible_os_family == 'Debian'
+    when: ansible_os_family == 'Debian' and docker.enabled|bool == true
   
   - name: add Kubernetes deb key
     apt_key:
@@ -62,7 +62,7 @@
   - name: add Docker deb repository
     apt_repository:
       repo: 'deb [arch=amd64] {{ docker_deb_repository_url }} xenial stable'
-    when: ansible_os_family == 'Debian'
+    when: ansible_os_family == 'Debian' and docker.enabled|bool == true
   
   - name: add Kubernetes deb repository
     apt_repository:

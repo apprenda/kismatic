@@ -21,7 +21,7 @@
 
   - name: validate devicemapper direct-lvm block device
     include: direct_lvm_preflight.yaml
-    when: "ansible_os_family == 'RedHat' and docker.storage.directlvm.enabled|bool == true"
+    when: "ansible_os_family == 'RedHat' and docker.storage.driver == 'devicemapper' and docker.storage.direct_lvm_block_device.path != ''"
 
   # Every etcd node should be able to reach all etcd nodes. This is quadratic,
   # but we can live with it because etcd count is usually <= 5
@@ -97,14 +97,6 @@
     run_once: true
     when: helm.enabled|bool == true and disconnected_installation|bool != true
 
-  - name: verify install node can reach Kismatic helm chart repo
-    uri:
-      url: https://apprenda.github.io/kismatic-charts
-    delegate_to: 127.0.0.1
-    become: no
-    run_once: true
-    when: helm.enabled|bool == true and disconnected_installation|bool != true
-
   # setup Kismatic Inspector
   - name: copy Kismatic Inspector to node
     copy:
@@ -129,11 +121,11 @@
   # Run the pre-flights checks, and always stop the checker regardless of result
   - block:
       - name: run pre-flight checks using Kismatic Inspector from the master
-        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %}'
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %} --additional-vars kubernetes_yum_version={{ kubernetes_yum_version }},kubernetes_deb_version={{ kubernetes_deb_version }}'
         delegate_to: "{{ groups['master'][0] }}"
         register: out
       - name: run pre-flight checks using Kismatic Inspector from the worker
-        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %}'
+        command: '{{ bin_dir }}/kismatic-inspector client {{ internal_ipv4 }}:8888 -o json --node-roles {{ ",".join(group_names) }} {% if upgrading|default("false")|bool %}--upgrade{% endif %} --additional-vars kubernetes_yum_version={{ kubernetes_yum_version }},kubernetes_deb_version={{ kubernetes_deb_version }}'
         delegate_to: "{{ groups['worker'][0] }}"
         register: out
     always:

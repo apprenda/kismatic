@@ -18,9 +18,9 @@ func getNodeRoles(commaSepRoles string) ([]string, error) {
 	return roles, nil
 }
 
-func getRulesFromFileOrDefault(out io.Writer, file string, useUpgradeRules bool) ([]rule.Rule, error) {
+func getRulesFromFileOrDefault(out io.Writer, file string, useUpgradeRules bool, vars map[string]string) ([]rule.Rule, error) {
 	if file != "" {
-		rules, err := rule.ReadFromFile(file)
+		rules, err := rule.ReadFromFile(file, vars)
 		if err != nil {
 			return nil, err
 		}
@@ -30,9 +30,9 @@ func getRulesFromFileOrDefault(out io.Writer, file string, useUpgradeRules bool)
 		return rules, nil
 	}
 	if useUpgradeRules {
-		return rule.UpgradeRules(), nil
+		return rule.UpgradeRules(vars), nil
 	}
-	return rule.DefaultRules(), nil
+	return rule.DefaultRules(vars), nil
 }
 
 func validateOutputType(outputType string) error {

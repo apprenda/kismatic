@@ -1,0 +1,23 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+
+  - name: copy helm-rbac.yaml to remote
+    template:
+      src: helm-rbac.yaml
+      dest: "{{ kubernetes_spec_dir }}/helm-rbac.yaml"
+
+  - name: create helm serviceaccount and rolebinding
+    command: kubectl apply -f {{ kubernetes_spec_dir }}/helm-rbac.yaml
+
+  - name: "run helm init"
+    local_action: command ../../helm init --service-account=tiller -i="{{ images.helm }}" --tiller-namespace="{{ helm.namespace }}" --upgrade {% if disconnected_installation|bool == true %}--skip-refresh{% endif %}
+    become: no
+    environment: "{{ proxy_env|combine({'KUBECONFIG': local_kubeconfig_directory}) }}"
+
+  - block:
+    - name: validate tiller pod
+      include: validate.yaml
+      when: run_pod_validation|bool == true 

@@ -18,6 +18,7 @@ type PlanAWS struct {
 	SSHKeyFile                   string
 	HomeDirectory                string
 	DisablePackageInstallation   bool
+	DisableDockerInstallation    bool
 	DisconnectedInstallation     bool
 	DockerRegistryServer         string
 	DockerRegistryCAPath         string
@@ -27,10 +28,11 @@ type PlanAWS struct {
 	HTTPProxy                    string
 	HTTPSProxy                   string
 	NoProxy                      string
-	UseDirectLVM                 bool
+	DockerStorageDriver          string
 	ServiceCIDR                  string
 	DisableCNI                   bool
 	CNIProvider                  string
+	DNSProvider                  string
 	DisableHelm                  bool
 	HeapsterReplicas             int
 	HeapsterInfluxdbPVC          string
@@ -74,13 +76,18 @@ const planAWSOverlay = `cluster:
   kubelet: 
     option_overrides: { {{if .KubeletOptions}}{{ range $k, $v := .KubeletOptions }}"{{ $k }}": "{{ $v }}"{{end}}{{end}} }
   cloud_provider:
-    provider: {{.CloudProvider}}{{if .UseDirectLVM}}
+    provider: {{.CloudProvider}}
 docker:
+  disable: {{.DisableDockerInstallation}}
   storage:
-    direct_lvm:
-      enabled: true
-      block_device: "/dev/xvdb"
-      enable_deferred_deletion: false{{end}}
+    driver: "{{.DockerStorageDriver}}"
+    opts: {}
+    direct_lvm_block_device:
+      path: {{if eq .DockerStorageDriver "devicemapper"}}"/dev/xvdb"{{end}}
+      thinpool_percent: "95"
+      thinpool_metapercent: "1"
+      thinpool_autoextend_threshold: "80"
+      thinpool_autoextend_percent: "20"
   logs:
     driver: "json-file"
     opts: 
@@ -99,6 +106,9 @@ add_ons:
       calico:
         mode: overlay
         log_level: info
+  dns:
+    disable: false
+    provider: {{if .DNSProvider}}{{.DNSProvider}}{{else}}kubedns{{end}}
   heapster:
     disable: false
     options:

@@ -21,7 +21,7 @@ import (
 // environment defined in the plan file
 type PreFlightExecutor interface {
 	RunPreFlightCheck(*Plan) error
-	RunNewWorkerPreFlightCheck(Plan, Node) error
+	RunNewNodePreFlightCheck(Plan, Node) error
 	RunUpgradePreFlightCheck(*Plan, ListableNode) error
 }
 
@@ -31,7 +31,7 @@ type Executor interface {
 	Install(p *Plan) error
 	GenerateCertificates(p *Plan, useExistingCA bool) error
 	RunSmokeTest(*Plan) error
-	AddWorker(*Plan, Node) (*Plan, error)
+	AddNode(*Plan, Node, []string) (*Plan, error)
 	RunPlay(string, *Plan) error
 	AddVolume(*Plan, StorageVolume) error
 	DeleteVolume(*Plan, string) error
@@ -333,8 +333,8 @@ func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
 	return ae.execute(t)
 }
 
-// RunNewWorkerPreFlightCheck runs the preflight checks against a new worker node
-func (ae *ansibleExecutor) RunNewWorkerPreFlightCheck(p Plan, node Node) error {
+// RunNewNodePreFlightCheck runs the preflight checks against a new node
+func (ae *ansibleExecutor) RunNewNodePreFlightCheck(p Plan, node Node) error {
 	cc, err := ae.buildClusterCatalog(&p)
 	if err != nil {
 		return err
@@ -343,21 +343,10 @@ func (ae *ansibleExecutor) RunNewWorkerPreFlightCheck(p Plan, node Node) error {
 	if err != nil {
 		return err
 	}
-	t := task{
-		name:           "copy-inspector",
-		playbook:       "copy-inspector.yaml",
-		inventory:      buildInventoryFromPlan(&p),
-		clusterCatalog: *cc,
-		explainer:      ae.preflightExplainer(),
-		plan:           p,
-	}
-	if err := ae.execute(t); err != nil {
-		return err
-	}
 	p.Worker.ExpectedCount++
 	p.Worker.Nodes = append(p.Worker.Nodes, node)
-	t = task{
-		name:           "add-worker-preflight",
+	t := task{
+		name:           "add-node-preflight",
 		playbook:       "preflight.yaml",
 		inventory:      buildInventoryFromPlan(&p),
 		clusterCatalog: *cc,
@@ -684,6 +673,11 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		KubeletOptions:               p.Cluster.KubeletOptions.Overrides,
 	}
 
+	// set versions
+	cc.Versions.Kubernetes = p.Cluster.Version
+	cc.Versions.KubernetesYum = p.Cluster.Version[1:] + "-0"
+	cc.Versions.KubernetesDeb = p.Cluster.Version[1:] + "-00"
+
 	cc.NoProxy = p.AllAddresses()
 	if p.Cluster.Networking.NoProxy != "" {
 		cc.NoProxy = cc.NoProxy + "," + p.Cluster.Networking.NoProxy
@@ -713,14 +707,24 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 	}
 
 	// Setup docker options
+	cc.Docker.Enabled = !p.Docker.Disable
 	cc.Docker.Logs.Driver = p.Docker.Logs.Driver
 	cc.Docker.Logs.Opts = p.Docker.Logs.Opts
-
-	cc.Docker.Storage.DirectLVM.Enabled = p.Docker.Storage.DirectLVM.Enabled
-	if cc.Docker.Storage.DirectLVM.Enabled {
-		cc.Docker.Storage.DirectLVM.BlockDevice = p.Docker.Storage.DirectLVM.BlockDevice
-		cc.Docker.Storage.DirectLVM.EnableDeferredDeletion = p.Docker.Storage.DirectLVM.EnableDeferredDeletion
+	cc.Docker.Storage.Driver = p.Docker.Storage.Driver
+	cc.Docker.Storage.Opts = p.Docker.Storage.Opts
+	cc.Docker.Storage.OptsList = []string{}
+	// A formatted list to set in docker daemon.json
+	for k, v := range p.Docker.Storage.Opts {
+		cc.Docker.Storage.OptsList = append(cc.Docker.Storage.OptsList, fmt.Sprintf("%s=%s", k, v))
 	}
+	cc.Docker.Storage.DirectLVMBlockDevice = ansible.DirectLVMBlockDevice{
+		Path:                        p.Docker.Storage.DirectLVMBlockDevice.Path,
+		ThinpoolPercent:             p.Docker.Storage.DirectLVMBlockDevice.ThinpoolPercent,
+		ThinpoolMetaPercent:         p.Docker.Storage.DirectLVMBlockDevice.ThinpoolMetaPercent,
+		ThinpoolAutoextendThreshold: p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendThreshold,
+		ThinpoolAutoextendPercent:   p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendPercent,
+	}
+
 	if ae.options.RestartServices {
 		cc.EnableRestart()
 	}
@@ -761,6 +765,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 
 	// DNS
 	cc.DNS.Enabled = !p.AddOns.DNS.Disable
+	cc.DNS.Provider = p.AddOns.DNS.Provider
 
 	// heapster
 	if p.AddOns.HeapsterMonitoring != nil && !p.AddOns.HeapsterMonitoring.Disable {
@@ -786,6 +791,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		default:
 			cc.Helm.Enabled = true
 		}
+		cc.Helm.Namespace = p.AddOns.PackageManager.Options.Helm.Namespace
 	}
 
 	cc.Rescheduler.Enabled = !p.AddOns.Rescheduler.Disable

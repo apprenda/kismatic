@@ -15,6 +15,7 @@
 
   # docker
   - include: _docker.yaml play_name="Upgrade Docker" upgrading=true
+    when: docker.enabled|bool == true
 
   #etcd
   - include: _etcd-k8s.yaml play_name="Upgrade Kubernetes Etcd Cluster" serial_count="1" upgrading=true

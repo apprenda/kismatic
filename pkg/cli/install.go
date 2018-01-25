@@ -26,7 +26,7 @@ func NewCmdInstall(in io.Reader, out io.Writer) *cobra.Command {
 	cmd.AddCommand(NewCmdPlan(in, out, opts))
 	cmd.AddCommand(NewCmdValidate(out, opts))
 	cmd.AddCommand(NewCmdApply(out, opts))
-	cmd.AddCommand(NewCmdAddWorker(out, opts))
+	cmd.AddCommand(NewCmdAddNode(out, opts))
 	cmd.AddCommand(NewCmdStep(out, opts))
 
 	// PersistentFlags

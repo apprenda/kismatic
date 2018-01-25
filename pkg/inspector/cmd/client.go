@@ -4,17 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/apprenda/kismatic/pkg/inspector"
 	"github.com/spf13/cobra"
 )
 
 type clientOpts struct {
-	outputType         string
-	nodeRoles          string
-	rulesFile          string
-	targetNode         string
-	useUpgradeDefaults bool
+	outputType          string
+	nodeRoles           string
+	rulesFile           string
+	targetNode          string
+	useUpgradeDefaults  bool
+	additionalVariables map[string]string
 }
 
 var clientExample = `# Run the inspector against an etcd node
@@ -29,6 +31,7 @@ kismatic-inspector client 10.0.1.24:9090 -f inspector-rules.yaml --node-roles et
 // NewCmdClient returns the "client" command
 func NewCmdClient(out io.Writer) *cobra.Command {
 	opts := clientOpts{}
+	var additionalVars []string
 	cmd := &cobra.Command{
 		Use:     "client HOST:PORT",
 		Short:   "Run the inspector against a remote inspector server.",
@@ -39,6 +42,14 @@ func NewCmdClient(out io.Writer) *cobra.Command {
 			}
 			// Set the target node as the first argument
 			opts.targetNode = args[0]
+			opts.additionalVariables = make(map[string]string)
+			for _, v := range additionalVars {
+				kv := strings.Split(v, "=")
+				if len(kv) != 2 {
+					return fmt.Errorf("invalid key=value %q", v)
+				}
+				opts.additionalVariables[kv[0]] = kv[1]
+			}
 			return runClient(out, opts)
 		},
 	}
@@ -46,6 +57,7 @@ func NewCmdClient(out io.Writer) *cobra.Command {
 	cmd.Flags().StringVar(&opts.nodeRoles, "node-roles", "", "comma-separated list of the node's roles. Valid roles are 'etcd', 'master', 'worker'")
 	cmd.Flags().StringVarP(&opts.rulesFile, "file", "f", "", "the path to an inspector rules file. If blank, the inspector uses the default rules")
 	cmd.Flags().BoolVarP(&opts.useUpgradeDefaults, "upgrade", "u", false, "use defaults for upgrade, rather than install")
+	cmd.Flags().StringSliceVar(&additionalVars, "additional-vars", []string{}, "key=value pairs separated by ',' to template ruleset")
 	return cmd
 }
 
@@ -64,7 +76,7 @@ func runClient(out io.Writer, opts clientOpts) error {
 	if err != nil {
 		return fmt.Errorf("error creating inspector client: %v", err)
 	}
-	rules, err := getRulesFromFileOrDefault(out, opts.rulesFile, opts.useUpgradeDefaults)
+	rules, err := getRulesFromFileOrDefault(out, opts.rulesFile, opts.useUpgradeDefaults, opts.additionalVariables)
 	if err != nil {
 		return err
 	}

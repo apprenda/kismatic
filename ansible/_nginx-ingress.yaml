@@ -1,12 +1,12 @@
 ---
-  - hosts: master[0]
+  - hosts: ingress
     any_errors_fatal: true
-    name: "{{ play_name | default('Start Kubernetes DNS') }}"
+    name: "{{ play_name | default('Start Kubernetes Ingress') }}"
     become: yes
     run_once: true
     vars_files:
       - group_vars/all.yaml
       - group_vars/container_images.yaml
-      
+
     roles:
-      - kube-dns
+      - nginx-ingress

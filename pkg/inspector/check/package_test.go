@@ -17,20 +17,24 @@ func (m stubPkgManager) IsAvailable(q PackageQuery) (bool, error) {
 
 func TestPackageCheck(t *testing.T) {
 	tests := []struct {
-		installationDisabled bool
-		isInstalled          bool
-		isAvailable          bool
+		packageName                string
+		installationDisabled       bool
+		dockerInstallationDisabled bool
+		isInstalled                bool
+		isAvailable                bool
 
 		expected    bool
 		errExpected bool
 	}{
 		{
+			packageName:          "somePkg",
 			installationDisabled: true,
 			isInstalled:          true,
 			isAvailable:          true,
 			expected:             true,
 		},
 		{
+			packageName:          "somePkg",
 			installationDisabled: true,
 			isInstalled:          false,
 			isAvailable:          true,
@@ -38,6 +42,7 @@ func TestPackageCheck(t *testing.T) {
 			errExpected:          true,
 		},
 		{
+			packageName:          "somePkg",
 			installationDisabled: true,
 			isInstalled:          false,
 			isAvailable:          false,
@@ -45,36 +50,58 @@ func TestPackageCheck(t *testing.T) {
 			errExpected:          true,
 		},
 		{
+			packageName:          "somePkg",
 			installationDisabled: false,
 			isInstalled:          true,
 			isAvailable:          true,
 			expected:             true,
 		},
 		{
+			packageName:          "somePkg",
 			installationDisabled: false,
 			isInstalled:          false,
 			isAvailable:          true,
 			expected:             true,
 		},
 		{
+			packageName:          "somePkg",
 			installationDisabled: false,
 			isInstalled:          true,
 			isAvailable:          false,
 			expected:             true,
 		},
 		{
+			packageName:          "somePkg",
 			installationDisabled: false,
 			isInstalled:          false,
 			isAvailable:          false,
 			expected:             true,
+		},
+		{
+			packageName:                "somePkg",
+			installationDisabled:       true,
+			dockerInstallationDisabled: true,
+			isInstalled:                false,
+			isAvailable:                false,
+			expected:                   false,
+			errExpected:                true,
+		},
+		{
+			packageName:                "docker-ce",
+			installationDisabled:       true,
+			dockerInstallationDisabled: true,
+			isInstalled:                false,
+			isAvailable:                false,
+			expected:                   true,
 		},
 	}
 
 	for i, test := range tests {
 		c := PackageCheck{
-			PackageQuery:         PackageQuery{"somePkg", "someVersion"},
-			PackageManager:       stubPkgManager{installed: test.isInstalled, available: test.isAvailable},
-			InstallationDisabled: test.installationDisabled,
+			PackageQuery:               PackageQuery{test.packageName, "someVersion"},
+			PackageManager:             stubPkgManager{installed: test.isInstalled, available: test.isAvailable},
+			InstallationDisabled:       test.installationDisabled,
+			DockerInstallationDisabled: test.dockerInstallationDisabled,
 		}
 		ok, err := c.Check()
 		if err != nil && !test.errExpected {

@@ -161,6 +161,27 @@ func (c *Cluster) validate() (bool, []error) {
 	if c.Name == "" {
 		v.addError(errors.New("Cluster name cannot be empty"))
 	}
+	// must be a valid semver, start with "v" and be a "suppored" version
+	if !kubernetesVersionValid(c.Version) {
+		v.addError(fmt.Errorf("Cluster version %q invalid, must be a valid %q version, ie %q", c.Version, kubernetesMinorVersionString, kubernetesVersionString))
+	} else {
+		// only go out and get latest version if not disconnected install
+		if !c.DisconnectedInstallation {
+			// should not fail here as its a valid regex
+			version, err := parseVersion(c.Version)
+			// TODO print a warning
+			if err == nil {
+				latestSemver, latest, err := kubernetesLatestStableVersion() // will always return some version
+				if err == nil {
+					if version.GT(latestSemver) {
+						v.addError(fmt.Errorf("Cluster version %q invalid, the latest stable version is %q", c.Version, latest))
+					}
+				}
+				// continue with the installation if an error occurs getting the latest version
+			}
+		}
+	}
+
 	v.validate(&c.Networking)
 	v.validate(&c.Certificates)
 	v.validate(&c.SSH)
@@ -241,6 +262,7 @@ func (c *CloudProvider) validate() (bool, []error) {
 func (f *AddOns) validate() (bool, []error) {
 	v := newValidator()
 	v.validate(f.CNI)
+	v.validate(f.DNS)
 	v.validate(f.HeapsterMonitoring)
 	v.validate(&f.PackageManager)
 	return v.valid()
@@ -259,6 +281,16 @@ func (n *CNI) validate() (bool, []error) {
 			if !util.Contains(n.Options.Calico.LogLevel, calicoLogLevel()) {
 				v.addError(fmt.Errorf("%q is not a valid Calico log level. Options are %v", n.Options.Calico.LogLevel, calicoLogLevel()))
 			}
+		}
+	}
+	return v.valid()
+}
+
+func (n DNS) validate() (bool, []error) {
+	v := newValidator()
+	if !n.Disable {
+		if !util.Contains(n.Provider, dnsProviders()) {
+			v.addError(fmt.Errorf("%q is not a valid DNS provider. Optins are %v", n.Provider, dnsProviders()))
 		}
 	}
 	return v.valid()
@@ -505,12 +537,18 @@ func (d Docker) validate() (bool, []error) {
 func (ds DockerStorage) validate() (bool, []error) {
 	v := newValidator()
 	v.validateWithErrPrefix("Direct LVM", ds.DirectLVM)
+	if ds.DirectLVMBlockDevice.Path != "" && ds.Driver != "devicemapper" {
+		v.addError(errors.New("DirectLVMBlockDevice Path can only be used with 'devicemapper' storage driver"))
+	}
+	if ds.DirectLVMBlockDevice.Path != "" && !filepath.IsAbs(ds.DirectLVMBlockDevice.Path) {
+		v.addError(errors.New("DirectLVMBlockDevice Path must be absolute"))
+	}
 	return v.valid()
 }
 
-func (dlvm DockerStorageDirectLVM) validate() (bool, []error) {
+func (dlvm *DockerStorageDirectLVMDeprecated) validate() (bool, []error) {
 	v := newValidator()
-	if dlvm.Enabled {
+	if dlvm != nil && dlvm.Enabled {
 		if dlvm.BlockDevice == "" {
 			v.addError(errors.New("DirectLVM is enabled, but no block device was specified"))
 		}

@@ -6,31 +6,20 @@ Release Team: @dkoshkin @alexbrand @emmetthitz
 
 ## Component version changes
 
-* Lorem ipsum dolor sit amet
-* Lorem ipsum dolor sit amet
-* Lorem ipsum dolor sit amet
+* Lorem ipsum dolor sit amet.
 
-## Notable Changes
+## Changelog since vX.Y.Z
 
-* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed volutpat. (#1234, @swade1987)
+* Lorem ipsum dolor sit amet. ([#1234](https://github.com/apprenda/kismatic/pull/1234) , [@swade1987](https://github.com/swade1987))
 
 
-## Plan file changes
+## Detailed change breakdown
 
-### New fields
+### Plan file changes
 
-* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed volutpat.
+* 
 
-### Deprecated fields
 
-* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed volutpat.
+### CLI changes
 
-## CLI changes
-
-### New commands
-
-* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed volutpat.
-
-### Deprecated commands
-
-* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed volutpat.
+* 

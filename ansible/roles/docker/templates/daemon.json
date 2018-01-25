@@ -1,19 +1,8 @@
 {
-{% if docker.storage.directlvm.enabled %}
-  "storage-driver": "devicemapper",
-   "storage-opts": [
-     "dm.thinpooldev=/dev/mapper/docker-thinpool",
-     "dm.use_deferred_removal=true",
-     "dm.use_deferred_deletion={{docker.storage.directlvm.enable_deferred_deletion}}"
-   ]{% if docker.logs.driver != "" %},{% endif %}
-{% endif %}
-
-{% if docker.logs.driver != "" %}
-  "log-driver": "{{ docker.logs.driver }}"{% if docker.logs.opts | length > 0 %},{% endif %}
-
-{% if docker.logs.opts | length > 0 %}
+  "storage-driver": "{{ docker.storage.driver }}",
+  "storage-opts": 
+{{ docker.storage.opts_list | to_nice_json(indent=4) }},
+  "log-driver": "{{ docker.logs.driver }}",
   "log-opts": 
 {{ docker.logs.opts | to_nice_json(indent=4) }}
-{% endif %}
-{% endif %}
 }

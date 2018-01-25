@@ -1,0 +1,9 @@
+---
+  - hosts: worker:ingress:storage
+    any_errors_fatal: true
+    name: "Smoke Test New Node"
+    become: yes
+    run_once: true
+
+    roles:
+      - node-smoke-test

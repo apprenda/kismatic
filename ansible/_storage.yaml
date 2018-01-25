@@ -9,7 +9,7 @@
         when: allow_package_installation|bool == true
       - glusterfs
 
-  - hosts: master
+  - hosts: storage
     any_errors_fatal: true
     name: "Create NFS service on the cluster"
     run_once: true

@@ -2,6 +2,7 @@
 ## Index
 * [cluster](#cluster)
   * [name](#clustername)
+  * [version](#clusterversion)
   * [admin_password _(deprecated)_](#clusteradmin_password-deprecated)
   * [disable_package_installation](#clusterdisable_package_installation)
   * [allow_package_installation _(deprecated)_](#clusterallow_package_installation-deprecated)
@@ -35,11 +36,20 @@
     * [provider](#clustercloud_providerprovider)
     * [config](#clustercloud_providerconfig)
 * [docker](#docker)
+  * [disable](#dockerdisable)
   * [logs](#dockerlogs)
     * [driver](#dockerlogsdriver)
     * [opts](#dockerlogsopts)
   * [storage](#dockerstorage)
-    * [direct_lvm](#dockerstoragedirect_lvm)
+    * [driver](#dockerstoragedriver)
+    * [opts](#dockerstorageopts)
+    * [direct_lvm_block_device](#dockerstoragedirect_lvm_block_device)
+      * [path](#dockerstoragedirect_lvm_block_devicepath)
+      * [thinpool_percent](#dockerstoragedirect_lvm_block_devicethinpool_percent)
+      * [thinpool_metapercent](#dockerstoragedirect_lvm_block_devicethinpool_metapercent)
+      * [thinpool_autoextend_threshold](#dockerstoragedirect_lvm_block_devicethinpool_autoextend_threshold)
+      * [thinpool_autoextend_percent](#dockerstoragedirect_lvm_block_devicethinpool_autoextend_percent)
+    * [direct_lvm _(deprecated)_](#dockerstoragedirect_lvm-deprecated)
       * [enabled](#dockerstoragedirect_lvmenabled)
       * [block_device](#dockerstoragedirect_lvmblock_device)
       * [enable_deferred_deletion](#dockerstoragedirect_lvmenable_deferred_deletion)
@@ -62,6 +72,7 @@
         * [felix_input_mtu](#add_onscnioptionscalicofelix_input_mtu)
   * [dns](#add_onsdns)
     * [disable](#add_onsdnsdisable)
+    * [provider](#add_onsdnsprovider)
   * [heapster](#add_onsheapster)
     * [disable](#add_onsheapsterdisable)
     * [options](#add_onsheapsteroptions)
@@ -80,6 +91,9 @@
   * [package_manager](#add_onspackage_manager)
     * [disable](#add_onspackage_managerdisable)
     * [provider](#add_onspackage_managerprovider)
+    * [options](#add_onspackage_manageroptions)
+      * [helm](#add_onspackage_manageroptionshelm)
+        * [namespace](#add_onspackage_manageroptionshelmnamespace)
   * [rescheduler](#add_onsrescheduler)
     * [disable](#add_onsreschedulerdisable)
 * [features _(deprecated)_](#features-deprecated)
@@ -149,6 +163,16 @@
 | **Kind** |  string |
 | **Required** |  Yes |
 | **Default** | ` ` | 
+
+###  cluster.version
+
+ The Kubernetes version to install. If left blank will be set to the latest tested version. Only a single Minor version is supported with. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `v1.9.2` | 
 
 ###  cluster.admin_password _(deprecated)_
 
@@ -422,13 +446,23 @@
 
  Configuration for the docker engine installed by KET 
 
+###  docker.disable
+
+ Set to true to disable the installation of docker container runtime on the nodes. The installer will validate that docker is installed and running prior to proceeding. Use this option if a different version of docker from the included one is required. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  bool |
+| **Required** |  No |
+| **Default** | `false` | 
+
 ###  docker.logs
 
- Log configuration for the docker engine 
+ Log configuration for the docker engine. 
 
 ###  docker.logs.driver
 
- Docker logging driver, more details https://docs.docker.com/engine/admin/logging/overview/ 
+ Docker logging driver, more details https://docs.docker.com/engine/admin/logging/overview/. 
 
 | | |
 |----------|-----------------|
@@ -438,7 +472,7 @@
 
 ###  docker.logs.opts
 
- Driver specific options 
+ Driver specific options. 
 
 | | |
 |----------|-----------------|
@@ -448,11 +482,85 @@
 
 ###  docker.storage
 
- Storage configuration for the docker engine 
+ Storage configuration for the docker engine. 
 
-###  docker.storage.direct_lvm
+###  docker.storage.driver
 
- DirectLVM is the configuration required for setting up device mapper in direct-lvm mode 
+ Docker storage driver, more details https://docs.docker.com/engine/userguide/storagedriver/. Leave empty to have docker automatically select the driver. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `'empty'` | 
+
+###  docker.storage.opts
+
+ Driver specific options 
+
+| | |
+|----------|-----------------|
+| **Kind** |  map[string]string |
+| **Required** |  No |
+| **Default** | ` ` | 
+
+###  docker.storage.direct_lvm_block_device
+
+ DirectLVMBlockDevice is the configuration required for setting up Device Mapper storage driver in direct-lvm mode. Refer to https://docs.docker.com/v17.03/engine/userguide/storagedriver/device-mapper-driver/#manage-devicemapper docs. 
+
+###  docker.storage.direct_lvm_block_device.path
+
+ The path to the block device. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | ` ` | 
+
+###  docker.storage.direct_lvm_block_device.thinpool_percent
+
+ The percentage of space to use for storage from the passed in block device. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `95` | 
+
+###  docker.storage.direct_lvm_block_device.thinpool_metapercent
+
+ The percentage of space to for metadata storage from the passed in block device. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `1` | 
+
+###  docker.storage.direct_lvm_block_device.thinpool_autoextend_threshold
+
+ The threshold for when lvm should automatically extend the thin pool as a percentage of the total storage space. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `80` | 
+
+###  docker.storage.direct_lvm_block_device.thinpool_autoextend_percent
+
+ The percentage to increase the thin pool by when an autoextend is triggered. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `20` | 
+
+###  docker.storage.direct_lvm _(deprecated)_
+
+ DirectLVM is the configuration required for setting up device mapper in direct-lvm mode. 
 
 ###  docker.storage.direct_lvm.enabled
 
@@ -641,6 +749,17 @@
 | **Required** |  No |
 | **Default** | `false` | 
 
+###  add_ons.dns.provider
+
+ This property indicates the in-cluster DNS provider. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  Yes |
+| **Default** | `kubedns` | 
+| **Options** |  `kubedns`, `coredns`
+
 ###  add_ons.heapster
 
  The Heapster Monitoring add-on configuration. 
@@ -780,6 +899,24 @@
 | **Required** |  Yes |
 | **Default** | ` ` | 
 | **Options** |  `helm`
+
+###  add_ons.package_manager.options
+
+ The PackageManager options. 
+
+###  add_ons.package_manager.options.helm
+
+ Helm PackageManager options 
+
+###  add_ons.package_manager.options.helm.namespace
+
+ Namespace to deploy tiller 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `kube-system` | 
 
 ###  add_ons.rescheduler
 

@@ -21,7 +21,7 @@ func testNFSShare(aws infrastructureProvisioner, distro linuxDistro) {
 			},
 		}
 
-		err := installKismaticWithPlan(plan, sshKey)
+		err := installKismaticWithPlan(plan)
 		FailIfError(err, "Error installing cluster with NFS shares")
 	})
 }

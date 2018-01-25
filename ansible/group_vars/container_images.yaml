@@ -4,19 +4,19 @@ official_images:
     version: v3.1.10
   kube_proxy:
     name: gcr.io/google-containers/kube-proxy-amd64
-    version: v1.9.2
+    version: "{{ versions.kubernetes }}"
   kube_controller_manager:
     name: gcr.io/google-containers/kube-controller-manager-amd64
-    version: v1.9.2
+    version: "{{ versions.kubernetes }}"
   kube_scheduler:
     name: gcr.io/google-containers/kube-scheduler-amd64
-    version: v1.9.2
+    version: "{{ versions.kubernetes }}"
   kube_apiserver:
     name: gcr.io/google-containers/kube-apiserver-amd64
-    version: v1.9.2
+    version: "{{ versions.kubernetes }}"
   calico_node:
     name: calico/node
-    version: v2.6.5
+    version: v2.6.6
   calico_ctl:
     name: calico/ctl
     version: v1.6.3
@@ -25,7 +25,7 @@ official_images:
     version: v1.11.2
   calico_kube_controller:
     name: calico/kube-controllers
-    version: v1.0.2
+    version: v1.0.3
   cni_bin:
     name: apprenda/cni-bin
     version: v0.6.0
@@ -58,16 +58,19 @@ official_images:
     version: 3.0
   kubedns:
     name: gcr.io/google_containers/k8s-dns-kube-dns-amd64
-    version: 1.14.7
+    version: 1.14.8
   kube_dnsmasq:
     name: gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64
-    version: 1.14.7
+    version: 1.14.8
   kubedns_sidecar:
     name: gcr.io/google_containers/k8s-dns-sidecar-amd64
-    version: 1.14.7
+    version: 1.14.8
+  coredns:
+    name: coredns/coredns
+    version: 1.0.5
   kubernetes_dashboard:
     name: gcr.io/google_containers/kubernetes-dashboard-amd64
-    version: v1.8.0
+    version: v1.8.2
   apprenda_tcp_healthz: 
     name: apprenda/tcp-healthz-amd64
     version: v1.0.0

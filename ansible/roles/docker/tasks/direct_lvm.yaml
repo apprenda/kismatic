@@ -5,14 +5,14 @@
       state: present
   - name: create docker volume group
     lvg:
-      pvs: "{{ docker.storage.directlvm.block_device }}"
+      pvs: "{{ docker.storage.direct_lvm_block_device.path }}"
       state: present
       vg: docker
   - name: create thinpool logical volume
     lvol:
       lv: thinpool
       vg: docker
-      size: 95%VG # Use 95% of the volume group for this logical volume
+      size: "{{ docker.storage.direct_lvm_block_device.thinpool_percent }}%VG" # Use 95% of the volume group for this logical volume
       opts: --wipesignatures y
   
   # The following two tasks are used to enable this play to be idempotent. We detect whether
@@ -51,7 +51,7 @@
     lvol:
       lv: thinpoolmeta
       vg: docker
-      size: 1%VG # Use 1% of the volume group for this logical volume
+      size: "{{ docker.storage.direct_lvm_block_device.thinpool_metapercent }}%VG" # Use 1% of the volume group for this logical volume
       opts: --wipesignatures y
     when: requires_thin_pool_conversion is defined and requires_thin_pool_conversion|bool == true
   

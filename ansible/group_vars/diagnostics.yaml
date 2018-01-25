@@ -29,6 +29,7 @@ diagnostics:
     - {msg: "Dumping kubedns docker logs", command: "docker logs `docker ps -a -f name=k8s_kubedns --format=\\{\\{.ID\\}\\} -l`", file: "logs_kubedns.log"}
     - {msg: "Dumping dnsmasq docker logs", command: "docker logs `docker ps -a -f name=k8s_dnsmasq --format=\\{\\{.ID\\}\\} -l`", file: "logs_dnsmasq.log"}
     - {msg: "Dumping kubedns sidecar docker logs", command: "docker logs `docker ps -a -f name=k8s_sidecar_kube-dns --format=\\{\\{.ID\\}\\} -l`", file: "logs_kubedns_sidecar.log"}
+    - {msg: "Dumping coredns docker logs", command: "docker logs `docker ps -a -f name=k8s_coredns_coredns --format=\\{\\{.ID\\}\\} -l", file: "logs_coredns.log"}
   calico_diagnostics:
     - {msg: "Dumping calico-node nodes", command: "docker run -i{% if modify_hosts_file is defined and modify_hosts_file|bool == true %} -v /etc/hosts:/etc/hosts{% endif %} -v /etc/kubernetes:/etc/kubernetes -v {{ calicoctl_conf_path }}:{{ calicoctl_conf_path }} {{ images.calico_ctl }} get nodes -o wide", file: "calicoctl_nodes.log"}
     - {msg: "Dumping calico-node docker logs", command: "docker logs `docker ps -a -f name=k8s_calico-node --format=\\{\\{.ID\\}\\} -l`", file: "logs_calico_node.log"}

@@ -7,7 +7,8 @@ import (
 
 var validPlan = Plan{
 	Cluster: Cluster{
-		Name: "test",
+		Name:    "test",
+		Version: "v1.9.2",
 		Networking: NetworkConfig{
 			Type:             "overlay",
 			PodCIDRBlock:     "172.16.0.0/16",
@@ -31,6 +32,9 @@ var validPlan = Plan{
 					LogLevel: "info",
 				},
 			},
+		},
+		DNS: DNS{
+			Provider: "kubedns",
 		},
 		HeapsterMonitoring: &HeapsterMonitoring{
 			Options: HeapsterOptions{
@@ -108,6 +112,193 @@ func TestValidateValidPlan(t *testing.T) {
 		t.Errorf("expected valid, but got invalid")
 	}
 	fmt.Println(errs)
+}
+
+func TestClusterVersion(t *testing.T) {
+	tests := []struct {
+		c     Cluster
+		valid bool
+	}{
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.9.2",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: true,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.9.2",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: true,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "foo",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.9.200",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.8.0",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:    "test",
+			Version: "v1.10.0",
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:                     "test",
+			Version:                  "v1.9.200",
+			DisconnectedInstallation: true,
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: true,
+		},
+		{c: Cluster{
+			Name:                     "test",
+			Version:                  "v1.8.0",
+			DisconnectedInstallation: true,
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+		{c: Cluster{
+			Name:                     "test",
+			Version:                  "v1.10.0",
+			DisconnectedInstallation: true,
+			Networking: NetworkConfig{
+				Type:             "overlay",
+				PodCIDRBlock:     "172.16.0.0/16",
+				ServiceCIDRBlock: "172.20.0.0/16",
+			},
+			Certificates: CertsConfig{
+				Expiry: "17250h",
+			},
+			SSH: SSHConfig{
+				User: "root",
+				Key:  "/bin/sh",
+				Port: 22,
+			},
+		},
+			valid: false,
+		},
+	}
+	for _, test := range tests {
+		if valid, _ := test.c.validate(); valid != test.valid {
+			t.Errorf("expected %v with %+v, but got %v - %q", test.valid, test.c, !test.valid)
+		}
+	}
 }
 
 func TestValidatePlanEmptyPodCIDR(t *testing.T) {
@@ -915,32 +1106,100 @@ func TestDockerRegistry(t *testing.T) {
 	}
 }
 
+func TestValidateDockerStorage(t *testing.T) {
+	tests := []struct {
+		storage DockerStorage
+		valid   bool
+	}{
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "overlay2",
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "foo",
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "",
+				},
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "foo",
+				},
+			},
+			valid: false,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "devicemapper",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "/foo/bar",
+				},
+			},
+			valid: true,
+		},
+		{
+			storage: DockerStorage{
+				Driver: "foo",
+				DirectLVMBlockDevice: DirectLVMBlockDevice{
+					Path: "/foo/bar",
+				},
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.storage.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect valid, but got invalid", i)
+		}
+	}
+}
+
 func TestValidateDockerStorageDirectLVM(t *testing.T) {
 	tests := []struct {
-		config DockerStorageDirectLVM
+		config DockerStorageDirectLVMDeprecated
 		valid  bool
 	}{
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled: false,
 			},
 			valid: true,
 		},
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled: true,
 			},
 			valid: false,
 		},
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled:     true,
 				BlockDevice: "foo",
 			},
 			valid: false,
 		},
 		{
-			config: DockerStorageDirectLVM{
+			config: DockerStorageDirectLVMDeprecated{
 				Enabled:     true,
 				BlockDevice: "/dev/sdb",
 			},
@@ -1115,6 +1374,45 @@ func TestCNIAddOn(t *testing.T) {
 	}
 	for i, test := range tests {
 		ok, _ := test.n.validate()
+		if ok != test.valid {
+			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
+		}
+	}
+}
+
+func TestDNSProvider(t *testing.T) {
+	tests := []struct {
+		d     DNS
+		valid bool
+	}{
+		{
+			d: DNS{
+				Provider: "kubedns",
+			},
+			valid: true,
+		},
+		{
+			d: DNS{
+				Provider: "coredns",
+			},
+			valid: true,
+		},
+		{
+			d: DNS{
+				Disable:  true,
+				Provider: "foo",
+			},
+			valid: true,
+		},
+		{
+			d: DNS{
+				Provider: "foo",
+			},
+			valid: false,
+		},
+	}
+	for i, test := range tests {
+		ok, _ := test.d.validate()
 		if ok != test.valid {
 			t.Errorf("test %d: expect %t, but got %t", i, test.valid, ok)
 		}

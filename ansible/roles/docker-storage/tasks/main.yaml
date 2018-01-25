@@ -1,4 +1,0 @@
----
-  - name: configure devicemapper in direct-lvm mode
-    include: direct_lvm.yaml
-    when: "ansible_os_family == 'RedHat' and docker.storage.directlvm.enabled|bool == true"

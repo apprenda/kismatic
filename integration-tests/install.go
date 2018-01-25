@@ -31,6 +31,7 @@ func GetSSHKeyFile() (string, error) {
 type installOptions struct {
 	adminPassword                string
 	disablePackageInstallation   bool
+	disableDockerInstallation    bool
 	disconnectedInstallation     bool
 	dockerRegistryServer         string
 	dockerRegistryCAPath         string
@@ -40,10 +41,11 @@ type installOptions struct {
 	httpProxy                    string
 	httpsProxy                   string
 	noProxy                      string
-	useDirectLVM                 bool
+	dockerStorageDriver          string
 	serviceCIDR                  string
 	disableCNI                   bool
 	cniProvider                  string
+	dnsProvider                  string
 	heapsterReplicas             int
 	heapsterInfluxdbPVC          string
 	cloudProvider                string
@@ -68,11 +70,15 @@ func installKismaticMini(node NodeDeets, sshKey string, adminPassword string) er
 		SSHKeyFile:          sshKey,
 		SSHUser:             sshUser,
 	}
-	return installKismaticWithPlan(plan, sshKey)
+	return installKismaticWithPlan(plan)
 }
 
 func installKismatic(nodes provisionedNodes, installOpts installOptions, sshKey string) error {
-	return installKismaticWithPlan(buildPlan(nodes, installOpts, sshKey), sshKey)
+	return installKismaticWithPlan(buildPlan(nodes, installOpts, sshKey))
+}
+
+func validateKismatic(nodes provisionedNodes, installOpts installOptions, sshKey string) error {
+	return validateKismaticWithPlan(buildPlan(nodes, installOpts, sshKey))
 }
 
 func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string) PlanAWS {
@@ -87,6 +93,7 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 	plan := PlanAWS{
 		AdminPassword:              installOpts.adminPassword,
 		DisablePackageInstallation: installOpts.disablePackageInstallation,
+		DisableDockerInstallation:  installOpts.disableDockerInstallation,
 		DisconnectedInstallation:   installOpts.disconnectedInstallation,
 		Etcd:                         nodes.etcd,
 		Master:                       nodes.master,
@@ -105,10 +112,11 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		HTTPProxy:                    installOpts.httpProxy,
 		HTTPSProxy:                   installOpts.httpsProxy,
 		NoProxy:                      installOpts.noProxy,
-		UseDirectLVM:                 installOpts.useDirectLVM,
+		DockerStorageDriver:          installOpts.dockerStorageDriver,
 		ServiceCIDR:                  installOpts.serviceCIDR,
 		DisableCNI:                   installOpts.disableCNI,
 		CNIProvider:                  installOpts.cniProvider,
+		DNSProvider:                  installOpts.dnsProvider,
 		DisableHelm:                  disableHelm,
 		HeapsterReplicas:             installOpts.heapsterReplicas,
 		HeapsterInfluxdbPVC:          installOpts.heapsterInfluxdbPVC,
@@ -122,7 +130,7 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 	return plan
 }
 
-func installKismaticWithPlan(plan PlanAWS, sshKey string) error {
+func installKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
 
 	By("Punch it Chewie!")
@@ -144,18 +152,33 @@ func installKismaticWithPlan(plan PlanAWS, sshKey string) error {
 	return nil
 }
 
+func validateKismaticWithPlan(plan PlanAWS) error {
+	writePlanFile(plan)
+
+	By("Validate Plan")
+	cmd := exec.Command("./kismatic", "install", "validate", "-f", "kismatic-testing.yaml")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func writePlanFile(plan PlanAWS) {
 	By("Building a template")
 	template, err := template.New("planAWSOverlay").Parse(planAWSOverlay)
 	FailIfError(err, "Couldn't parse template")
 
-	f, err := os.Create("kismatic-testing.yaml")
-	FailIfError(err, "Error creating plan")
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	err = template.Execute(w, &plan)
-	FailIfError(err, "Error filling in plan template")
-	w.Flush()
+	path := "kismatic-testing.yaml"
+	_, err = os.Stat(path)
+	// create file if not exists
+	if os.IsNotExist(err) {
+		f, err := os.Create(path)
+		FailIfError(err, "Error creating plan")
+		defer f.Close()
+		w := bufio.NewWriter(f)
+		err = template.Execute(w, &plan)
+		FailIfError(err, "Error filling in plan template")
+		w.Flush()
+	}
 }
 
 func installKismaticWithABadNode() {

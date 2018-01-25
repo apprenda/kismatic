@@ -12,7 +12,7 @@ import (
 )
 
 func mustGetTempDir(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "add-worker-test")
+	dir, err := ioutil.TempDir("", "add-node-test")
 	if err != nil {
 		t.Fatalf("failed to create temp dir: %v", err)
 	}
@@ -33,7 +33,7 @@ func TestAddWorkerCertMissingCAMissing(t *testing.T) {
 		},
 	}
 	newWorker := Node{}
-	newPlan, err := e.AddWorker(originalPlan, newWorker)
+	newPlan, err := e.AddNode(originalPlan, newWorker, []string{"worker"})
 	if newPlan != nil {
 		t.Errorf("add worker returned an updated plan")
 	}
@@ -63,13 +63,14 @@ func TestAddWorkerCertMissingCAExists(t *testing.T) {
 			Nodes: []Node{},
 		},
 		Cluster: Cluster{
+			Version: "v1.9.2",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
 		},
 	}
 	newWorker := Node{}
-	_, err := e.AddWorker(originalPlan, newWorker)
+	_, err := e.AddNode(originalPlan, newWorker, []string{"worker"})
 	if err != nil {
 		t.Errorf("unexpected error while adding worker: %v", err)
 	}
@@ -105,6 +106,7 @@ func TestAddWorkerPlanIsUpdated(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
+			Version: "v1.9.2",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -113,12 +115,18 @@ func TestAddWorkerPlanIsUpdated(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	updatedPlan, err := e.AddWorker(originalPlan, newWorker)
+	updatedPlan, err := e.AddNode(originalPlan, newWorker, []string{"worker"})
 	if err != nil {
 		t.Errorf("unexpected error while adding worker: %v", err)
 	}
 	if updatedPlan.Worker.ExpectedCount != 2 {
 		t.Errorf("expected count was not incremented")
+	}
+	if updatedPlan.Ingress.ExpectedCount != 0 {
+		t.Errorf("expected ingress count was not 0")
+	}
+	if updatedPlan.Storage.ExpectedCount != 0 {
+		t.Errorf("expected storage count was not 0")
 	}
 	found := false
 	for _, w := range updatedPlan.Worker.Nodes {
@@ -127,7 +135,212 @@ func TestAddWorkerPlanIsUpdated(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Errorf("the updated plan does not include the new worker")
+		t.Errorf("the updated plan does not include the new node")
+	}
+}
+
+func TestAddIngressPlanIsUpdated(t *testing.T) {
+	e := ansibleExecutor{
+		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		stdout:              ioutil.Discard,
+		consoleOutputFormat: ansible.RawFormat,
+		pki: &fakePKI{
+			caExists: true,
+		},
+		runnerExplainerFactory: fakeRunnerExplainer(nil),
+		certsDir:               mustGetTempDir(t),
+	}
+	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
+		Ingress: OptionalNodeGroup{
+			ExpectedCount: 1,
+			Nodes: []Node{
+				{
+					Host: "existingWorker",
+				},
+			},
+		},
+		Cluster: Cluster{
+			Version: "v1.9.2",
+			Networking: NetworkConfig{
+				ServiceCIDRBlock: "10.0.0.0/16",
+			},
+		},
+	}
+	newWorker := Node{
+		Host: "test",
+	}
+	updatedPlan, err := e.AddNode(originalPlan, newWorker, []string{"ingress"})
+	if err != nil {
+		t.Errorf("unexpected error while adding worker: %v", err)
+	}
+	if updatedPlan.Ingress.ExpectedCount != 2 {
+		t.Errorf("expected count was not incremented")
+	}
+	if updatedPlan.Worker.ExpectedCount != 0 {
+		t.Errorf("expected worker count was not 0")
+	}
+	if updatedPlan.Storage.ExpectedCount != 0 {
+		t.Errorf("expected storage count was not 0")
+	}
+	found := false
+	for _, w := range updatedPlan.Ingress.Nodes {
+		if w.Equal(newWorker) {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the updated plan does not include the new node")
+	}
+}
+
+func TestAddStoragePlanIsUpdated(t *testing.T) {
+	e := ansibleExecutor{
+		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		stdout:              ioutil.Discard,
+		consoleOutputFormat: ansible.RawFormat,
+		pki: &fakePKI{
+			caExists: true,
+		},
+		runnerExplainerFactory: fakeRunnerExplainer(nil),
+		certsDir:               mustGetTempDir(t),
+	}
+	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
+		Storage: OptionalNodeGroup{
+			ExpectedCount: 1,
+			Nodes: []Node{
+				{
+					Host: "existingWorker",
+				},
+			},
+		},
+		Cluster: Cluster{
+			Version: "v1.9.2",
+			Networking: NetworkConfig{
+				ServiceCIDRBlock: "10.0.0.0/16",
+			},
+		},
+	}
+	newWorker := Node{
+		Host: "test",
+	}
+	updatedPlan, err := e.AddNode(originalPlan, newWorker, []string{"storage"})
+	if err != nil {
+		t.Errorf("unexpected error while adding worker: %v", err)
+	}
+	if updatedPlan.Storage.ExpectedCount != 2 {
+		t.Errorf("expected count was not incremented")
+	}
+	if updatedPlan.Worker.ExpectedCount != 0 {
+		t.Errorf("expected worker count was not 0")
+	}
+	if updatedPlan.Ingress.ExpectedCount != 0 {
+		t.Errorf("expected ingress count was not 0")
+	}
+	found := false
+	for _, w := range updatedPlan.Storage.Nodes {
+		if w.Equal(newWorker) {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the updated plan does not include the new node")
+	}
+}
+
+func TestAddAllRolesPlanIsUpdated(t *testing.T) {
+	e := ansibleExecutor{
+		options:             ExecutorOptions{RestartServices: true, RunsDirectory: mustGetTempDir(t)},
+		stdout:              ioutil.Discard,
+		consoleOutputFormat: ansible.RawFormat,
+		pki: &fakePKI{
+			caExists: true,
+		},
+		runnerExplainerFactory: fakeRunnerExplainer(nil),
+		certsDir:               mustGetTempDir(t),
+	}
+	originalPlan := &Plan{
+		Master: MasterNodeGroup{
+			Nodes: []Node{{InternalIP: "10.10.2.20"}},
+		},
+		Worker: NodeGroup{
+			ExpectedCount: 1,
+			Nodes: []Node{
+				{
+					Host: "existingWorker",
+				},
+			},
+		},
+		Ingress: OptionalNodeGroup{
+			ExpectedCount: 1,
+			Nodes: []Node{
+				{
+					Host: "existingWorker",
+				},
+			},
+		},
+		Storage: OptionalNodeGroup{
+			ExpectedCount: 1,
+			Nodes: []Node{
+				{
+					Host: "existingWorker",
+				},
+			},
+		},
+		Cluster: Cluster{
+			Version: "v1.9.2",
+			Networking: NetworkConfig{
+				ServiceCIDRBlock: "10.0.0.0/16",
+			},
+		},
+	}
+	newWorker := Node{
+		Host: "test",
+	}
+	updatedPlan, err := e.AddNode(originalPlan, newWorker, []string{"worker", "ingress", "storage"})
+	if err != nil {
+		t.Errorf("unexpected error while adding worker: %v", err)
+	}
+	if updatedPlan.Worker.ExpectedCount != 2 {
+		t.Errorf("expected worker count was not incremented")
+	}
+	if updatedPlan.Ingress.ExpectedCount != 2 {
+		t.Errorf("expected ingress count was not incremented")
+	}
+	if updatedPlan.Storage.ExpectedCount != 2 {
+		t.Errorf("expected storage count was not incremented")
+	}
+	found := false
+	for _, w := range updatedPlan.Worker.Nodes {
+		if w.Equal(newWorker) {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the updated plan does not include the new worker node")
+	}
+	found = false
+	for _, w := range updatedPlan.Ingress.Nodes {
+		if w.Equal(newWorker) {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the updated plan does not include the new ingress node")
+	}
+	found = false
+	for _, w := range updatedPlan.Storage.Nodes {
+		if w.Equal(newWorker) {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("the updated plan does not include the new storage node")
 	}
 }
 
@@ -155,6 +368,7 @@ func TestAddWorkerPlanNotUpdatedAfterFailure(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
+			Version: "v1.9.2",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -163,7 +377,7 @@ func TestAddWorkerPlanNotUpdatedAfterFailure(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	updatedPlan, err := e.AddWorker(originalPlan, newWorker)
+	updatedPlan, err := e.AddNode(originalPlan, newWorker, []string{"worker"})
 	if err == nil {
 		t.Errorf("expected an error, but didn't get one")
 	}
@@ -199,6 +413,7 @@ func TestAddWorkerRestartServicesEnabled(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
+			Version: "v1.9.2",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -207,7 +422,7 @@ func TestAddWorkerRestartServicesEnabled(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	_, err := e.AddWorker(originalPlan, newWorker)
+	_, err := e.AddNode(originalPlan, newWorker, []string{"worker"})
 	if err != nil {
 		t.Errorf("unexpected error")
 	}
@@ -256,6 +471,7 @@ func TestAddWorkerHostsFilesDNSEnabled(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
+			Version: "v1.9.2",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 				UpdateHostsFiles: true,
@@ -265,11 +481,11 @@ func TestAddWorkerHostsFilesDNSEnabled(t *testing.T) {
 	newWorker := Node{
 		Host: "test",
 	}
-	_, err := e.AddWorker(originalPlan, newWorker)
+	_, err := e.AddNode(originalPlan, newWorker, []string{"worker"})
 	if err != nil {
 		t.Errorf("unexpected error")
 	}
-	expectedPlaybook := "_hosts.yaml"
+	expectedPlaybook := "hosts.yaml"
 	found := false
 	for _, p := range fakeRunner.allNodesPlaybooks {
 		if p == expectedPlaybook {

@@ -94,15 +94,61 @@ func readDeprecatedFields(p *Plan) {
 	if p.DockerRegistry.Server == "" && p.DockerRegistry.Address != "" && p.DockerRegistry.Port != 0 {
 		p.DockerRegistry.Server = fmt.Sprintf("%s:%d", p.DockerRegistry.Address, p.DockerRegistry.Port)
 	}
+
+	if p.Docker.Storage.DirectLVM != nil && p.Docker.Storage.DirectLVM.Enabled && (p.Docker.Storage.Opts == nil || len(p.Docker.Storage.Opts) == 0) {
+		p.Docker.Storage.Driver = "devicemapper"
+		p.Docker.Storage.Opts = map[string]string{
+			"dm.thinpooldev":           "/dev/mapper/docker-thinpool",
+			"dm.use_deferred_removal":  "true",
+			"dm.use_deferred_deletion": fmt.Sprintf("%t", p.Docker.Storage.DirectLVM.EnableDeferredDeletion),
+		}
+		p.Docker.Storage.DirectLVMBlockDevice.Path = p.Docker.Storage.DirectLVM.BlockDevice
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolPercent = "95"
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolMetaPercent = "1"
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendThreshold = "80"
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendPercent = "20"
+		p.Docker.Storage.DirectLVM = nil
+	}
 }
 
 func setDefaults(p *Plan) {
+	// Set to either the latest version or the tested one if an error occurs
+	if p.Cluster.Version == "" {
+		p.Cluster.Version = kubernetesVersionString
+	}
+
 	if p.Docker.Logs.Driver == "" {
 		p.Docker.Logs.Driver = "json-file"
 		p.Docker.Logs.Opts = map[string]string{
 			"max-size": "50m",
 			"max-file": "1",
 		}
+	}
+
+	// set options that were previously set in Ansible
+	// only set them when creating a block device
+	if p.Docker.Storage.Driver == "devicemapper" && p.Docker.Storage.DirectLVMBlockDevice.Path != "" {
+		if _, ok := p.Docker.Storage.Opts["dm.thinpooldev"]; !ok {
+			p.Docker.Storage.Opts["dm.thinpooldev"] = "/dev/mapper/docker-thinpool"
+		}
+		if _, ok := p.Docker.Storage.Opts["dm.use_deferred_removal"]; !ok {
+			p.Docker.Storage.Opts["dm.use_deferred_removal"] = "true"
+		}
+		if _, ok := p.Docker.Storage.Opts["dm.use_deferred_deletion"]; !ok {
+			p.Docker.Storage.Opts["dm.use_deferred_deletion"] = "false"
+		}
+	}
+	if p.Docker.Storage.DirectLVMBlockDevice.ThinpoolPercent == "" {
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolPercent = "95"
+	}
+	if p.Docker.Storage.DirectLVMBlockDevice.ThinpoolMetaPercent == "" {
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolMetaPercent = "1"
+	}
+	if p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendThreshold == "" {
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendThreshold = "80"
+	}
+	if p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendPercent == "" {
+		p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendPercent = "20"
 	}
 
 	if p.AddOns.CNI == nil {
@@ -124,6 +170,10 @@ func setDefaults(p *Plan) {
 
 	if p.AddOns.CNI.Options.Calico.WorkloadMTU == 0 {
 		p.AddOns.CNI.Options.Calico.WorkloadMTU = 1500
+	}
+
+	if p.AddOns.DNS.Provider == "" {
+		p.AddOns.DNS.Provider = "kubedns"
 	}
 
 	if p.AddOns.HeapsterMonitoring == nil {
@@ -153,9 +203,13 @@ func setDefaults(p *Plan) {
 	if p.AddOns.Dashboard == nil {
 		p.AddOns.Dashboard = &Dashboard{}
 	}
+
+	if p.AddOns.PackageManager.Options.Helm.Namespace == "" {
+		p.AddOns.PackageManager.Options.Helm.Namespace = "kube-system"
+	}
 }
 
-var yamlKeyRE = regexp.MustCompile(`[^a-zA-Z]*([a-z_\-A-Z]+)[ ]*:`)
+var yamlKeyRE = regexp.MustCompile(`[^a-zA-Z]*([a-z_\-A-Z.]+)[ ]*:`)
 
 // Write the plan to the file system
 func (fp *FilePlanner) Write(p *Plan) error {
@@ -182,11 +236,21 @@ func (fp *FilePlanner) Write(p *Plan) error {
 	scanner := bufio.NewScanner(bytes.NewReader(bytez))
 	prevIndent := -1
 	addNewLineBeforeComment := true
+	var etcdBlock bool
 	for scanner.Scan() {
 		text := scanner.Text()
 		matched := yamlKeyRE.FindStringSubmatch(text)
 		if matched != nil && len(matched) > 1 {
 			indent := strings.Count(matched[0], " ") / 2
+
+			// Figure out if we are in the etcd block
+			if indent == 0 {
+				etcdBlock = (text == "etcd:")
+			}
+			// Don't print labels: {} for etcd group
+			if etcdBlock && strings.Contains(text, "labels: {}") {
+				continue
+			}
 
 			// Add a new line if we are leaving a major indentation block
 			// (leaving a struct)..
@@ -277,6 +341,7 @@ func WritePlanTemplate(planTemplateOpts PlanTemplateOptions, w PlanReadWriter) e
 func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p := Plan{}
 	p.Cluster.Name = "kubernetes"
+	p.Cluster.Version = kubernetesVersionString
 	p.Cluster.AdminPassword = templateOpts.AdminPassword
 	p.Cluster.DisablePackageInstallation = false
 	p.Cluster.DisconnectedInstallation = false
@@ -303,6 +368,10 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 			"max-file": "1",
 		},
 	}
+	p.Docker.Storage.DirectLVMBlockDevice.ThinpoolPercent = "95"
+	p.Docker.Storage.DirectLVMBlockDevice.ThinpoolMetaPercent = "1"
+	p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendThreshold = "80"
+	p.Docker.Storage.DirectLVMBlockDevice.ThinpoolAutoextendPercent = "20"
 
 	// Add-Ons
 	// CNI
@@ -312,6 +381,8 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p.AddOns.CNI.Options.Calico.LogLevel = "info"
 	p.AddOns.CNI.Options.Calico.WorkloadMTU = 1500
 	p.AddOns.CNI.Options.Calico.FelixInputMTU = 1440
+	// DNS
+	p.AddOns.DNS.Provider = "kubedns"
 	// Heapster
 	p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
 	p.AddOns.HeapsterMonitoring.Options.Heapster.Replicas = 2
@@ -320,6 +391,7 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 
 	// Package Manager
 	p.AddOns.PackageManager.Provider = "helm"
+	p.AddOns.PackageManager.Options.Helm.Namespace = "kube-system"
 
 	p.AddOns.Dashboard = &Dashboard{}
 	p.AddOns.Dashboard.Disable = false
@@ -384,57 +456,60 @@ func getDNSServiceIP(p *Plan) (string, error) {
 // in the plan file. The value of the map contains the comment, split into
 // separate lines.
 var commentMap = map[string][]string{
-	"cluster.admin_password":                             []string{"This password is used to login to the Kubernetes Dashboard and can also be", "used for administration without a security certificate."},
-	"cluster.disable_package_installation":               []string{"Set to true if the nodes have the required packages installed."},
-	"cluster.disconnected_installation":                  []string{"Set to true if you are performing a disconnected installation."},
-	"cluster.networking":                                 []string{"Networking configuration of your cluster."},
-	"cluster.networking.pod_cidr_block":                  []string{"Kubernetes will assign pods IPs in this range. Do not use a range that is", "already in use on your local network!"},
-	"cluster.networking.service_cidr_block":              []string{"Kubernetes will assign services IPs in this range. Do not use a range", "that is already in use by your local network or pod network!"},
-	"cluster.networking.update_hosts_files":              []string{"Set to true if your nodes cannot resolve each others' names using DNS."},
-	"cluster.networking.http_proxy":                      []string{"Set the proxy server to use for HTTP connections."},
-	"cluster.networking.https_proxy":                     []string{"Set the proxy server to use for HTTPs connections."},
-	"cluster.networking.no_proxy":                        []string{"List of host names and/or IPs that shouldn't go through any proxy.", "All nodes' 'host' and 'IPs' are always set."},
-	"cluster.certificates":                               []string{"Generated certs configuration."},
-	"cluster.certificates.expiry":                        []string{"Self-signed certificate expiration period in hours; default is 2 years."},
-	"cluster.certificates.ca_expiry":                     []string{"CA certificate expiration period in hours; default is 2 years."},
-	"cluster.ssh":                                        []string{"SSH configuration for cluster nodes."},
-	"cluster.ssh.user":                                   []string{"This user must be able to sudo without password."},
-	"cluster.ssh.ssh_key":                                []string{"Absolute path to the ssh private key we should use to manage nodes."},
-	"cluster.kube_apiserver":                             []string{"Override configuration of Kubernetes components."},
-	"cluster.cloud_provider":                             []string{"Kubernetes cloud provider integration"},
-	"cluster.cloud_provider.provider":                    []string{"Options: 'aws','azure','cloudstack','fake','gce','mesos','openstack',", "'ovirt','photon','rackspace','vsphere'.", "Leave empty for bare metal setups or other unsupported providers."},
-	"cluster.cloud_provider.config":                      []string{"Path to the config file, leave empty if provider does not require it."},
-	"docker":                                             []string{"Docker daemon configuration of all cluster nodes"},
-	"etcd":                                               []string{"Etcd nodes are the ones that run the etcd distributed key-value database."},
-	"etcd.nodes":                                         []string{"Provide the hostname and IP of each node. If the node has an IP for internal", "traffic, provide it in the internalip field. Otherwise, that field can be", "left blank."},
-	"master":                                             []string{"Master nodes are the ones that run the Kubernetes control plane components."},
-	"worker":                                             []string{"Worker nodes are the ones that will run your workloads on the cluster."},
-	"ingress":                                            []string{"Ingress nodes will run the ingress controllers."},
-	"storage":                                            []string{"Storage nodes will be used to create a distributed storage cluster that can", "be consumed by your workloads."},
-	"master.load_balanced_fqdn":                          []string{"If you have set up load balancing for master nodes, enter the FQDN name here.", "Otherwise, use the IP address of a single master node."},
-	"master.load_balanced_short_name":                    []string{"If you have set up load balancing for master nodes, enter the short name here.", "Otherwise, use the IP address of a single master node."},
-	"docker.storage.direct_lvm":                          []string{"Configure devicemapper in direct-lvm mode (RHEL/CentOS only)."},
-	"docker.storage.direct_lvm.block_device":             []string{"Path to the block device that will be used for direct-lvm mode. This", "device will be wiped and used exclusively by docker."},
-	"docker.storage.direct_lvm.enable_deferred_deletion": []string{"Set to true if you want to enable deferred deletion when using", "direct-lvm mode."},
-	"docker_registry":                                    []string{"If you want to use an internal registry for the installation or upgrade, you", "must provide its information here. You must seed this registry before the", "installation or upgrade of your cluster. This registry must be accessible from", "all nodes on the cluster."},
-	"docker_registry.server":                             []string{"IP or hostname and port for your registry."},
-	"docker_registry.CA":                                 []string{"Absolute path to the certificate authority that should be trusted when", "connecting to your registry."},
-	"docker_registry.username":                           []string{"Leave blank for unauthenticated access."},
-	"docker_registry.password":                           []string{"Leave blank for unauthenticated access."},
-	"add_ons":                                            []string{"Add-ons are additional components that KET installs on the cluster."},
-	"nfs":                                                []string{"A set of NFS volumes for use by on-cluster persistent workloads"},
-	"nfs.nfs_host":                                       []string{"The host name or ip address of an NFS server."},
-	"nfs.mount_path":                                     []string{"The mount path of an NFS share. Must start with /"},
-	"add_ons.cni.provider":                               []string{"Selecting 'custom' will result in a CNI ready cluster, however it is up to", "you to configure a plugin after the install.", "Options: 'calico','weave','contiv','custom'."},
-	"add_ons.cni.options.calico.mode":                    []string{"Options: 'overlay','routed'."},
-	"add_ons.cni.options.calico.log_level":               []string{"Options: 'warning','info','debug'."},
-	"add_ons.cni.options.calico.workload_mtu":            []string{"MTU for the workload interface, configures the CNI config."},
-	"add_ons.cni.options.calico.felix_input_mtu":         []string{"MTU for the tunnel device used if IPIP is enabled."},
-	"add_ons.heapster.options.influxdb.pvc_name":         []string{"Provide the name of the persistent volume claim that you will create", "after installation. If not specified, the data will be stored in", "ephemeral storage."},
-	"add_ons.heapster.options.heapster.service_type":     []string{"Specify kubernetes ServiceType. Defaults to 'ClusterIP'.", "Options: 'ClusterIP','NodePort','LoadBalancer','ExternalName'."},
-	"add_ons.heapster.options.heapster.sink":             []string{"Specify the sink to store heapster data. Defaults to an influxdb pod", "running on the cluster."},
-	"add_ons.package_manager.provider":                   []string{"Options: 'helm'"},
-	"add_ons.rescheduler":                                []string{"The rescheduler ensures that critical add-ons remain running on the cluster."},
+	"cluster.admin_password":                         []string{"This password is used to login to the Kubernetes Dashboard and can also be", "used for administration without a security certificate."},
+	"cluster.version":                                []string{fmt.Sprintf("Kubernetes cluster version (supported minor version %q).", kubernetesMinorVersionString)},
+	"cluster.disable_package_installation":           []string{"Set to true if the nodes have the required packages installed."},
+	"cluster.disconnected_installation":              []string{"Set to true if you are performing a disconnected installation."},
+	"cluster.networking":                             []string{"Networking configuration of your cluster."},
+	"cluster.networking.pod_cidr_block":              []string{"Kubernetes will assign pods IPs in this range. Do not use a range that is", "already in use on your local network!"},
+	"cluster.networking.service_cidr_block":          []string{"Kubernetes will assign services IPs in this range. Do not use a range", "that is already in use by your local network or pod network!"},
+	"cluster.networking.update_hosts_files":          []string{"Set to true if your nodes cannot resolve each others' names using DNS."},
+	"cluster.networking.http_proxy":                  []string{"Set the proxy server to use for HTTP connections."},
+	"cluster.networking.https_proxy":                 []string{"Set the proxy server to use for HTTPs connections."},
+	"cluster.networking.no_proxy":                    []string{"List of host names and/or IPs that shouldn't go through any proxy.", "All nodes' 'host' and 'IPs' are always set."},
+	"cluster.certificates":                           []string{"Generated certs configuration."},
+	"cluster.certificates.expiry":                    []string{"Self-signed certificate expiration period in hours; default is 2 years."},
+	"cluster.certificates.ca_expiry":                 []string{"CA certificate expiration period in hours; default is 2 years."},
+	"cluster.ssh":                                    []string{"SSH configuration for cluster nodes."},
+	"cluster.ssh.user":                               []string{"This user must be able to sudo without password."},
+	"cluster.ssh.ssh_key":                            []string{"Absolute path to the ssh private key we should use to manage nodes."},
+	"cluster.kube_apiserver":                         []string{"Override configuration of Kubernetes components."},
+	"cluster.cloud_provider":                         []string{"Kubernetes cloud provider integration."},
+	"cluster.cloud_provider.provider":                []string{"Options: 'aws','azure','cloudstack','fake','gce','mesos','openstack',", "'ovirt','photon','rackspace','vsphere'.", "Leave empty for bare metal setups or other unsupported providers."},
+	"cluster.cloud_provider.config":                  []string{"Path to the config file, leave empty if provider does not require it."},
+	"docker":                                         []string{"Docker daemon configuration of all cluster nodes."},
+	"docker.disable":                                 []string{"Set to true if docker is already installed and configured."},
+	"docker.storage.driver":                          []string{"Leave empty to have docker automatically select the driver."},
+	"docker.storage.direct_lvm_block_device":         []string{"Used for setting up Device Mapper storage driver in direct-lvm mode."},
+	"docker.storage.direct_lvm_block_device.path":    []string{"Absolute path to the block device that will be used for direct-lvm mode.", "This device will be wiped and used exclusively by docker."},
+	"docker_registry":                                []string{"If you want to use an internal registry for the installation or upgrade, you", "must provide its information here. You must seed this registry before the", "installation or upgrade of your cluster. This registry must be accessible from", "all nodes on the cluster."},
+	"docker_registry.server":                         []string{"IP or hostname and port for your registry."},
+	"docker_registry.CA":                             []string{"Absolute path to the certificate authority that should be trusted when", "connecting to your registry."},
+	"docker_registry.username":                       []string{"Leave blank for unauthenticated access."},
+	"docker_registry.password":                       []string{"Leave blank for unauthenticated access."},
+	"add_ons":                                        []string{"Add-ons are additional components that KET installs on the cluster."},
+	"add_ons.cni.provider":                           []string{"Selecting 'custom' will result in a CNI ready cluster, however it is up to", "you to configure a plugin after the install.", "Options: 'calico','weave','contiv','custom'."},
+	"add_ons.cni.options.calico.mode":                []string{"Options: 'overlay','routed'."},
+	"add_ons.cni.options.calico.log_level":           []string{"Options: 'warning','info','debug'."},
+	"add_ons.cni.options.calico.workload_mtu":        []string{"MTU for the workload interface, configures the CNI config."},
+	"add_ons.cni.options.calico.felix_input_mtu":     []string{"MTU for the tunnel device used if IPIP is enabled."},
+	"add_ons.dns.provider":                           []string{"Options: 'kubedns','coredns'."},
+	"add_ons.heapster.options.influxdb.pvc_name":     []string{"Provide the name of the persistent volume claim that you will create", "after installation. If not specified, the data will be stored in", "ephemeral storage."},
+	"add_ons.heapster.options.heapster.service_type": []string{"Specify kubernetes ServiceType. Defaults to 'ClusterIP'.", "Options: 'ClusterIP','NodePort','LoadBalancer','ExternalName'."},
+	"add_ons.heapster.options.heapster.sink":         []string{"Specify the sink to store heapster data. Defaults to an influxdb pod", "running on the cluster."},
+	"add_ons.package_manager.provider":               []string{"Options: 'helm'."},
+	"add_ons.rescheduler":                            []string{"The rescheduler ensures that critical add-ons remain running on the cluster."},
+	"etcd":                                           []string{"Etcd nodes are the ones that run the etcd distributed key-value database."},
+	"etcd.nodes":                                     []string{"Provide the hostname and IP of each node. If the node has an IP for internal", "traffic, provide it in the internalip field. Otherwise, that field can be", "left blank."},
+	"master":                                         []string{"Master nodes are the ones that run the Kubernetes control plane components."},
+	"worker":                                         []string{"Worker nodes are the ones that will run your workloads on the cluster."},
+	"ingress":                                        []string{"Ingress nodes will run the ingress controllers."},
+	"storage":                                        []string{"Storage nodes will be used to create a distributed storage cluster that can", "be consumed by your workloads."},
+	"master.load_balanced_fqdn":                      []string{"If you have set up load balancing for master nodes, enter the FQDN name here.", "Otherwise, use the IP address of a single master node."},
+	"master.load_balanced_short_name":                []string{"If you have set up load balancing for master nodes, enter the short name here.", "Otherwise, use the IP address of a single master node."},
+	"nfs":            []string{"A set of NFS volumes for use by on-cluster persistent workloads."},
+	"nfs.nfs_host":   []string{"The host name or ip address of an NFS server."},
+	"nfs.mount_path": []string{"The mount path of an NFS share. Must start with '/'."},
 }
 
 type stack struct {

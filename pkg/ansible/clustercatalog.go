@@ -7,6 +7,12 @@ import (
 )
 
 type ClusterCatalog struct {
+	Versions struct {
+		Kubernetes    string `yaml:"kubernetes"`
+		KubernetesYum string `yaml:"kubernetes_yum"`
+		KubernetesDeb string `yaml:"kubernetes_deb"`
+	}
+
 	ClusterName               string `yaml:"kubernetes_cluster_name"`
 	AdminPassword             string `yaml:"kubernetes_admin_password"`
 	TLSDirectory              string `yaml:"tls_directory"`
@@ -44,7 +50,7 @@ type ClusterCatalog struct {
 
 	KismaticPreflightCheckerLinux string `yaml:"kismatic_preflight_checker"`
 
-	WorkerNode string `yaml:"worker_node"`
+	NewNode string `yaml:"new_node"`
 
 	NFSVolumes []NFSVolume `yaml:"nfs_volumes"`
 
@@ -70,16 +76,16 @@ type ClusterCatalog struct {
 	DiagnosticsDateTime  string `yaml:"diagnostics_date_time"`
 
 	Docker struct {
-		Logs struct {
+		Enabled bool
+		Logs    struct {
 			Driver string            `yaml:"driver"`
 			Opts   map[string]string `yaml:"opts"`
 		}
 		Storage struct {
-			DirectLVM struct {
-				Enabled                bool   `yaml:"enabled"`
-				BlockDevice            string `yaml:"block_device"`
-				EnableDeferredDeletion bool   `yaml:"enable_deferred_deletion"`
-			}
+			Driver               string               `yaml:"driver"`
+			Opts                 map[string]string    `yaml:"opts"`
+			OptsList             []string             `yaml:"opts_list"`
+			DirectLVMBlockDevice DirectLVMBlockDevice `yaml:"direct_lvm_block_device"`
 		}
 	}
 
@@ -89,7 +95,8 @@ type ClusterCatalog struct {
 	CloudConfig   string `yaml:"cloud_config_local"`
 
 	DNS struct {
-		Enabled bool
+		Enabled  bool
+		Provider string
 	}
 
 	RunPodValidation bool `yaml:"run_pod_validation"`
@@ -126,7 +133,8 @@ type ClusterCatalog struct {
 	}
 
 	Helm struct {
-		Enabled bool
+		Enabled   bool
+		Namespace string
 	}
 
 	Rescheduler struct {
@@ -143,6 +151,13 @@ type ClusterCatalog struct {
 	KubeletNodeOptions map[string]map[string]string `yaml:"kubelet_node_overrides"`
 }
 
+type DirectLVMBlockDevice struct {
+	Path                        string
+	ThinpoolPercent             string `yaml:"thinpool_percent"`
+	ThinpoolMetaPercent         string `yaml:"thinpool_metapercent"`
+	ThinpoolAutoextendThreshold string `yaml:"thinpool_autoextend_threshold"`
+	ThinpoolAutoextendPercent   string `yaml:"thinpool_autoextend_percent"`
+}
 type NFSVolume struct {
 	Host string
 	Path string

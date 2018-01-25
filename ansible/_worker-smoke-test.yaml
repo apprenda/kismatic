@@ -1,9 +1,0 @@
----
-  - hosts: worker
-    any_errors_fatal: true
-    name: "Smoke Test New Worker"
-    become: yes
-    run_once: true
-
-    roles:
-      - worker-smoke-test

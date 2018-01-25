@@ -1,9 +1,9 @@
 ---
   - include: _calico-network-policy.yaml play_name="Upgrade Network Policy Controller" upgrading=true
     when: cni.enabled|bool == true and cni.provider == "calico"
-  - include: _kube-dns.yaml play_name="Upgrade Kubernetes DNS" upgrading=true
+  - include: _cluster-dns.yaml play_name="Upgrade Kubernetes DNS" upgrading=true
     when: dns.enabled|bool == true
-  - include: _kube-ingress.yaml play_name="Upgrade Kubernetes Ingress" upgrading=true
+  - include: _nginx-ingress.yaml play_name="Upgrade Kubernetes Ingress" upgrading=true
     when: configure_ingress|bool == true
   - include: _heapster.yaml play_name="Upgrade Heapster Cluster Monitoring" upgrading=true
     when: heapster.enabled|bool == true
