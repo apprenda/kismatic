@@ -67,3 +67,14 @@ func kubernetesLatestStableVersion() (semver.Version, string, error) {
 func kubernetesVersionValid(version string) bool {
 	return kubeReleaseRegex.MatchString(version)
 }
+
+// VersionOverrides returns a map of all image names and their versions that can be modified by the user
+func VersionOverrides() map[string]string {
+	versions := make(map[string]string, 0)
+	versions["kube_proxy"] = kubernetesVersionString
+	versions["kube_controller_manager"] = kubernetesVersionString
+	versions["kube_scheduler"] = kubernetesVersionString
+	versions["kube_apiserver"] = kubernetesVersionString
+
+	return versions
+}

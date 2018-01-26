@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	yaml "gopkg.in/yaml.v2"
@@ -32,13 +34,14 @@ interested in the list of all images that can be used in a KET installation, you
 may use the --list-only flag.
 `
 
-const imageManifestFile = "./ansible/playbooks/group_vars/container_images.yaml"
+const imagesManifestFile = "./ansible/playbooks/group_vars/container_images.yaml"
 
 type seedRegistryOptions struct {
-	listOnly       bool
-	verbose        bool
-	planFile       string
-	registryServer string
+	listOnly            bool
+	verbose             bool
+	planFile            string
+	imagesManifestsFile string
+	registryServer      string
 }
 
 type imageManifest struct {
@@ -67,36 +70,59 @@ func NewCmdSeedRegistry(stdout, stderr io.Writer) *cobra.Command {
 				return cmd.Usage()
 			}
 			if options.listOnly {
-				return doListImages(stdout, options, imageManifestFile)
+				return doListImages(stdout, options)
 			}
-			return doSeedRegistry(stdout, stderr, options, imageManifestFile)
+			return doSeedRegistry(stdout, stderr, options)
 		},
 	}
 	cmd.Flags().BoolVar(&options.listOnly, "list-only", false, "when true, the images will only be listed but not pushed to the registry")
 	cmd.Flags().BoolVar(&options.verbose, "verbose", false, "enable verbose logging")
 	cmd.Flags().StringVar(&options.registryServer, "server", "", "set to the location of the registry server, without the protocol (e.g. localhost:5000)")
+	cmd.Flags().StringVar(&options.imagesManifestsFile, "images-manifest-file", "", "path to the container images manifest file")
 	addPlanFileFlag(cmd.Flags(), &options.planFile)
 	return cmd
 }
 
-func doListImages(out io.Writer, options seedRegistryOptions, imageManifestFile string) error {
-	im, err := readImageManifest()
+func doListImages(stdout io.Writer, options seedRegistryOptions) error {
+	// try to get path relative to executable
+	manifest := manifestPath(options.imagesManifestsFile)
+	// set default image versions
+	versions := install.VersionOverrides()
+
+	// try to read the plan file to get component versions
+	planner := install.FilePlanner{File: options.planFile}
+	if planner.PlanExists() {
+		plan, err := planner.Read()
+		if err != nil {
+			util.PrettyPrintErr(stdout, "Reading installation plan file %q", options.planFile)
+			return fmt.Errorf("error reading plan file: %v", err)
+		}
+		// set versions from the plan file
+		versions = plan.Versions()
+	}
+
+	im, err := readImageManifest(manifest, versions)
 	if err != nil {
 		return err
 	}
 	for _, img := range im.OfficialImages {
-		fmt.Fprintf(out, "%s\n", img)
+		fmt.Fprintf(stdout, "%s\n", img)
 	}
 	return nil
 }
 
-func doSeedRegistry(stdout, stderr io.Writer, options seedRegistryOptions, imageManifestFile string) error {
+func doSeedRegistry(stdout, stderr io.Writer, options seedRegistryOptions) error {
 	util.PrintHeader(stdout, "Seed Container Image Registry", '=')
 
 	// Validate that docker is available
 	if _, err := exec.LookPath("docker"); err != nil {
 		return errors.New("Did not find docker installed on this node. The docker CLI must be available for seeding the registry.")
 	}
+
+	// try to get path relative to executable
+	manifest := manifestPath(options.imagesManifestsFile)
+	// set default image versions
+	versions := install.VersionOverrides()
 
 	// Figure out the registry we are to seed
 	// The registry specified through the command-line flag takes precedence
@@ -106,7 +132,7 @@ func doSeedRegistry(stdout, stderr io.Writer, options seedRegistryOptions, image
 		// we need to get the server from the plan file
 		planner := install.FilePlanner{File: options.planFile}
 		if !planner.PlanExists() {
-			util.PrettyPrintErr(stdout, "Reading installation plan file [ERROR]")
+			util.PrettyPrintErr(stdout, "Reading installation plan file %q", options.planFile)
 			fmt.Fprintln(stdout, `Run "kismatic install plan" to generate it or use the "--server" option`)
 			return fmt.Errorf("plan does not exist")
 		}
@@ -127,9 +153,11 @@ func doSeedRegistry(stdout, stderr io.Writer, options seedRegistryOptions, image
 			return errors.New("Invalid registry configuration found in plan file")
 		}
 		server = plan.DockerRegistry.Server
+		// set versions from the plan file
+		versions = plan.Versions()
 	}
 
-	im, err := readImageManifest()
+	im, err := readImageManifest(manifest, versions)
 	if err != nil {
 		return err
 	}
@@ -182,14 +210,37 @@ func seedImage(stdout, stderr io.Writer, img image, registry string, verbose boo
 	return nil
 }
 
-func readImageManifest() (imageManifest, error) {
+func readImageManifest(file string, versions map[string]string) (imageManifest, error) {
 	im := imageManifest{}
-	imBytes, err := ioutil.ReadFile(imageManifestFile)
+	imBytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return im, fmt.Errorf("Error reading the list of images: %v", err)
 	}
 	if err := yaml.Unmarshal(imBytes, &im); err != nil {
 		return im, fmt.Errorf("Error unmarshalling the list of images: %v", err)
 	}
+	// subsitute versions
+	for k, img := range im.OfficialImages {
+		if val, ok := versions[k]; ok {
+			img.Version = val
+			im.OfficialImages[k] = img
+		}
+	}
 	return im, nil
+}
+
+func manifestPath(customManifestPath string) string {
+	if customManifestPath != "" {
+		return customManifestPath
+	}
+	manifest := imagesManifestFile
+	// to support running the command from not the current path
+	// try to get the path of the executable
+	ex, err := os.Executable()
+	if err == nil {
+		exPath := filepath.Dir(ex)
+		manifest = filepath.Join(exPath, imagesManifestFile)
+	}
+
+	return manifest
 }

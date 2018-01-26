@@ -777,3 +777,17 @@ func (p Plan) NetworkConfigured() bool {
 	// CNI disabled or "custom" return false
 	return p.AddOns.CNI == nil || (!p.AddOns.CNI.Disable && p.AddOns.CNI.Provider != "custom")
 }
+
+func (p Plan) Versions() map[string]string {
+	kubernetesVersion := kubernetesVersionString
+	if p.Cluster.Version != "" {
+		kubernetesVersion = p.Cluster.Version
+	}
+	versions := make(map[string]string)
+	versions["kube_proxy"] = kubernetesVersion
+	versions["kube_controller_manager"] = kubernetesVersion
+	versions["kube_scheduler"] = kubernetesVersion
+	versions["kube_apiserver"] = kubernetesVersion
+
+	return versions
+}
