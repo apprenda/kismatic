@@ -36,6 +36,7 @@ type HttpServer struct {
 // If certificates are not provided, a self signed CA will be used
 // Use 0 for no read and write timeouts
 func (s *HttpServer) Init() error {
+
 	if s.Logger == nil {
 		return fmt.Errorf("logger cannot be nil")
 	}

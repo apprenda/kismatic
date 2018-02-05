@@ -107,8 +107,12 @@ bare-test: vendor
 integration-test: dist just-integration-test
 
 .PHONY: vendor
-vendor: tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH)
+vendor: tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH) 
 	tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH) install
+
+
+tools/swagger-$(GLIDE_GOOS)-$(HOST_GOARCH):
+	curl -L https://github.com/go-swagger/go-swagger/releases/download/$(SWAGGER_VERSION)/swagger_$(GLIDE_GOOS)_$(HOST_GOARCH)
 
 tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH):
 	mkdir -p tools
@@ -206,6 +210,10 @@ docs/update-plan-file-reference.md:
 
 docs/generate-plan-file-reference.md:
 	@go run cmd/gen-kismatic-ref-docs/*.go -o markdown pkg/install/plan_types.go Plan
+
+docs/swagger: tools/swagger_$(GLIDE_GOOS)_$(HOST_GOARCH)
+	swagger generate spec -o ./swagger.json
+	
 
 version: FORCE
 	@echo VERSION=$(VERSION)

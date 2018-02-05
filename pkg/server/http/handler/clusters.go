@@ -44,7 +44,8 @@ type ClusterRequest struct {
 
 // The Provisioner defines the infrastructure provisioner that should be used
 // for hosting the cluster
-type sanitizedProvisioner struct {
+type Provisioner struct {
+	// Options: aws, azure, digital ocean
 	Provider         string            `json:"provider"`
 	Options          map[string]string `json:"options"`
 	AllowDestruction bool              `json:"allowDestruction"`
@@ -65,6 +66,26 @@ type ClusterResponse struct {
 
 // Create a cluster as described in the request body's JSON payload.
 func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+
+	// swagger:route POST /clusters creates a cluster
+	//
+	// Creates a cluster according to the spec provided by the user.
+	//
+	//
+	//     Consumes:
+	//     - application/json
+	//
+	//     Produces:
+	//     - application/json
+	//
+	//     Schemes: http, https
+	//
+	//     Responses:
+	//		 202: it worked
+	//       400: bad request
+	//		 409: cluster name in use
+	//		 500: store/unmarshal error
+
 	req := &ClusterRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		http.Error(w, fmt.Sprintf("could not decode body: %s\n", err.Error()), http.StatusBadRequest)
@@ -106,6 +127,26 @@ func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.
 
 // Update the cluster with the given name
 func (api Clusters) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
+
+	// swagger:route PUT /clusters/:name updates a cluster
+	//
+	// Updates a cluster (idempotently) according to the spec provided by the user.
+	//
+	//     Consumes:
+	//     - application/json
+	//
+	//     Produces:
+	//     - application/json
+	//
+	//     Schemes: http, https
+	//
+	//     Responses:
+	//		 202: it worked
+	//       400: bad request
+	//	   	 404: cluster not found
+	//		 409: cluster name in use
+	//		 500: store/unmarshal error
+
 	id := p.ByName("name")
 	fromStore, err := getFromStore(id, api.Store)
 	if err != nil {
