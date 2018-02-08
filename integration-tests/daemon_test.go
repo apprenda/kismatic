@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"time"
 
+	ketHttp "github.com/apprenda/kismatic/pkg/server/http"
 	"github.com/apprenda/kismatic/pkg/server/http/handler"
 	"github.com/apprenda/kismatic/pkg/store"
 	. "github.com/onsi/ginkgo"
@@ -95,7 +96,7 @@ The error: %v
 				pb, err := json.Marshal(payload)
 				Expect(err).ToNot(HaveOccurred())
 
-				clustersEndpoint := fmt.Sprintf("https://localhost:%d/clusters", daemonPort)
+				clustersEndpoint := fmt.Sprintf("https://localhost:%d%s/clusters", daemonPort, ketHttp.APIPath)
 				resp, err := tlsIgnoringClient.Post(clustersEndpoint, "application/json", bytes.NewBuffer(pb))
 				Expect(err).ToNot(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
@@ -140,7 +141,7 @@ The error: %v
 func destroyAllClusters(port int) error {
 	// Get all clusters
 	By("Getting all clusters to destroy them")
-	clustersEndpoint := fmt.Sprintf("https://localhost:%d/clusters", port)
+	clustersEndpoint := fmt.Sprintf("https://localhost:%d%s/clusters", port, ketHttp.APIPath)
 	resp, err := tlsIgnoringClient.Get(clustersEndpoint)
 	if err != nil {
 		return fmt.Errorf("failed to get list of all clusters: %v", err)

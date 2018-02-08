@@ -53,5 +53,6 @@ integration-tests/vendor
 vendor-provision/*
 vendor-kuberang/*
 vendor-helm
+vendor-swagger-ui
 .glide
 pkg/server/server

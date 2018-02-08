@@ -1,0 +1,434 @@
+{
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "text/plain",
+    "application/json"
+  ],
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "swagger": "2.0",
+  "info": {
+    "title": "Kismatic API.",
+    "termsOfService": "there are no TOS at this moment, use at your own risk we take no responsibility",
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/"
+    },
+    "version": "0.0.1"
+  },
+  "paths": {
+    "/api/v1/clusters": {
+      "get": {
+        "description": "Returns all clusters the server is managing",
+        "produces": [
+          "application/json"
+        ],
+        "operationId": "getAllClusters",
+        "responses": {
+          "200": {
+            "description": "Body contains JSON spec for all clusters"
+          },
+          "500": {
+            "description": "Marshalling/fetching error"
+          }
+        }
+      },
+      "post": {
+        "description": "Creates cluster according to provided spec",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/plain"
+        ],
+        "summary": "Creates cluster with {name}",
+        "operationId": "createCluster",
+        "parameters": [
+          {
+            "$ref": "#/definitions/cluster",
+            "x-go-name": "Req",
+            "description": "the cluster specification to create",
+            "name": "cluster",
+            "in": "body",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "malformed request"
+          },
+          "409": {
+            "description": "cluster with {name} already exists"
+          },
+          "500": {
+            "description": "marshalling/fetching error"
+          }
+        }
+      }
+    },
+    "/api/v1/clusters/{name}": {
+      "get": {
+        "description": "Could be any cluster being managed",
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Returns cluster with {name}",
+        "operationId": "getCluster",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the cluster",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "cluster with {name} not found"
+          },
+          "500": {
+            "description": "marshalling/fetching error"
+          }
+        }
+      },
+      "put": {
+        "description": "Updates cluster according to provided spec - still requiring a full request.",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "application/json"
+        ],
+        "summary": "Updates cluster with {name}",
+        "operationId": "updateCluster",
+        "parameters": [
+          {
+            "$ref": "#/definitions/cluster",
+            "x-go-name": "Req",
+            "description": "the cluster specification to create",
+            "name": "cluster",
+            "in": "body",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted"
+          },
+          "400": {
+            "description": "malformed request"
+          },
+          "404": {
+            "description": "cluster with {name} not found"
+          },
+          "500": {
+            "description": "marshalling/fetching error"
+          }
+        }
+      },
+      "delete": {
+        "description": "Could be any cluster being managed",
+        "produces": [
+          "text/plain"
+        ],
+        "summary": "Deletes cluster with {name}",
+        "operationId": "deleteCluster",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the cluster",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "OK"
+          },
+          "404": {
+            "description": "cluster with {name} not found"
+          },
+          "500": {
+            "description": "marshalling/fetching error"
+          }
+        }
+      }
+    },
+    "/api/v1/clusters/{name}/assets": {
+      "get": {
+        "description": "Downloads assets as a tarball",
+        "produces": [
+          "application/gzip"
+        ],
+        "summary": "Returns all assets for cluster with {name}",
+        "operationId": "getAssets",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the cluster",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {},
+          "404": {
+            "description": "couldn't find assets"
+          },
+          "500": {
+            "description": "marshalling/fetching error"
+          }
+        }
+      }
+    },
+    "/api/v1/clusters/{name}/kubeconfig": {
+      "get": {
+        "description": "Downloads the kubeconfig for the specified cluster",
+        "produces": [
+          "text/plain"
+        ],
+        "summary": "Returns kubeconfig for cluster with {name}",
+        "operationId": "getKubeconfig",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the cluster",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "cluster with {name} not found"
+          },
+          "500": {
+            "description": "couldn't find kubeconfig"
+          }
+        }
+      }
+    },
+    "/api/v1/clusters/{name}/logs": {
+      "get": {
+        "description": "Displays the plaintext Kismatic logs",
+        "produces": [
+          "text/plain"
+        ],
+        "summary": "Returns the Kismatic installer logs for the cluster",
+        "operationId": "getLogs",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "name of the cluster",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The plain text logs for the cluster installation"
+          },
+          "404": {
+            "description": "couldn't find logs"
+          },
+          "500": {
+            "description": "marshalling/fetching error"
+          }
+        }
+      }
+    },
+    "/docs/v1/": {
+      "get": {
+        "description": "Returns the swagger ui for the API documentation",
+        "operationId": "getDocs",
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "file not found"
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "description": "Returns server health",
+        "produces": [
+          "text/plain"
+        ],
+        "operationId": "getHealthz",
+        "responses": {
+          "200": {
+            "description": "Server ok",
+            "schema": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "/spec/v1/swagger.json": {
+      "get": {
+        "description": "Returns the swagger.json spec file",
+        "produces": [
+          "application/json"
+        ],
+        "operationId": "getSpec",
+        "responses": {
+          "200": {
+            "description": "ok"
+          },
+          "404": {
+            "description": "file not found"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "Provisioner": {
+      "description": "The Provisioner specifies the infrastructure provisioner that should be used\nfor the cluster.",
+      "type": "object",
+      "required": [
+        "provider",
+        "options",
+        "secrets",
+        "allowDestruction"
+      ],
+      "properties": {
+        "allowDestruction": {
+          "description": "Whether operations should be allowed to destroy resources on the provider",
+          "type": "boolean",
+          "x-go-name": "AllowDestruction"
+        },
+        "options": {
+          "description": "The options to use for the provider.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Options"
+        },
+        "provider": {
+          "description": "The cloud provider used to create the cluster. The provider does not necessarily have to match the given values if the user provides their own provider.yaml and provider terraform definitions.",
+          "type": "string",
+          "pattern": "aws|azure|digital ocean|user defined",
+          "x-go-name": "Provider"
+        },
+        "secrets": {
+          "description": "The secrets required by the cloud provider for login.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Secrets"
+        }
+      },
+      "x-go-package": "github.com/apprenda/kismatic/pkg/store"
+    },
+    "cluster": {
+      "description": "ClusterRequest is the cluster resource defined by the user of the API",
+      "type": "object",
+      "required": [
+        "name",
+        "desiredState",
+        "etcdCount",
+        "masterCount",
+        "workerCount",
+        "ingressCount",
+        "provisioner"
+      ],
+      "properties": {
+        "desiredState": {
+          "description": "The desired state of the cluster. Possible values:",
+          "type": "string",
+          "pattern": "planned|provisioned|installed",
+          "x-go-name": "DesiredState"
+        },
+        "etcdCount": {
+          "description": "The number of etcd nodes",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "EtcdCount"
+        },
+        "ingressCount": {
+          "description": "The number of ingress nodes",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "IngressCount"
+        },
+        "masterCount": {
+          "description": "The number of master nodes",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MasterCount"
+        },
+        "name": {
+          "description": "The name of the cluster. Must be unique across cloud providers.",
+          "type": "string",
+          "uniqueItems": true,
+          "x-go-name": "Name"
+        },
+        "provisioner": {
+          "$ref": "#/definitions/Provisioner"
+        },
+        "workerCount": {
+          "description": "The number of worker nodes",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "WorkerCount"
+        }
+      },
+      "x-go-name": "ClusterRequest",
+      "x-go-package": "github.com/apprenda/kismatic/pkg/server/http/handler"
+    },
+    "sanitizedProvisioner": {
+      "description": "The Provisioner defines the infrastructure provisioner that should be used\nfor hosting the cluster",
+      "type": "object",
+      "properties": {
+        "allowDestruction": {
+          "type": "boolean",
+          "x-go-name": "AllowDestruction"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Options"
+        },
+        "provider": {
+          "type": "string",
+          "x-go-name": "Provider"
+        }
+      },
+      "x-go-package": "github.com/apprenda/kismatic/pkg/server/http/handler"
+    }
+  },
+  "responses": {
+    "clusterResponse": {
+      "description": "ClusterResponse is the cluster resource returned by the server",
+      "schema": {
+        "$ref": "#/definitions/sanitizedProvisioner"
+      }
+    }
+  }
+}

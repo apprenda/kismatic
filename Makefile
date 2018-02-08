@@ -16,6 +16,8 @@ HOST_GOARCH = $(shell go env GOARCH)
 GLIDE_VERSION = v0.13.1
 ANSIBLE_VERSION = 2.3.0.0
 TERRAFORM_VERSION = 0.11.0
+SWAGGER_VERSION = 0.13.0
+SWAGGER-UI_VERSION = 3.10.0
 KUBERANG_VERSION = v1.2.2
 GO_VERSION = 1.9.2
 KUBECTL_VERSION = v1.9.2
@@ -47,6 +49,7 @@ bare-build: bin/$(GOOS)/kismatic
 bare-build-update-dist: bare-build
 	cp -r ansible out/ansible/playbooks
 	cp -r providers/* out/providers
+	cp docs/swagger.json out/swagger-ui/spec
 	cp bin/$(GOOS)/kismatic out/
 
 build-inspector: vendor
@@ -88,6 +91,7 @@ clean:
 	rm -rf vendor-kuberang
 	rm -rf vendor-helm
 	rm -rf vendor-kubectl
+	rm -rf vendor-swagger-ui
 	rm -rf tools
 
 test: vendor
@@ -107,12 +111,13 @@ bare-test: vendor
 integration-test: dist just-integration-test
 
 .PHONY: vendor
-vendor: tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH) 
+vendor: tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH) tools/swagger-$(GLIDE_GOOS)-$(HOST_GOARCH)
 	tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH) install
 
 
 tools/swagger-$(GLIDE_GOOS)-$(HOST_GOARCH):
-	curl -L https://github.com/go-swagger/go-swagger/releases/download/$(SWAGGER_VERSION)/swagger_$(GLIDE_GOOS)_$(HOST_GOARCH)
+	curl -L https://github.com/go-swagger/go-swagger/releases/download/$(SWAGGER_VERSION)/swagger_$(GLIDE_GOOS)_$(HOST_GOARCH) -o tools/swagger_$(GLIDE_GOOS)
+	chmod +x tools/swagger_$(GLIDE_GOOS)
 
 tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH):
 	mkdir -p tools
@@ -125,6 +130,11 @@ vendor-ansible/out:
 	curl -L https://github.com/apprenda/vendor-ansible/releases/download/v$(ANSIBLE_VERSION)/ansible.tar.gz -o vendor-ansible/out/ansible.tar.gz
 	tar -zxf vendor-ansible/out/ansible.tar.gz -C vendor-ansible/out
 	rm vendor-ansible/out/ansible.tar.gz
+
+vendor-swagger-ui/out:
+	mkdir -p vendor-swagger-ui/
+	curl -L https://github.com/swagger-api/swagger-ui/archive/v$(SWAGGER-UI_VERSION).tar.gz | tar -xz -C vendor-swagger-ui/
+	sed -i 's@http://petstore.swagger.io/v2/swagger.json@/spec/v1/swagger.json@g' vendor-swagger-ui/swagger-ui-$(SWAGGER-UI_VERSION)/dist/index.html
 
 vendor-terraform/out:
 	mkdir -p vendor-terraform/out/darwin
@@ -166,7 +176,7 @@ dist: vendor
 	    circleci/golang:$(GO_VERSION)          \
 	    make bare-dist
 
-bare-dist: vendor-ansible/out vendor-terraform/out vendor-kuberang/$(KUBERANG_VERSION) vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-amd64 vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-amd64 bare-build bare-build-inspector
+bare-dist: vendor-ansible/out vendor-terraform/out vendor-swagger-ui/out vendor-kuberang/$(KUBERANG_VERSION) vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-amd64 vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-amd64 bare-build bare-build-inspector
 	mkdir -p out
 	cp bin/$(GOOS)/kismatic out
 	mkdir -p out/ansible
@@ -179,6 +189,9 @@ bare-dist: vendor-ansible/out vendor-terraform/out vendor-kuberang/$(KUBERANG_VE
 	cp vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-amd64 out/ansible/playbooks/kuberang/linux/amd64/kuberang
 	cp vendor-terraform/out/$(GOOS)/terraform out/terraform
 	cp -r providers out/providers
+	mkdir -p out/swagger-ui/spec
+	cp -r vendor-swagger-ui/swagger-ui-$(SWAGGER-UI_VERSION)/dist out/swagger-ui
+	cp docs/swagger.json out/swagger-ui/spec
 	cp vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-amd64 out/kubectl
 	cp vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-amd64 out/helm
 	rm -f out/kismatic.tar.gz
@@ -211,8 +224,11 @@ docs/update-plan-file-reference.md:
 docs/generate-plan-file-reference.md:
 	@go run cmd/gen-kismatic-ref-docs/*.go -o markdown pkg/install/plan_types.go Plan
 
-docs/swagger: tools/swagger_$(GLIDE_GOOS)_$(HOST_GOARCH)
-	swagger generate spec -o ./swagger.json
+docs/generate-swagger.json:
+	GOROOT=$(shell go env GOROOT) tools/swagger_$(GLIDE_GOOS) generate spec -b ./pkg/server 
+
+docs/update-swagger.json: 
+	GOROOT=$(shell go env GOROOT) tools/swagger_$(GLIDE_GOOS) generate spec -b ./pkg/server > docs/swagger.json
 	
 
 version: FORCE

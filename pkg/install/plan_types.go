@@ -599,7 +599,6 @@ func Merge(l, r NodeGroup) NodeGroup {
 Outer:
 	for i := 0; i < lmin; i++ {
 		for j := 0; j < rmin; j++ {
-			fmt.Println(i, j, l.Nodes[i], r.Nodes[j])
 			if l.Nodes[i].Equal(r.Nodes[j]) {
 				ret.Nodes = append(ret.Nodes, Node{
 					IP:         l.Nodes[i].IP,

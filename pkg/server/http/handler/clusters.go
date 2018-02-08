@@ -31,61 +31,98 @@ type Clusters struct {
 	Logger    *log.Logger
 }
 
+// ClusterParams is a swagger wrapper for a cluster request
+//swagger:parameters createCluster updateCluster
+type ClusterParams struct {
+	Req *ClusterRequest `json:"body"`
+}
+
 // ClusterRequest is the cluster resource defined by the user of the API
+// swagger:model cluster
 type ClusterRequest struct {
-	Name         string            `json:"name"`
-	DesiredState string            `json:"desiredState"`
-	EtcdCount    int               `json:"etcdCount"`
-	MasterCount  int               `json:"masterCount"`
-	WorkerCount  int               `json:"workerCount"`
-	IngressCount int               `json:"ingressCount"`
-	Provisioner  store.Provisioner `json:"provisioner"`
+	// The name of the cluster. Must be unique across cloud providers.
+	//
+	// required: true
+	// unique: true
+	Name string `json:"name"`
+	// The desired state of the cluster. Possible values:
+	//
+	// required: true
+	// pattern: planned|provisioned|installed
+	DesiredState string `json:"desiredState"`
+	// The number of etcd nodes
+	//
+	// required: true
+	EtcdCount int `json:"etcdCount"`
+	// The number of master nodes
+	//
+	// required: true
+	MasterCount int `json:"masterCount"`
+	// The number of worker nodes
+	//
+	// required: true
+	WorkerCount int `json:"workerCount"`
+	// The number of ingress nodes
+	//
+	// required: true
+	IngressCount int `json:"ingressCount"`
+	// The provisioner spec
+	//
+	// required: true
+	Provisioner store.Provisioner `json:"provisioner"`
 }
 
 // The Provisioner defines the infrastructure provisioner that should be used
 // for hosting the cluster
-type Provisioner struct {
-	// Options: aws, azure, digital ocean
+type sanitizedProvisioner struct {
 	Provider         string            `json:"provider"`
 	Options          map[string]string `json:"options"`
 	AllowDestruction bool              `json:"allowDestruction"`
 }
 
 // ClusterResponse is the cluster resource returned by the server
+// swagger:response clusterResponse
 type ClusterResponse struct {
-	Name         string               `json:"name"`
-	DesiredState string               `json:"desiredState"`
-	CurrentState string               `json:"currentState"`
-	ClusterIP    string               `json:"clusterIP"`
-	EtcdCount    int                  `json:"etcdCount"`
-	MasterCount  int                  `json:"masterCount"`
-	WorkerCount  int                  `json:"workerCount"`
-	IngressCount int                  `json:"ingressCount"`
-	Provisioner  sanitizedProvisioner `json:"provisioner"`
+	// The name of the cluster
+	//
+	// in: body
+	Name string `json:"name"`
+	// The desired state of the cluster
+	//
+	// in: body
+	DesiredState string `json:"desiredState"`
+	// The current state of the cluster
+	//
+	// in: body
+	CurrentState string `json:"currentState"`
+	// The IP of the cluster
+	//
+	// in: body
+	ClusterIP string `json:"clusterIP"`
+	// The number of etcd nodes
+	//
+	// in: body
+	EtcdCount int `json:"etcdCount"`
+	// The number of master nodes
+	//
+	// in: body
+	MasterCount int `json:"masterCount"`
+	// The number of worker nodes
+	//
+	// in: body
+	WorkerCount int `json:"workerCount"`
+	// The number of ingress nodes
+	//
+	// in: body
+	IngressCount int `json:"ingressCount"`
+	// The provisioner spec, minus any secrets
+	//
+	// in: body
+	Provisioner sanitizedProvisioner `json:"provisioner"`
 }
 
 // Create a cluster as described in the request body's JSON payload.
 func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-
-	// swagger:route POST /clusters creates a cluster
-	//
-	// Creates a cluster according to the spec provided by the user.
-	//
-	//
-	//     Consumes:
-	//     - application/json
-	//
-	//     Produces:
-	//     - application/json
-	//
-	//     Schemes: http, https
-	//
-	//     Responses:
-	//		 202: it worked
-	//       400: bad request
-	//		 409: cluster name in use
-	//		 500: store/unmarshal error
-
 	req := &ClusterRequest{}
 	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
 		http.Error(w, fmt.Sprintf("could not decode body: %s\n", err.Error()), http.StatusBadRequest)
@@ -127,26 +164,6 @@ func (api Clusters) Create(w http.ResponseWriter, r *http.Request, _ httprouter.
 
 // Update the cluster with the given name
 func (api Clusters) Update(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
-
-	// swagger:route PUT /clusters/:name updates a cluster
-	//
-	// Updates a cluster (idempotently) according to the spec provided by the user.
-	//
-	//     Consumes:
-	//     - application/json
-	//
-	//     Produces:
-	//     - application/json
-	//
-	//     Schemes: http, https
-	//
-	//     Responses:
-	//		 202: it worked
-	//       400: bad request
-	//	   	 404: cluster not found
-	//		 409: cluster name in use
-	//		 500: store/unmarshal error
-
 	id := p.ByName("name")
 	fromStore, err := getFromStore(id, api.Store)
 	if err != nil {

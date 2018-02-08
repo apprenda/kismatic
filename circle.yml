@@ -11,7 +11,7 @@ jobs:
       - checkout
       - run: 
           name: Install unzip
-          command: apt update && apt install unzip
+          command: sudo apt update && sudo apt install unzip
       - run:
           name: Unit tests
           command: make bare-test
@@ -19,8 +19,12 @@ jobs:
           name: Verify gofmt
           command: diff -u <(echo -n) <(gofmt -d ./pkg ./cmd)
       - run:
-          name: Verify reference documentation is up to date
+          name: Verify reference CLI documentation is up to date
           command: diff -u <(cat docs/plan-file-reference.md) <(make docs/generate-plan-file-reference.md)
+      - run:
+          name: Verify reference API documentation is up to date
+          command: 
+            "diff -u <(cat docs/swagger.json) <(GOROOT=$(go env GOROOT) tools/swagger_$(go env GOOS) generate spec -b ./pkg/server)"
       - run:
           name: Create release directory # Used for releasing to GH
           command: mkdir release

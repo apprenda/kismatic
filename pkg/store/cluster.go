@@ -32,10 +32,23 @@ type ClusterStatus struct {
 // The Provisioner specifies the infrastructure provisioner that should be used
 // for the cluster.
 type Provisioner struct {
-	Provider         string            `json:"provider"`
-	Options          map[string]string `json:"options"`
-	Secrets          map[string]string `json:"secrets"`
-	AllowDestruction bool              `json:"allowDestruction"`
+	// The cloud provider used to create the cluster. The provider does not necessarily have to match the given values if the user provides their own provider.yaml and provider terraform definitions.
+	//
+	// required: true
+	// pattern: aws|azure|digital ocean|user defined
+	Provider string `json:"provider"`
+	// The options to use for the provider.
+	//
+	// required: true
+	Options map[string]string `json:"options"`
+	// The secrets required by the cloud provider for login.
+	//
+	// required: true
+	Secrets map[string]string `json:"secrets"`
+	// Whether operations should be allowed to destroy resources on the provider
+	//
+	// required: true
+	AllowDestruction bool `json:"allowDestruction"`
 }
 
 // ClusterStore is a smaller interface into the store

@@ -40,3 +40,5 @@ import:
   version: ~0.1.0
   subpackages:
   - cmp
+- package: github.com/rs/cors
+  version: ^1.2.0

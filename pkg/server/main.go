@@ -1,29 +1,3 @@
-// Package classification Kismatic API.
-//
-// Terms Of Service:
-//
-// there are no TOS at this moment, use at your own risk we take no responsibility
-//
-//     Schemes: http, https
-//     Host: localhost
-//     BasePath: /api/v1
-//     Version: 0.1.0
-//     License: Apache 2.0 http://www.apache.org/licenses/
-//     Contact: Emmett Hitz<ehitz@apprenda.com>
-//
-//     Consumes:
-//     - application/json
-//
-//     Produces:
-//     - application/json
-//
-//     Security:
-//
-//     SecurityDefinitions:
-//
-//     Extensions:
-//
-// swagger:meta
 package main
 
 import (

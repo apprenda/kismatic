@@ -1,5 +1,5 @@
-hash: b174a6695087d737a5f02f4435b439f906186dadbca817f51a8f54c738c2ee3c
-updated: 2017-12-21T13:15:23.570518-05:00
+hash: 03a7953f8249b01bbfc2138b9b1e6f02c2361d4bbea3958de2bef0c7a3518b96
+updated: 2018-02-15T13:50:55.092603-05:00
 imports:
 - name: github.com/aws/aws-sdk-go
   version: afe97f91ead47c4a10f1e816c5a1cc8967fb70f9
@@ -64,7 +64,7 @@ imports:
   - signer/remote
   - signer/universal
 - name: github.com/cpuguy83/go-md2man
-  version: 1d903dcb749992f3741d744c0f8376b4bd7eb3e1
+  version: 20f5889cbdc3c73dbd2862796665e7c465ade7d1
   subpackages:
   - md2man
 - name: github.com/dsnet/compress
@@ -158,6 +158,8 @@ imports:
   version: f1be085ecd6fca1b0a0e25eda71f208dcfcee5ab
 - name: github.com/pkg/browser
   version: c90ca0c84f15f81c982e32665bffd8d7aac8f097
+- name: github.com/rs/cors
+  version: 7af7a1e09ba336d2ea14b1ce73bf693c6837dbf6
 - name: github.com/russross/blackfriday
   version: 6d1ef893fcb01b4f50cb6e57ed7df3e2e627b6b2
 - name: github.com/spf13/cobra
