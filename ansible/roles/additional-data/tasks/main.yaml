@@ -1,0 +1,19 @@
+---
+  - name: Create if file dir doesn't exists
+    file:
+      path: "{{ item.destination| dirname }}"
+      mode: "{{ kubernetes_service_mode }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+      state: directory
+    when: item.hosts in hostvars[inventory_hostname].group_names[0] or inventory_hostname == item.hosts or item.hosts == 'all' or item.hosts == ansible_default_ipv4.address
+    with_items: "{{ files }}"
+  - name: copy file
+    copy:
+      src: "{{ item.source }}"
+      dest: "{{ item.destination}}"
+      mode: "{{ kubernetes_service_mode }}"
+      owner: "{{ kubernetes_owner }}"
+      group: "{{ kubernetes_group }}"
+    when: item.hosts in hostvars[inventory_hostname].group_names[0] or inventory_hostname == item.hosts or item.hosts == 'all' or item.hosts == ansible_default_ipv4.address
+    with_items: "{{ files }}"

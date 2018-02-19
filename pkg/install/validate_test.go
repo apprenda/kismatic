@@ -2,6 +2,7 @@ package install
 
 import (
 	"fmt"
+	"os"
 	"testing"
 )
 
@@ -88,6 +89,15 @@ var validPlan = Plan{
 			{
 				Host: "10.10.2.20",
 				Path: "/",
+			},
+		},
+	},
+	AdditionalFiles: AdditionalFiles{
+		Files: []File{
+			{
+				Source:      "/",
+				Destination: "/",
+				Hosts:       "192.168.205.11",
 			},
 		},
 	},
@@ -818,6 +828,87 @@ func TestValidateNFSVolume(t *testing.T) {
 			Host: test.host,
 			Path: test.path,
 		}
+		if valid, _ := v.validate(); valid != test.valid {
+			t.Errorf("Expected valid = %v, but got %v", test.valid, valid)
+		}
+	}
+}
+
+func TestValidatePlanAdditionalFilesDupes(t *testing.T) {
+	p := validPlan
+
+	p.AdditionalFiles.Files = append(p.AdditionalFiles.Files, File{
+		Source:      "/",
+		Destination: "/",
+		Hosts:       "192.168.205.11",
+	})
+
+	assertInvalidPlan(t, p)
+}
+
+func TestValidateFile(t *testing.T) {
+	tests := []struct {
+		srcPath  string
+		destPath string
+		hosts    string
+		valid    bool
+	}{
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    "192.168.205.11",
+			valid:    true,
+		},
+		{
+			srcPath:  "../someRelativePath",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    "192.168.205.11",
+			valid:    true,
+		},
+		{
+			srcPath:  "",
+			destPath: "",
+			hosts:    "192.168.205.11",
+			valid:    false,
+		},
+		{
+			srcPath:  "",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    "192.168.205.11",
+			valid:    false,
+		},
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "",
+			hosts:    "192.168.205.11",
+			valid:    false,
+		},
+		{
+			srcPath:  "../someRelativePath",
+			destPath: "../someRelativePath",
+			hosts:    "192.168.205.11",
+			valid:    false,
+		},
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "../someRelativePath",
+			hosts:    "192.168.205.11",
+			valid:    false,
+		},
+
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    "",
+			valid:    false,
+		}}
+	for _, test := range tests {
+		v := File{
+			Source:      test.srcPath,
+			Destination: test.destPath,
+			Hosts:       test.hosts,
+		}
+		fmt.Println(os.Getwd())
 		if valid, _ := v.validate(); valid != test.valid {
 			t.Errorf("Expected valid = %v, but got %v", test.valid, valid)
 		}
