@@ -34,6 +34,10 @@ type Clusters struct {
 // ClusterParams is a swagger wrapper for a cluster request
 //swagger:parameters createCluster updateCluster
 type ClusterParams struct {
+	// The cluster spec
+	//
+	// in: body
+	// required: true
 	Req *ClusterRequest `json:"body"`
 }
 

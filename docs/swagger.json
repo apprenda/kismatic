@@ -49,12 +49,14 @@
         "operationId": "createCluster",
         "parameters": [
           {
-            "$ref": "#/definitions/cluster",
             "x-go-name": "Req",
             "description": "the cluster specification to create",
             "name": "cluster",
             "in": "body",
-            "required": true
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/cluster"
+            }
           }
         ],
         "responses": {
@@ -114,12 +116,14 @@
         "operationId": "updateCluster",
         "parameters": [
           {
-            "$ref": "#/definitions/cluster",
             "x-go-name": "Req",
             "description": "the cluster specification to create",
             "name": "cluster",
             "in": "body",
-            "required": true
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/cluster"
+            }
           }
         ],
         "responses": {
