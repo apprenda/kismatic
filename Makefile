@@ -81,15 +81,15 @@ clean: shallow-clean
 # YOU SHOULDN'T NEED TO USE ANYTHING BENEATH THIS LINE
 # UNLESS YOU REALLY KNOW WHAT YOU'RE DOING
 # ---------------------------------------------------------------------
+.PHONY: all
 all:
-	@$(MAKE) GOOS=darwin make dist
-	@$(MAKE) GOOS=linux make dist
-	@$(MAKE) make dist-docker
+	@$(MAKE) GOOS=darwin dist
+	@$(MAKE) GOOS=linux dist
 
-
+.PHONY: all-host
 all-host:
-	@$(MAKE) GOOS=darwin make dist-host
-	@$(MAKE) GOOS=linux make dist-host
+	@$(MAKE) GOOS=darwin dist-host
+	@$(MAKE) GOOS=linux dist-host
 
 shallow-clean:
 	rm -rf $(BUILD_OUTPUT)
@@ -207,7 +207,8 @@ copy-vendors: # omit kismatic, inspector, playbooks, terraform since we provide 
 	mkdir -p $(BUILD_OUTPUT)/ansible/playbooks/kuberang/linux/$(GOARCH)/
 	cp vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-$(GOARCH) $(BUILD_OUTPUT)/ansible/playbooks/kuberang/linux/$(GOARCH)/kuberang
 
-tarball/$(GOOS): 
+.PHONY: tarball
+tarball: 
 	rm -f kismatic-$(GOOS).tar.gz
 	tar -czf kismatic-$(GOOS).tar.gz -C $(BUILD_OUTPUT) .
 
@@ -215,25 +216,20 @@ dist-common: build-host build-inspector-host copy-kismatic copy-inspector copy-p
 
 dist-host: shallow-clean dist-common
 
-dist-docker:
-	@$(MAKE) GOOS=linux BUILD_OUTPUT=out-docker dist-common
-	docker build . --no-cache --tag apprenda/kismatic:dev-$(BRANCH)
-	docker push apprenda/kismatic:dev-$(BRANCH)
-
 get-ginkgo:
 	go get github.com/onsi/ginkgo/ginkgo
-	cd integration-tests && ../tools/glide-$(GLIDE_GOOS)-$(HOST_GOARCH) install
+	cd integration-tests && ../tools/glide-linux-$(HOST_GOARCH) install
 
-just-integration-test: integration-tests/vendor
+just-integration-test: get-ginkgo
 	ginkgo --skip "\[slow\]" -p $(GINKGO_OPTS) -v integration-tests
 
-slow-integration-test: integration-tests/vendor
+slow-integration-test: get-ginkgo
 	ginkgo --focus "\[slow\]" -p $(GINKGO_OPTS) -v integration-tests
 
-serial-integration-test: integration-tests/vendor
+serial-integration-test: get-ginkgo
 	ginkgo -v integration-tests
 
-focus-integration-test: integration-tests/vendor
+focus-integration-test: get-ginkgo
 	ginkgo --focus $(FOCUS) $(GINKGO_OPTS) -v integration-tests
 
 docs/update-plan-file-reference.md:

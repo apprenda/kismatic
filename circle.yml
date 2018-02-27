@@ -25,32 +25,26 @@ jobs:
           name: Create release directory # Used for releasing to GH
           command: mkdir release
       - run:
-          name: Darwin dist
-          command: GLIDE_GOOS=linux GOOS=darwin make dist-host
+          name: Darwin, Linux dists
+          command: make all-host
       - run:
           name: Darwin tarball
-          command: make tarball/darwin
+          command: GOOS=darwin make tarball
+      - run:
+          name: Linux tarball
+          command: GOOS=linux make tarball
       - store_artifacts:
           path: kismatic-darwin.tar.gz
           destination: kismatic-darwin-amd64.tar.gz
       - run:
           name: Copy darwin pkg to release dir
           command: mv kismatic-darwin.tar.gz release/kismatic-${CIRCLE_TAG}-darwin-amd64.tar.gz
-      - run:
-          name: Linux dist
-          command: GOOS=linux make dist-host
-      - run:
-          name: Linux tarball
-          command: make tarball/linux
       - store_artifacts:
           path: kismatic-linux.tar.gz
           destination: kismatic-linux-amd64.tar.gz
       - run:
           name: Copy linux pkg to release dir # Used for releasing to GH
           command: cp kismatic-linux.tar.gz release/kismatic-${CIRCLE_TAG}-linux-amd64.tar.gz
-      - run:
-          name: Docker dist
-          command: make dist-docker
       - run:
           name: Set integration test SSH Key 
           command: echo "$KISMATIC_INT_TEST_KEY" | base64 -d > ~/.ssh/kismatic-integration-testing.pem
