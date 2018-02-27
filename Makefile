@@ -36,7 +36,7 @@ GO_VERSION = 1.9.4
 KUBECTL_VERSION = v1.9.3
 HELM_VERSION = v2.8.1
 
-install: build copy-kismatic copy-inspector copy-playbooks
+install: build-all copy-all
 
 dist: shallow-clean
 	@echo "Running dist inside contianer"
@@ -70,13 +70,8 @@ clean: shallow-clean
 	rm -rf bin
 	rm -rf out-*
 	rm -rf vendor
-	rm -rf vendor-ansible
-	rm -rf vendor-kuberang
-	rm -rf vendor-helm
-	rm -rf vendor-kubectl
-	tools/glide-$(HOST_GOOS)-$(HOST_GOARCH) cc
+	rm -rf vendor-*
 	rm -rf tools
-	rm kismatic-*.tar.gz
 
 # YOU SHOULDN'T NEED TO USE ANYTHING BENEATH THIS LINE
 # UNLESS YOU REALLY KNOW WHAT YOU'RE DOING
@@ -93,6 +88,11 @@ all-host:
 
 shallow-clean:
 	rm -rf $(BUILD_OUTPUT)
+
+tar-clean: 
+	rm kismatic-*.tar.gz
+
+build-all: build build-inspector
 
 build: 
 	@echo Building kismatic in container
@@ -131,8 +131,6 @@ build-inspector:
 	    make build-inspector-host
 
 build-inspector-host:
-	@$(MAKE) vendor
-	@$(MAKE) glide-install
 	@$(MAKE) GOOS=linux bin/inspector/linux/$(GOARCH)/kismatic-inspector
 
 
@@ -142,13 +140,27 @@ bin/inspector/$(GOOS)/$(GOARCH)/kismatic-inspector:
 	    -ldflags "-X main.version=$(VERSION) -X 'main.buildDate=$(BUILD_DATE)'"  \
 	    ./cmd/kismatic-inspector
 
-integration-test: dist just-integration-test
+integration-test: 
+	@echo "Running integration tests inside contianer"
+	@docker run                                \
+	    --rm                                   \
+		-e FOCUS="$(FOCUS)"					   \
+	    -e GOOS="linux" 	                   \
+	    -e HOST_GOOS="linux"                   \
+	    -e VERSION="$(VERSION)"                \
+	    -e BUILD_DATE="$(BUILD_DATE)"          \
+	    -u root:root                 		   \
+	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
+	    -w "/go/src/$(PKG)"                    \
+	    circleci/golang:$(GO_VERSION)          \
+		make just-integration-test
 
 glide-install:
+	tools/glide-$(HOST_GOOS)-$(HOST_GOARCH) cc
 	tools/glide-linux-$(HOST_GOARCH) install
 
 .PHONY: vendor
-vendor: vendor-tools vendor-ansible/out vendor-kuberang/$(KUBERANG_VERSION) vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-$(GOARCH) vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH)
+vendor: vendor-tools vendor-ansible/out vendor-provision/out vendor-kuberang/$(KUBERANG_VERSION) vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-$(GOARCH) vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH)
 
 .PHONY: vendor-tools
 vendor-tools: tools/glide-linux-$(HOST_GOARCH)
@@ -167,8 +179,7 @@ vendor-ansible/out:
 
 vendor-provision/out:
 	mkdir -p vendor-provision/out/
-	curl -L https://github.com/apprenda/kismatic-provision/releases/download/$(PROVISIONER_VERSION)/provision-darwin-amd64 -o vendor-provision/out/provision-darwin-amd64
-	curl -L https://github.com/apprenda/kismatic-provision/releases/download/$(PROVISIONER_VERSION)/provision-linux-amd64 -o vendor-provision/out/provision-linux-amd64
+	curl -L https://github.com/apprenda/kismatic-provision/releases/download/$(PROVISIONER_VERSION)/provision-$(GOOS)-amd64 -o vendor-provision/out/provision
 	chmod +x vendor-provision/out/*
 
 vendor-kuberang/$(KUBERANG_VERSION):
@@ -187,24 +198,29 @@ vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH):
 	rm -rf vendor-helm/$(GOOS)-$(GOARCH)
 	chmod +x vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH)
 
+copy-all: copy-kismatic copy-playbooks copy-inspector copy-vendors
+
 copy-kismatic:
 	mkdir -p $(BUILD_OUTPUT)
 	cp bin/$(GOOS)/kismatic $(BUILD_OUTPUT)
 
 copy-inspector:
+	rm -rf $(BUILD_OUTPUT)/ansible/playbooks/inspector
 	mkdir -p $(BUILD_OUTPUT)/ansible/playbooks/inspector
 	cp -r bin/inspector/* $(BUILD_OUTPUT)/ansible/playbooks/inspector
 
 copy-playbooks:
+	mkdir -p $(BUILD_OUTPUT)/ansible
+	cp -r vendor-ansible/out/ansible/* $(BUILD_OUTPUT)/ansible
 	rm -rf $(BUILD_OUTPUT)/ansible/playbooks
 	cp -r ansible $(BUILD_OUTPUT)/ansible/playbooks
 
 copy-vendors: # omit kismatic, inspector, playbooks, terraform since we provide configs for those.
-	mkdir -p $(BUILD_OUTPUT)/ansible
 	cp -r vendor-ansible/out/ansible/* $(BUILD_OUTPUT)/ansible
 	cp vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-$(GOARCH) $(BUILD_OUTPUT)/kubectl
 	cp vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH) $(BUILD_OUTPUT)/helm
 	mkdir -p $(BUILD_OUTPUT)/ansible/playbooks/kuberang/linux/$(GOARCH)/
+	cp vendor-provision/out/provision $(BUILD_OUTPUT)/provision
 	cp vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-$(GOARCH) $(BUILD_OUTPUT)/ansible/playbooks/kuberang/linux/$(GOARCH)/kuberang
 
 .PHONY: tarball
@@ -212,24 +228,28 @@ tarball:
 	rm -f kismatic-$(GOOS).tar.gz
 	tar -czf kismatic-$(GOOS).tar.gz -C $(BUILD_OUTPUT) .
 
-dist-common: build-host build-inspector-host copy-kismatic copy-inspector copy-playbooks copy-vendors
+dist-common: build-host build-inspector-host copy-all
 
 dist-host: shallow-clean dist-common
 
 get-ginkgo:
 	go get github.com/onsi/ginkgo/ginkgo
-	cd integration-tests && ../tools/glide-linux-$(HOST_GOARCH) install
+	cd integration-tests
 
 just-integration-test: get-ginkgo
+	@$(MAKE) GOOS=linux tarball
 	ginkgo --skip "\[slow\]" -p $(GINKGO_OPTS) -v integration-tests
 
 slow-integration-test: get-ginkgo
+	@$(MAKE) GOOS=linux tarball
 	ginkgo --focus "\[slow\]" -p $(GINKGO_OPTS) -v integration-tests
 
 serial-integration-test: get-ginkgo
+	@$(MAKE) GOOS=linux tarball
 	ginkgo -v integration-tests
 
 focus-integration-test: get-ginkgo
+	@$(MAKE) GOOS=linux tarball
 	ginkgo --focus $(FOCUS) $(GINKGO_OPTS) -v integration-tests
 
 docs/update-plan-file-reference.md:

@@ -73,7 +73,7 @@ var _ = BeforeSuite(func() {
 		Fail(fmt.Sprintf("Failed to make temp dir: %v", err))
 	}
 	// Copy the current version of kismatic to known location
-	cmd := exec.Command("cp", "../out/kismatic.tar.gz", currentKismaticDir)
+	cmd := exec.Command("cp", "../kismatic-linux.tar.gz", currentKismaticDir)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	if err = cmd.Run(); err != nil {
@@ -143,7 +143,7 @@ func extractTarball(src, dst string) error {
 // extracts the current build of kismatic (the one being tested)
 func extractCurrentKismatic(dest string) error {
 	By(fmt.Sprintf("Extracting current kismatic to directory %q", dest))
-	if err := extractTarball(filepath.Join(currentKismaticDir, "kismatic.tar.gz"), dest); err != nil {
+	if err := extractTarball(filepath.Join(currentKismaticDir, "kismatic-linux.tar.gz"), dest); err != nil {
 		return fmt.Errorf("error extracting kismatic to %s: %v", dest, err)
 	}
 	return nil
