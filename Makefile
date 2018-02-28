@@ -46,7 +46,7 @@ dist: shallow-clean
 	    -e HOST_GOOS="linux"                   \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                 		   \
+	    -u root:root                           \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w "/go/src/$(PKG)"                    \
 	    circleci/golang:$(GO_VERSION)          \
@@ -55,8 +55,8 @@ dist: shallow-clean
 test:
 	@docker run                             \
 	    --rm                                \
-	    -e HOST_GOOS="linux"               \
-	    -u root:root              \
+	    -e HOST_GOOS="linux"                \
+	    -u root:root                        \
 	    -v "$(shell pwd)":/go/src/$(PKG)    \
 	    -v /tmp:/tmp                        \
 	    -w /go/src/$(PKG)                   \
@@ -98,11 +98,11 @@ build:
 	@echo Building kismatic in container
 	@docker run                                \
 	    --rm                                   \
-	    -e GOOS="$(GOOS)" 		      		   \
+	    -e GOOS="$(GOOS)"                      \
 	    -e HOST_GOOS="linux"                   \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                 		   \
+	    -u root:root                           \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w /go/src/$(PKG)                      \
 	    circleci/golang:$(GO_VERSION)          \
@@ -124,7 +124,7 @@ build-inspector:
 	    -e HOST_GOOS="linux"                   \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                		   \
+	    -u root:root                           \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w /go/src/$(PKG)                      \
 	    circleci/golang:$(GO_VERSION)          \
@@ -144,12 +144,12 @@ integration-test:
 	@echo "Running integration tests inside contianer"
 	@docker run                                \
 	    --rm                                   \
-		-e FOCUS="$(FOCUS)"					   \
+        -e FOCUS="$(FOCUS)"	                   \
 	    -e GOOS="linux" 	                   \
 	    -e HOST_GOOS="linux"                   \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                 		   \
+	    -u root:root                           \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w "/go/src/$(PKG)"                    \
 	    circleci/golang:$(GO_VERSION)          \
@@ -279,5 +279,5 @@ trigger-ci-slow-tests:
 trigger-ci-focused-tests:
 	@echo Triggering focused test
 	curl -u $(CIRCLE_CI_TOKEN): -X POST --header "Content-Type: application/json"     \
-		-d "{\"build_parameters\": {\"FOCUS\": \"$(FOCUS)\"}}"                         \
+		-d "{\"build_parameters\": {\"FOCUS\": \"$(FOCUS)\"}}"                        \
 		$(CIRCLE_ENDPOINT)
