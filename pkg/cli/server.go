@@ -180,17 +180,17 @@ func (ssg storeSecretsGetter) GetAsEnvironmentVariables(clusterName string, expe
 	storedSecrets := c.Spec.Provisioner.Secrets
 	var envVars []string
 	for expectedKey, envVar := range expected {
-		var found bool
 		for key, value := range storedSecrets {
 			if key == expectedKey {
-				found = true
 				envVars = append(envVars, fmt.Sprintf("%s=%s", envVar, value))
 				continue
 			}
 		}
-		if !found {
-			return nil, fmt.Errorf("required option %q was not provided", expectedKey)
+		if value := os.Getenv(envVar); value != "" {
+			envVars = append(envVars, fmt.Sprintf("%s=%s", envVar, value))
+			continue
 		}
+		return nil, fmt.Errorf("required option %q was not provided", expectedKey)
 	}
 	return envVars, nil
 }

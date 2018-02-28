@@ -251,6 +251,11 @@ func (s *HttpServer) Init() error {
 	//   in: body
 	//   description: the cluster specification to create
 	//   required: true
+	// - name: name
+	//   in: path
+	//   description: name of the cluster
+	//   required: true
+	//   type: string
 	// responses:
 	//   '202':
 	//     description: Accepted

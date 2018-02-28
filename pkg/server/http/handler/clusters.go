@@ -31,7 +31,6 @@ type Clusters struct {
 	Logger    *log.Logger
 }
 
-// ClusterParams is a swagger wrapper for a cluster request
 //swagger:parameters createCluster updateCluster
 type ClusterParams struct {
 	// The cluster spec

@@ -260,8 +260,9 @@ func (at AnyTerraform) buildPopulatedPlan(plan install.Plan) (*install.Plan, err
 	if err != nil {
 		return nil, err
 	}
-	masterNodes := install.Merge(install.NodeGroup{Nodes: plan.Master.Nodes, ExpectedCount: plan.Master.ExpectedCount},
-		nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
+	masterNodes := install.Merge(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts),
+		install.NodeGroup{Nodes: plan.Master.Nodes, ExpectedCount: plan.Master.ExpectedCount},
+	)
 	mng := install.MasterNodeGroup{
 		ExpectedCount: masterNodes.ExpectedCount,
 		Nodes:         masterNodes.Nodes,
@@ -279,14 +280,14 @@ func (at AnyTerraform) buildPopulatedPlan(plan install.Plan) (*install.Plan, err
 	if err != nil {
 		return nil, err
 	}
-	plan.Etcd = install.Merge(plan.Etcd, nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
+	plan.Etcd = install.Merge(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts), plan.Etcd)
 
 	// Workers
 	tfNodes, err = at.getTerraformNodes(plan.Cluster.Name, "worker")
 	if err != nil {
 		return nil, err
 	}
-	plan.Worker = install.Merge(plan.Worker, nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
+	plan.Worker = install.Merge(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts), plan.Worker)
 
 	// Ingress
 	if plan.Ingress.ExpectedCount > 0 {
@@ -294,8 +295,7 @@ func (at AnyTerraform) buildPopulatedPlan(plan install.Plan) (*install.Plan, err
 		if err != nil {
 			return nil, fmt.Errorf("error getting ingress node information: %v", err)
 		}
-		plan.Ingress = install.OptionalNodeGroup(install.Merge(install.NodeGroup{Nodes: plan.Ingress.Nodes, ExpectedCount: plan.Ingress.ExpectedCount},
-			nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts)))
+		plan.Ingress = install.OptionalNodeGroup(install.Merge(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts), install.NodeGroup{Nodes: plan.Ingress.Nodes, ExpectedCount: plan.Ingress.ExpectedCount}))
 	}
 
 	// Storage
@@ -304,7 +304,7 @@ func (at AnyTerraform) buildPopulatedPlan(plan install.Plan) (*install.Plan, err
 		if err != nil {
 			return nil, fmt.Errorf("error getting storage node information: %v", err)
 		}
-		plan.Storage = install.OptionalNodeGroup(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts))
+		plan.Storage = install.OptionalNodeGroup(install.Merge(nodeGroupFromSlices(tfNodes.IPs, tfNodes.InternalIPs, tfNodes.Hosts), install.NodeGroup{Nodes: plan.Storage.Nodes, ExpectedCount: plan.Storage.ExpectedCount}))
 	}
 
 	return &plan, nil

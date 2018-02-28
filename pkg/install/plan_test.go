@@ -207,7 +207,7 @@ func TestReadDeprecatedDashboard(t *testing.T) {
 
 }
 
-// In general, NewGroup represents the inbound Terraform NodeGroup
+// In general, Newgroup represents the inbound Terraform NodeGroup
 // And should never be labelled.
 func TestMerge(t *testing.T) {
 	tests := []struct {
@@ -218,7 +218,7 @@ func TestMerge(t *testing.T) {
 	}{
 		{
 			name: "should overwrite labels",
-			NewGroup: NodeGroup{
+			OldGroup: NodeGroup{
 				ExpectedCount: 4,
 				Nodes: []Node{
 					Node{
@@ -275,7 +275,7 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			OldGroup: NodeGroup{
+			NewGroup: NodeGroup{
 				ExpectedCount: 4,
 				Nodes: []Node{
 					Node{
@@ -392,7 +392,7 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "should merge labels",
-			OldGroup: NodeGroup{
+			NewGroup: NodeGroup{
 				ExpectedCount: 4,
 				Nodes: []Node{
 					Node{
@@ -449,7 +449,7 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			NewGroup: NodeGroup{
+			OldGroup: NodeGroup{
 				ExpectedCount: 4,
 				Nodes: []Node{
 					Node{
@@ -574,63 +574,6 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "should scale up and maintain order",
-			OldGroup: NodeGroup{
-				ExpectedCount: 4,
-				Nodes: []Node{
-					Node{
-						InternalIP: "1",
-						IP:         "1",
-						Host:       "1",
-						Labels: map[string]string{
-							"this label": "should NOT remain",
-						},
-						KubeletOptions: KubeletOptions{
-							map[string]string{
-								"this override": "should NOT remain",
-							},
-						},
-					},
-					Node{
-						InternalIP: "2",
-						IP:         "2",
-						Host:       "2",
-						Labels: map[string]string{
-							"this label": "should NOT remain",
-						},
-						KubeletOptions: KubeletOptions{
-							map[string]string{
-								"this override": "should NOT remain",
-							},
-						},
-					},
-					Node{
-						InternalIP: "3",
-						IP:         "3",
-						Host:       "3",
-						Labels: map[string]string{
-							"this label": "should NOT remain",
-						},
-						KubeletOptions: KubeletOptions{
-							map[string]string{
-								"this override": "should NOT remain",
-							},
-						},
-					},
-					Node{
-						InternalIP: "4",
-						IP:         "4",
-						Host:       "4",
-						Labels: map[string]string{
-							"this label": "should NOT remain",
-						},
-						KubeletOptions: KubeletOptions{
-							map[string]string{
-								"this override": "should NOT remain",
-							},
-						},
-					},
-				},
-			},
 			NewGroup: NodeGroup{
 				ExpectedCount: 6,
 				Nodes: []Node{
@@ -639,11 +582,11 @@ func TestMerge(t *testing.T) {
 						IP:         "1",
 						Host:       "1",
 						Labels: map[string]string{
-							"this label": "should remain",
+							"this label": "should NOT remain",
 						},
 						KubeletOptions: KubeletOptions{
 							map[string]string{
-								"this override": "should remain",
+								"this override": "should NOT remain",
 							},
 						},
 					},
@@ -652,11 +595,11 @@ func TestMerge(t *testing.T) {
 						IP:         "2",
 						Host:       "2",
 						Labels: map[string]string{
-							"this label": "should remain",
+							"this label": "should NOT remain",
 						},
 						KubeletOptions: KubeletOptions{
 							map[string]string{
-								"this override": "should remain",
+								"this override": "should NOT remain",
 							},
 						},
 					},
@@ -665,11 +608,11 @@ func TestMerge(t *testing.T) {
 						IP:         "3",
 						Host:       "3",
 						Labels: map[string]string{
-							"this label": "should remain",
+							"this label": "should NOT remain",
 						},
 						KubeletOptions: KubeletOptions{
 							map[string]string{
-								"this override": "should remain",
+								"this override": "should NOT remain",
 							},
 						},
 					},
@@ -678,11 +621,11 @@ func TestMerge(t *testing.T) {
 						IP:         "4",
 						Host:       "4",
 						Labels: map[string]string{
-							"this label": "should remain",
+							"this label": "should NOT remain",
 						},
 						KubeletOptions: KubeletOptions{
 							map[string]string{
-								"this override": "should remain",
+								"this override": "should NOT remain",
 							},
 						},
 					},
@@ -703,6 +646,63 @@ func TestMerge(t *testing.T) {
 						InternalIP: "6",
 						IP:         "6",
 						Host:       "6",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+			OldGroup: NodeGroup{
+				ExpectedCount: 4,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "3",
+						IP:         "3",
+						Host:       "3",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
 						Labels: map[string]string{
 							"this label": "should remain",
 						},
@@ -800,6 +800,50 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "should scale down and maintain order",
+			NewGroup: NodeGroup{
+				ExpectedCount: 3,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
 			OldGroup: NodeGroup{
 				ExpectedCount: 3,
 				Nodes: []Node{
@@ -856,6 +900,57 @@ func TestMerge(t *testing.T) {
 						},
 					},
 				},
+			},
+			ExpectedGroup: NodeGroup{
+				ExpectedCount: 3,
+				Nodes: []Node{
+					Node{
+						InternalIP: "1",
+						IP:         "1",
+						Host:       "1",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "2",
+						IP:         "2",
+						Host:       "2",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+					Node{
+						InternalIP: "4",
+						IP:         "4",
+						Host:       "4",
+						Labels: map[string]string{
+							"this label": "should remain",
+						},
+						KubeletOptions: KubeletOptions{
+							map[string]string{
+								"this override": "should remain",
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "should scale up from nothing",
+			OldGroup: NodeGroup{
+				ExpectedCount: 0,
+				Nodes:         []Node{},
 			},
 			NewGroup: NodeGroup{
 				ExpectedCount: 3,

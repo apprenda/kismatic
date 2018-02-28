@@ -585,6 +585,7 @@ func mapMerge(l, r map[string]string) map[string]string {
 	return ret
 }
 
+//Merge is used to merge two node groups, including their contents.
 func Merge(l, r NodeGroup) NodeGroup {
 	var ret NodeGroup
 	lmin := len(l.Nodes)
@@ -604,9 +605,9 @@ Outer:
 					IP:         l.Nodes[i].IP,
 					InternalIP: l.Nodes[i].InternalIP,
 					Host:       l.Nodes[i].Host,
-					Labels:     mapMerge(l.Nodes[i].Labels, r.Nodes[j].Labels),
+					Labels:     mapMerge(r.Nodes[j].Labels, l.Nodes[i].Labels),
 					KubeletOptions: KubeletOptions{
-						Overrides: mapMerge(l.Nodes[i].KubeletOptions.Overrides, r.Nodes[j].KubeletOptions.Overrides),
+						Overrides: mapMerge(r.Nodes[j].KubeletOptions.Overrides, l.Nodes[i].KubeletOptions.Overrides),
 					},
 				})
 				//significantly faster than just axing the single element

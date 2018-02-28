@@ -124,6 +124,13 @@
             "schema": {
               "$ref": "#/definitions/cluster"
             }
+          },
+          {
+            "type": "string",
+            "description": "name of the cluster",
+            "name": "name",
+            "in": "path",
+            "required": true
           }
         ],
         "responses": {
