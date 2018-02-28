@@ -17,21 +17,21 @@
   # 2) apply the new DS
   # 3) shutdown the existing pod and wait
   - name: get the name of the kube-proxy pod running on this node
-    command: kubectl get pods -l=k8s-app=kube-proxy --template {%raw%}'{{range .items}}{{if eq .spec.nodeName{%endraw%} "{{ inventory_hostname|lower }}"{%raw%}}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}'{%endraw%} -n kube-system
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods -l=k8s-app=kube-proxy --template {%raw%}'{{range .items}}{{if eq .spec.nodeName{%endraw%} "{{ inventory_hostname|lower }}"{%raw%}}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}'{%endraw%} -n kube-system
     register: pod_name
     when: upgrading is defined and upgrading|bool == true
 
   - name: start kube-proxy
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/kube-proxy.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/kube-proxy.yaml
     run_once: true
 
   - name: delete kube-proxy pod running on this node
-    command: kubectl delete pod {{ pod_name.stdout }} -n kube-system --now
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} delete pod {{ pod_name.stdout }} -n kube-system --now
     when: pod_name is defined and pod_name.stdout is defined and pod_name.stdout != ""
 
     # wait for pod to shutdown
   - name: wait until the kube-proxy pod running on this node is deleted
-    command: kubectl get pods {{ pod_name.stdout }} --ignore-not-found=true -n kube-system
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods {{ pod_name.stdout }} --ignore-not-found=true -n kube-system
     register: poddeleted
     until: poddeleted|success and poddeleted.stdout == ""
     retries: 20
@@ -39,17 +39,17 @@
     when: pod_name is defined and pod_name.stdout is defined and pod_name.stdout != ""
 
   - name: label nodes for kube-proxy
-    command: kubectl label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname|lower }} --kubeconfig {{ kubernetes_kubeconfig.kubectl }} kismatic/kube-proxy=true
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} label --overwrite nodes --selector kubernetes.io/hostname={{ inventory_hostname|lower }} kismatic/kube-proxy=true
     
   - name: get desired number of kube-proxy pods
-    command: kubectl get ds kube-proxy -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds kube-proxy -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
     register: desiredPods
     until: desiredPods|success and desiredPods.stdout|int > 0
     retries: 20
     delay: 6
     run_once: true
   - name: wait until all kube-proxy pods are ready
-    command: kubectl get ds kube-proxy -o=jsonpath='{.status.numberReady}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds kube-proxy -o=jsonpath='{.status.numberReady}' --namespace=kube-system
     register: readyPods
     until: desiredPods.stdout|int == readyPods.stdout|int
     retries: 20

@@ -185,7 +185,7 @@ func testStatefulWorkload(nodes provisionedNodes, sshKey string) error {
 		if err != nil {
 			return err
 		}
-		return runViaSSH([]string{"sudo kubectl create -f /tmp/" + resource}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
+		return runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config create -f /tmp/" + resource}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
 	}
 
 	By("Creating a storage volume")
@@ -201,14 +201,14 @@ func testStatefulWorkload(nodes provisionedNodes, sshKey string) error {
 	}
 
 	By("Verifying the reclaim policy on the Persistent Volume")
-	reclaimPolicyCmd := "sudo kubectl get pv kis-int-test -o jsonpath={.spec.persistentVolumeReclaimPolicy}"
+	reclaimPolicyCmd := "sudo kubectl --kubeconfig /root/.kube/config get pv kis-int-test -o jsonpath={.spec.persistentVolumeReclaimPolicy}"
 	err = runViaSSH([]string{reclaimPolicyCmd, fmt.Sprintf("if [ \"`%s`\" = \"%s\" ]; then exit 0; else exit 1; fi", reclaimPolicyCmd, reclaimPolicy)}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("Found an unexpected reclaim policy. Expected %s", reclaimPolicy)
 	}
 
 	By("Verifying the access modes on the Persistent Volume")
-	accessModesCmd := "sudo kubectl get pv kis-int-test -o jsonpath={.spec.accessModes}"
+	accessModesCmd := "sudo kubectl --kubeconfig /root/.kube/config get pv kis-int-test -o jsonpath={.spec.accessModes}"
 	expectedAccessModes := "[" + strings.Join(accessModes, " ") + "]"
 	err = runViaSSH([]string{accessModesCmd, fmt.Sprintf("if [ \"`%s`\" = \"%s\" ]; then exit 0; else exit 1; fi", accessModesCmd, expectedAccessModes)}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
 	if err != nil {
@@ -227,7 +227,7 @@ func testStatefulWorkload(nodes provisionedNodes, sshKey string) error {
 
 	By("Verifying the completion of the write workload")
 	time.Sleep(1 * time.Minute)
-	jobStatusCmd := "sudo kubectl get jobs kismatic-writer -o jsonpath={.status.conditions[0].status}"
+	jobStatusCmd := "sudo kubectl --kubeconfig /root/.kube/config get jobs kismatic-writer -o jsonpath={.status.conditions[0].status}"
 	err = runViaSSH([]string{jobStatusCmd, fmt.Sprintf("if [ \"`%s`\" = \"True\" ]; then exit 0; else exit 1; fi", jobStatusCmd)}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("Writer workload failed: %v", err)
@@ -240,7 +240,7 @@ func testStatefulWorkload(nodes provisionedNodes, sshKey string) error {
 
 	By("Verifying the completion of the reader workload")
 	time.Sleep(1 * time.Minute)
-	jobStatusCmd = "sudo kubectl get jobs kismatic-reader -o jsonpath={.status.conditions[0].status}"
+	jobStatusCmd = "sudo kubectl --kubeconfig /root/.kube/config get jobs kismatic-reader -o jsonpath={.status.conditions[0].status}"
 	err = runViaSSH([]string{jobStatusCmd, fmt.Sprintf("if [ \"`%s`\" = \"True\" ]; then exit 0; else exit 1; fi", jobStatusCmd)}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("Reader workload failed: %v", err)
@@ -253,7 +253,7 @@ func testStatefulWorkload(nodes provisionedNodes, sshKey string) error {
 	}
 
 	By("Verifying the storage volume was deleted")
-	err = runViaSSH([]string{"sudo kubectl get pv 2>&1 | grep 'No resources found.'"}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
+	err = runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config get pv 2>&1 | grep 'No resources found.'"}, []NodeDeets{nodes.master[0]}, sshKey, 30*time.Second)
 	if err != nil {
 		return fmt.Errorf("Error validating the volume was removed: %v", err)
 	}

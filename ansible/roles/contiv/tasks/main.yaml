@@ -11,7 +11,7 @@
   # Runs on the first master node if we find that the secret does 
   # not exist
   - name: check if contiv proxy server certs secert exists
-    command: kubectl -n kube-system get secret {{ contiv.proxy_server_certs_secret_name }} -o jsonpath='{.metadata.name}' --ignore-not-found 
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} -n kube-system get secret {{ contiv.proxy_server_certs_secret_name }} -o jsonpath='{.metadata.name}' --ignore-not-found 
     register: certs_check_result
 
   - block:
@@ -32,7 +32,7 @@
         - "{{ contiv.certs.proxy_server_cert_filename }}"
 
     - name: create secret for contiv proxy server certificates
-      command: kubectl -n kube-system create secret tls {{ contiv.proxy_server_certs_secret_name }} --key=/tmp/contiv-certs/{{ contiv.certs.proxy_server_key_filename }} --cert=/tmp/contiv-certs/{{ contiv.certs.proxy_server_cert_filename }}
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} -n kube-system create secret tls {{ contiv.proxy_server_certs_secret_name }} --key=/tmp/contiv-certs/{{ contiv.certs.proxy_server_key_filename }} --cert=/tmp/contiv-certs/{{ contiv.certs.proxy_server_cert_filename }}
 
     - name: delete temp contiv certs
       file:
@@ -62,12 +62,12 @@
         - "netplugin.yaml"
 
     - name: deploy contiv components
-      command: kubectl apply -f /etc/contiv --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f /etc/contiv
       run_once: true
     
     # Wait until netmaster pods are up
     - name: get desired number of netmaster pods
-      command: kubectl get ds contiv-netmaster -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds contiv-netmaster -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
       register: desiredPods
       until: desiredPods|success
       retries: 20
@@ -75,7 +75,7 @@
       run_once: true
 
     - name: wait until all netmaster pods are ready
-      command: kubectl get ds contiv-netmaster -o=jsonpath='{.status.numberAvailable}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds contiv-netmaster -o=jsonpath='{.status.numberAvailable}' --namespace=kube-system
       register: readyPods
       until: desiredPods.stdout|int == readyPods.stdout|int
       retries: 20
@@ -104,12 +104,12 @@
       run_once: true
 
     - name: restart netplugin to propagate forwarding mode change
-      command: kubectl -n kube-system delete pod --selector k8s-app=contiv-netplugin
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} -n kube-system delete pod --selector k8s-app=contiv-netplugin
       run_once: true
 
     # Wait until netplugins pods are up
     - name: get desired number of netplugin pods
-      command: kubectl get ds contiv-netplugin -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds contiv-netplugin -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
       register: desiredPods
       until: desiredPods|success
       retries: 20
@@ -117,7 +117,7 @@
       run_once: true
 
     - name: wait until all netplugin pods are ready
-      command: kubectl get ds contiv-netplugin -o=jsonpath='{.status.numberReady}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds contiv-netplugin -o=jsonpath='{.status.numberReady}' --namespace=kube-system
       register: readyPods
       until: desiredPods.stdout|int == readyPods.stdout|int
       retries: 20

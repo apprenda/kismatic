@@ -512,6 +512,13 @@ func TestGenerateClusterCertificatesValidateCertificateInformation(t *testing.T)
 			expectedOrganizations: []string{"system:masters"},
 		},
 		{
+			name:                  "kube-apiserver kubelet client certificate",
+			certFilename:          "apiserver-kubelet-client.pem",
+			issuer:                "someName",
+			expectedCommonName:    "kube-apiserver-kubelet-client",
+			expectedOrganizations: []string{"system:masters"},
+		},
+		{
 			name:                  "proxy client certificate",
 			certFilename:          "proxy-client.pem",
 			issuer:                "proxyClientCA",

@@ -22,7 +22,7 @@ func addNodeToCluster(newNode NodeDeets, sshKey string, labels []string, roles [
 	}
 
 	By("Verifying that the node was added")
-	sshCmd := fmt.Sprintf("sudo kubectl get nodes %s --kubeconfig /root/.kube/config", strings.ToLower(newNode.Hostname)) // the api server is case-sensitive.
+	sshCmd := fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get nodes %s", strings.ToLower(newNode.Hostname)) // the api server is case-sensitive.
 	out, err := executeCmd(sshCmd, newNode.PublicIP, newNode.SSHUser, sshKey)
 	if err != nil {
 		return fmt.Errorf("error getting nodes using kubectl: %v. Command output was: %s", err, out)

@@ -103,11 +103,6 @@ const defaultRuleSet = `---
   - ["master"]
   port: 6443
   procName: kube-apiserver
-- kind: TCPPortAvailable
-  when: 
-  - ["master"]
-  port: 8080
-  procName: kube-apiserver
 # kube-scheduler
 - kind: TCPPortAvailable
   when: 
@@ -122,7 +117,6 @@ const defaultRuleSet = `---
   procName: kube-controller
 
 # Ports used by K8s master are accessible
-# Port 8080 is not accessible from outside
 - kind: TCPPortAccessible
   when: 
   - ["master"]

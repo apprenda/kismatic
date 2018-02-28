@@ -29,7 +29,6 @@ func GetSSHKeyFile() (string, error) {
 }
 
 type installOptions struct {
-	adminPassword                string
 	disablePackageInstallation   bool
 	disableDockerInstallation    bool
 	disconnectedInstallation     bool
@@ -56,10 +55,9 @@ type installOptions struct {
 	kubeletOptions               map[string]string
 }
 
-func installKismaticMini(node NodeDeets, sshKey string, adminPassword string) error {
+func installKismaticMini(node NodeDeets, sshKey string) error {
 	sshUser := node.SSHUser
 	plan := PlanAWS{
-		AdminPassword:       adminPassword,
 		Etcd:                []NodeDeets{node},
 		Master:              []NodeDeets{node},
 		Worker:              []NodeDeets{node},
@@ -91,7 +89,6 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 		disableHelm = true
 	}
 	plan := PlanAWS{
-		AdminPassword:              installOpts.adminPassword,
 		DisablePackageInstallation: installOpts.disablePackageInstallation,
 		DisableDockerInstallation:  installOpts.disableDockerInstallation,
 		DisconnectedInstallation:   installOpts.disconnectedInstallation,

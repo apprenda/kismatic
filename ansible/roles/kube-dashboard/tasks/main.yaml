@@ -8,12 +8,12 @@
       src: kubernetes-dashboard.yaml
       dest: "{{ kubernetes_spec_dir }}/kubernetes-dashboard.yaml"
   - name: start kubernetes-dashboard service
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/kubernetes-dashboard.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/kubernetes-dashboard.yaml
     register: out
 
   - block:
     - name: wait until kubernetes-dashboard pods are ready
-      command: kubectl get deployment kubernetes-dashboard -n kube-system -o jsonpath='{.status.availableReplicas}'
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment kubernetes-dashboard -n kube-system -o jsonpath='{.status.availableReplicas}'
       register: readyReplicas
       until: readyReplicas.stdout|int == [2, groups['worker'] | length] | min
       retries: 24

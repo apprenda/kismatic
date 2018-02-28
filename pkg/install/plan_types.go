@@ -920,6 +920,15 @@ func (plan Plan) certSpecs(clusterCA *tls.CA, proxyClientCA *tls.CA) ([]certific
 		}
 	}
 
+	// Kube APIServer Kubelet Client certificate
+	m = append(m, certificateSpec{
+		description:   "kube-apiserver kubelet client",
+		filename:      kubeAPIServerKubeletClientClientFilename,
+		commonName:    kubeAPIServerKubeletClientClientCommonName,
+		organizations: []string{adminGroup},
+		ca:            clusterCA,
+	})
+
 	// Proxy Client certificate
 	m = append(m, certificateSpec{
 		description:   "proxy client",

@@ -41,4 +41,4 @@
     dest: "{{ kubernetes_spec_dir }}/add-persistent-volume-{{nfs_index}}.yaml"
 
 - name: create pv pv{{ nfs_index }}
-  command: kubectl apply -f {{ kubernetes_spec_dir }}/add-persistent-volume-{{nfs_index}}.yaml
+  command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/add-persistent-volume-{{nfs_index}}.yaml

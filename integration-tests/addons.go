@@ -29,7 +29,7 @@ func verifyHeapster(master NodeDeets, sshKey string) error {
 
 	// create PVCs
 	for _, f := range pvcs {
-		if err := runViaSSH([]string{fmt.Sprintf("sudo kubectl apply -f /tmp/%s", f)}, []NodeDeets{master}, sshKey, 1*time.Minute); err != nil {
+		if err := runViaSSH([]string{fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config apply -f /tmp/%s", f)}, []NodeDeets{master}, sshKey, 1*time.Minute); err != nil {
 			return fmt.Errorf("error creating pvc %s: %v", f, err)
 		}
 	}
@@ -53,7 +53,7 @@ func verifyTiller(master NodeDeets, sshKey string) error {
 func verifyDeployment(deployments map[string]int, master NodeDeets, sshKey string) error {
 	for k, v := range deployments {
 		if err := retry.WithBackoff(func() error {
-			return runViaSSH([]string{fmt.Sprintf("sudo kubectl get deployment %s -n kube-system -o jsonpath='{.status.availableReplicas}' | grep %d", k, v)}, []NodeDeets{master}, sshKey, 1*time.Minute)
+			return runViaSSH([]string{fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get deployment %s -n kube-system -o jsonpath='{.status.availableReplicas}' | grep %d", k, v)}, []NodeDeets{master}, sshKey, 1*time.Minute)
 		}, 10); err != nil {
 			return fmt.Errorf("error verifying deployment %s: %v", k, err)
 		}

@@ -12,6 +12,6 @@
       src: gluster-healthz-daemonset.yaml
       dest: "{{ kubernetes_spec_dir }}/gluster-healthz-daemonset.yaml"
   - name: create gluster-healthz DaemonSet
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/gluster-healthz-daemonset.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/gluster-healthz-daemonset.yaml
   - name: create NFS service on the cluster
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/gluster-service.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/gluster-service.yaml

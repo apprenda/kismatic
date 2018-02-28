@@ -28,9 +28,6 @@ spec:
     - containerPort: {{ kubernetes_master_secure_port }}
       hostPort: {{ kubernetes_master_secure_port }}
       name: https
-    - containerPort: {{ kubernetes_master_insecure_port }}
-      hostPort: {{ kubernetes_master_insecure_port }}
-      name: local
     volumeMounts:
     - mountPath: /etc/kubernetes
       name: ssl-certs-kubernetes
@@ -50,7 +47,8 @@ spec:
       httpGet:
         host: 127.0.0.1
         path: /healthz
-        port: {{ kubernetes_master_insecure_port }}
+        port: {{ kubernetes_master_secure_port }}
+        scheme: HTTPS
       initialDelaySeconds: 15
       timeoutSeconds: 15
       failureThreshold: 8

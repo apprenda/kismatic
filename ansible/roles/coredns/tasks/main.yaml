@@ -8,12 +8,12 @@
       src: coredns.yaml
       dest: "{{ kubernetes_spec_dir }}/coredns.yaml"
   - name: start coredns service
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/coredns.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/coredns.yaml
     register: out
   
   - block:
     - name: wait up to 5 minutes until DNS pods are ready
-      command: kubectl get deployment coredns -n kube-system -o jsonpath='{.status.availableReplicas}'
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment coredns -n kube-system -o jsonpath='{.status.availableReplicas}'
       register: readyReplicas
       until: readyReplicas.stdout|int == cluster_dns_replicas|int
       retries: 30
@@ -30,7 +30,7 @@
       when: readyReplicas.stdout|int != cluster_dns_replicas|int
 
     - name: get the logs of the first DNS pod that did not start up in time
-      command: kubectl logs -n kube-system {{ failedDNSPodNames.stdout_lines[0] }} --tail 15
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} logs -n kube-system {{ failedDNSPodNames.stdout_lines[0] }} --tail 15
       register: failedDNSPodLogs
       when: "'stdout_lines' in failedDNSPodNames and failedDNSPodNames.stdout_lines|length > 0"
       

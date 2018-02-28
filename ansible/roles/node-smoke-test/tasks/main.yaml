@@ -1,6 +1,6 @@
 ---
   - name: wait for node '{{ new_node|lower }}' to register with the API server and become Ready
-    command: kubectl get nodes --selector kubernetes.io/hostname={{ new_node|lower }} --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get nodes --selector kubernetes.io/hostname={{ new_node|lower }}
     register: nodeStatus
     until: nodeStatus|success and "Ready" in nodeStatus.stdout
     retries: 20

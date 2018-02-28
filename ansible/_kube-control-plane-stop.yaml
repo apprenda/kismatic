@@ -21,7 +21,7 @@
         when: pod_stat is defined and pod_stat.stat.exists
       - name: wait until kube-apiserver is stopped
         wait_for:
-          port: "{{ kubernetes_master_insecure_port }}"
+          port: "{{ kubernetes_master_secure_port }}"
           state: stopped
           delay: 1
           timeout: 30

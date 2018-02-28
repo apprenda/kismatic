@@ -113,7 +113,12 @@ spec:
       name: metrics-server
       labels:
         k8s-app: metrics-server
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
       serviceAccountName: metrics-server
       containers:
       - name: metrics-server

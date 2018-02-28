@@ -17,7 +17,7 @@ var _ = Describe("install step commands", func() {
 	Describe("Running the api server play against an existing cluster", func() {
 		ItOnAWS("should return successfully [slow]", func(aws infrastructureProvisioner) {
 			WithMiniInfrastructure(Ubuntu1604LTS, aws, func(node NodeDeets, sshKey string) {
-				err := installKismaticMini(node, sshKey, "")
+				err := installKismaticMini(node, sshKey)
 				Expect(err).ToNot(HaveOccurred())
 
 				c := exec.Command("./kismatic", "install", "step", "_kube-apiserver.yaml", "-f", "kismatic-testing.yaml")

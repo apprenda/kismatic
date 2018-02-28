@@ -10,11 +10,11 @@
       dest: "{{ kubernetes_spec_dir }}/metrics-server.yaml"
 
   - name: start metrics-server
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/metrics-server.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/metrics-server.yaml
 
   - block:
     - name: wait until metrics-server pods are ready
-      command: kubectl get deployment metrics-server -n kube-system -o jsonpath='{.status.availableReplicas}'
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment metrics-server -n kube-system -o jsonpath='{.status.availableReplicas}'
       register: readyReplicas
       until: readyReplicas.stdout|int == 1
       retries: 24

@@ -3,7 +3,6 @@ package integration_tests
 type ClusterPlan struct {
 	Cluster struct {
 		Name                       string
-		AdminPassword              string `yaml:"admin_password"`
 		DisablePackageInstallation string `yaml:"disable_package_installation"`
 		Networking                 struct {
 			Type             string

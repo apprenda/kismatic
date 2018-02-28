@@ -13,7 +13,7 @@ func verifyNetworkPolicy(node NodeDeets, sshKey string) error {
 	if err := copyFileToRemote("test-resources/network-policy/tester.yaml", "/tmp/tester.yaml", node, sshKey, 1*time.Minute); err != nil {
 		return fmt.Errorf("could not copy network-policy tester to remote: %v", err)
 	}
-	if err := runViaSSH([]string{"sudo kubectl apply -f /tmp/tester.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
+	if err := runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config apply -f /tmp/tester.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
 		return fmt.Errorf("could not deploy network-policy tester to remote: %v", err)
 	}
 
@@ -26,7 +26,7 @@ func verifyNetworkPolicy(node NodeDeets, sshKey string) error {
 	if err := copyFileToRemote("test-resources/network-policy/default-deny.yaml", "/tmp/default-deny.yaml", node, sshKey, 1*time.Minute); err != nil {
 		return fmt.Errorf("could not copy default-deny network-policy resource to remote: %v", err)
 	}
-	if err := runViaSSH([]string{"sudo kubectl apply -f /tmp/default-deny.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
+	if err := runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config apply -f /tmp/default-deny.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
 		return fmt.Errorf("could not deploy default-deny network-policy resource to remote: %v", err)
 
 	}
@@ -41,7 +41,7 @@ func verifyNetworkPolicy(node NodeDeets, sshKey string) error {
 	if err := copyFileToRemote("test-resources/network-policy/"+policyFile, "/tmp/policy.yaml", node, sshKey, 1*time.Minute); err != nil {
 		return fmt.Errorf("could not copy pod network-policy resources to remote: %v", err)
 	}
-	if err := runViaSSH([]string{"sudo kubectl apply -f /tmp/policy.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
+	if err := runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config apply -f /tmp/policy.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
 		return fmt.Errorf("could not deploy pod network-policy resources to remote: %v", err)
 	}
 
@@ -53,11 +53,11 @@ func verifyNetworkPolicy(node NodeDeets, sshKey string) error {
 	// always try to disable global policy
 	By("disabling global network policy on the policy-tester namespace")
 	if err := retry.WithBackoff(func() error {
-		return runViaSSH([]string{`sudo kubectl annotate ns policy-tester "net.beta.kubernetes.io/network-policy={\"ingress\": {\"isolation\": \"DefaultAllow\"}}" --overwrite`}, []NodeDeets{node}, sshKey, 1*time.Minute)
+		return runViaSSH([]string{`sudo kubectl --kubeconfig /root/.kube/config annotate ns policy-tester "net.beta.kubernetes.io/network-policy={\"ingress\": {\"isolation\": \"DefaultAllow\"}}" --overwrite`}, []NodeDeets{node}, sshKey, 1*time.Minute)
 	}, 3); err != nil {
 		return fmt.Errorf("could not unset deny policy: %v\n", err)
 	}
-	if err := runViaSSH([]string{"sudo kubectl delete -f /tmp/default-deny.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
+	if err := runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config delete -f /tmp/default-deny.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute); err != nil {
 		return fmt.Errorf("could not deploy default-deny network-policy resource to remote: %v", err)
 	}
 
@@ -66,6 +66,6 @@ func verifyNetworkPolicy(node NodeDeets, sshKey string) error {
 
 func testPodAccess(node NodeDeets, sshKey string, tries uint) error {
 	return retry.WithBackoff(func() error {
-		return runViaSSH([]string{"sudo kubectl exec -n policy-tester -it network-policy-tester -- wget --spider --timeout=1 network-policy-echoserver"}, []NodeDeets{node}, sshKey, 1*time.Minute)
+		return runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config exec -n policy-tester -it network-policy-tester -- wget --spider --timeout=1 network-policy-echoserver"}, []NodeDeets{node}, sshKey, 1*time.Minute)
 	}, tries)
 }

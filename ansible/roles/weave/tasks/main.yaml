@@ -17,14 +17,14 @@
       mode: "{{ kubernetes_service_mode }}"
 
   - name: get the name of the weave pod running on this node
-    command: kubectl get pods -l=k8s-app=weave-net --template {%raw%}'{{range .items}}{{if eq .spec.nodeName{%endraw%} "{{ inventory_hostname|lower }}"{%raw%}}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}'{%endraw%} -n kube-system
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods -l=k8s-app=weave-net --template {%raw%}'{{range .items}}{{if eq .spec.nodeName{%endraw%} "{{ inventory_hostname|lower }}"{%raw%}}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}'{%endraw%} -n kube-system
     register: pod_name
     when: upgrading is defined and upgrading|bool == true
 
   - name: start weave containers
-    command: kubectl apply -f /etc/weave/weave.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f /etc/weave/weave.yaml
     run_once: true
 
   - name: delete weave pod running on this node
-    command: kubectl delete pod {{ pod_name.stdout }} -n kube-system --now
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} delete pod {{ pod_name.stdout }} -n kube-system --now
     when: pod_name is defined and pod_name.stdout is defined and pod_name.stdout != ""

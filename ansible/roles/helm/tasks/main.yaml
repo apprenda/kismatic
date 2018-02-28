@@ -10,7 +10,7 @@
       dest: "{{ kubernetes_spec_dir }}/helm-rbac.yaml"
 
   - name: create helm serviceaccount and rolebinding
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/helm-rbac.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/helm-rbac.yaml
 
   - name: "run helm init"
     local_action: command ../../helm init --service-account=tiller -i="{{ images.helm }}" --tiller-namespace="{{ helm.namespace }}" --upgrade {% if disconnected_installation|bool == true %}--skip-refresh{% endif %}

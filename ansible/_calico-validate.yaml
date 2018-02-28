@@ -9,14 +9,14 @@
 
     tasks:
       - name: get desired number of calico pods
-        command: kubectl get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds calico-node -o=jsonpath='{.status.desiredNumberScheduled}' --namespace=kube-system
         register: desiredPods
         until: desiredPods|success and desiredPods.stdout|int > 0
         retries: 20
         delay: 6
         run_once: true
       - name: wait until all calico pods are ready
-        command: kubectl get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get ds calico-node -o=jsonpath='{.status.numberReady}' --namespace=kube-system
         register: readyPods
         until: desiredPods.stdout|int == readyPods.stdout|int
         retries: 20
