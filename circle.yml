@@ -11,7 +11,7 @@ jobs:
       - checkout
       - run:
           name: Install glide packages
-          command: make vendor && make glide-install
+          command: make vendor && make glide-install-host
       - run:
           name: Unit tests
           command: make TEST_OPTS="-v" test-host
@@ -56,7 +56,7 @@ jobs:
           command: |
             if [[ -n "$FOCUS" ]]
             then
-                make focus-integration-test
+                make focus-integration-test-host
             fi
           no_output_timeout: 30m
           environment:
@@ -64,7 +64,7 @@ jobs:
             ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/tmp/ssh-%r-%h-%p"    
       - run:
           name: Integration tests
-          command: make just-integration-test
+          command: make just-integration-test-host
           no_output_timeout: 30m
           environment:
             GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
@@ -75,7 +75,7 @@ jobs:
           command: |
             if [[ -n "$CIRCLE_TAG" || -n "$RUN_SLOW_TESTS" ]]
             then
-              make slow-integration-test
+              make slow-integration-test-host
             fi
           no_output_timeout: 90m
           environment:
