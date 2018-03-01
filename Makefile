@@ -54,7 +54,7 @@ install:
 	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
 	    -w /go/src/$(PKG)                      \
 	    circleci/golang:$(GO_VERSION)          \
-	    make build-host build-inspector-host copy-kismatic copy-playbooks copy-inspector
+	    make bin/$(GOOS)/kismatic build-inspector-host copy-kismatic copy-playbooks copy-inspector
 
 dist: shallow-clean
 	@echo "Running dist inside contianer"
@@ -70,12 +70,13 @@ dist: shallow-clean
 	    circleci/golang:$(GO_VERSION)          \
 	    make dist-common
 
-clean: shallow-clean
+clean: 
 	rm -rf bin
 	rm -rf out-*
 	rm -rf vendor
 	rm -rf vendor-*
 	rm -rf tools
+	rm -rf tmp
 
 test:
 	@docker run                             \
@@ -83,53 +84,69 @@ test:
 	    -e HOST_GOOS="linux"                \
 	    -u root:root                        \
 	    -v "$(shell pwd)":/go/src/$(PKG)    \
-	    -v /tmp:/tmp                        \
 	    -w /go/src/$(PKG)                   \
 	    circleci/golang:$(GO_VERSION)       \
 	    make test-host
 
 integration-test: 
+	mkdir -p tmp
 	@echo "Running integration tests inside contianer"
-	@docker run                                \
-	    --rm                                   \
-	    -e GOOS="linux" 	                   \
-	    -e HOST_GOOS="linux"                   \
-	    -e VERSION="$(VERSION)"                \
-	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                           \
-	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
-	    -w "/go/src/$(PKG)"                    \
-	    circleci/golang:$(GO_VERSION)          \
-		make just-integration-test-host
+	@docker run                                                 \
+	    --rm                                                    \
+	    -e GOOS="linux" 	                                    \
+	    -e HOST_GOOS="linux"                                    \
+	    -e VERSION="$(VERSION)"                                 \
+	    -e BUILD_DATE="$(BUILD_DATE)"                           \
+	    -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
+	    -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
+		-e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -u root:root                                            \
+	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
+		-v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro"\
+		-v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
+	    -w "/go/src/$(PKG)"                                     \
+	    circleci/golang:$(GO_VERSION)                           \
+		make integration-test-host
 
 focus-integration-test: 
+	mkdir -p tmp
 	@echo "Running integration tests inside contianer"
-	@docker run                                \
-	    --rm                                   \
-        -e FOCUS="$(FOCUS)"	                   \
-	    -e GOOS="linux" 	                   \
-	    -e HOST_GOOS="linux"                   \
-	    -e VERSION="$(VERSION)"                \
-	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                           \
-	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
-	    -w "/go/src/$(PKG)"                    \
-	    circleci/golang:$(GO_VERSION)          \
+	@docker run                                                 \
+	    --rm                                                    \
+        -e FOCUS="$(FOCUS)"	                                    \
+	    -e GOOS="linux" 	                                    \
+	    -e HOST_GOOS="linux"                                    \
+	    -e VERSION="$(VERSION)"                                 \
+	    -e BUILD_DATE="$(BUILD_DATE)"                           \
+        -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
+		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
+		-e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -u root:root                                            \
+	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
+		-v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro"\
+		-v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
+	    -w "/go/src/$(PKG)"                                     \
+	    circleci/golang:$(GO_VERSION)                           \
 		make focus-integration-test-host
 
 slow-integration-test: 
+	mkdir -p tmp
 	@echo "Running integration tests inside contianer"
-	@docker run                                \
-	    --rm                                   \
-        -e FOCUS="$(FOCUS)"	                   \
-	    -e GOOS="linux" 	                   \
-	    -e HOST_GOOS="linux"                   \
-	    -e VERSION="$(VERSION)"                \
-	    -e BUILD_DATE="$(BUILD_DATE)"          \
-	    -u root:root                           \
-	    -v "$(shell pwd)":"/go/src/$(PKG)"     \
-	    -w "/go/src/$(PKG)"                    \
-	    circleci/golang:$(GO_VERSION)          \
+	@docker run                                                 \
+	    --rm                                                    \
+	    -e GOOS="linux" 	                                    \
+	    -e HOST_GOOS="linux"                                    \
+	    -e VERSION="$(VERSION)"                                 \
+	    -e BUILD_DATE="$(BUILD_DATE)"                           \
+        -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
+		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
+		-e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -u root:root                                            \
+	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
+		-v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro"\
+		-v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
+	    -w "/go/src/$(PKG)"                                     \
+	    circleci/golang:$(GO_VERSION)                           \
 		make slow-integration-test-host
 
 # YOU SHOULDN'T NEED TO USE ANYTHING BENEATH THIS LINE
@@ -201,7 +218,7 @@ glide-update:
 	    circleci/golang:$(GO_VERSION)          \
 	    make glide-update-host
 
-copy-all: copy-kismatic copy-playbooks copy-inspector copy-vendors
+copy-all: copy-vendors copy-inspector copy-playbooks copy-kismatic
 
 copy-kismatic:
 	mkdir -p $(BUILD_OUTPUT)
@@ -214,15 +231,16 @@ copy-inspector:
 
 copy-playbooks:
 	mkdir -p $(BUILD_OUTPUT)/ansible
-	rm -rf $(BUILD_OUTPUT)/ansible/playbooks
-	cp -r ansible $(BUILD_OUTPUT)/ansible/playbooks
+	rm -rf $(filter-out $(BUILD_OUTPUT)/ansible/playbooks/inspector $(BUILD_OUTPUT)/ansible/playbooks/kuberang, $(wildcard $(BUILD_OUTPUT)/ansible/playbooks/*))
+	cp -r $(wildcard ansible/*) $(BUILD_OUTPUT)/ansible/playbooks
 
-copy-vendors: # omit kismatic, inspector, playbooks, terraform since we provide configs for those.
+copy-vendors: # omit kismatic, inspector, terraform since we provide configs for those.
+	mkdir -p $(BUILD_OUTPUT)/ansible
 	cp -r vendor-ansible/out/ansible/* $(BUILD_OUTPUT)/ansible
 	cp vendor-kubectl/out/kubectl-$(KUBECTL_VERSION)-$(GOOS)-$(GOARCH) $(BUILD_OUTPUT)/kubectl
 	cp vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH) $(BUILD_OUTPUT)/helm
-	mkdir -p $(BUILD_OUTPUT)/ansible/playbooks/kuberang/linux/$(GOARCH)/
 	cp vendor-provision/out/provision $(BUILD_OUTPUT)/provision
+	mkdir -p $(BUILD_OUTPUT)/ansible/playbooks/kuberang/linux/$(GOARCH)/
 	cp vendor-kuberang/$(KUBERANG_VERSION)/kuberang-linux-$(GOARCH) $(BUILD_OUTPUT)/ansible/playbooks/kuberang/linux/$(GOARCH)/kuberang
 
 tarball: 
@@ -239,8 +257,9 @@ all-host:
 test-host:
 	go test ./cmd/... ./pkg/... $(TEST_OPTS)
 
-build-host: vendor glide-install-host bin/$(GOOS)/kismatic
+build-host: tools/glide-$(HOST_GOOS)-$(HOST_GOARCH) glide-install-host bin/$(GOOS)/kismatic
 
+.PHONY: bin/$(GOOS)/kismatic
 bin/$(GOOS)/kismatic:
 	go build -o $@                                                              \
 	    -ldflags "-X main.version=$(VERSION) -X 'main.buildDate=$(BUILD_DATE)'" \
@@ -249,6 +268,7 @@ bin/$(GOOS)/kismatic:
 build-inspector-host:
 	@$(MAKE) GOOS=linux bin/inspector/linux/$(GOARCH)/kismatic-inspector
 
+.PHONY: bin/inspector/$(GOOS)/$(GOARCH)/kismatic-inspector
 bin/inspector/$(GOOS)/$(GOARCH)/kismatic-inspector:
 	go build -o $@                                                               \
 	    -ldflags "-X main.version=$(VERSION) -X 'main.buildDate=$(BUILD_DATE)'"  \
@@ -298,7 +318,7 @@ vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH):
 	rm -rf vendor-helm/$(GOOS)-$(GOARCH)
 	chmod +x vendor-helm/out/helm-$(HELM_VERSION)-$(GOOS)-$(GOARCH)
 
-dist-common: build-host build-inspector-host copy-all
+dist-common: vendor build-host build-inspector-host copy-all
 
 dist-host: shallow-clean dist-common
 
@@ -306,7 +326,7 @@ get-ginkgo:
 	go get github.com/onsi/ginkgo/ginkgo
 	cd integration-tests
 
-just-integration-test-host: get-ginkgo
+integration-test-host: get-ginkgo
 	@$(MAKE) GOOS=linux tarball
 	ginkgo --skip "\[slow\]" -p $(GINKGO_OPTS) -v integration-tests
 

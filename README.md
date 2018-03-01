@@ -66,8 +66,6 @@ KET operational tools include:
 
 [How to Build KET](docs/development/BUILDING.md)
 
-[Workflows](BUILDING.md)
-
 [How to Contribute to KET](docs/development/CONTRIBUTING.md)
 
 [Running Integration Tests](docs/development/INTEGRATION_TESTING.md)

@@ -53,3 +53,5 @@ integration-tests/vendor
 vendor-*
 .glide
 pkg/server/server
+kismatic-*.tar.gz
+tmp

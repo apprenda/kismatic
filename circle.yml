@@ -60,11 +60,16 @@ jobs:
             fi
           no_output_timeout: 30m
           environment:
+            GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
             ANSIBLE_SSH_CONTROL_PATH: "/tmp/ssh-%%r-%%h-%%p"
             ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/tmp/ssh-%r-%h-%p"    
       - run:
           name: Integration tests
-          command: make just-integration-test-host
+          command: |
+            if [[ -z "$FOCUS" ]]
+            then
+                make integration-test-host
+            fi 
           no_output_timeout: 30m
           environment:
             GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
