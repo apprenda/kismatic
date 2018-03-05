@@ -93,61 +93,61 @@ integration-test:
 	@echo "Running integration tests inside contianer"
 	@docker run                                                 \
 	    --rm                                                    \
-	    -e GOOS="linux" 	                                    \
+	    -e GOOS="linux"                                         \
 	    -e HOST_GOOS="linux"                                    \
 	    -e VERSION="$(VERSION)"                                 \
 	    -e BUILD_DATE="$(BUILD_DATE)"                           \
 	    -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
 	    -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
-		-e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
 	    -u root:root                                            \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
-		-v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro"\
-		-v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
+	    -v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro" \
+	    -v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
 	    -w "/go/src/$(PKG)"                                     \
 	    circleci/golang:$(GO_VERSION)                           \
-		make integration-test-host
+	    make integration-test-host
 
 focus-integration-test: 
 	mkdir -p tmp
 	@echo "Running integration tests inside contianer"
 	@docker run                                                 \
 	    --rm                                                    \
-        -e FOCUS="$(FOCUS)"	                                    \
-	    -e GOOS="linux" 	                                    \
+	    -e FOCUS="$(FOCUS)"                                     \
+	    -e GOOS="linux"                                         \
 	    -e HOST_GOOS="linux"                                    \
 	    -e VERSION="$(VERSION)"                                 \
 	    -e BUILD_DATE="$(BUILD_DATE)"                           \
-        -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
-		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
-		-e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
+	    -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
+	    -e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
 	    -u root:root                                            \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
-		-v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro"\
-		-v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
+	    -v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro" \
+	    -v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
 	    -w "/go/src/$(PKG)"                                     \
 	    circleci/golang:$(GO_VERSION)                           \
-		make focus-integration-test-host
+	     make focus-integration-test-host
 
 slow-integration-test: 
 	mkdir -p tmp
 	@echo "Running integration tests inside contianer"
 	@docker run                                                 \
 	    --rm                                                    \
-	    -e GOOS="linux" 	                                    \
+	    -e GOOS="linux"                                         \
 	    -e HOST_GOOS="linux"                                    \
 	    -e VERSION="$(VERSION)"                                 \
 	    -e BUILD_DATE="$(BUILD_DATE)"                           \
-        -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
-		-e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
-		-e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
+	    -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
+	    -e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
 	    -u root:root                                            \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
-		-v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro"\
-		-v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
+	    -v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro" \
+	    -v "$(shell pwd)/tmp":"/tmp/kismatic"                   \
 	    -w "/go/src/$(PKG)"                                     \
 	    circleci/golang:$(GO_VERSION)                           \
-		make slow-integration-test-host
+	    make slow-integration-test-host
 
 # YOU SHOULDN'T NEED TO USE ANYTHING BENEATH THIS LINE
 # UNLESS YOU REALLY KNOW WHAT YOU'RE DOING
@@ -180,7 +180,7 @@ build-inspector:
 	@echo Building inspector in container
 	@docker run                                \
 	    --rm                                   \
-	    -e GOOS="$(GOOS)"               	   \
+	    -e GOOS="$(GOOS)"                      \
 	    -e HOST_GOOS="linux"                   \
 	    -e VERSION="$(VERSION)"                \
 	    -e BUILD_DATE="$(BUILD_DATE)"          \
