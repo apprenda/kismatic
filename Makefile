@@ -100,6 +100,7 @@ integration-test:
 	    -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
 	    -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
 	    -e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -e CREATED_BY="$(CREATED_BY)"                           \
 	    -u root:root                                            \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
 	    -v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro" \
@@ -121,6 +122,7 @@ focus-integration-test:
 	    -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
 	    -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
 	    -e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -e CREATED_BY="$(CREATED_BY)"                           \
 	    -u root:root                                            \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
 	    -v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro" \
@@ -141,6 +143,7 @@ slow-integration-test:
 	    -e AWS_ACCESS_KEY_ID="$(AWS_ACCESS_KEY_ID)"             \
 	    -e AWS_SECRET_ACCESS_KEY="$(AWS_SECRET_ACCESS_KEY)"     \
 	    -e LEAVE_ARTIFACTS="$(LEAVE_ARTIFACTS)"                 \
+	    -e CREATED_BY="$(CREATED_BY)"                           \
 	    -u root:root                                            \
 	    -v "$(shell pwd)":"/go/src/$(PKG)"                      \
 	    -v "$(HOME)/.ssh/kismatic-integration-testing.pem":"/root/.ssh/kismatic-integration-testing.pem:ro" \
