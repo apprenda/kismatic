@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -590,17 +591,21 @@ func (nfsVol NFSVolume) validate() (bool, []error) {
 
 func (additionalfile *AdditionalFiles) validate() (bool, []error) {
 	v := newValidator()
-	uniqueFiles := make(map[File]bool)
+	uniqueFiles := make(map[string]bool)
 	for _, file := range additionalfile.Files {
 		v.validate(file)
-		if _, ok := uniqueFiles[file]; ok {
+		sort.Sort(sort.StringSlice(file.Hosts))
+		fileString := strings.Join(file.Hosts, ",")
+		keyFile := strings.ToLower(file.Source + " " + file.Destination + " " + fileString)
+		if _, ok := uniqueFiles[keyFile]; ok {
 			v.addError(fmt.Errorf("Duplicate Files %v", file))
 		} else {
-			uniqueFiles[file] = true
+			uniqueFiles[keyFile] = true
 		}
 	}
 	return v.valid()
 }
+
 func (addfile File) validate() (bool, []error) {
 	v := newValidator()
 	if addfile.Source == "" {
@@ -609,8 +614,11 @@ func (addfile File) validate() (bool, []error) {
 	if addfile.Destination == "" {
 		v.addError(errors.New("Destination file path cannot be empty"))
 	}
-	if addfile.Hosts == "" {
-		v.addError(errors.New("Server name cannot be empty"))
+	for _, value := range addfile.Hosts {
+		xal := len(value)
+		if xal <= 0 {
+			v.addError(errors.New("Server name cannot be empty"))
+		}
 	}
 	if len(addfile.Source) > 0 && !(addfile.Source[0] == '/' || addfile.Source[0] == '.') {
 		v.addError(errors.New("Source paths must be absolute or relative"))

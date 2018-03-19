@@ -621,7 +621,7 @@ type File struct {
 	Destination string
 	// The hostname or IP or ansible group of the server where files will be copied.
 	// +required
-	Hosts string
+	Hosts []string
 }
 
 type SSHConnection struct {

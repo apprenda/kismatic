@@ -1,19 +1,24 @@
 ---
-  - name: Create if file dir doesn't exists
+  - name: create {{ item.destination| dirname }} directory
     file:
-      path: "{{ item.destination| dirname }}"
+      path: "{{ item.0.destination| dirname }}"
       mode: "{{ kubernetes_service_mode }}"
       owner: "{{ kubernetes_owner }}"
       group: "{{ kubernetes_group }}"
       state: directory
-    when: item.hosts in hostvars[inventory_hostname].group_names[0] or inventory_hostname == item.hosts or item.hosts == 'all' or item.hosts == ansible_default_ipv4.address
-    with_items: "{{ files }}"
-  - name: copy file
+    when: item.1 in hostvars[inventory_hostname].group_names or inventory_hostname == item.1 or 'all' == item.1 or  ansible_default_ipv4.address == item.1
+    with_subelements:
+      - "{{ files }}"
+      - "hosts"
+
+  - name: copy file or directory
     copy:
-      src: "{{ item.source }}"
-      dest: "{{ item.destination}}"
+      src: "{{ item.0.source }}"
+      dest: "{{ item.0.destination}}"
       mode: "{{ kubernetes_service_mode }}"
       owner: "{{ kubernetes_owner }}"
       group: "{{ kubernetes_group }}"
-    when: item.hosts in hostvars[inventory_hostname].group_names[0] or inventory_hostname == item.hosts or item.hosts == 'all' or item.hosts == ansible_default_ipv4.address
-    with_items: "{{ files }}"
+    when: item.1 in hostvars[inventory_hostname].group_names or inventory_hostname == item.1 or 'all' == item.1 or  ansible_default_ipv4.address == item.1
+    with_subelements:
+      - "{{ files }}"
+      - "hosts"

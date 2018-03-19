@@ -97,7 +97,7 @@ var validPlan = Plan{
 			{
 				Source:      "/",
 				Destination: "/",
-				Hosts:       "192.168.205.11",
+				Hosts:       []string{"192.168.205.11"},
 			},
 		},
 	},
@@ -840,7 +840,7 @@ func TestValidatePlanAdditionalFilesDupes(t *testing.T) {
 	p.AdditionalFiles.Files = append(p.AdditionalFiles.Files, File{
 		Source:      "/",
 		Destination: "/",
-		Hosts:       "192.168.205.11",
+		Hosts:       []string{"192.168.205.11"},
 	})
 
 	assertInvalidPlan(t, p)
@@ -850,56 +850,56 @@ func TestValidateFile(t *testing.T) {
 	tests := []struct {
 		srcPath  string
 		destPath string
-		hosts    string
+		hosts    []string
 		valid    bool
 	}{
 		{
 			srcPath:  "/tmp/xa.yml",
 			destPath: "/tmp/copy_xa.yml",
-			hosts:    "192.168.205.11",
+			hosts:    []string{"192.168.205.11"},
 			valid:    true,
 		},
 		{
 			srcPath:  "../someRelativePath",
 			destPath: "/tmp/copy_xa.yml",
-			hosts:    "192.168.205.11",
+			hosts:    []string{"192.168.205.11"},
 			valid:    true,
 		},
 		{
 			srcPath:  "",
 			destPath: "",
-			hosts:    "192.168.205.11",
+			hosts:    []string{"192.168.205.11"},
 			valid:    false,
 		},
 		{
 			srcPath:  "",
 			destPath: "/tmp/copy_xa.yml",
-			hosts:    "192.168.205.11",
+			hosts:    []string{"192.168.205.11"},
 			valid:    false,
 		},
 		{
 			srcPath:  "/tmp/xa.yml",
 			destPath: "",
-			hosts:    "192.168.205.11",
+			hosts:    []string{"192.168.205.11"},
 			valid:    false,
 		},
 		{
 			srcPath:  "../someRelativePath",
 			destPath: "../someRelativePath",
-			hosts:    "192.168.205.11",
+			hosts:    []string{"192.168.205.11"},
 			valid:    false,
 		},
 		{
 			srcPath:  "/tmp/xa.yml",
 			destPath: "../someRelativePath",
-			hosts:    "192.168.205.11",
+			hosts:    []string{"192.168.205.11"},
 			valid:    false,
 		},
 
 		{
 			srcPath:  "/tmp/xa.yml",
 			destPath: "/tmp/copy_xa.yml",
-			hosts:    "",
+			hosts:    []string{""},
 			valid:    false,
 		}}
 	for _, test := range tests {

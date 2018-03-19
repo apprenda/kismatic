@@ -410,7 +410,7 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	}
 
 	for i := 0; i < templateOpts.Files; i++ {
-		f := File{Source: "/", Destination: "/", Hosts: ""}
+		f := File{Source: "/", Destination: "/", Hosts: []string{""}}
 		p.AdditionalFiles.Files = append(p.AdditionalFiles.Files, f)
 	}
 

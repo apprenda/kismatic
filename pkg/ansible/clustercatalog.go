@@ -168,7 +168,7 @@ type NFSVolume struct {
 type File struct {
 	Source      string
 	Destination string
-	Hosts       string
+	Hosts       []string
 }
 
 func (c *ClusterCatalog) EnableRestart() {
