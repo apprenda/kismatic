@@ -747,6 +747,14 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		})
 	}
 
+	for _, n := range p.AdditionalFiles.Files {
+		cc.Files = append(cc.Files, ansible.File{
+			Source:      n.Source,
+			Destination: n.Destination,
+			Hosts:       n.Hosts,
+		})
+	}
+
 	cc.EnableGluster = p.Storage.Nodes != nil && len(p.Storage.Nodes) > 0
 
 	cc.CloudProvider = p.Cluster.CloudProvider.Provider

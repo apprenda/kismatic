@@ -30,6 +30,7 @@ type PlanTemplateOptions struct {
 	IngressNodes  int
 	StorageNodes  int
 	NFSVolumes    int
+	Files         int
 	AdminPassword string
 }
 
@@ -413,6 +414,11 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 		p.NFS.Volumes = append(p.NFS.Volumes, v)
 	}
 
+	for i := 0; i < templateOpts.Files; i++ {
+		f := File{Source: "/", Destination: "/", Hosts: []string{""}}
+		p.AdditionalFiles.Files = append(p.AdditionalFiles.Files, f)
+	}
+
 	n := Node{}
 	for i := 0; i < p.Etcd.ExpectedCount; i++ {
 		p.Etcd.Nodes = append(p.Etcd.Nodes, n)
@@ -514,9 +520,13 @@ var commentMap = map[string][]string{
 	"storage":                                            []string{"Storage nodes will be used to create a distributed storage cluster that can", "be consumed by your workloads."},
 	"master.load_balanced_fqdn":                          []string{"If you have set up load balancing for master nodes, enter the FQDN name here.", "Otherwise, use the IP address of a single master node."},
 	"master.load_balanced_short_name":                    []string{"If you have set up load balancing for master nodes, enter the short name here.", "Otherwise, use the IP address of a single master node."},
-	"nfs":            []string{"A set of NFS volumes for use by on-cluster persistent workloads."},
-	"nfs.nfs_host":   []string{"The host name or ip address of an NFS server."},
-	"nfs.mount_path": []string{"The mount path of an NFS share. Must start with '/'."},
+	"nfs":               []string{"A set of NFS volumes for use by on-cluster persistent workloads."},
+	"nfs.nfs_host":      []string{"The host name or ip address of an NFS server."},
+	"nfs.mount_path":    []string{"The mount path of an NFS share. Must start with '/'."},
+	"files":             []string{"A set of files for use by on-cluster additional configuration."},
+	"files.source":      []string{"Path to the file on localhost. Must start with '/'."},
+	"files.destination": []string{"Path to the file on remote machine, where file will be copied. Must start with '/'."},
+	"files.hosts":       []string{"Host name or IP address or group where additional files will be copied."},
 }
 
 type stack struct {

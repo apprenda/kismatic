@@ -54,6 +54,8 @@ type ClusterCatalog struct {
 
 	NFSVolumes []NFSVolume `yaml:"nfs_volumes"`
 
+	Files []File `yaml:"files"`
+
 	EnableGluster bool `yaml:"configure_storage"`
 
 	// volume add vars
@@ -166,6 +168,12 @@ type DirectLVMBlockDevice struct {
 type NFSVolume struct {
 	Host string
 	Path string
+}
+
+type File struct {
+	Source      string
+	Destination string
+	Hosts       []string
 }
 
 func (c *ClusterCatalog) EnableRestart() {

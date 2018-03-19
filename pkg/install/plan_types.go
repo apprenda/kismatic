@@ -78,6 +78,8 @@ type Plan struct {
 	Storage OptionalNodeGroup
 	// NFS volumes of the cluster.
 	NFS NFS
+	// Additional configuration files of the cluster
+	AdditionalFiles AdditionalFiles `yaml:"additional_files"`
 }
 
 // Cluster describes a Kubernetes cluster
@@ -617,6 +619,26 @@ type StorageVolume struct {
 	// AccessModes supported by the persistent volume
 	// ref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
 	AccessModes []string
+}
+
+// A AdditionalFiles is a collection of files
+type AdditionalFiles struct {
+	// List of additional configuration files that should be attached
+	//to the cluster during the installation.
+	Files []File
+}
+
+// A File  will be copied on remote machine
+type File struct {
+	// The path from where files will be copied
+	// +required
+	Source string
+	// The path where files will be copied.
+	// +required
+	Destination string
+	// The hostname or IP or ansible group of the server where files will be copied.
+	// +required
+	Hosts []string
 }
 
 type SSHConnection struct {

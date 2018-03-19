@@ -16,6 +16,7 @@
   - include: _etcd-networking.yaml
     when: cni.enabled|bool == true and (cni.provider == "calico" or cni.provider == "contiv")
   # kubernetes
+  - include: _additional-data.yml
   - include: _kubelet.yaml
   - include: _kube-apiserver.yaml
   - include: _kube-scheduler.yaml

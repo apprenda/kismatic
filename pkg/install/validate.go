@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -151,6 +152,7 @@ func (p *Plan) validate() (bool, []error) {
 	v.validateWithErrPrefix("Worker nodes", &p.Worker)
 	v.validateWithErrPrefix("Ingress nodes", &p.Ingress)
 	v.validate(&p.NFS)
+	v.validate(&p.AdditionalFiles)
 	v.validateWithErrPrefix("Storage nodes", &p.Storage)
 
 	return v.valid()
@@ -583,6 +585,49 @@ func (nfsVol NFSVolume) validate() (bool, []error) {
 	}
 	if len(nfsVol.Path) > 0 && nfsVol.Path[0] != '/' {
 		v.addError(errors.New("NFS volume path must be absolute"))
+	}
+	return v.valid()
+}
+
+func (additionalfile *AdditionalFiles) validate() (bool, []error) {
+	v := newValidator()
+	uniqueFiles := make(map[string]bool)
+	for _, file := range additionalfile.Files {
+		v.validate(file)
+		sort.Sort(sort.StringSlice(file.Hosts))
+		fileString := strings.Join(file.Hosts, ",")
+		keyFile := strings.ToLower(file.Source + " " + file.Destination + " " + fileString)
+		if _, ok := uniqueFiles[keyFile]; ok {
+			v.addError(fmt.Errorf("Duplicate Files %v", file))
+		} else {
+			uniqueFiles[keyFile] = true
+		}
+	}
+	return v.valid()
+}
+
+func (addfile File) validate() (bool, []error) {
+	v := newValidator()
+	if addfile.Source == "" {
+		v.addError(errors.New("Source file path cannot be empty"))
+	}
+	if addfile.Destination == "" {
+		v.addError(errors.New("Destination file path cannot be empty"))
+	}
+	for _, value := range addfile.Hosts {
+		xal := len(value)
+		if xal <= 0 {
+			v.addError(errors.New("Server name cannot be empty"))
+		}
+	}
+	if len(addfile.Source) > 0 && !(addfile.Source[0] == '/' || addfile.Source[0] == '.') {
+		v.addError(errors.New("Source paths must be absolute or relative"))
+	}
+	if len(addfile.Destination) > 0 && addfile.Destination[0] != '/' {
+		v.addError(errors.New("Destination paths must be absolute or"))
+	}
+	if _, err := os.Stat(addfile.Source); os.IsNotExist(err) {
+		v.addError(fmt.Errorf("File doesn't exist %v", addfile.Source))
 	}
 	return v.valid()
 }

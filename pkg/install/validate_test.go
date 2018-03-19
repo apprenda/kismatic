@@ -91,6 +91,15 @@ var validPlan = Plan{
 			},
 		},
 	},
+	AdditionalFiles: AdditionalFiles{
+		Files: []File{
+			{
+				Source:      "/",
+				Destination: "/",
+				Hosts:       []string{"192.168.205.11"},
+			},
+		},
+	},
 }
 
 func assertInvalidPlan(t *testing.T, p Plan) {
@@ -817,6 +826,86 @@ func TestValidateNFSVolume(t *testing.T) {
 		v := NFSVolume{
 			Host: test.host,
 			Path: test.path,
+		}
+		if valid, _ := v.validate(); valid != test.valid {
+			t.Errorf("Expected valid = %v, but got %v", test.valid, valid)
+		}
+	}
+}
+
+func TestValidatePlanAdditionalFilesDupes(t *testing.T) {
+	p := validPlan
+
+	p.AdditionalFiles.Files = append(p.AdditionalFiles.Files, File{
+		Source:      "/",
+		Destination: "/",
+		Hosts:       []string{"192.168.205.11"},
+	})
+
+	assertInvalidPlan(t, p)
+}
+
+func TestValidateFile(t *testing.T) {
+	tests := []struct {
+		srcPath  string
+		destPath string
+		hosts    []string
+		valid    bool
+	}{
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    []string{"192.168.205.11"},
+			valid:    true,
+		},
+		{
+			srcPath:  "../someRelativePath",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    []string{"192.168.205.11"},
+			valid:    true,
+		},
+		{
+			srcPath:  "",
+			destPath: "",
+			hosts:    []string{"192.168.205.11"},
+			valid:    false,
+		},
+		{
+			srcPath:  "",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    []string{"192.168.205.11"},
+			valid:    false,
+		},
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "",
+			hosts:    []string{"192.168.205.11"},
+			valid:    false,
+		},
+		{
+			srcPath:  "../someRelativePath",
+			destPath: "../someRelativePath",
+			hosts:    []string{"192.168.205.11"},
+			valid:    false,
+		},
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "../someRelativePath",
+			hosts:    []string{"192.168.205.11"},
+			valid:    false,
+		},
+
+		{
+			srcPath:  "/tmp/xa.yml",
+			destPath: "/tmp/copy_xa.yml",
+			hosts:    []string{""},
+			valid:    false,
+		}}
+	for _, test := range tests {
+		v := File{
+			Source:      test.srcPath,
+			Destination: test.destPath,
+			Hosts:       test.hosts,
 		}
 		if valid, _ := v.validate(); valid != test.valid {
 			t.Errorf("Expected valid = %v, but got %v", test.valid, valid)
