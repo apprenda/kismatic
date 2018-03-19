@@ -187,8 +187,8 @@ var _ = Describe("disconnected installation", func() {
 
 func disableInternetAccess(nodes []NodeDeets, sshKey string) error {
 	By("Blocking all outbound connections")
-	allowSourcePorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10256,10250,10251,10252,10254" // ports needed/checked by inspector
-	allowDestPorts := "8888,2379,6666,2380,6660,6443,8443,80,443,4194,10256,10250,10251,10252,10254"
+	allowSourcePorts := "8888,2379,6666,2380,6660,6443,8443,80,443,10256,10250,10251,10252,10254" // ports needed/checked by inspector
+	allowDestPorts := "8888,2379,6666,2380,6660,6443,8443,80,443,10256,10250,10251,10252,10254"
 	allowedStorgePorts := "8081,111,2049,38465,38466,38467"
 	cmd := []string{
 		"sudo iptables -A OUTPUT -o lo -j ACCEPT",                                                                 // allow loopback

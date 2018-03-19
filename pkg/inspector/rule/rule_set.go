@@ -103,11 +103,6 @@ const defaultRuleSet = `---
   - ["master"]
   port: 6443
   procName: kube-apiserver
-- kind: TCPPortAvailable
-  when: 
-  - ["master"]
-  port: 8080
-  procName: kube-apiserver
 # kube-scheduler
 - kind: TCPPortAvailable
   when: 
@@ -122,7 +117,6 @@ const defaultRuleSet = `---
   procName: kube-controller
 
 # Ports used by K8s master are accessible
-# Port 8080 is not accessible from outside
 - kind: TCPPortAccessible
   when: 
   - ["master"]
@@ -142,12 +136,6 @@ const defaultRuleSet = `---
   timeout: 5s
 
 # Ports used by K8s worker are available
-# cAdvisor
-- kind: TCPPortAvailable
-  when: 
-  - ["master", "worker", "ingress", "storage"]
-  port: 4194
-  procName: kubelet
 # kubelet localhost healthz
 - kind: TCPPortAvailable
   when: 
@@ -180,12 +168,6 @@ const defaultRuleSet = `---
   procName: kubelet
 
 # Ports used by K8s worker are accessible
-# cAdvisor
-- kind: TCPPortAccessible
-  when: 
-  - ["master", "worker", "ingress", "storage"]
-  port: 4194
-  timeout: 5s
 # kube-proxy
 - kind: TCPPortAccessible
   when: 

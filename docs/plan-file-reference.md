@@ -70,6 +70,7 @@
         * [log_level](#add_onscnioptionscalicolog_level)
         * [workload_mtu](#add_onscnioptionscalicoworkload_mtu)
         * [felix_input_mtu](#add_onscnioptionscalicofelix_input_mtu)
+        * [ip_autodetection_method](#add_onscnioptionscalicoip_autodetection_method)
   * [dns](#add_onsdns)
     * [disable](#add_onsdnsdisable)
     * [provider](#add_onsdnsprovider)
@@ -84,6 +85,8 @@
         * [pvc_name](#add_onsheapsteroptionsinfluxdbpvc_name)
       * [heapster_replicas _(deprecated)_](#add_onsheapsteroptionsheapster_replicas-deprecated)
       * [influxdb_pvc_name _(deprecated)_](#add_onsheapsteroptionsinfluxdb_pvc_name-deprecated)
+  * [metrics_server](#add_onsmetrics_server)
+    * [disable](#add_onsmetrics_serverdisable)
   * [dashboard](#add_onsdashboard)
     * [disable](#add_onsdashboarddisable)
   * [dashbard _(deprecated)_](#add_onsdashbard-deprecated)
@@ -172,7 +175,7 @@
 |----------|-----------------|
 | **Kind** |  string |
 | **Required** |  No |
-| **Default** | `v1.9.2` | 
+| **Default** | `v1.9.3` | 
 
 ###  cluster.admin_password _(deprecated)_
 
@@ -717,7 +720,7 @@
 
 ###  add_ons.cni.options.calico.workload_mtu
 
- MTU for the workload interface, configures the CNI config 
+ MTU for the workload interface, configures the CNI config. 
 
 | | |
 |----------|-----------------|
@@ -727,13 +730,23 @@
 
 ###  add_ons.cni.options.calico.felix_input_mtu
 
- MTU for the tunnel device used if IPIP is enabled 
+ MTU for the tunnel device used if IPIP is enabled. 
 
 | | |
 |----------|-----------------|
 | **Kind** |  int |
 | **Required** |  No |
 | **Default** | `1440` | 
+
+###  add_ons.cni.options.calico.ip_autodetection_method
+
+ IPAutodetectionMethod is used to detect the IPv4 address of the host. The value gets set in IP_AUTODETECTION_METHOD variable in the pod. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  string |
+| **Required** |  No |
+| **Default** | `first-found` | 
 
 ###  add_ons.dns
 
@@ -846,6 +859,20 @@
 | **Kind** |  string |
 | **Required** |  No |
 | **Default** | ` ` | 
+
+###  add_ons.metrics_server
+
+ Metrics Server add-on configuration. A cluster-wide aggregator of resource usage data. Required for Horizontal Pod Autoscaler to function properly. 
+
+###  add_ons.metrics_server.disable
+
+ Whether the metrics-server add-on should be disabled. When set to true, metrics-server will not be deployed on the cluster. 
+
+| | |
+|----------|-----------------|
+| **Kind** |  bool |
+| **Required** |  No |
+| **Default** | `false` | 
 
 ###  add_ons.dashboard
 

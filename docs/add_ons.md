@@ -30,6 +30,7 @@ Plan file options:
 | `add_ons.cni.options.calico.log_level` | Set the log level for Calico components. Options: `warning`, `info`, `debug` |
 | `add_ons.cni.options.calico.workload_mtu` | Set Calico's CNI config `mtu` |
 | `add_ons.cni.options.calico.felix_input_mtu` | Set Calico's `FELIX_IPINIPMTU` env |
+| `add_ons.cni.options.calico.ip_autodetection_method` | Set Calico's `IP_AUTODETECTION_METHOD` env |
 
 ### Disabled CNI
 When CNI is disabled, KET will skip the installation of the CNI binaries and CNI plugin.

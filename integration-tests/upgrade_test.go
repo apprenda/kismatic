@@ -9,7 +9,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var versions = []string{"v1.7.1", "v1.8.0"}
+var versions = []string{"v1.9.0"}
 
 var _ = Describe("Upgrade", func() {
 	Describe("Upgrading a cluster using online mode", func() {
@@ -49,7 +49,7 @@ var _ = Describe("Upgrade", func() {
 							nodes.worker = allWorkers[0 : len(nodes.worker)-3]
 
 							// Standup cluster with previous version
-							opts := installOptions{adminPassword: "abbazabba"}
+							opts := installOptions{}
 							err := installKismatic(nodes, opts, sshKey)
 							FailIfError(err)
 
@@ -86,9 +86,9 @@ var _ = Describe("Upgrade", func() {
 							})
 
 							// Use master[0] public IP
-							sub.It("should have an accessible dashboard", func() error {
-								return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
-							})
+							//sub.It("should have an accessible dashboard", func() error {
+							// 	return canAccessDashboard(fmt.Sprintf("https://admin:abbazabba@%s:6443/ui", nodes.master[0].PublicIP))
+							// })
 
 							sub.It("should respect network policies", func() error {
 								return verifyNetworkPolicy(nodes.master[0], sshKey)
@@ -101,7 +101,7 @@ var _ = Describe("Upgrade", func() {
 									return fmt.Errorf("could not remove node: %v", err)
 								}
 								By("Re-running Kuberang")
-								if err = runViaSSH([]string{"sudo kuberang"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
+								if err = runViaSSH([]string{"sudo kuberang --kubeconfig /root/.kube/config"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
 									return err
 								}
 								return nil
@@ -120,7 +120,6 @@ var _ = Describe("Upgrade", func() {
 								nodes.worker = nodes.worker[0:1]
 								// Standup cluster with previous version
 								opts := installOptions{
-									adminPassword:            "abbazabba",
 									disconnectedInstallation: false, // we want KET to install the packages, so let it use the package repo
 									modifyHostsFiles:         true,
 								}
@@ -166,7 +165,6 @@ var _ = Describe("Upgrade", func() {
 								err = os.Remove("kismatic-testing.yaml")
 								FailIfError(err)
 								opts = installOptions{
-									adminPassword:            "abbazabba",
 									disconnectedInstallation: true,
 									modifyHostsFiles:         true,
 									dockerRegistryCAPath:     caFile,
@@ -190,7 +188,6 @@ var _ = Describe("Upgrade", func() {
 								nodes.worker = nodes.worker[0:1]
 								// Standup cluster with previous version
 								opts := installOptions{
-									adminPassword:            "abbazabba",
 									disconnectedInstallation: false, // we want KET to install the packages, so let it use the package repo
 									modifyHostsFiles:         true,
 								}
@@ -235,7 +232,6 @@ var _ = Describe("Upgrade", func() {
 								err = os.Remove("kismatic-testing.yaml")
 								FailIfError(err)
 								opts = installOptions{
-									adminPassword:            "abbazabba",
 									disconnectedInstallation: true,
 									modifyHostsFiles:         true,
 									dockerRegistryCAPath:     caFile,
@@ -257,7 +253,7 @@ var _ = Describe("Upgrade", func() {
 
 func installAndUpgradeMinikube(node NodeDeets, sshKey string, online bool) {
 	// Install previous version cluster
-	err := installKismaticMini(node, sshKey, "abbazabba")
+	err := installKismaticMini(node, sshKey)
 	FailIfError(err)
 	extractCurrentKismaticInstaller()
 	upgradeCluster(online)

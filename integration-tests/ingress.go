@@ -18,7 +18,7 @@ func verifyIngressNodes(master NodeDeets, ingressNodes []NodeDeets, sshKey strin
 	for _, ingNode := range ingressNodes {
 		if err := verifyIngressPoint(ingNode); err != nil {
 			// For debugging purposes...
-			runViaSSH([]string{"sudo kubectl describe -f /tmp/ingress.yaml", "sudo kubectl describe pods"}, []NodeDeets{master}, sshKey, 1*time.Minute)
+			runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config describe -f /tmp/ingress.yaml", "sudo kubectl --kubeconfig /root/.kube/config describe pods"}, []NodeDeets{master}, sshKey, 1*time.Minute)
 			return err
 		}
 	}
@@ -33,10 +33,10 @@ func addIngressResource(node NodeDeets, sshKey string) {
 	err = runViaSSH([]string{"sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /tmp/tls.key -out /tmp/tls.crt -subj \"/CN=kismaticintegration.com\""}, []NodeDeets{node}, sshKey, 1*time.Minute)
 	FailIfError(err, "Error creating certificates for HTTPs")
 
-	err = runViaSSH([]string{"sudo kubectl create secret tls kismaticintegration-tls --cert=/tmp/tls.crt --key=/tmp/tls.key"}, []NodeDeets{node}, sshKey, 1*time.Minute)
+	err = runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config create secret tls kismaticintegration-tls --cert=/tmp/tls.crt --key=/tmp/tls.key"}, []NodeDeets{node}, sshKey, 1*time.Minute)
 	FailIfError(err, "Error creating tls secret")
 
-	err = runViaSSH([]string{"sudo kubectl apply -f /tmp/ingress.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute)
+	err = runViaSSH([]string{"sudo kubectl --kubeconfig /root/.kube/config apply -f /tmp/ingress.yaml"}, []NodeDeets{node}, sshKey, 1*time.Minute)
 	FailIfError(err, "Error creating ingress resources")
 }
 

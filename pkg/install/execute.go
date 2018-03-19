@@ -20,7 +20,7 @@ import (
 // The PreFlightExecutor will run pre-flight checks against the
 // environment defined in the plan file
 type PreFlightExecutor interface {
-	RunPreFlightCheck(*Plan) error
+	RunPreFlightCheck(plan *Plan, nodes ...string) error
 	RunNewNodePreFlightCheck(Plan, Node) error
 	RunUpgradePreFlightCheck(*Plan, ListableNode) error
 }
@@ -28,11 +28,11 @@ type PreFlightExecutor interface {
 // The Executor will carry out the installation plan
 type Executor interface {
 	PreFlightExecutor
-	Install(plan *Plan, restartServices bool) error
+	Install(plan *Plan, restartServices bool, nodes ...string) error
 	GenerateCertificates(p *Plan, useExistingCA bool) error
 	RunSmokeTest(*Plan) error
-	AddNode(Plan *Plan, node Node, roles []string, restartServices bool) (*Plan, error)
-	RunPlay(name string, plan *Plan, restartServices bool) error
+	AddNode(plan *Plan, node Node, roles []string, restartServices bool) (*Plan, error)
+	RunPlay(name string, plan *Plan, restartServices bool, nodes ...string) error
 	AddVolume(*Plan, StorageVolume) error
 	DeleteVolume(*Plan, string) error
 	UpgradeNodes(plan Plan, nodesToUpgrade []ListableNode, onlineUpgrade bool, maxParallelWorkers int, restartServices bool) error
@@ -241,7 +241,7 @@ func (ae *ansibleExecutor) GenerateCertificates(p *Plan, useExistingCA bool) err
 	// Generate cluster Certificate Authority
 	util.PrintHeader(ae.stdout, "Configuring Certificates", '=')
 
-	var caCert *tls.CA
+	var clusterCACert *tls.CA
 	var err error
 	if useExistingCA {
 		exists, err := ae.pki.CertificateAuthorityExists()
@@ -251,20 +251,25 @@ func (ae *ansibleExecutor) GenerateCertificates(p *Plan, useExistingCA bool) err
 		if !exists {
 			return errors.New("The Certificate Authority is required, but it was not found.")
 		}
-		caCert, err = ae.pki.GetClusterCA()
+		clusterCACert, err = ae.pki.GetClusterCA()
 		if err != nil {
 			return fmt.Errorf("error reading CA certificate: %v", err)
 		}
 
 	} else {
-		caCert, err = ae.pki.GenerateClusterCA(p)
+		clusterCACert, err = ae.pki.GenerateClusterCA(p)
 		if err != nil {
 			return fmt.Errorf("error generating CA for the cluster: %v", err)
 		}
 	}
 
+	proxyClientCACert, err := ae.pki.GenerateProxyClientCA(p)
+	if err != nil {
+		return fmt.Errorf("error generating CA for the proxy client: %v", err)
+	}
+
 	// Generate node and user certificates
-	err = ae.pki.GenerateClusterCertificates(p, caCert)
+	err = ae.pki.GenerateClusterCertificates(p, clusterCACert, proxyClientCACert)
 	if err != nil {
 		return fmt.Errorf("error generating certificates for the cluster: %v", err)
 	}
@@ -274,7 +279,7 @@ func (ae *ansibleExecutor) GenerateCertificates(p *Plan, useExistingCA bool) err
 }
 
 // Install the cluster according to the installation plan
-func (ae *ansibleExecutor) Install(p *Plan, restartServices bool) error {
+func (ae *ansibleExecutor) Install(p *Plan, restartServices bool, nodes ...string) error {
 	// Build the ansible inventory
 	cc, err := ae.buildClusterCatalog(p)
 	if err != nil {
@@ -290,6 +295,7 @@ func (ae *ansibleExecutor) Install(p *Plan, restartServices bool) error {
 		inventory:      buildInventoryFromPlan(p),
 		clusterCatalog: *cc,
 		explainer:      ae.defaultExplainer(),
+		limit:          nodes,
 	}
 	util.PrintHeader(ae.stdout, "Installing Cluster", '=')
 	return ae.execute(t)
@@ -313,7 +319,7 @@ func (ae *ansibleExecutor) RunSmokeTest(p *Plan) error {
 }
 
 // RunPreflightCheck against the nodes defined in the plan
-func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
+func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan, nodes ...string) error {
 	cc, err := ae.buildClusterCatalog(p)
 	if err != nil {
 		return err
@@ -325,6 +331,7 @@ func (ae *ansibleExecutor) RunPreFlightCheck(p *Plan) error {
 		clusterCatalog: *cc,
 		explainer:      ae.preflightExplainer(),
 		plan:           *p,
+		limit:          nodes,
 	}
 	return ae.execute(t)
 }
@@ -390,7 +397,7 @@ func (ae *ansibleExecutor) RunUpgradePreFlightCheck(p *Plan, node ListableNode) 
 	return ae.execute(t)
 }
 
-func (ae *ansibleExecutor) RunPlay(playName string, p *Plan, restartServices bool) error {
+func (ae *ansibleExecutor) RunPlay(playName string, p *Plan, restartServices bool, nodes ...string) error {
 	cc, err := ae.buildClusterCatalog(p)
 	if err != nil {
 		return err
@@ -405,6 +412,7 @@ func (ae *ansibleExecutor) RunPlay(playName string, p *Plan, restartServices boo
 		clusterCatalog: *cc,
 		explainer:      ae.defaultExplainer(),
 		plan:           *p,
+		limit:          nodes,
 	}
 	return ae.execute(t)
 }
@@ -762,6 +770,7 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.CNI.Options.Calico.LogLevel = p.AddOns.CNI.Options.Calico.LogLevel
 		cc.CNI.Options.Calico.WorkloadMTU = p.AddOns.CNI.Options.Calico.WorkloadMTU
 		cc.CNI.Options.Calico.FelixInputMTU = p.AddOns.CNI.Options.Calico.FelixInputMTU
+		cc.CNI.Options.Calico.IPAutodetectionMethod = p.AddOns.CNI.Options.Calico.IPAutodetectionMethod
 
 		if cc.CNI.Provider == cniProviderContiv {
 			cc.InsecureNetworkingEtcd = true
@@ -780,6 +789,9 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.Heapster.Options.Heapster.Sink = p.AddOns.HeapsterMonitoring.Options.Heapster.Sink
 		cc.Heapster.Options.InfluxDB.PVCName = p.AddOns.HeapsterMonitoring.Options.InfluxDB.PVCName
 	}
+
+	// metrics-server
+	cc.MetricsServer.Enabled = !p.AddOns.MetricsServer.Disable
 
 	// dashboard
 	cc.Dashboard.Enabled = true

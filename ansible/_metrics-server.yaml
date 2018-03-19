@@ -1,0 +1,11 @@
+---
+  - hosts: master[0]
+    any_errors_fatal: true
+    name: "{{ play_name | default('Start Kubernetes Metrics Server') }}"
+    become: yes
+    vars_files:
+      - group_vars/all.yaml
+      - group_vars/container_images.yaml
+
+    roles:
+      - metrics-server

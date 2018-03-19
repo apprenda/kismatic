@@ -17,7 +17,6 @@ bin_dir: /usr/bin
 etcd_k8s_client_port: 2379
 etcd_networking_client_port: 6666
 kubernetes_master_secure_port: 6443
-kubernetes_master_insecure_port: 8080
 kubernetes_proxy_insecure_port: 10256
 kubernetes_scheduler_insecure_port: 10251
 kubernetes_controller_mgr_insecure_port: 10252
@@ -32,14 +31,14 @@ etcd_certificates:
   etcd_client_key: "{{ etcd_install_dir }}/etcd-client-key.pem"
   owner: root
   group: root
-  mode: 0660
+  mode: "0660"
 # etcd-install
-etcd_install_executable_owner: 1000
-etcd_install_executable_group: 1000
-etcd_install_executable_mode: 0775
+etcd_install_executable_owner: "1000"
+etcd_install_executable_group: "1000"
+etcd_install_executable_mode: "0775"
 etcd_service_owner: root
 etcd_service_group: root
-etcd_service_mode: 0664
+etcd_service_mode: "0664"
 # etcd cluster setup
 etcd_service_cluster_string: "{% for host in groups['etcd'] %}{{ host }}=https://{{ hostvars[host]['internal_ipv4'] }}:{{ etcd_service_peer_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 #===============================================================================
@@ -63,7 +62,7 @@ calico_dir: /etc/calico
 # paths
 calicoctl_conf_path: "{{ calico_dir }}/calicoctl.cfg"
 #file modes
-calico_executable_mode: 0775
+calico_executable_mode: "0775"
 # weave
 weave_dir: /etc/weave
 #networking
@@ -102,11 +101,11 @@ kubernetes_kubeconfig:
   kubelet: "{{kubernetes_install_dir}}/kubelet.conf"
 
 # file modes
-kubernetes_executable_mode: 0775
-kubernetes_service_mode: 0664
-kubernetes_certificates_mode: 0660
-docker_certificate_mode: 0660
-network_environment_mode: 0660
+kubernetes_executable_mode: "0775"
+kubernetes_service_mode: "0664"
+kubernetes_certificates_mode: "0660"
+docker_certificate_mode: "0660"
+network_environment_mode: "0660"
 # owner/group
 kubernetes_owner: root
 kubernetes_group: root
@@ -128,6 +127,7 @@ cloud_config: "{% if cloud_config_local is defined and cloud_config_local != '' 
 kubernetes_certificates_dir: "{{ kubernetes_install_dir }}/pki"
 kubernetes_certificates:
   ca: "{{ kubernetes_certificates_dir }}/ca.pem"
+  proxy_client_ca: "{{ kubernetes_certificates_dir }}/proxy-client-ca.pem"
   admin: "{{ kubernetes_certificates_dir }}/admin.pem"
   admin_key: "{{ kubernetes_certificates_dir }}/admin-key.pem"
   api_server: "{{ kubernetes_certificates_dir }}/api-server.pem"
@@ -140,20 +140,32 @@ kubernetes_certificates:
   scheduler_key: "{{ kubernetes_certificates_dir }}/scheduler-key.pem"
   kubelet: "{{ kubernetes_certificates_dir }}/kubelet.pem"
   kubelet_key: "{{ kubernetes_certificates_dir }}/kubelet-key.pem"
+  kube_apiserver_kubelet_client: "{{ kubernetes_certificates_dir }}/apiserver-kubelet-client.pem"
+  kube_apiserver_kubelet_client_key: "{{ kubernetes_certificates_dir }}/apiserver-kubelet-client-key.pem"
+  proxy_client: "{{ kubernetes_certificates_dir }}/proxy-client.pem"
+  proxy_client_key: "{{ kubernetes_certificates_dir }}/proxy-client-key.pem"
   service_account: "{{ kubernetes_certificates_dir }}/service-account.pem"
   service_account_key: "{{ kubernetes_certificates_dir }}/service-account-key.pem"
 
 kubernetes_api_server_option_defaults:
-  "admission-control": "NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,NodeRestriction"
+  "admission-control": "NamespaceLifecycle,LimitRanger,ServiceAccount,NodeRestriction,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
   "advertise-address": "{{ internal_ipv4 }}"
   "allow-privileged": "true"
   "apiserver-count": "{{ kubernetes_master_apiserver_count }}"
-  "anonymous-auth": "false"
   "authorization-mode": "Node,RBAC{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %},ABAC{% endif %}" #TODO remove ABAC
   "authorization-policy-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_authorization_policy_path }}{% endif %}"
   "basic-auth-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_basic_auth_path }}{% endif %}"
   "bind-address": "0.0.0.0"
   "client-ca-file": "{{ kubernetes_certificates.ca }}"
+  "requestheader-client-ca-file": "{{ kubernetes_certificates.proxy_client_ca }}"
+  "proxy-client-cert-file": "{{ kubernetes_certificates.proxy_client }}"
+  "proxy-client-key-file": "{{ kubernetes_certificates.proxy_client_key }}"
+  "profiling": "false"
+  "repair-malformed-updates" : "false"
+  "requestheader-allowed-names": ""
+  "requestheader-extra-headers-prefix": "X-Remote-Extra-"
+  "requestheader-group-headers": "X-Remote-Group"
+  "requestheader-username-headers": "X-Remote-User"
   "cloud-provider": "{{ cloud_provider }}"
   "cloud-config": "{{ cloud_config }}"
   "enable-swagger-ui": "true"
@@ -161,8 +173,9 @@ kubernetes_api_server_option_defaults:
   "etcd-certfile": "{{ kubernetes_certificates.etcd_client }}"
   "etcd-keyfile": "{{ kubernetes_certificates.etcd_client_key }}"
   "etcd-servers": "{{ etcd_k8s_cluster_ip_list }}"
-  "insecure-bind-address": "127.0.0.1"
-  "insecure-port": "{{ kubernetes_master_insecure_port }}"
+  "insecure-port": "0"
+  "kubelet-client-certificate": "{{ kubernetes_certificates.kube_apiserver_kubelet_client }}"
+  "kubelet-client-key": "{{ kubernetes_certificates.kube_apiserver_kubelet_client_key }}"
   "kubelet-preferred-address-types": "{% if modify_hosts_file is defined and modify_hosts_file|bool == true %}InternalIP,ExternalIP,Hostname{% endif %}"
   "runtime-config": "extensions/v1beta1=true,extensions/v1beta1/networkpolicies=true"
   "secure-port": "{{ kubernetes_master_secure_port }}"
@@ -180,6 +193,7 @@ kube_controller_manager_option_defaults:
   "cluster-name": "{{ kubernetes_cluster_name }}"
   "kubeconfig": "{{ kubernetes_kubeconfig.controller_manager }}"
   "leader-elect": "true"
+  "profiling": "false"
   "root-ca-file": "{{ kubernetes_certificates.ca }}"
   "service-account-private-key-file": "{{ kubernetes_certificates.service_account_key }}"
   "service-cluster-ip-range": "{{ kubernetes_services_cidr }}"
@@ -189,16 +203,22 @@ kube_controller_manager_option_defaults:
 kube_scheduler_option_defaults:
   "kubeconfig": "{{ kubernetes_kubeconfig.scheduler }}"
   "leader-elect": "true"
+  "profiling": "false"
   "v": "2"
 
 kube_proxy_option_defaults:
   "cluster-cidr": "{{ kubernetes_pods_cidr }}"
   "hostname-override": "$(NODE_NAME)"
+  "profiling": "false"
   "proxy-mode": "iptables"
   "v": "2"
 
 kubelet_defaults:
   "allow-privileged": "true"
+  "authorization-mode": "Webhook"
+  "event-qps": "0"
+  "cadvisor-port" : "0"
+  "client-ca-file": "{{ kubernetes_certificates.ca }}"
   "cloud-provider": "{{ cloud_provider }}"
   "cloud-config": "{{ cloud_config }}"
   "cluster-dns": "{{ kubernetes_dns_service_ip }}"
@@ -206,6 +226,7 @@ kubelet_defaults:
   "container-runtime": "docker"
   "cni-bin-dir": "{% if cni.enabled|bool == true %}/opt/cni/bin{% endif %}"
   "cni-conf-dir": "{% if cni.enabled|bool == true %}{{ network_plugin_dir }}{% endif %}"
+  "make-iptables-util-chains": "true"
   "network-plugin": "{% if cni.enabled|bool == true %}cni{% endif %}"
   "docker": "unix:///var/run/docker.sock"
   "hostname-override": "{{ inventory_hostname }}"
@@ -217,7 +238,8 @@ kubelet_defaults:
   "pod-manifest-path": "{{ kubelet_pod_manifests_dir }}"
   "register-schedulable": "{{ kubernetes_schedulable }}"
   "serialize-image-pulls": "false"
-  "tls-cert-file": "{{ kubernetes_certificates.kubelet}}"
+  "streaming-connection-idle-timeout": "0"
+  "tls-cert-file": "{{ kubernetes_certificates.kubelet }}"
   "tls-private-key-file": "{{ kubernetes_certificates.kubelet_key }}"
   "v": "2"
 
@@ -258,6 +280,7 @@ official_versioned_images:
   heapster: "{{official_images.heapster.name}}:{{official_images.heapster.version}}"
   influxdb: "{{official_images.influxdb.name}}:{{official_images.influxdb.version}}"
   rescheduler: "{{official_images.rescheduler.name}}:{{official_images.rescheduler.version}}"
+  metrics_server: "{{official_images.metrics_server.name}}:{{official_images.metrics_server.version}}"
 
 images:
   etcd: "{{ official_versioned_images.etcd | final_image(docker_registry_full_url, load_private_images) }}"
@@ -289,6 +312,7 @@ images:
   heapster: "{{ official_versioned_images.heapster | final_image(docker_registry_full_url, load_private_images) }}"
   influxdb: "{{ official_versioned_images.influxdb | final_image(docker_registry_full_url, load_private_images) }}"
   rescheduler: "{{ official_versioned_images.rescheduler | final_image(docker_registry_full_url, load_private_images) }}"
+  metrics_server: "{{ official_versioned_images.metrics_server | final_image(docker_registry_full_url, load_private_images) }}"
 
 #===============================================================================
 # docker packages
@@ -305,13 +329,10 @@ kubernetes_deb_gpg_key_url: "https://packages.cloud.google.com/apt/doc/apt-key.g
 
 #===============================================================================
 
-# Preflight check variables
-preflight_check_tcp_ports: "{{etcd_k8s_client_port}},{{etcd_networking_client_port}},{{kubernetes_master_secure_port}},{{kubernetes_master_insecure_port}}"
-
 # Gluster
 volume_mount: /
 volume_base_dir: data/
-volume_mode: 0777
+volume_mode: "0777"
 volume_replica_count: 2
 volume_distribution_count: 1
 

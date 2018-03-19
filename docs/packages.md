@@ -39,7 +39,7 @@ EOF'
 | Component | Install Command |
 | ---- | ---- |
 | Etcd Node | `sudo yum -y install --setopt=obsoletes=0 docker-ce-17.03.2.ce-1.el7.centos` |
-| Kubernetes Node | `sudo yum -y install --setopt=obsoletes=0 docker-ce-17.03.2.ce-1.el7.centos && yum -y install nfs-utils kubelet-1.9.2-0 kubectl-1.9.2-0` |
+| Kubernetes Node | `sudo yum -y install --setopt=obsoletes=0 docker-ce-17.03.2.ce-1.el7.centos && yum -y install nfs-utils kubelet-1.9.3-0 kubectl-1.9.3-0` |
 
 ## Installing via DEB (Ubuntu Xenial)
 
@@ -90,7 +90,7 @@ sudo apt-get update
 | Component | Install Command |
 | ---- | ---- |
 | Etcd Node | `sudo apt-get install -y docker-ce=17.03.2~ce-0~ubuntu-xenial` |
-| Kubernetes Node | `sudo apt-get install -y docker-ce=17.03.2~ce-0~ubuntu-xenial nfs-common kubelet=1.9.2-00 kubectl=1.9.2-00` |
+| Kubernetes Node | `sudo apt-get install -y docker-ce=17.03.2~ce-0~ubuntu-xenial nfs-common kubelet=1.9.3-00 kubectl=1.9.3-00` |
 
 #### Stop the kubelet
 When the Ubuntu kubelet package is installed the service will be started and will bind to ports. This will cause some preflight port checks to fail.

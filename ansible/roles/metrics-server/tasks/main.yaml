@@ -1,0 +1,27 @@
+---
+  - name: create /etc/kubernetes/specs directory
+    file:
+      path: "{{ kubernetes_spec_dir }}"
+      state: directory
+
+  - name: copy metrics-server.yaml to remote
+    template:
+      src: metrics-server.yaml
+      dest: "{{ kubernetes_spec_dir }}/metrics-server.yaml"
+
+  - name: start metrics-server
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/metrics-server.yaml
+
+  - block:
+    - name: wait until metrics-server pods are ready
+      command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment metrics-server -n kube-system -o jsonpath='{.status.availableReplicas}'
+      register: readyReplicas
+      until: readyReplicas.stdout|int == 1
+      retries: 24
+      delay: 10
+      failed_when: false # We don't want this task to actually fail (We catch the failure with a custom msg in the next task)
+    - name: fail if any metrics-serverpods are not ready
+      fail:
+        msg: "Timed out waiting for metrics-server pods to be in the ready state."
+      when: readyReplicas.stdout|int != 1
+    when: run_pod_validation|bool == true 

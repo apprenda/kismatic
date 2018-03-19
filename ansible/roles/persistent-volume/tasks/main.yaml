@@ -1,6 +1,6 @@
 ---
   - name: get storage cluster IP
-    command: kubectl get svc kismatic-storage -n kube-system -o=jsonpath='{.spec.clusterIP}'
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get svc kismatic-storage -n kube-system -o=jsonpath='{.spec.clusterIP}'
     register: out
 
   - name: set storage cluster IP
@@ -18,4 +18,4 @@
         dest: "{{ kubernetes_spec_dir }}/pv.yaml"
 
   - name: create persistent volume {{ volume_name }}
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/pv.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/pv.yaml

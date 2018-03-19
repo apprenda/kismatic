@@ -7,6 +7,8 @@
     when: configure_ingress|bool == true
   - include: _heapster.yaml play_name="Upgrade Heapster Cluster Monitoring" upgrading=true
     when: heapster.enabled|bool == true
+  - include: _metrics-server.yaml play_name="Upgrade Kubernetes Metrics Server" upgrading=true
+    when: metricsserver.enabled|bool == true
   - include: _kube-dashboard.yaml play_name="Upgrade Kubernetes Dashboard" upgrading=true
     when: dashboard.enabled|bool == true
   - include: _helm.yaml play_name="Upgrade Helm and Tiller" upgrading=true

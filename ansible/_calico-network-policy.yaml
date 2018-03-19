@@ -10,10 +10,10 @@
 
     pre_tasks:
       - name: remove old calico-policy-controller replication controller if exists
-        command: kubectl delete rc calico-policy-controller -n kube-system --now --ignore-not-found
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} delete rc calico-policy-controller -n kube-system --now --ignore-not-found
         when: upgrading is defined and upgrading|bool == true
       - name: remove old calico-policy-controller deployment if exists
-        command: kubectl delete deployment calico-policy-controller -n kube-system --now --ignore-not-found
+        command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} delete deployment calico-policy-controller -n kube-system --now --ignore-not-found
         when: upgrading is defined and upgrading|bool == true
 
     roles:

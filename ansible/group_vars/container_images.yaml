@@ -16,13 +16,13 @@ official_images:
     version: "{{ versions.kubernetes }}"
   calico_node:
     name: calico/node
-    version: v2.6.6
+    version: v2.6.8
   calico_ctl:
     name: calico/ctl
     version: v1.6.3
   calico_cni:
     name: calico/cni
-    version: v1.11.2
+    version: v1.11.4
   calico_kube_controller:
     name: calico/kube-controllers
     version: v1.0.3
@@ -37,16 +37,16 @@ official_images:
     version: 1.1.1
   weave:
     name: weaveworks/weave-kube
-    version: 2.1.3
+    version: 2.2.0
   weave_npc:
     name: weaveworks/weave-npc
-    version: 2.1.3
+    version: 2.2.0
   defaultbackend:
     name: gcr.io/google_containers/defaultbackend
     version: 1.4
   nginx_ingress_controller:
     name: quay.io/kubernetes-ingress-controller/nginx-ingress-controller
-    version: 0.10.2
+    version: 0.11.0
   nginx:
     name: nginx
     version: stable-alpine
@@ -67,22 +67,25 @@ official_images:
     version: 1.14.8
   coredns:
     name: coredns/coredns
-    version: 1.0.5
+    version: 1.0.6
   kubernetes_dashboard:
     name: gcr.io/google_containers/kubernetes-dashboard-amd64
-    version: v1.8.2
+    version: v1.8.3
   apprenda_tcp_healthz: 
     name: apprenda/tcp-healthz-amd64
     version: v1.0.0
   helm:
     name: gcr.io/kubernetes-helm/tiller
-    version: v2.7.2
+    version: v2.8.1
   heapster:
     name: gcr.io/google_containers/heapster-amd64
-    version: v1.5.0
+    version: v1.5.1
   influxdb:
     name: gcr.io/google_containers/heapster-influxdb-amd64
     version: v1.3.3
   rescheduler:
     name: gcr.io/google-containers/rescheduler
     version: v0.3.1
+  metrics_server:
+    name: gcr.io/google_containers/metrics-server-amd64
+    version: v0.2.1

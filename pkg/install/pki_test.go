@@ -260,7 +260,11 @@ func TestGenerateClusterCertificatesExistingCertsAreNotRegen(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	proxyClientCA, err := pki.GenerateProxyClientCA(p)
+	if err != nil {
+		t.Fatalf("error generating proxy-client CA for test: %v", err)
+	}
+	if err = pki.GenerateClusterCertificates(p, ca, proxyClientCA); err != nil {
 		t.Fatalf("error generating cluster certificates: %v", err)
 	}
 
@@ -275,7 +279,7 @@ func TestGenerateClusterCertificatesExistingCertsAreNotRegen(t *testing.T) {
 	}
 
 	// Run generation again. Nothing should be touched.
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	if err = pki.GenerateClusterCertificates(p, ca, proxyClientCA); err != nil {
 		t.Fatalf("error generating cluster certificates: %v", err)
 	}
 
@@ -352,6 +356,10 @@ func TestGenerateClusterCertificatesValidateCertificateInformation(t *testing.T)
 	if err != nil {
 		t.Fatalf("failed to generate cluster CA")
 	}
+	proxyClientCA, err := pki.GenerateProxyClientCA(p)
+	if err != nil {
+		t.Fatalf("failed to generate proxy-client CA")
+	}
 	etcdNode := p.Etcd.Nodes[0]
 	masterNode := p.Master.Nodes[0]
 	workerNode := p.Worker.Nodes[0]
@@ -359,7 +367,7 @@ func TestGenerateClusterCertificatesValidateCertificateInformation(t *testing.T)
 	storageNode := p.Storage.Nodes[0]
 
 	// Generate the cluster certificates
-	err = pki.GenerateClusterCertificates(p, ca)
+	err = pki.GenerateClusterCertificates(p, ca, proxyClientCA)
 	if err != nil {
 		t.Fatalf("failed to generate cluster certificates")
 	}
@@ -452,54 +460,76 @@ func TestGenerateClusterCertificatesValidateCertificateInformation(t *testing.T)
 	tests := []struct {
 		name                  string
 		certFilename          string
+		issuer                string
 		expectedCommonName    string
 		expectedOrganizations []string
 	}{
 		{
 			name:               "kube scheduler certificate",
 			certFilename:       "kube-scheduler.pem",
+			issuer:             "someName",
 			expectedCommonName: "system:kube-scheduler",
 		},
 		{
 			name:               "kube controller mgr certificate",
 			certFilename:       "kube-controller-manager.pem",
+			issuer:             "someName",
 			expectedCommonName: "system:kube-controller-manager",
 		},
 		{
 			name:                  "master node/kubelet certificate",
 			certFilename:          fmt.Sprintf("%s-kubelet.pem", masterNode.Host),
+			issuer:                "someName",
 			expectedCommonName:    fmt.Sprintf("system:node:%s", masterNode.Host),
 			expectedOrganizations: []string{"system:nodes"},
 		},
 		{
 			name:                  "worker node/kubelet certificate",
 			certFilename:          fmt.Sprintf("%s-kubelet.pem", workerNode.Host),
+			issuer:                "someName",
 			expectedCommonName:    fmt.Sprintf("system:node:%s", workerNode.Host),
 			expectedOrganizations: []string{"system:nodes"},
 		},
 		{
 			name:                  "ingress node/kubelet certificate",
 			certFilename:          fmt.Sprintf("%s-kubelet.pem", ingressNode.Host),
+			issuer:                "someName",
 			expectedCommonName:    fmt.Sprintf("system:node:%s", ingressNode.Host),
 			expectedOrganizations: []string{"system:nodes"},
 		},
 		{
 			name:                  "storage node/kubelet certificate",
 			certFilename:          fmt.Sprintf("%s-kubelet.pem", storageNode.Host),
+			issuer:                "someName",
 			expectedCommonName:    fmt.Sprintf("system:node:%s", storageNode.Host),
 			expectedOrganizations: []string{"system:nodes"},
 		},
 		{
 			name:                  "admin user certificate",
 			certFilename:          "admin.pem",
+			issuer:                "someName",
 			expectedCommonName:    "admin",
+			expectedOrganizations: []string{"system:masters"},
+		},
+		{
+			name:                  "kube-apiserver kubelet client certificate",
+			certFilename:          "apiserver-kubelet-client.pem",
+			issuer:                "someName",
+			expectedCommonName:    "kube-apiserver-kubelet-client",
+			expectedOrganizations: []string{"system:masters"},
+		},
+		{
+			name:                  "proxy client certificate",
+			certFilename:          "proxy-client.pem",
+			issuer:                "proxyClientCA",
+			expectedCommonName:    "aggregator",
 			expectedOrganizations: []string{"system:masters"},
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, validateClientCertificateAndKey(pki.GeneratedCertsDirectory,
-			test.certFilename, test.expectedCommonName, test.expectedOrganizations...))
+			test.certFilename, test.issuer, test.expectedCommonName, test.expectedOrganizations...))
 	}
 }
 
@@ -529,7 +559,7 @@ func TestGenerateClusterCertificatesPlanFileExpirationIsRespected(t *testing.T) 
 	}
 }
 
-func validateClientCertificateAndKey(certsDir, filename, expectedCommonName string, expectedOrganizations ...string) func(t *testing.T) {
+func validateClientCertificateAndKey(certsDir, filename, expectedIssuer string, expectedCommonName string, expectedOrganizations ...string) func(t *testing.T) {
 	return func(t *testing.T) {
 		cert := mustReadCertFile(filepath.Join(certsDir, filename), t)
 		if expectedCommonName != cert.Subject.CommonName {
@@ -538,6 +568,10 @@ func validateClientCertificateAndKey(certsDir, filename, expectedCommonName stri
 
 		if !reflect.DeepEqual(cert.Subject.Organization, expectedOrganizations) {
 			t.Errorf("Expected organizations: %v, but got %v", expectedOrganizations, cert.Subject.Organization)
+		}
+
+		if cert.Issuer.CommonName != expectedIssuer {
+			t.Errorf("Expected issuer: %s, but got %s", expectedIssuer, cert.Issuer.CommonName)
 		}
 	}
 }
@@ -595,7 +629,11 @@ func TestContivProxyServerCertGenerated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	proxyClientCA, err := pki.GenerateClusterCA(p)
+	if err != nil {
+		t.Fatalf("error generating proxy-client CA for test: %v", err)
+	}
+	if err = pki.GenerateClusterCertificates(p, ca, proxyClientCA); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 	certFile := filepath.Join(pki.GeneratedCertsDirectory, "contiv-proxy-server.pem")
@@ -612,6 +650,10 @@ func TestInvalidNodeCertificateShouldFailValidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
+	proxyClientCA, err := pki.GenerateProxyClientCA(p)
+	if err != nil {
+		t.Fatalf("error generating proxy-client CA for test: %v", err)
+	}
 	if err = pki.GenerateNodeCertificate(p, p.Master.Nodes[0], ca); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
@@ -623,7 +665,7 @@ func TestInvalidNodeCertificateShouldFailValidation(t *testing.T) {
 		InternalIP: "22.33.44.55",
 	}
 
-	err = pki.GenerateClusterCertificates(p, ca)
+	err = pki.GenerateClusterCertificates(p, ca, proxyClientCA)
 	if err == nil {
 		t.Fatalf("expected an error, got nil")
 	}
@@ -703,7 +745,11 @@ func TestValidateClusterCertificatesWithValidExistingCerts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	proxyClientCA, err := pki.GenerateProxyClientCA(p)
+	if err != nil {
+		t.Fatalf("error generating proxy-client CA for test: %v", err)
+	}
+	if err = pki.GenerateClusterCertificates(p, ca, proxyClientCA); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 
@@ -726,7 +772,11 @@ func TestValidateClusterCertificatesInvalidCerts(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error generating CA for test: %v", err)
 	}
-	if err = pki.GenerateClusterCertificates(p, ca); err != nil {
+	proxyClientCA, err := pki.GenerateProxyClientCA(p)
+	if err != nil {
+		t.Fatalf("error generating proxy-client CA for test: %v", err)
+	}
+	if err = pki.GenerateClusterCertificates(p, ca, proxyClientCA); err != nil {
 		t.Fatalf("failed to generate certs: %v", err)
 	}
 

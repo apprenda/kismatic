@@ -15,7 +15,6 @@ var kubeAPIServerProtectedOptions = []string{
 	"etcd-certfile",
 	"etcd-keyfile",
 	"etcd-servers",
-	"insecure-port",
 	"secure-port",
 	"service-account-key-file",
 	"service-cluster-ip-range",

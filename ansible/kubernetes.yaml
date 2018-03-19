@@ -45,6 +45,8 @@
     when: dns.enabled|bool == true
   - include: _heapster.yaml
     when: heapster.enabled|bool == true
+  - include: _metrics-server.yaml
+    when: metricsserver.enabled|bool == true
   - include: _kube-dashboard.yaml
     when: dashboard.enabled|bool == true
   - include: _helm.yaml

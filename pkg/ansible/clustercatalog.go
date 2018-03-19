@@ -108,10 +108,11 @@ type ClusterCatalog struct {
 		Provider string
 		Options  struct {
 			Calico struct {
-				Mode          string
-				LogLevel      string `yaml:"log_level"`
-				WorkloadMTU   int    `yaml:"workload_mtu"`
-				FelixInputMTU int    `yaml:"felix_input_mtu"`
+				Mode                  string
+				LogLevel              string `yaml:"log_level"`
+				WorkloadMTU           int    `yaml:"workload_mtu"`
+				FelixInputMTU         int    `yaml:"felix_input_mtu"`
+				IPAutodetectionMethod string `yaml:"ip_autodetection_method"`
 			}
 		}
 	}
@@ -128,6 +129,10 @@ type ClusterCatalog struct {
 				PVCName string `yaml:"pvc_name"`
 			}
 		}
+	}
+
+	MetricsServer struct {
+		Enabled bool
 	}
 
 	Dashboard struct {

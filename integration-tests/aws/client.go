@@ -167,7 +167,10 @@ func (c Client) CreateNode(ami AMI, instanceType InstanceType, addBlockDevice bo
 		return "", err
 	}
 	// Tag the nodes
-	thisHost, _ := os.Hostname()
+	createdBy, _ := os.Hostname()
+	if os.Getenv("CREATED_BY") != "" {
+		createdBy = os.Getenv("CREATED_BY")
+	}
 	tagReq := &ec2.CreateTagsInput{
 		Resources: []*string{instanceID},
 		Tags: []*ec2.Tag{
@@ -177,7 +180,7 @@ func (c Client) CreateNode(ami AMI, instanceType InstanceType, addBlockDevice bo
 			},
 			{
 				Key:   aws.String("CreatedBy"),
-				Value: aws.String(thisHost),
+				Value: aws.String(createdBy),
 			},
 		},
 	}
@@ -280,7 +283,7 @@ func (c Client) CreateDNSRecords(nodeIPs []string) (*DNSRecord, error) {
 		return nil, err
 	}
 	// Setup variables to modify hosted zone
-	name := strconv.FormatInt(time.Now().Unix(), 10) + ".kismatic.integration-tests."
+	name := strconv.FormatInt(time.Now().Unix(), 10) + ".kismatic.integration-tests"
 	dnsRecord := &DNSRecord{Name: name, Values: nodeIPs}
 	err = modifyHostedZone(dnsRecord, route53.ChangeActionUpsert, c.Config.HostedZoneID, api)
 	if err != nil {

@@ -11,7 +11,6 @@ type PlanAWS struct {
 	Ingress                      []NodeDeets
 	Storage                      []NodeDeets
 	NFSVolume                    []NFSVolume
-	AdminPassword                string
 	MasterNodeFQDN               string
 	MasterNodeShortName          string
 	SSHUser                      string
@@ -47,7 +46,6 @@ type PlanAWS struct {
 // Certain fields are still present for backwards compatabilty when testing upgrades
 const planAWSOverlay = `cluster:
   name: kubernetes
-  admin_password: {{.AdminPassword}}
   disable_package_installation: {{.DisablePackageInstallation}}
   disconnected_installation: {{.DisconnectedInstallation}}
   networking:
@@ -106,6 +104,9 @@ add_ons:
       calico:
         mode: overlay
         log_level: info
+        workload_mtu: 1500
+        felix_input_mtu: 1440
+        ip_autodetection_method: first-found
   dns:
     disable: false
     provider: {{if .DNSProvider}}{{.DNSProvider}}{{else}}kubedns{{end}}
@@ -119,6 +120,8 @@ add_ons:
         sink: influxdb:http://heapster-influxdb.kube-system.svc:8086
       influxdb:
         pvc_name: {{.HeapsterInfluxdbPVC}}
+  metrics_server:
+    disable: false
   package_manager:
     disable: {{.DisableHelm}}
     provider: helm

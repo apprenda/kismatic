@@ -21,6 +21,8 @@ In this way, when a client issues a request to a server, the client can check th
 the server's certificate has been signed by the CA. On the flip side, the server can
 verify the client's certificate as well by making sure the cert has been signed by the root CA.
 
+There is an additional CA that is used by the [kube-aggregator](https://kubernetes.io/docs/tasks/access-kubernetes-api/configure-aggregation-layer/). This CA is then used to sign a certificate used for `--proxy-client-cert-file` and `--proxy-client-key-file` flags on the `kube-apiserver`, the CA gets set as `--requestheader-client-ca-file` flag.
+
 ## Certificates in Kismatic
 Kismatic will generate certificates for all the components in the cluster. Furthermore,
 it will also generate an admin certificate that can be used to access the API server
@@ -31,14 +33,17 @@ as a cluster admin.
 | Certificate | Purpose | Filename |
 |---|---|---|
 | Self-Signed CA | Sign generated certificates |  ca.pem |
+| Self-Signed proxy-client CA | Sign generated certificates | proxy-client-ca.pem |
 | Etcd Server Cert | Serving API over HTTPS, performing peer-authentication | $nodeName-etcd.pem | 
 | API Server Cert | Serving API over HTTPS | $nodeName-apiserver.pem  |
 | Controller Manager Client Cert  | Used by controller manager to talk to API Server  | kube-controller-manager.pem  |
 | Scheduler Client Cert | Used by scheduler to talk to API Server | kube-scheduler.pem |
 | Service Account Signing Cert | Used by controller mgr to sign service accounts | service-account.pem |
 | Kubelet Client Cert | Used by Kubelet to talk to API Server | $nodeName-kubelet.pem |
+| Kube API Server Kubelet Client Cert | Used by kube-apiserver to talk to the kubelet | apiserver-kubelet-client.pem |
 | Etcd Client Cert | Used by calico to talk to etcd | etcd-client.pem |
 | Admin Client Cert | Used by admin to authenticate with the cluster using kubectl | admin.pem | 
+| Proxy Client Cert | Used by the proxy-client and aggregation layer | proxy-client.pem | 
 
 ### Secured Interactions
 
@@ -61,8 +66,8 @@ The following is a list of the interactions that happen between all the componen
   * Key Size: 2048
 * Expiration: configurable, defaults to 17600h (2 years)
 
-### Can I bring my own CA?
-Yes. Kismatic allows you to provide your own Certificate Authority for generating certificates. Simply place the CA's private key (`ca-key.pem`) and certificate (`ca.pem`) in the `generated/keys` directory beside the `kismatic` binary.
+### Can I bring my own CAs?
+Yes. Kismatic allows you to provide your own Certificate Authority for generating certificates. Simply place the CA's private key (`ca-key.pem`) and certificate (`ca.pem`) in the `generated/keys` directory beside the `kismatic` binary. This will also work for the proxy-client CA with private key (`proxy-client-ca.pem`) and certificate (`proxy-client.pem`).
 
 ### Certificate generation command
 In Kubernetes, client certificates are used for authenticating with the Kubernetes API server. KET facilitates

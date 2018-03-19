@@ -2,7 +2,7 @@ version: 2
 defaults: &defaults
   working_directory: /go/src/github.com/apprenda/kismatic
   docker:
-    - image: circleci/golang:1.9.2
+    - image: circleci/golang:1.9.4
 
 jobs:
   build:
@@ -10,8 +10,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install glide packages
+          command: make vendor && make glide-install-host
+      - run:
           name: Unit tests
-          command: make TEST_OPTS="-v" bare-test
+          command: make TEST_OPTS="-v" test-host
       - run:
           name: Verify gofmt
           command: diff -u <(echo -n) <(gofmt -d ./pkg ./cmd)
@@ -22,23 +25,26 @@ jobs:
           name: Create release directory # Used for releasing to GH
           command: mkdir release
       - run:
-          name: Darwin dist
-          command: GLIDE_GOOS=linux GOOS=darwin make bare-dist
+          name: Darwin, Linux dists
+          command: make all-host
+      - run:
+          name: Darwin tarball
+          command: GOOS=darwin make tarball
+      - run:
+          name: Linux tarball
+          command: GOOS=linux make tarball
       - store_artifacts:
-          path: out/kismatic.tar.gz
+          path: kismatic-darwin.tar.gz
           destination: kismatic-darwin-amd64.tar.gz
       - run:
           name: Copy darwin pkg to release dir
-          command: mv out/kismatic.tar.gz release/kismatic-${CIRCLE_TAG}-darwin-amd64.tar.gz
-      - run:
-          name: Linux dist
-          command: GOOS=linux make bare-dist
+          command: mv kismatic-darwin.tar.gz release/kismatic-${CIRCLE_TAG}-darwin-amd64.tar.gz
       - store_artifacts:
-          path: out/kismatic.tar.gz
+          path: kismatic-linux.tar.gz
           destination: kismatic-linux-amd64.tar.gz
       - run:
           name: Copy linux pkg to release dir # Used for releasing to GH
-          command: cp out/kismatic.tar.gz release/kismatic-${CIRCLE_TAG}-linux-amd64.tar.gz
+          command: cp kismatic-linux.tar.gz release/kismatic-${CIRCLE_TAG}-linux-amd64.tar.gz
       - run:
           name: Set integration test SSH Key 
           command: echo "$KISMATIC_INT_TEST_KEY" | base64 -d > ~/.ssh/kismatic-integration-testing.pem
@@ -50,15 +56,20 @@ jobs:
           command: |
             if [[ -n "$FOCUS" ]]
             then
-                make focus-integration-test
+                make focus-integration-test-host
             fi
           no_output_timeout: 30m
           environment:
+            GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
             ANSIBLE_SSH_CONTROL_PATH: "/tmp/ssh-%%r-%%h-%%p"
             ANSIBLE_SSH_ARGS: "-o ControlMaster=auto -o ControlPersist=1800s -o ControlPath=/tmp/ssh-%r-%h-%p"    
       - run:
           name: Integration tests
-          command: make just-integration-test
+          command: |
+            if [[ -z "$FOCUS" ]]
+            then
+                make integration-test-host
+            fi 
           no_output_timeout: 30m
           environment:
             GINKGO_OPTS: "-nodes=32 --flakeAttempts=2"
@@ -69,7 +80,7 @@ jobs:
           command: |
             if [[ -n "$CIRCLE_TAG" || -n "$RUN_SLOW_TESTS" ]]
             then
-              make slow-integration-test
+              make slow-integration-test-host
             fi
           no_output_timeout: 90m
           environment:

@@ -1,8 +1,8 @@
-# Calico Version v2.6.6
-# https://docs.projectcalico.org/v2.6/releases#v2.6.6
+# Calico Version v2.6.8
+# https://docs.projectcalico.org/v2.6/releases#v2.6.8
 # This manifest includes the following component versions:
-#   calico/node:v2.6.6
-#   calico/cni:v1.11.2
+#   calico/node:v2.6.8
+#   calico/cni:v1.11.4
 #   calico/kube-controllers:v1.0.3
 
 # This ConfigMap is used to configure a self-hosted Calico installation.
@@ -160,6 +160,8 @@ spec:
             # Auto-detect the BGP IP address.
             - name: IP
               value: ""
+            - name: IP_AUTODETECTION_METHOD
+              value: "{{ cni.options.calico.ip_autodetection_method }}"
             - name: FELIX_HEALTHENABLED
               value: "true"
           securityContext:

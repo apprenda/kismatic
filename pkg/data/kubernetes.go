@@ -62,7 +62,7 @@ type RemoteKubectl struct {
 
 // ListPersistentVolumes returns PersistentVolume data
 func (k RemoteKubectl) ListPersistentVolumes() (*PersistentVolumeList, error) {
-	pvRaw, err := k.SSHClient.Output(true, "sudo kubectl get pv -o json")
+	pvRaw, err := k.SSHClient.Output(true, "sudo kubectl --kubeconfig /root/.kube/config get pv -o json")
 	if err != nil {
 		return nil, fmt.Errorf("error getting persistent volume data: %v", err)
 	}
@@ -83,7 +83,7 @@ func UnmarshalPVs(raw string) (*PersistentVolumeList, error) {
 
 // ListPods returns Pods data with --all-namespaces=true flag
 func (k RemoteKubectl) ListPods() (*PodList, error) {
-	podsRaw, err := k.SSHClient.Output(true, "sudo kubectl get pods --all-namespaces=true -o json")
+	podsRaw, err := k.SSHClient.Output(true, "sudo kubectl --kubeconfig /root/.kube/config get pods --all-namespaces=true -o json")
 	if err != nil {
 		return nil, fmt.Errorf("error getting pod data: %v", err)
 	}
@@ -105,7 +105,7 @@ func UnmarshalPods(raw string) (*PodList, error) {
 // GetDaemonSet returns the DaemonSet with the given namespace and name. If not found,
 // returns an error.
 func (k RemoteKubectl) GetDaemonSet(namespace, name string) (*DaemonSet, error) {
-	cmd := fmt.Sprintf("sudo kubectl get ds --namespace=%s -o json %s", namespace, name)
+	cmd := fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get ds --namespace=%s -o json %s", namespace, name)
 	dsRaw, err := k.SSHClient.Output(true, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error getting daemon sets: %v", err)
@@ -123,7 +123,7 @@ func (k RemoteKubectl) GetDaemonSet(namespace, name string) (*DaemonSet, error) 
 // GetReplicationController returns the ReplicationController with the given name in the given namespace.
 // If not found, returns an error.
 func (k RemoteKubectl) GetReplicationController(namespace, name string) (*ReplicationController, error) {
-	cmd := fmt.Sprintf("sudo kubectl get replicationcontroller --namespace=%s -o json %s", namespace, name)
+	cmd := fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get replicationcontroller --namespace=%s -o json %s", namespace, name)
 	rcRaw, err := k.SSHClient.Output(true, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error getting replication controller: %v", err)
@@ -141,7 +141,7 @@ func (k RemoteKubectl) GetReplicationController(namespace, name string) (*Replic
 // GetReplicaSet returns the ReplicaSet with the given name in the given namespace.
 // If not found, returns an error.
 func (k RemoteKubectl) GetReplicaSet(namespace, name string) (*ReplicaSet, error) {
-	cmd := fmt.Sprintf("sudo kubectl get replicaset --namespace=%s -o json %s", namespace, name)
+	cmd := fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get replicaset --namespace=%s -o json %s", namespace, name)
 	raw, err := k.SSHClient.Output(true, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error getting ReplicaSet: %v", err)
@@ -159,7 +159,7 @@ func (k RemoteKubectl) GetReplicaSet(namespace, name string) (*ReplicaSet, error
 // GetPersistentVolume returns the persistent volume with the given name.
 // If not found, returns an error.
 func (k RemoteKubectl) GetPersistentVolume(name string) (*PersistentVolume, error) {
-	cmd := fmt.Sprintf("sudo kubectl get pv -o json %s", name)
+	cmd := fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get pv -o json %s", name)
 	raw, err := k.SSHClient.Output(true, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error getting PersistentVolume: %v", err)
@@ -177,7 +177,7 @@ func (k RemoteKubectl) GetPersistentVolume(name string) (*PersistentVolume, erro
 // GetPersistentVolumeClaim returns the persistent volume claim with the given name and namespace.
 // If not found, returns an error.
 func (k RemoteKubectl) GetPersistentVolumeClaim(namespace, name string) (*PersistentVolumeClaim, error) {
-	cmd := fmt.Sprintf("sudo kubectl get pvc --namespace %s -o json %s", namespace, name)
+	cmd := fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get pvc --namespace %s -o json %s", namespace, name)
 	raw, err := k.SSHClient.Output(true, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error getting PersistentVolumeClaim: %v", err)
@@ -195,7 +195,7 @@ func (k RemoteKubectl) GetPersistentVolumeClaim(namespace, name string) (*Persis
 // GetStatefulSet returns the stateful set with the given name in the given namespace.
 // If not found, returns an error.
 func (k RemoteKubectl) GetStatefulSet(namespace, name string) (*StatefulSet, error) {
-	cmd := fmt.Sprintf("sudo kubectl get statefulset --namespace %s -o json %s", namespace, name)
+	cmd := fmt.Sprintf("sudo kubectl --kubeconfig /root/.kube/config get statefulset --namespace %s -o json %s", namespace, name)
 	raw, err := k.SSHClient.Output(true, cmd)
 	if err != nil {
 		return nil, fmt.Errorf("error getting StatefulSet: %v", err)

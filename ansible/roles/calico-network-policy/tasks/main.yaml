@@ -9,11 +9,11 @@
       src: policy-controller.yaml
       dest: "{{ kubernetes_spec_dir }}/policy-controller.yaml"
   - name: start calico policy controller
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/policy-controller.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/policy-controller.yaml
     register: out
 
   - name: wait until policy controller pods are ready
-    command: kubectl get deployment calico-kube-controllers -n kube-system -o jsonpath='{.status.availableReplicas}'
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment calico-kube-controllers -n kube-system -o jsonpath='{.status.availableReplicas}'
     register: readyReplicas
     until: readyReplicas.stdout|int == 1
     retries: 24

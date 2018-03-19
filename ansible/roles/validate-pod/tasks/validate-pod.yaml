@@ -1,7 +1,7 @@
 ---
     # kubeconfig is required because this task can be triggered from any k8s node
   - name: wait up to 5 min until pod '{{ name }}' has the desired version
-    command: kubectl get pods --selector {{ selector }} --namespace kube-system -o jsonpath='{.items[0].metadata.annotations.kismatic/version}' --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods --selector {{ selector }} --namespace kube-system -o jsonpath='{.items[0].metadata.annotations.kismatic/version}'
     register: podVersion
     until: podVersion.stdout == kismatic_short_version
     retries: 60
@@ -22,7 +22,7 @@
     when: podVersion.stdout != kismatic_short_version
 
   - name: wait up to 5 min until pod '{{ name }}' is running
-    command: kubectl get pods --selector {{ selector }} --namespace kube-system --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods --selector {{ selector }} --namespace kube-system
     register: phase
     until: phase|success and "Running" in phase.stdout
     retries: 60

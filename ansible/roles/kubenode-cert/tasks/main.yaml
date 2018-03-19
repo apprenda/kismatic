@@ -13,7 +13,16 @@
       owner: "{{ kubernetes_certificates_owner }}"
       group: "{{ kubernetes_certificates_group }}"
       mode: "{{ kubernetes_certificates_mode }}"
-    
+
+  # copy proxy-client CA certificate
+  - name: copy proxy-client-ca.pem
+    copy:
+      src: "{{ tls_directory }}/proxy-client-ca.pem"
+      dest: "{{ kubernetes_certificates.proxy_client_ca }}"
+      owner: "{{ kubernetes_certificates_owner }}"
+      group: "{{ kubernetes_certificates_group }}"
+      mode: "{{ kubernetes_certificates_mode }}"
+
   # copy kubernetes control plane certificates
   - name: copy master node TLS assets
     copy:
@@ -40,6 +49,14 @@
         dest: "{{ kubernetes_certificates.controller_manager }}"
       - src: "kube-controller-manager-key.pem"
         dest: "{{ kubernetes_certificates.controller_manager_key }}"
+      - src: "apiserver-kubelet-client.pem"
+        dest: "{{ kubernetes_certificates.kube_apiserver_kubelet_client }}"
+      - src: "apiserver-kubelet-client-key.pem"
+        dest: "{{ kubernetes_certificates.kube_apiserver_kubelet_client_key }}"
+      - src: "proxy-client.pem"
+        dest: "{{ kubernetes_certificates.proxy_client }}"
+      - src: "proxy-client-key.pem"
+        dest: "{{ kubernetes_certificates.proxy_client_key }}"
       - src: "service-account.pem"
         dest: "{{ kubernetes_certificates.service_account }}"
       - src: "service-account-key.pem"

@@ -22,6 +22,7 @@ type stepCmd struct {
 	restartServices    bool
 	verbose            bool
 	outputFormat       string
+	limit              []string
 }
 
 // NewCmdStep returns the step command
@@ -53,6 +54,7 @@ func NewCmdStep(out io.Writer, opts *installOpts) *cobra.Command {
 			return stepCmd.run()
 		},
 	}
+	cmd.Flags().StringSliceVar(&stepCmd.limit, "limit", []string{}, "comma-separated list of hostnames to limit the execution to a subset of nodes")
 	cmd.Flags().StringVar(&stepCmd.generatedAssetsDir, "generated-assets-dir", "generated", "path to the directory where assets generated during the installation process will be stored")
 	cmd.Flags().BoolVar(&stepCmd.restartServices, "restart-services", false, "force restart cluster services (Use with care)")
 	cmd.Flags().BoolVar(&stepCmd.verbose, "verbose", false, "enable verbose logging from the installation")
@@ -67,6 +69,7 @@ func (c stepCmd) run() error {
 		outputFormat:       c.outputFormat,
 		skipPreFlight:      true,
 		generatedAssetsDir: c.generatedAssetsDir,
+		limit:              c.limit,
 	}
 	if err := doValidate(c.out, c.planner, valOpts); err != nil {
 		return err
@@ -76,7 +79,7 @@ func (c stepCmd) run() error {
 		return fmt.Errorf("error reading plan file: %v", err)
 	}
 	util.PrintHeader(c.out, "Running Task", '=')
-	if err := c.executor.RunPlay(c.task, plan, c.restartServices); err != nil {
+	if err := c.executor.RunPlay(c.task, plan, c.restartServices, c.limit...); err != nil {
 		return err
 	}
 	util.PrintColor(c.out, util.Green, "\nTask completed successfully\n\n")

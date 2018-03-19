@@ -33,25 +33,25 @@
       mode: "{{ network_environment_mode }}"
 
   - name: create calico RBAC roles
-    command: kubectl apply -f /etc/calico/rbac.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f /etc/calico/rbac.yaml
     run_once: true
 
   - name: get the name of the calico pod running on this node
-    command: kubectl get pods -l=k8s-app=calico-node --template {%raw%}'{{range .items}}{{if eq .spec.nodeName{%endraw%} "{{ inventory_hostname|lower }}"{%raw%}}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}'{%endraw%} -n kube-system
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods -l=k8s-app=calico-node --template {%raw%}'{{range .items}}{{if eq .spec.nodeName{%endraw%} "{{ inventory_hostname|lower }}"{%raw%}}}{{.metadata.name}}{{"\n"}}{{end}}{{end}}'{%endraw%} -n kube-system
     register: calico_pod_name
     when: upgrading is defined and upgrading|bool == true
 
   - name: start calico containers
-    command: kubectl apply -f /etc/calico/calico.yaml --kubeconfig {{ kubernetes_kubeconfig.kubectl }}
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f /etc/calico/calico.yaml
     run_once: true
 
   - name: delete calico pod running on this node
-    command: kubectl delete pod {{ calico_pod_name.stdout }} -n kube-system --now
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} delete pod {{ calico_pod_name.stdout }} -n kube-system --now
     when: calico_pod_name is defined and calico_pod_name.stdout is defined and calico_pod_name.stdout != ""
 
     # wait for pod to shutdown
   - name: wait until the calico pod running on this node is deleted
-    command: kubectl get pods {{ calico_pod_name.stdout }} --ignore-not-found=true -n kube-system
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get pods {{ calico_pod_name.stdout }} --ignore-not-found=true -n kube-system
     register: poddeleted
     until: poddeleted|success and poddeleted.stdout == ""
     retries: 20

@@ -1,5 +1,5 @@
 - name: wait until the tiller pod is ready
-  command: kubectl get deployment tiller-deploy -n {{ helm.namespace }} -o jsonpath='{.status.availableReplicas}'
+  command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment tiller-deploy -n {{ helm.namespace }} -o jsonpath='{.status.availableReplicas}'
   register: readyReplicas
   until: readyReplicas.stdout|int == 1
   retries: 24

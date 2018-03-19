@@ -18,11 +18,11 @@
       dest: "{{ kubernetes_spec_dir }}/heapster.yaml"
 
   - name: create heapster rolebinding
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/heapster-rbac.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/heapster-rbac.yaml
   - name: start influxdb controller
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/influxdb.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/influxdb.yaml
   - name: start heapster controller
-    command: kubectl apply -f {{ kubernetes_spec_dir }}/heapster.yaml
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} apply -f {{ kubernetes_spec_dir }}/heapster.yaml
 
   - block:
     - name: validate heapster pods  # don't verify if user is going to create their own PVC/PV

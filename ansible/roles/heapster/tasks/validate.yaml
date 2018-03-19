@@ -1,5 +1,5 @@
   - name: wait until the influxdb pods are ready
-    command: kubectl get deployment heapster-influxdb -n kube-system -o jsonpath='{.status.availableReplicas}'
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment heapster-influxdb -n kube-system -o jsonpath='{.status.availableReplicas}'
     register: readyReplicas
     until: readyReplicas.stdout|int == 1
     retries: 24
@@ -12,7 +12,7 @@
     when: readyReplicas.stdout|int != 1
 
   - name: wait until the heapster pods are ready
-    command: kubectl get deployment heapster -n kube-system -o jsonpath='{.status.availableReplicas}'
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} get deployment heapster -n kube-system -o jsonpath='{.status.availableReplicas}'
     register: readyReplicas
     until: readyReplicas.stdout|int == {{ heapster.options.heapster.replicas }}
     retries: 24
