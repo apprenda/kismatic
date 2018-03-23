@@ -46,6 +46,8 @@ spec:
     - name: usr-ca-certs-host
       mountPath: /usr/share/ca-certificates
       readOnly: true
+    - mountPath: /usr/libexec/kubernetes/kubelet-plugins/volume/exec/
+      name: flexvolume-mount
 {% if cloud_provider is defined and cloud_provider == 'aws' and ansible_os_family == 'RedHat' %}
     - mountPath: /etc/ssl/certs/ca-bundle.crt
       name: rhel-ca-bundle
@@ -64,6 +66,9 @@ spec:
   - hostPath:
       path: /usr/share/ca-certificates
     name: usr-ca-certs-host
+  - hostPath:
+      path: /usr/libexec/kubernetes/kubelet-plugins/volume/exec/
+    name: flexvolume-mount
 {% if cloud_provider is defined and cloud_provider == 'aws' and ansible_os_family == 'RedHat' %}
   - hostPath:
       path: /etc/ssl/certs/ca-bundle.crt

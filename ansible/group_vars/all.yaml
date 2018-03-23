@@ -242,6 +242,7 @@ kubelet_defaults:
   "tls-cert-file": "{{ kubernetes_certificates.kubelet }}"
   "tls-private-key-file": "{{ kubernetes_certificates.kubelet_key }}"
   "v": "2"
+  "volume-plugin-dir": "/usr/libexec/kubernetes/kubelet-plugins/volume/exec/"
 
 # etcd IPs
 etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_networking_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
