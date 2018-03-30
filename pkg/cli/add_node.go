@@ -25,7 +25,7 @@ type addNodeOpts struct {
 var validRoles = []string{"worker", "ingress", "storage"}
 
 // NewCmdAddNode returns the command for adding node to the cluster
-func NewCmdAddNode(out io.Writer, installOpts *installOpts) *cobra.Command {
+func NewCmdAddNode(out io.Writer) *cobra.Command {
 	opts := &addNodeOpts{}
 	cmd := &cobra.Command{
 		Use:     "add-node CLUSTER_NAME NODE_NAME NODE_IP [NODE_INTERNAL_IP]",

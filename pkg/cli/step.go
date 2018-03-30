@@ -25,7 +25,7 @@ type stepCmd struct {
 }
 
 // NewCmdStep returns the step command
-func NewCmdStep(out io.Writer, opts *installOpts) *cobra.Command {
+func NewCmdStep(out io.Writer) *cobra.Command {
 	stepCmd := &stepCmd{
 		out: out,
 	}

@@ -130,7 +130,7 @@ func buildPlan(nodes provisionedNodes, installOpts installOptions, sshKey string
 func installKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
 	By("Punch it Chewie!")
-	cmd := exec.Command("./kismatic", "install", "apply", defaultClusterName)
+	cmd := exec.Command("./kismatic", "apply", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -151,7 +151,7 @@ func installKismaticWithPlan(plan PlanAWS) error {
 func validateKismaticWithPlan(plan PlanAWS) error {
 	writePlanFile(plan)
 	By("Validate Plan")
-	cmd := exec.Command("./kismatic", "install", "validate", defaultClusterName)
+	cmd := exec.Command("./kismatic", "validate", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
@@ -203,7 +203,7 @@ func installKismaticWithABadNode() {
 	writePlanFile(plan)
 
 	By("Validing our plan")
-	cmd := exec.Command("./kismatic", "install", "validate", defaultClusterName)
+	cmd := exec.Command("./kismatic", "validate", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
@@ -212,7 +212,7 @@ func installKismaticWithABadNode() {
 	}
 
 	By("Well, try it anyway")
-	cmd = exec.Command("./kismatic", "install", "apply", defaultClusterName)
+	cmd = exec.Command("./kismatic", "apply", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()

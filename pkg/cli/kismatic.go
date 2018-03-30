@@ -22,7 +22,6 @@ more documentation is available at https://github.com/apprenda/kismatic`,
 
 	cmd.AddCommand(NewCmdImport(out))
 	cmd.AddCommand(NewCmdVersion(buildDate, out))
-	cmd.AddCommand(NewCmdInstall(in, out))
 	cmd.AddCommand(NewCmdVolume(in, out))
 	cmd.AddCommand(NewCmdIP(out))
 	cmd.AddCommand(NewCmdList(out))
@@ -34,6 +33,13 @@ more documentation is available at https://github.com/apprenda/kismatic`,
 	cmd.AddCommand(NewCmdCertificates(out))
 	cmd.AddCommand(NewCmdSeedRegistry(out, stderr))
 	cmd.AddCommand(NewCmdServer(out))
+	cmd.AddCommand(NewCmdPlan(in, out))
+	cmd.AddCommand(NewCmdValidate(out))
+	cmd.AddCommand(NewCmdApply(out))
+	cmd.AddCommand(NewCmdAddNode(out))
+	cmd.AddCommand(NewCmdStep(out))
+	cmd.AddCommand(NewCmdProvision(in, out))
+	cmd.AddCommand(NewCmdDestroy(in, out))
 
 	return cmd, nil
 }

@@ -21,7 +21,7 @@ type validateOpts struct {
 }
 
 // NewCmdValidate creates a new install validate command
-func NewCmdValidate(out io.Writer, installOpts *installOpts) *cobra.Command {
+func NewCmdValidate(out io.Writer) *cobra.Command {
 	opts := &validateOpts{}
 	cmd := &cobra.Command{
 		Use:   "validate CLUSTER_NAME",

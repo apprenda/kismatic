@@ -31,7 +31,7 @@ type applyOpts struct {
 }
 
 // NewCmdApply creates a cluter using the plan file
-func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
+func NewCmdApply(out io.Writer) *cobra.Command {
 	applyOpts := applyOpts{}
 	cmd := &cobra.Command{
 		Use:   "apply CLUSTER_NAME",

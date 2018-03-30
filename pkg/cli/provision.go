@@ -14,7 +14,7 @@ import (
 )
 
 // NewCmdProvision creates a new provision command
-func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
+func NewCmdProvision(in io.Reader, out io.Writer) *cobra.Command {
 	provisionOpts := provision.ProvisionOpts{}
 	cmd := &cobra.Command{
 		Use:   "provision CLUSTER_NAME",
@@ -67,7 +67,7 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 }
 
 // NewCmdDestroy creates a new destroy command
-func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Command {
+func NewCmdDestroy(in io.Reader, out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "destroy CLUSTER_NAME",
 		Short: "destroy your provisioned cluster",

@@ -152,7 +152,7 @@ func getBadSSHKeyFile() (string, error) {
 
 func runValidate(planFile string) error {
 
-	cmd := exec.Command("./kismatic", "install", "validate", defaultClusterName)
+	cmd := exec.Command("./kismatic", "validate", defaultClusterName)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

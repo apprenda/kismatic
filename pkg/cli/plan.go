@@ -12,7 +12,7 @@ import (
 )
 
 // NewCmdPlan creates a new install plan command
-func NewCmdPlan(in io.Reader, out io.Writer, options *installOpts) *cobra.Command {
+func NewCmdPlan(in io.Reader, out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plan",
 		Short: "plan your Kubernetes cluster and generate a plan file",
