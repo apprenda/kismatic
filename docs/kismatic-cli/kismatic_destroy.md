@@ -1,19 +1,19 @@
-## kismatic ip
+## kismatic destroy
 
-retrieve the IP address of the cluster
+destroy your provisioned cluster
 
 ### Synopsis
 
-retrieve the IP address of the cluster
+destroy your provisioned cluster
 
 ```
-kismatic ip CLUSTER_NAME [flags]
+kismatic destroy CLUSTER_NAME [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for ip
+  -h, --help   help for destroy
 ```
 
 ### SEE ALSO

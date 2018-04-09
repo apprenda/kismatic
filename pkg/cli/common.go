@@ -24,7 +24,7 @@ type planFileNotFoundErr struct {
 }
 
 func (e planFileNotFoundErr) Error() string {
-	return fmt.Sprintf("Plan file not found at %q. If you don't have a plan file, you may generate one with 'kismatic install plan'", e.filename)
+	return fmt.Sprintf("Plan file not found at %q. If you don't have a plan file, you may generate one with 'kismatic plan'", e.filename)
 }
 
 // Returns a path to a plan file, generated dir, and runs dir according to the clusterName

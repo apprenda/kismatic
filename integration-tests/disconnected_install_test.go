@@ -69,7 +69,7 @@ var _ = Describe("disconnected installation", func() {
 					}
 
 					// installOpts.disableRegistrySeeding = true
-					By("Running kismatic install apply")
+					By("Running kismatic apply")
 					err = installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 				})
@@ -125,7 +125,7 @@ var _ = Describe("disconnected installation", func() {
 					}
 
 					// installOpts.disableRegistrySeeding = true
-					By("Running kismatic install apply")
+					By("Running kismatic apply")
 					err = installKismatic(nodes, installOpts, sshKey)
 					Expect(err).ToNot(HaveOccurred())
 				})
@@ -169,7 +169,7 @@ var _ = Describe("disconnected installation", func() {
 				err = runViaSSH([]string{fmt.Sprintf("export http_proxy=%s:%d && curl --head www.google.com", proxyNode.PrivateIP, proxyPort)}, clusterNodes.allNodes(), sshKey, 1*time.Minute)
 				FailIfError(err, "Failed to curl google with proxy")
 
-				By("Running kismatic install apply")
+				By("Running kismatic apply")
 				// don't use the proxy for cluster communication
 
 				installOpts := installOptions{

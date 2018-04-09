@@ -52,7 +52,7 @@ There are currently three storage options with Kismatic:
 
  If you have an existing kubernetes cluster setup with Kismatic you can still have the tool configure a GlusterFS cluster by adding to your plan file similar to above and running:
    ```
-   kismatic install step _storage.yaml
+   kismatic step _storage.yaml
    ```
 
  This will setup a 2 node GlusterFS cluster and expose it as a kubernetes service with the name of `kismatic-storage`

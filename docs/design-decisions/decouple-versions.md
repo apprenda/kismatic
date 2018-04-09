@@ -78,7 +78,7 @@ A new optional field will be added that will contain the Kubernetes `version` un
 
 ### Install Changes
 
-When running `kismatic install plan` the version will be set to the version the the KET binary was built and tested with.
+When running `kismatic plan` the version will be set to the version the the KET binary was built and tested with.
 
 The `kubernetes` version string will also be validated to be the supported `Minor` version and less than or equal to the latest stable version of that `Minor` from:
 ``` bash

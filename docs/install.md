@@ -20,7 +20,7 @@
 * Provision infrastructure (make machines or alter your network)
 * Install load balancers
 
-# Kismatic Install Workflow
+# Kismatic Workflow
 
 First, review the following document to learn about a few example Kubernetes cluster deployment architectures and the various approaches therein: [know what you want to build and how you want to build it](intent.md).
 
@@ -30,7 +30,7 @@ First, review the following document to learn about a few example Kubernetes clu
 | --- | --- | --- | --- |
 | Read these docs to learn more about the resources Kubernetes will require of your infrastructure provider. You may engage with other departments in your organization (storage, network, security, IT, etc.) to make decisions and arrange required work. | Work with infrastucture providers to build out the machines and network changes that you'll need to install Kubernetes. Collect information about your infrastructure and enter it into a Plan File. | Kismatic will check the readiness of the machines and network you've specified in the Plan File. | Kismatic will configure the machines you've specified in the Plan File and run a smoke test to ensure that the resulting cluster is usable.|
 
-1. **Plan**: `kismatic install plan`
+1. **Plan**: `kismatic plan`
    1. The installer will ask basic questions about the intent of your cluster.
    2. The installer will produce a `kismatic-cluster.yaml` file which you will edit to capture your intent.
 2. **Provision**
@@ -44,7 +44,7 @@ First, review the following document to learn about a few example Kubernetes clu
       3. Open up ports where necessary.
       4. Optionally add load balancing to Master nodes.
    3. Review the installation plan in `kismatic-cluster.yaml` and add information for each node.
-3. **Install**: `kismatic install apply`
+3. **Install**: `kismatic apply`
    1. Every install phase begins by validating the plan and testing the infrastructure referenced within it.
    2. If the installation plan is valid, the installer will build you a cluster.
       1. Validate that nodes are provisioned correctly.
@@ -55,11 +55,11 @@ First, review the following document to learn about a few example Kubernetes clu
 
 # Validate
 
-If you're confident about the structure of your plan file and the state of your cluster, validation will be performed during `install apply` as well. Feel free to throw caution to the wind.
+If you're confident about the structure of your plan file and the state of your cluster, validation will be performed during `apply` as well. Feel free to throw caution to the wind.
 
 Having updated your plan, from your installation machine, run:
 
-`./kismatic install validate`
+`./kismatic validate`
 
 This will cause the installer to validate the structure and content of your plan, as well as the readiness of your nodes and network for installation.  Any errors detected will be written to stdout.
 
@@ -70,7 +70,7 @@ This step will result in the copying of the kismatic-inspector to each node via 
 
 Having a valid plan, from your installation machine, run:
 
-`./kismatic install apply`
+`./kismatic apply`
 
 Kismatic will connect to each of your machines, install necessary software and prove that the cluster and network are working as intended. Any errors detected will be written to stdout.
 

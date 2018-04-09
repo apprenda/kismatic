@@ -138,7 +138,7 @@ func doSeedRegistry(stdout, stderr io.Writer, options seedRegistryOptions) error
 		planner := install.FilePlanner{File: options.planFile}
 		if !planner.PlanExists() {
 			util.PrettyPrintErr(stdout, "Reading installation plan file %q", options.planFile)
-			fmt.Fprintln(stdout, `Run "kismatic install plan" to generate it or use the "--server" option`)
+			fmt.Fprintln(stdout, `Run "kismatic plan" to generate it or use the "--server" option`)
 			return fmt.Errorf("plan does not exist")
 		}
 		plan, err := planner.Read()

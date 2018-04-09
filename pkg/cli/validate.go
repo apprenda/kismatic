@@ -20,7 +20,7 @@ type validateOpts struct {
 	skipPreFlight      bool
 }
 
-// NewCmdValidate creates a new install validate command
+// NewCmdValidate creates a new validate command
 func NewCmdValidate(out io.Writer) *cobra.Command {
 	opts := &validateOpts{}
 	cmd := &cobra.Command{
@@ -51,7 +51,7 @@ func doValidate(out io.Writer, planner install.Planner, opts *validateOpts) erro
 	// Check if plan file exists
 	if !planner.PlanExists() {
 		util.PrettyPrintErr(out, "Reading installation plan file [ERROR]")
-		fmt.Fprintln(out, "Run \"kismatic install plan\" to generate it")
+		fmt.Fprintln(out, "Run \"kismatic plan\" to generate it")
 		return fmt.Errorf("plan does not exist")
 	}
 	plan, err := planner.Read()

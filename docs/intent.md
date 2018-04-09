@@ -25,13 +25,13 @@
 2. Create a [small Linux VM](plan.md#compute)
    * You will need to know its IP address and short name.
    * You will need to create a user with passwordless auth, ssh capability and a [public key](provision.md#access).
-3. Run `./kismatic install plan`; you will be creating 1 of each node
+3. Run `./kismatic plan`; you will be creating 1 of each node
 4. Open the `kismatic-cluster.yaml` file in a text editor
    * Set `allow_package_installation: true`
    * Update your user and public key if necessary.
    * Enter the machine's short hostname as the `load_balanced_fqdn` and `load_balanced_short_name`
    * Add your one machine's IP and short hostname as a node in the section for each type of node -- etcd, worker and master.
-5. Run `./kismatic install apply`
+5. Run `./kismatic apply`
 6. Congratulations! You have your first cluster.
 
 # <a name="junior"></a>1/1/1+ Developer's Cluster
@@ -58,7 +58,7 @@
    * Assign public IPs -- we can always remove them later, but this will ease installation
    * Add the new instances to a security group that will allow access to any port from your machine
    * Be sure to select your new keypair on creation
-5. Run `./kismatic install plan`; you will be creating 1 of each node (more if using more workers)
+5. Run `./kismatic plan`; you will be creating 1 of each node (more if using more workers)
 6. Open the `kismatic-cluster.yaml` file in a text editor
    * Set `allow_package_installation: true`
    * Update your user (`ubuntu` for Ubuntu, `ec2-user` for RHEL)
@@ -67,7 +67,7 @@
      * `ip:` Use the Public IP Address
      * `internal_ip:` Use the first Private IP
    * Enter the master's short hostname as the `load_balanced_fqdn` and `load_balanced_short_name`
-7. Run `./kismatic install apply`
+7. Run `./kismatic apply`
 8. Congratulations! You have your first cluster.
 
 # <a name="skunkworks"></a>3+/2/2+ Skunkworks Cluster
@@ -121,7 +121,7 @@
 
 ### Cluster Administrator
 1. Download the [latest Kismatic](provision.md#get) for Linux and unpack it to `/opt/kismatic` on the **install machine**.
-3. Run `./kismatic install plan`
+3. Run `./kismatic plan`
 4. Open the `kismatic-cluster.yaml` file in a text editor
    * If the default CIDR blocks for pod and service networks overlap with IP ranges already in use on your network, you will need to change them.
    * If you have no already installed Kismatic packages, set `allow_package_installation: true`
@@ -134,7 +134,7 @@
      * `host:` Use a short name that's accessible to
      * `ip:` This is an ip address that can be used to ssh into the node
      * `internal_ip:` This is the ip address that nodes should use to talk to each other
-5. Run `./kismatic install apply`
+5. Run `./kismatic apply`
 6. Congratulations! You have a skunkworks cluster. Build something bold!
 
 # <a name="production"></a>5+/2+/2+ Production Cluster
@@ -196,7 +196,7 @@
 
 ### Cluster Administrator
 1. Download the [latest Kismatic](provision.md#get) for Linux and unpack it to `/opt/kismatic` on the **install machine**.
-3. Run `./kismatic install plan`
+3. Run `./kismatic plan`
 4. Open the `kismatic-cluster.yaml` file in a text editor
    * Set `type: routed`
    * If the default CIDR blocks for pod and service networks overlap with IP ranges already in use on your network, you will need to change them.
@@ -210,5 +210,5 @@
      * `host:` Use a short name that's accessible to
      * `ip:` This is an ip address that can be used to ssh into the node
      * `internal_ip:` This is the ip address that nodes should use to talk to each other
-5. Run `./kismatic install apply`
+5. Run `./kismatic apply`
 6. Congratulations! You have a production cluster. Now get to work!

@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/ginkgo"
 )
 
-var _ = Describe("kismatic install validate tests", func() {
+var _ = Describe("kismatic validate tests", func() {
 	BeforeEach(func() {
 		dir := setupTestWorkingDir()
 		os.Chdir(dir)

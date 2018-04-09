@@ -53,7 +53,7 @@ the logs from the `kube-dns` container: `kubectl logs -n kube-system $KUBE_DNS_P
 ## Failure during installation
 Kismatic keeps a record for all command executions in the `runs` directory.
 Inside `runs`, kismatic creates subdirectories that map to actions performed. 
-For example, when running `kismatic install apply`, 
+For example, when running `kismatic apply`, 
 an `apply` directory is created in the `runs`, and a timestamped directory is created inside `runs/apply`
 for each execution of the command.
 

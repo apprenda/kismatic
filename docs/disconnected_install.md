@@ -45,7 +45,7 @@ Docker Hub, GCR, or other public registries.
 
 Once the relevant options in the plan file have been set, and the local repository and local registry have been stood up, you are ready to perform the disconnected installation. 
 
-At this point, you can run `kismatic install apply` to initiate the installation.
+At this point, you can run `kismatic apply` to initiate the installation.
 
 ## Upgrading your cluster
 Before performing a cluster upgrade, you must:

@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewCmdPlan creates a new install plan command
+// NewCmdPlan creates a new plan command
 func NewCmdPlan(in io.Reader, out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "plan",
@@ -154,7 +154,7 @@ func doPlan(in io.Reader, out io.Writer, planner install.FilePlanner) error {
 		return fmt.Errorf("error planning installation: %v", err)
 	}
 	fmt.Fprintf(out, "Wrote plan file template to %q\n", planner.File)
-	fmt.Fprintf(out, "Edit the plan file to further describe your cluster. Once ready, execute the \"install validate\" command to proceed.\n")
+	fmt.Fprintf(out, "Edit the plan file to further describe your cluster. Once ready, execute the \"validate\" command to proceed.\n")
 	return nil
 }
 

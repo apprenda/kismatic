@@ -14,7 +14,7 @@ The binaries are published to the repository's [releases page](https://github.co
 
 From the machine you installed Kismatic to, run the following:
 
-`./kismatic install plan`
+`./kismatic plan`
 
 You will be asked a few questions regarding the decisions you made in the Plan section above. The kismatic installer will then generate a **kismatic-cluster.yaml** file.
 
