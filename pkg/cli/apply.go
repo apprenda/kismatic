@@ -36,13 +36,10 @@ func NewCmdApply(out io.Writer, installOpts *installOpts) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "apply CLUSTER_NAME",
 		Short: "apply your plan file to create a Kubernetes cluster",
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

@@ -19,13 +19,10 @@ func NewCmdProvision(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comm
 	cmd := &cobra.Command{
 		Use:   "provision CLUSTER_NAME",
 		Short: "provision your Kubernetes cluster",
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err
@@ -74,13 +71,10 @@ func NewCmdDestroy(in io.Reader, out io.Writer, opts *installOpts) *cobra.Comman
 	cmd := &cobra.Command{
 		Use:   "destroy CLUSTER_NAME",
 		Short: "destroy your provisioned cluster",
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

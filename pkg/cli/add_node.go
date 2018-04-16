@@ -31,13 +31,10 @@ func NewCmdAddNode(out io.Writer, installOpts *installOpts) *cobra.Command {
 		Use:     "add-node CLUSTER_NAME NODE_NAME NODE_IP [NODE_INTERNAL_IP]",
 		Short:   "add a new node to an existing Kubernetes cluster",
 		Aliases: []string{"add-worker"},
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 3 || len(args) > 4 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

@@ -19,13 +19,10 @@ func NewCmdIP(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "ip CLUSTER_NAME",
 		Short: "retrieve the IP address of the cluster",
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

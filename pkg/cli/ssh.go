@@ -31,13 +31,11 @@ func NewCmdSSH(out io.Writer) *cobra.Command {
 HOST must be one of the following:
 - A hostname or IP defined in the plan file
 - An alias: master, etcd, worker, ingress or storage. This will ssh into the first defined node of that type.`,
-		Args: func(cmd *cobra.Command, args []string) error {
+
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

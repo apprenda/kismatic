@@ -50,13 +50,11 @@ A local datastore will be created to persist the state of the clusters managed b
 
 If cert-file or key-file are not provided, a self-signed CA will be used to create the required key-pair for TLS. 
 		`,
-		Args: func(cmd *cobra.Command, args []string) error {
+
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			return doServer(stdout, options)
 		},
 	}

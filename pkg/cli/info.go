@@ -26,13 +26,10 @@ func NewCmdInfo(out io.Writer) *cobra.Command {
 		Long: `will list the nodes that make up the cluster, along with their current versions & roles.
 
 This will be retrieved by connecting to each node via ssh`,
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

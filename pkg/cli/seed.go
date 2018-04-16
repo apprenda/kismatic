@@ -65,13 +65,10 @@ func NewCmdSeedRegistry(stdout, stderr io.Writer) *cobra.Command {
 		Use:   "seed-registry CLUSTER_NAME",
 		Short: "seed a registry with the container images required by KET",
 		Long:  seedRegistryLong,
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

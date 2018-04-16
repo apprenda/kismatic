@@ -32,13 +32,10 @@ func NewCmdStep(out io.Writer, opts *installOpts) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "step CLUSTER_NAME PLAY_NAME",
 		Short: "run a specific task of the installation workflow (debug feature)",
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

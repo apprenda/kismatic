@@ -31,14 +31,10 @@ func NewCmdImport(out io.Writer) *cobra.Command {
 		Short: "imports a cluster plan file, and generated assets",
 		Long: `imports a cluster plan file, and generated assets. 
 		The GENERATED_DIR_PATH is the path to the directory where assets generated during the installation process were stored from a previous KET installation.`,
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 2 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-
 			opts.srcPlanFilePath = args[0]
 			opts.srcGeneratedAssetsDir = args[1]
 			fp := install.FilePlanner{File: opts.srcPlanFilePath}
@@ -67,7 +63,6 @@ func NewCmdImport(out io.Writer) *cobra.Command {
 			return doImport(out, clusterName, opts)
 		},
 	}
-	cmd.Flags().StringVar(&opts.srcGeneratedAssetsDir, "generated-assets-dir", "generated", "path to the directory where assets generated during the installation process were stored")
 	cmd.Flags().StringVar(&opts.srcRunsDir, "runs-dir", "", "path to the directory where artifacts created during the installation process were stored")
 	return cmd
 }

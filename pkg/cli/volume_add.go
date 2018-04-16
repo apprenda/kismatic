@@ -33,13 +33,11 @@ func NewCmdVolumeAdd(out io.Writer) *cobra.Command {
 		Long: `Add storage volumes to the Kubernetes cluster.
 
 This function requires a target cluster that has storage nodes.`,
-		Args: func(cmd *cobra.Command, args []string) error {
+
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

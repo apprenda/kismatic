@@ -23,13 +23,10 @@ func NewCmdDiagnostic(out io.Writer) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "diagnose CLUSTER_NAME",
 		Short: "Collects diagnostics about the nodes in the cluster",
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

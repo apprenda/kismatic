@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 )
 
@@ -34,6 +35,9 @@ func generateDirsFromName(clusterName string) (string, string, string) {
 // CheckClusterExists does a simple check to see if the cluster folder+plan file exists in clusters
 // returns true even in the cases where an error exists if the scan hasn't completed.
 func CheckClusterExists(name string) (bool, error) {
+	if err := os.MkdirAll(assetsFolder, 0700); err != nil {
+		return true, err
+	}
 	// TODO: also check db
 	// MOVED TO "seamless" PR - requires store interface changes
 	files, err := ioutil.ReadDir(assetsFolder)

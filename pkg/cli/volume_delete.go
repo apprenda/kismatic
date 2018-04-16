@@ -27,13 +27,11 @@ func NewCmdVolumeDelete(in io.Reader, out io.Writer) *cobra.Command {
 		Long: `Delete storage volumes created by the 'volume add' command.
 		
 WARNING all data in the volume will be lost.`,
-		Args: func(cmd *cobra.Command, args []string) error {
+
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err

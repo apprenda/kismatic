@@ -78,13 +78,10 @@ Performing an offline upgrade could result in loss of critical data and reduced 
 availability. For this reason, this method should not be used for clusters that are housing
 production workloads.
 `,
-		Args: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err
@@ -112,13 +109,11 @@ be printed, and the upgrade will not proceed.
 If the node under upgrade is a Kubernetes node, it is cordoned and drained of workloads
 before any changes are applied.
 `,
-		Args: func(cmd *cobra.Command, args []string) error {
+
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
 				return cmd.Usage()
 			}
-			return nil
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
 			clusterName := args[0]
 			if exists, err := CheckClusterExists(clusterName); !exists {
 				return err
