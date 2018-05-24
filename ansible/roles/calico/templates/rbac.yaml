@@ -1,6 +1,5 @@
-# Calico Version v2.6.9
-# https://docs.projectcalico.org/v2.6/releases#v2.6.9
-
+# Calico Version v3.1.1
+# https://docs.projectcalico.org/v3.1/releases#v3.1.1
 ---
 
 kind: ClusterRole
@@ -14,7 +13,6 @@ rules:
       - nodes
     verbs:
       - get
-
 ---
 
 apiVersion: rbac.authorization.k8s.io/v1beta1

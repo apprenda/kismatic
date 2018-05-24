@@ -16,16 +16,16 @@ official_images:
     version: "{{ versions.kubernetes }}"
   calico_node:
     name: calico/node
-    version: v2.6.9
+    version: v3.1.1
   calico_ctl:
     name: calico/ctl
     version: v1.6.4
   calico_cni:
     name: calico/cni
-    version: v1.11.5
+    version: v3.1.1
   calico_kube_controller:
     name: calico/kube-controllers
-    version: v1.0.4
+    version: v3.1.1
   cni_bin:
     name: apprenda/cni-bin
     version: v0.6.0
