@@ -19,6 +19,13 @@ rules:
     verbs:
       - watch
       - list
+  - apiGroups:
+    - networking.k8s.io
+    resources:
+      - networkpolicies
+    verbs:
+      - watch
+      - list
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
@@ -70,8 +77,11 @@ spec:
       hostNetwork: true
       serviceAccountName: calico-kube-controllers
       tolerations:
-        - effect: NoSchedule
+        # Mark the pod as a critical add-on for rescheduling.
+        - key: CriticalAddonsOnly
           operator: Exists
+        - key: node-role.kubernetes.io/master
+          effect: NoSchedule
       volumes:
         - name: "ca"
           hostPath:
