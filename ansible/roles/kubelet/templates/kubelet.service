@@ -12,7 +12,7 @@ ExecStart=/usr/bin/kubelet \
   --{{ option[0] }}={{ option[1] }} \
 {% endif %}
 {% endfor %}
-Restart=on-failure
+Restart=always
 RestartSec=3
 WorkingDirectory=/root/
 

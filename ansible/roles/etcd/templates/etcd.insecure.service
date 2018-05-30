@@ -28,7 +28,7 @@ ExecStart={{ bin_dir }}/docker run \
   --initial-cluster-token={{ etcd_service_cluster_token }} \
   --initial-cluster={{ etcd_service_cluster_string }} \
   --initial-cluster-state=new
-Restart=on-failure
+Restart=always
 RestartSec=3
 
 ExecStop=-{{ bin_dir }}/docker stop {{ etcd_name }}
