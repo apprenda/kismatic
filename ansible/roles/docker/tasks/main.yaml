@@ -16,20 +16,22 @@
 
   # start and verify that Docker installed successfully and is running
   - name: start docker service
-    service:
+    systemd:
       name: docker
       state: started
       enabled: yes
+      daemon_reload: yes
     when: force_docker_restart is not defined or force_docker_restart|bool == false # only run if not going to restart right after
 
   # force_kubelet_restart=true to force restart
   # on install, service will be started with the task before this
   # on upgrade, this will be restarted only of the package was upgraded
   - name: restart docker service
-    service:
+    systemd:
       name: docker
       state: restarted
       enabled: yes
+      daemon_reload: yes
     when: >
       (config.changed) or
       (force_docker_restart is defined and force_docker_restart|bool == true) or
