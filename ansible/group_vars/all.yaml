@@ -116,7 +116,6 @@ kubernetes_certificates_group: root
 docker_certificates_owner: root
 docker_certificates_group: root
 # kubernetes cluster config
-kubernetes_master_apiserver_count: "{{ groups['master'] | length }}"
 local_kubernetes_master_ip: https://127.0.0.1:{{ kubernetes_master_secure_port }}
 kubernetes_master_ip: https://{{ kubernetes_load_balancer }}:{{ kubernetes_load_balancer_port }}
 kubernetes_schedulable: "{% if 'worker' in group_names %}true{% else %}false{% endif %}"
@@ -152,13 +151,13 @@ kubernetes_certificates:
 kubernetes_api_server_option_defaults:
   "advertise-address": "{{ internal_ipv4 }}"
   "allow-privileged": "true"
-  "apiserver-count": "{{ kubernetes_master_apiserver_count }}"
   "authorization-mode": "Node,RBAC{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %},ABAC{% endif %}" #TODO remove ABAC
   "authorization-policy-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_authorization_policy_path }}{% endif %}"
   "basic-auth-file": "{% if kubernetes_admin_password is defined and kubernetes_admin_password != '' %}{{ kubernetes_basic_auth_path }}{% endif %}"
   "bind-address": "0.0.0.0"
   "client-ca-file": "{{ kubernetes_certificates.ca }}"
   "enable-admission-plugins": "NamespaceLifecycle,LimitRanger,ServiceAccount,NodeRestriction,PersistentVolumeLabel,DefaultStorageClass,DefaultTolerationSeconds,MutatingAdmissionWebhook,ValidatingAdmissionWebhook,ResourceQuota"
+  "endpoint-reconciler-type": "lease"
   "requestheader-client-ca-file": "{{ kubernetes_certificates.proxy_client_ca }}"
   "proxy-client-cert-file": "{{ kubernetes_certificates.proxy_client }}"
   "proxy-client-key-file": "{{ kubernetes_certificates.proxy_client_key }}"

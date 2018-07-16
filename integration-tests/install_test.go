@@ -242,26 +242,25 @@ var _ = Describe("kismatic", func() {
 			})
 		})
 
-		// TODO add back when --endpoint-reconciler-type=lease
-		// Context("when deploying an HA cluster", func() {
-		// 	ItOnAWS("should still be a highly available cluster after removing a master node [slow]", func(aws infrastructureProvisioner) {
-		// 		WithInfrastructureAndDNS(NodeCount{1, 2, 1, 1, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
-		// 			// install cluster
-		// 			installOpts := installOptions{}
-		// 			err := installKismatic(nodes, installOpts, sshKey)
-		// 			Expect(err).ToNot(HaveOccurred())
+		Context("when deploying an HA cluster", func() {
+			ItOnAWS("should still be a highly available cluster after removing a master node [slow]", func(aws infrastructureProvisioner) {
+				WithInfrastructureAndDNS(NodeCount{1, 2, 1, 1, 0}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
+					// install cluster
+					installOpts := installOptions{}
+					err := installKismatic(nodes, installOpts, sshKey)
+					Expect(err).ToNot(HaveOccurred())
 
-		// 			By("Removing a Kubernetes master node")
-		// 			if err = aws.TerminateNode(nodes.master[0]); err != nil {
-		// 				FailIfError(err, "could not remove node")
-		// 			}
-		// 			By("Re-running Kuberang")
-		// 			if err = runViaSSH([]string{"sudo kuberang --kubeconfig /root/.kube/config"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
-		// 				FailIfError(err, "kuberang error")
-		// 			}
-		// 		})
-		// 	})
-		// })
+					By("Removing a Kubernetes master node")
+					if err = aws.TerminateNode(nodes.master[0]); err != nil {
+						FailIfError(err, "could not remove node")
+					}
+					By("Re-running Kuberang")
+					if err = runViaSSH([]string{"sudo kuberang --kubeconfig /root/.kube/config"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
+						FailIfError(err, "kuberang error")
+					}
+				})
+			})
+		})
 
 		// This spec will be used for testing non-destructive kismatic features on
 		// a new cluster.

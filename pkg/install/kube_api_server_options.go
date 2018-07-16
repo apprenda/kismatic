@@ -7,7 +7,6 @@ import (
 
 var kubeAPIServerProtectedOptions = []string{
 	"advertise-address",
-	"apiserver-count",
 	"client-ca-file",
 	"cloud-provider",
 	"cloud-config",

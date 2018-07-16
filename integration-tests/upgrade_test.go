@@ -95,19 +95,18 @@ var _ = Describe("Upgrade", func() {
 								return verifyNetworkPolicy(nodes.master[0], sshKey)
 							})
 
-							// TODO add back when --endpoint-reconciler-type=lease
 							// This test should always be last
-							// sub.It("should still be a highly available cluster after upgrade", func() error {
-							// 	By("Removing a Kubernetes master node")
-							// 	if err = aws.TerminateNode(nodes.master[0]); err != nil {
-							// 		return fmt.Errorf("could not remove node: %v", err)
-							// 	}
-							// 	By("Re-running Kuberang")
-							// 	if err = runViaSSH([]string{"sudo kuberang --kubeconfig /root/.kube/config"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
-							// 		return err
-							// 	}
-							// 	return nil
-							// })
+							sub.It("should still be a highly available cluster after upgrade", func() error {
+								By("Removing a Kubernetes master node")
+								if err = aws.TerminateNode(nodes.master[0]); err != nil {
+									return fmt.Errorf("could not remove node: %v", err)
+								}
+								By("Re-running Kuberang")
+								if err = runViaSSH([]string{"sudo kuberang --kubeconfig /root/.kube/config"}, []NodeDeets{nodes.master[1]}, sshKey, 5*time.Minute); err != nil {
+									return err
+								}
+								return nil
+							})
 						})
 					})
 				})
