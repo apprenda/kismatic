@@ -880,8 +880,8 @@
 |----------|-----------------|
 | **Kind** |  string |
 | **Required** |  Yes |
-| **Default** | `kubedns` | 
-| **Options** |  `kubedns`, `coredns`
+| **Default** | `coredns` | 
+| **Options** |  `coredns`, `kubedns`
 
 ###  add_ons.dns.options
 

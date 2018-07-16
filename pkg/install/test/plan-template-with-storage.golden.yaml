@@ -177,8 +177,8 @@ add_ons:
   dns:
     disable: false
 
-    # Options: 'kubedns','coredns'.
-    provider: kubedns
+    # Options: 'coredns','kubedns'.
+    provider: coredns
     options:
       replicas: 2
 

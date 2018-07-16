@@ -183,7 +183,7 @@ func setDefaults(p *Plan) {
 	}
 
 	if p.AddOns.DNS.Provider == "" {
-		p.AddOns.DNS.Provider = "kubedns"
+		p.AddOns.DNS.Provider = "coredns"
 	}
 	if p.AddOns.DNS.Options.Replicas <= 0 {
 		p.AddOns.DNS.Options.Replicas = 2
@@ -400,7 +400,7 @@ func buildPlanFromTemplateOptions(templateOpts PlanTemplateOptions) Plan {
 	p.AddOns.CNI.Options.Calico.FelixInputMTU = 1440
 	p.AddOns.CNI.Options.Calico.IPAutodetectionMethod = "first-found"
 	// DNS
-	p.AddOns.DNS.Provider = "kubedns"
+	p.AddOns.DNS.Provider = "coredns"
 	p.AddOns.DNS.Options.Replicas = 2
 	// Heapster
 	p.AddOns.HeapsterMonitoring = &HeapsterMonitoring{}
@@ -516,7 +516,7 @@ var commentMap = map[string][]string{
 	"add_ons.cni.options.calico.felix_input_mtu":         []string{"MTU for the tunnel device used if IPIP is enabled."},
 	"add_ons.cni.options.calico.ip_autodetection_method": []string{"Used to detect the IPv4 address of the host."},
 	"add_ons.cni.options.weave.password":                 []string{"Used by Weave for network traffic encryption.", "Should be reasonably strong, with at least 50 bits of entropy."},
-	"add_ons.dns.provider":                               []string{"Options: 'kubedns','coredns'."},
+	"add_ons.dns.provider":                               []string{"Options: 'coredns','kubedns'."},
 	"add_ons.heapster.options.influxdb.pvc_name":         []string{"Provide the name of the persistent volume claim that you will create", "after installation. If not specified, the data will be stored in", "ephemeral storage."},
 	"add_ons.heapster.options.heapster.service_type":     []string{"Specify kubernetes ServiceType. Defaults to 'ClusterIP'.", "Options: 'ClusterIP','NodePort','LoadBalancer','ExternalName'."},
 	"add_ons.heapster.options.heapster.sink":             []string{"Specify the sink to store heapster data. Defaults to an influxdb pod", "running on the cluster."},

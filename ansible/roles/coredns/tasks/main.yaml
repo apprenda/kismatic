@@ -1,4 +1,10 @@
 ---
+  - name: delete kube-dns service if exists
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} -n kube-system delete service kube-dns
+
+  - name: delete kube-dns deployment if exists
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} -n kube-system delete deployment kube-dns
+    
   - name: create /etc/kubernetes/specs directory
     file:
       path: "{{ kubernetes_spec_dir }}"

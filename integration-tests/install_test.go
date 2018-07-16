@@ -464,7 +464,7 @@ var _ = Describe("kismatic", func() {
 		// })
 
 		Context("when deploying a skunkworks cluster", func() {
-			Context("with CoreDNS as the DNS provider", func() {
+			Context("with KubeDNS as the DNS provider", func() {
 				ItOnAWS("should install successfully [slow]", func(aws infrastructureProvisioner) {
 					WithInfrastructure(NodeCount{3, 2, 5, 2, 2}, Ubuntu1604LTS, aws, func(nodes provisionedNodes, sshKey string) {
 						// reserve 3 of the workers for the add-node test
@@ -475,7 +475,7 @@ var _ = Describe("kismatic", func() {
 						installOpts := installOptions{
 							heapsterReplicas:    3,
 							heapsterInfluxdbPVC: "influxdb",
-							dnsProvider:         "coredns",
+							dnsProvider:         "kubedns",
 						}
 						err := installKismatic(nodes, installOpts, sshKey)
 						Expect(err).ToNot(HaveOccurred())

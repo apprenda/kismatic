@@ -452,8 +452,8 @@ type DNS struct {
 	Disable bool
 	// This property indicates the in-cluster DNS provider.
 	// +required
-	// +options=kubedns,coredns
-	// +default=kubedns
+	// +options=coredns,kubedns
+	// +default=coredns
 	Provider string
 	// The options that can be configured for the cluster DNS add-on
 	Options DNSOptions

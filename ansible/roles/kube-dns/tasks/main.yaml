@@ -1,4 +1,10 @@
 ---
+  - name: delete coredns service if exists
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} -n kube-system delete service coredns
+
+  - name: delete coredns deployment if exists
+    command: kubectl --kubeconfig {{ kubernetes_kubeconfig.kubectl }} -n kube-system delete deployment coredns
+
   - name: create /etc/kubernetes/specs directory
     file:
       path: "{{ kubernetes_spec_dir }}"

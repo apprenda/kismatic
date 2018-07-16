@@ -112,7 +112,7 @@ add_ons:
         password: ""
   dns:
     disable: false
-    provider: {{if .DNSProvider}}{{.DNSProvider}}{{else}}kubedns{{end}}
+    provider: {{if .DNSProvider}}{{.DNSProvider}}{{else}}coredns{{end}}
     options:
       replicas: 2
   heapster:
