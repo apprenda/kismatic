@@ -79,6 +79,7 @@ spec:
         prometheus.io/scrape: "true"
     spec:
       hostNetwork: true
+      priorityClassName: system-cluster-critical
       serviceAccountName: calico-node
       # Minimize downtime during a rolling upgrade or deletion; tell Kubernetes to do a "force
       # deletion": https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods.

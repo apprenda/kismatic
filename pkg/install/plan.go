@@ -522,15 +522,14 @@ var commentMap = map[string][]string{
 	"add_ons.heapster.options.heapster.sink":             []string{"Specify the sink to store heapster data. Defaults to an influxdb pod", "running on the cluster."},
 	"add_ons.metrics_server":                             []string{"Metrics Server is a cluster-wide aggregator of resource usage data."},
 	"add_ons.package_manager.provider":                   []string{"Options: 'helm'."},
-	"add_ons.rescheduler":                                []string{"The rescheduler ensures that critical add-ons remain running on the cluster."},
-	"etcd":                                               []string{"Etcd nodes are the ones that run the etcd distributed key-value database."},
-	"etcd.nodes":                                         []string{"Provide the hostname and IP of each node. If the node has an IP for internal", "traffic, provide it in the internalip field. Otherwise, that field can be", "left blank."},
-	"master":                                             []string{"Master nodes are the ones that run the Kubernetes control plane components."},
-	"worker":                                             []string{"Worker nodes are the ones that will run your workloads on the cluster."},
-	"ingress":                                            []string{"Ingress nodes will run the ingress controllers."},
-	"storage":                                            []string{"Storage nodes will be used to create a distributed storage cluster that can", "be consumed by your workloads."},
-	"master.load_balancer":                               []string{"If you have set up load balancing for master nodes, enter the IP or DNS and Port.", "Otherwise, use the IP address of a single master node and port '6443'."},
-	"additional_files":                                   []string{"A set of files or directories to copy from the local machine to any of the nodes in the cluster."},
+	"etcd":                 []string{"Etcd nodes are the ones that run the etcd distributed key-value database."},
+	"etcd.nodes":           []string{"Provide the hostname and IP of each node. If the node has an IP for internal", "traffic, provide it in the internalip field. Otherwise, that field can be", "left blank."},
+	"master":               []string{"Master nodes are the ones that run the Kubernetes control plane components."},
+	"worker":               []string{"Worker nodes are the ones that will run your workloads on the cluster."},
+	"ingress":              []string{"Ingress nodes will run the ingress controllers."},
+	"storage":              []string{"Storage nodes will be used to create a distributed storage cluster that can", "be consumed by your workloads."},
+	"master.load_balancer": []string{"If you have set up load balancing for master nodes, enter the IP or DNS and Port.", "Otherwise, use the IP address of a single master node and port '6443'."},
+	"additional_files":     []string{"A set of files or directories to copy from the local machine to any of the nodes in the cluster."},
 }
 
 type stack struct {

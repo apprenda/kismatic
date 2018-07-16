@@ -9,10 +9,12 @@ metadata:
   annotations:
     version: "{{ official_images.kube_apiserver.version }}"
     kismatic/version: "{{ kismatic_short_version }}"
+    scheduler.alpha.kubernetes.io/critical-pod: ''
   name: kube-scheduler
   namespace: kube-system
 spec:
   hostNetwork: true
+  priorityClassName: system-cluster-critical
   containers:
   - name: kube-scheduler
     image: {{ images.kube_scheduler }}

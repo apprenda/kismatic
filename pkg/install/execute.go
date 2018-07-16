@@ -841,8 +841,6 @@ func (ae *ansibleExecutor) buildClusterCatalog(p *Plan) (*ansible.ClusterCatalog
 		cc.Helm.Namespace = p.AddOns.PackageManager.Options.Helm.Namespace
 	}
 
-	cc.Rescheduler.Enabled = !p.AddOns.Rescheduler.Disable
-
 	// merge node labels
 	// cannot use inventory file because nodes share roles
 	// set it to a map[host][]key=value

@@ -371,10 +371,6 @@ type AddOns struct {
 	Dashboard Dashboard `yaml:"dashboard"`
 	// The PackageManager add-on configuration.
 	PackageManager PackageManager `yaml:"package_manager"`
-	// The Rescheduler add-on configuration.
-	// Because the Rescheduler does not have leader election and therefore can only run as a single instance in a cluster, it will be deployed as a static pod on the first master.
-	// More information about the Rescheduler can be found here: https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
-	Rescheduler Rescheduler `yaml:"rescheduler"`
 }
 
 // Features configuration
@@ -568,14 +564,6 @@ type HelmOptions struct {
 	// Namespace to deploy tiller
 	// +default=kube-system
 	Namespace string
-}
-
-// Rescheduler add-on configuration
-type Rescheduler struct {
-	// Whether the pod rescheduler add-on should be disabled.
-	// When set to true, the rescheduler will not be installed on the cluster.
-	// +default=false
-	Disable bool
 }
 
 type DeprecatedPackageManager struct {

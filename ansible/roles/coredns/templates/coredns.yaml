@@ -68,6 +68,8 @@ metadata:
     k8s-app: coredns
     kubernetes.io/cluster-service: "true"
     kubernetes.io/name: "CoreDNS"
+  annotations:
+    kismatic/version: "{{ kismatic_short_version }}"
 spec:
   selector:
     matchLabels:
@@ -85,10 +87,12 @@ spec:
       annotations:
         prometheus.io/port: "9153"
         prometheus.io/scrape: "true"
+        scheduler.alpha.kubernetes.io/critical-pod: ''
       labels:
         k8s-app: coredns
     spec:
       serviceAccountName: coredns
+      priorityClassName: system-cluster-critical
       tolerations:
         - key: "CriticalAddonsOnly"
           operator: "Exists"

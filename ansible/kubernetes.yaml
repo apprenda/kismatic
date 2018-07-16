@@ -39,8 +39,6 @@
     when: cni.enabled|bool == true and cni.provider == "weave"
   - include: _contiv.yaml
     when: cni.enabled|bool == true and cni.provider == "contiv"
-  - include: _rescheduler.yaml
-    when: rescheduler.enabled|bool == true
   - include: _cluster-dns.yaml
     when: dns.enabled|bool == true
   - include: _heapster.yaml

@@ -5,6 +5,8 @@ metadata:
   namespace: kube-system
   labels:
     name: ingress
+  annotations:
+    kismatic/version: "{{ kismatic_short_version }}"
 spec:
   selector:
     matchLabels:
@@ -14,7 +16,7 @@ spec:
       labels:
         name: ingress
       annotations:
-        kismatic/version: "{{ kismatic_short_version }}"
+        scheduler.alpha.kubernetes.io/critical-pod: ''
         prometheus.io/port: "10254"
         prometheus.io/scrape: "true"
     spec:
@@ -59,6 +61,7 @@ spec:
         - --profiling=false
         - --annotations-prefix=ingress.kubernetes.io
       serviceAccountName: nginx-ingress-serviceaccount
+      priorityClassName: system-cluster-critical
 ---
 apiVersion: v1
 data:

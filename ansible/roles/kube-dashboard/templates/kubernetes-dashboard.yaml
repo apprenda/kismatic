@@ -138,6 +138,7 @@ spec:
       labels:
         k8s-app: kubernetes-dashboard
       annotations:
+        kismatic/version: "{{ kismatic_short_version }}"
         scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
       affinity:
@@ -187,6 +188,7 @@ spec:
       - name: tmp-volume
         emptyDir: {}
       serviceAccountName: kubernetes-dashboard
+      priorityClassName: system-cluster-critical
       tolerations:
       - key: "CriticalAddonsOnly"
         operator: "Exists"

@@ -40,8 +40,11 @@ spec:
       labels:
         task: monitoring
         k8s-app: heapster
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
       serviceAccountName: heapster
+      priorityClassName: system-cluster-critical
       containers:
       - name: heapster
         image: "{{ images.heapster }}"

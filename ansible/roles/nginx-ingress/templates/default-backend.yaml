@@ -6,6 +6,8 @@ metadata:
   namespace: kube-system
   labels:
     app: default-http-backend
+  annotations:
+    kismatic/version: "{{ kismatic_short_version }}"
 spec:
   selector:
     matchLabels:
@@ -15,8 +17,9 @@ spec:
       labels:
         app: default-http-backend
       annotations:
-        kismatic/version: "{{ kismatic_short_version }}"
+        scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
+      priorityClassName: system-cluster-critical
       nodeSelector:
         kismatic/ingress: "true"
       terminationGracePeriodSeconds: 60

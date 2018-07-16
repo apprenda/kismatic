@@ -50,7 +50,6 @@ metadata:
     k8s-app: calico-kube-controllers
   annotations:
     kismatic/version: "{{ kismatic_short_version }}"
-    scheduler.alpha.kubernetes.io/critical-pod: ''
 spec:
   selector:
     matchLabels:
@@ -66,10 +65,13 @@ spec:
       labels:
         tier: control-plane
         k8s-app: calico-kube-controllers
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
       # The controllers must run in the host network namespace so that
       # it isn't governed by policy that would prevent it from working.
       hostNetwork: true
+      priorityClassName: system-cluster-critical
       serviceAccountName: calico-kube-controllers
       tolerations:
         - effect: NoSchedule

@@ -110,8 +110,6 @@
     * [options](#add_onspackage_manageroptions)
       * [helm](#add_onspackage_manageroptionshelm)
         * [namespace](#add_onspackage_manageroptionshelmnamespace)
-  * [rescheduler](#add_onsrescheduler)
-    * [disable](#add_onsreschedulerdisable)
 * [features _(deprecated)_](#features-deprecated)
   * [package_manager _(deprecated)_](#featurespackage_manager-deprecated)
     * [enabled _(deprecated)_](#featurespackage_managerenabled-deprecated)
@@ -1079,20 +1077,6 @@
 | **Kind** |  string |
 | **Required** |  No |
 | **Default** | `kube-system` | 
-
-###  add_ons.rescheduler
-
- The Rescheduler add-on configuration. Because the Rescheduler does not have leader election and therefore can only run as a single instance in a cluster, it will be deployed as a static pod on the first master. More information about the Rescheduler can be found here: https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/ 
-
-###  add_ons.rescheduler.disable
-
- Whether the pod rescheduler add-on should be disabled. When set to true, the rescheduler will not be installed on the cluster. 
-
-| | |
-|----------|-----------------|
-| **Kind** |  bool |
-| **Required** |  No |
-| **Default** | `false` | 
 
 ##  features _(deprecated)_
 

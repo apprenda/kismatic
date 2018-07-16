@@ -209,3 +209,4 @@ spec:
             cpu: 10m
       dnsPolicy: Default  # Don't use cluster DNS.
       serviceAccountName: kube-dns
+      priorityClassName: system-cluster-critical

@@ -100,7 +100,6 @@ kubernetes_kubeconfig:
   controller_manager: "{{kubernetes_install_dir}}/controller-manager.conf"
   scheduler: "{{kubernetes_install_dir}}/scheduler.conf"
   kubelet: "{{kubernetes_install_dir}}/kubelet.conf"
-  rescheduler: "{{kubernetes_install_dir}}/rescheduler.conf"
 
 # file modes
 kubernetes_executable_mode: "0775"
@@ -284,7 +283,6 @@ official_versioned_images:
   helm: "{{official_images.helm.name}}:{{official_images.helm.version}}"
   heapster: "{{official_images.heapster.name}}:{{official_images.heapster.version}}"
   influxdb: "{{official_images.influxdb.name}}:{{official_images.influxdb.version}}"
-  rescheduler: "{{official_images.rescheduler.name}}:{{official_images.rescheduler.version}}"
   metrics_server: "{{official_images.metrics_server.name}}:{{official_images.metrics_server.version}}"
 
 images:
@@ -316,7 +314,6 @@ images:
   helm: "{{ official_versioned_images.helm | final_image(docker_registry_full_url, load_private_images) }}"
   heapster: "{{ official_versioned_images.heapster | final_image(docker_registry_full_url, load_private_images) }}"
   influxdb: "{{ official_versioned_images.influxdb | final_image(docker_registry_full_url, load_private_images) }}"
-  rescheduler: "{{ official_versioned_images.rescheduler | final_image(docker_registry_full_url, load_private_images) }}"
   metrics_server: "{{ official_versioned_images.metrics_server | final_image(docker_registry_full_url, load_private_images) }}"
 
 #===============================================================================

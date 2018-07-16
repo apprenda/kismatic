@@ -13,7 +13,6 @@ the `add-ons` section. KET supports the following add-ons:
 - [Heapster](#heapster)
 - [Dashboard](#dashboard)
 - [Package Manager](#package-manager)
-- [Rescheduler](#rescheduler)
 
 ## CNI
 The Container Networking Interface (CNI) enables the use of different
@@ -96,12 +95,3 @@ Plan file options:
 | `add_ons.package_manager.disable` | Set to true if the package manager should not be deployed during installation |
 | `add_ons.package_manager.provider` | The package manager that should be deployed. Options: `helm` |
 | `add_ons.package_manager.options.helm.namespace` | Configure the kubernetes `namespace` to deploy `tiller` to |
-
-## Rescheduler
-The [Critical Add-Ons Rescheduler](https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/) is a pod that runs in the cluster and ensures that ciritcal add-ons are always scheduled.
-
-Plan file options:
-
-| Field | Description | 
-|-------|-------------|
-| `add_ons.rescheduler.disable` | Set to true to skip the deployment of the Rescheduler |

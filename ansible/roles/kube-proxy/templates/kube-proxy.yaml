@@ -29,7 +29,6 @@ metadata:
     k8s-app: kube-proxy
   annotations:
     version: "{{ official_images.kube_apiserver.version }}"
-    kismatic/version: "{{ kismatic_short_version }}"
   name: kube-proxy
   namespace: kube-system
 spec:
@@ -111,3 +110,4 @@ spec:
         hostPath:
           path: /lib/modules
       serviceAccountName: kube-proxy
+      priorityClassName: system-cluster-critical

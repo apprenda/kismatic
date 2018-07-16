@@ -41,8 +41,6 @@
     when: cni.enabled|bool == true and cni.provider == "weave"
   - include: _weave-validate.yaml upgrading=true
     when: cni.enabled|bool == true and cni.provider == "weave"
-  - include: _rescheduler.yaml play_name="Upgrade Kubernetes Pod Rescheduler" upgrading=true
-    when: rescheduler.enabled|bool == true
     
   - include: _kube-uncordon-node.yaml
 

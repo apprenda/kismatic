@@ -113,6 +113,8 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: metrics-server
+  annotations:
+    kismatic/version: "{{ kismatic_short_version }}"
 spec:
   selector:
     matchLabels:
@@ -129,6 +131,7 @@ spec:
       - key: "CriticalAddonsOnly"
         operator: "Exists"
       serviceAccountName: metrics-server
+      priorityClassName: system-cluster-critical
       containers:
       - name: metrics-server
         image: "{{ images.metrics_server }}"
