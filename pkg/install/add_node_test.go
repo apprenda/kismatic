@@ -63,7 +63,7 @@ func TestAddNodeCertMissingCAExists(t *testing.T) {
 			Nodes: []Node{},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -106,7 +106,7 @@ func TestAddNodePlanIsUpdated(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -163,7 +163,7 @@ func TestAddIngressPlanIsUpdated(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -220,7 +220,7 @@ func TestAddStoragePlanIsUpdated(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -293,7 +293,7 @@ func TestAddAllRolesPlanIsUpdated(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -368,7 +368,7 @@ func TestAddNodePlanNotUpdatedAfterFailure(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -413,7 +413,7 @@ func TestAddNodeRestartServicesEnabled(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 			},
@@ -471,7 +471,7 @@ func TestAddNodeHostsFilesDNSEnabled(t *testing.T) {
 			},
 		},
 		Cluster: Cluster{
-			Version: "v1.10.5",
+			Version: "v1.11.0",
 			Networking: NetworkConfig{
 				ServiceCIDRBlock: "10.0.0.0/16",
 				UpdateHostsFiles: true,

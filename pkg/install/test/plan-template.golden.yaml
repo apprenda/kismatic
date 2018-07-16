@@ -1,8 +1,8 @@
 cluster:
   name: kubernetes
 
-  # Kubernetes cluster version (supported minor version "v1.10.x").
-  version: v1.10.5
+  # Kubernetes cluster version (supported minor version "v1.11.x").
+  version: v1.11.0
 
   # Set to true if the nodes have the required packages installed.
   disable_package_installation: false

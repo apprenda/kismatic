@@ -13,11 +13,11 @@ import (
 
 var (
 	httpTimeout                  = 5 * time.Second
-	kubeReleaseRegex             = regexp.MustCompile(`^v1\.10\.(0|[1-9][0-9]*)$`)
-	kubernetesReleaseURL         = "https://storage.googleapis.com/kubernetes-release/release/stable-1.10.txt"
-	kubernetesVersionString      = "v1.10.5"
-	kubernetesMinorVersionString = "v1.10.x"
-	kubernetesVersion            = semver.Version{Major: 1, Minor: 10, Patch: 5} // build the struct directly to not get an error
+	kubeReleaseRegex             = regexp.MustCompile(`^v1\.11\.(0|[1-9][0-9]*)$`)
+	kubernetesReleaseURL         = "https://storage.googleapis.com/kubernetes-release/release/stable-1.11.txt"
+	kubernetesVersionString      = "v1.11.0"
+	kubernetesMinorVersionString = "v1.11.x"
+	kubernetesVersion            = semver.Version{Major: 1, Minor: 11, Patch: 0} // build the struct directly to not get an error
 )
 
 func parseVersion(versionString string) (semver.Version, error) {
