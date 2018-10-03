@@ -42,7 +42,7 @@ type PlanAWS struct {
 	KubeletOptions               map[string]string
 }
 
-// Certain fields are still present for backwards compatabilty when testing upgrades
+// Certain fields are still present for backwards compatibility when testing upgrades
 const planAWSOverlay = `cluster:
   name: kubernetes
   disable_package_installation: {{.DisablePackageInstallation}}

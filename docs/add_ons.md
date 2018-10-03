@@ -98,7 +98,7 @@ Plan file options:
 | `add_ons.package_manager.options.helm.namespace` | Configure the kubernetes `namespace` to deploy `tiller` to |
 
 ## Rescheduler
-The [Critical Add-Ons Rescheduler](https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/) is a pod that runs in the cluster and ensures that ciritcal add-ons are always scheduled.
+The [Critical Add-Ons Rescheduler](https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/) is a pod that runs in the cluster and ensures that critical add-ons are always scheduled.
 
 Plan file options:
 

@@ -32,7 +32,7 @@ var _ = Describe("kismatic", func() {
 	Describe("Calling 'install plan'", func() {
 		Context("and just hitting enter", func() {
 			It("should result in the output of a well formed default plan file", func() {
-				By("Outputing a file")
+				By("Outputting a file")
 				c := exec.Command("./kismatic", "install", "plan")
 				helpbytes, helperr := c.Output()
 				Expect(helperr).To(BeNil())

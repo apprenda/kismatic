@@ -5,7 +5,7 @@ Opens the kubernetes dashboard URL of the cluster
 ### Synopsis
 
 
-  This command is a convenience command to open the dashbord.
+  This command is a convenience command to open the dashboard.
   - Retrieves the token of the secret for ServiceAccount 'kubernetes-dashboard-admin':
   -----------------------------------------------------------------------------------------------------------------------------------------------------
   export SECRET="$(./kubectl get sa kubernetes-dashboard-admin -o 'jsonpath={.secrets[0].name}' -n kube-system --kubeconfig generated/kubeconfig)"
