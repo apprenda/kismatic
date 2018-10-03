@@ -14,9 +14,9 @@ This node will contain:
 * `kubelet` and be part of the kubernetes cluster, by default the **kubelet will be unschedulable** on the ingress nodes
 * The certificates required to communicate with the kubernetes cluster
 * a [default backend](https://github.com/kubernetes/contrib/tree/master/404-server) required for the ingress controller
-  * The backend will run as a [Deamon Set](http://kubernetes.io/docs/admin/daemons/) on the `ingress` nodes, with a kubernetes service fronting it
+  * The backend will run as a [Daemon Set](http://kubernetes.io/docs/admin/daemons/) on the `ingress` nodes, with a kubernetes service fronting it
 * an [Nginx Ingress Controller](https://github.com/kubernetes/contrib/tree/master/ingress/controllers/nginx) that will listen on ports **80** and **443**
-  * The controller will run as a [Deamon Set](http://kubernetes.io/docs/admin/daemons/) on the `ingress` nodes with `hostPort: 80` and `hostPort: 443`
+  * The controller will run as a [Daemon Set](http://kubernetes.io/docs/admin/daemons/) on the `ingress` nodes with `hostPort: 80` and `hostPort: 443`
   * The controller will run with `hostNetwork: true`, see [issue 23920](https://github.com/kubernetes/kubernetes/issues/23920)
   * The controller has a `/healthz` endpoint that will return a `200` status when its alive
   * The controller will respond with a `404` when a requested endpoint is not mapped with a ingress resource

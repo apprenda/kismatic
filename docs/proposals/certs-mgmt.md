@@ -11,7 +11,7 @@ as validation of deployed certificates and certificate redeployment.
 * As an operator, I want to redeploy certificates with a new CA without having to reinstall my cluster
 
 ## Certificate Validity Check
-A command that can be run against an existing cluster to validate the certificates that are deployed on the cluster. Certificates that are withing the warning window will be flagged. Certificates that have expired will be flagged.
+A command that can be run against an existing cluster to validate the certificates that are deployed on the cluster. Certificates that are within the warning window will be flagged. Certificates that have expired will be flagged.
 
 ```
 kismatic certificates validate [options]

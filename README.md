@@ -52,7 +52,7 @@ KET operational tools include:
 
 [Upgrading Your Cluster](docs/upgrade.md) -- Instructions on using KET to upgrade your Kubernetes cluster.
 
-[Plan File Reference](docs/plan-file-reference.md) -- Reference documentaion for the KET plan file.
+[Plan File Reference](docs/plan-file-reference.md) -- Reference documentation for the KET plan file.
 
 [Cluster Examples](docs/intent.md) -- Examples for various ways you can use KET in your organization.
 

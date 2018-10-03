@@ -37,5 +37,5 @@ Validity Period:
 * Kismatic will print a warning if the chosen validity period is longer than the recommended 825 days (https://cabforum.org/2017/03/17/ballot-193-825-day-certificate-lifetimes/)
 
 # Other considerations
-* Ensure that our certificate validation code allows for custom SANs and organizations. I belive this
+* Ensure that our certificate validation code allows for custom SANs and organizations. I believe this
 is already the case, but we should verify.

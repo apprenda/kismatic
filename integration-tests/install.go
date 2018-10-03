@@ -218,7 +218,7 @@ func installKismaticWithABadNode() {
 	w.Flush()
 	f.Close()
 
-	By("Validing our plan")
+	By("Validating our plan")
 	cmd := exec.Command("./kismatic", "install", "validate", "-f", f.Name())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

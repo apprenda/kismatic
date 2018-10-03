@@ -2,7 +2,7 @@
 
 To get started with Kubernetes quickly, you can use Kismatic to stand up a small cluster in AWS or virtualized on a personal computer.
 
-But setting up a proper cluster takes a little forethought. Depending on your intent, you may need to engage multiple teams within your organization to correctly provision the required infrastructure. Planning will also help you identify provisioning tasks and know what infromation will be needed to proceed with installation.
+But setting up a proper cluster takes a little forethought. Depending on your intent, you may need to engage multiple teams within your organization to correctly provision the required infrastructure. Planning will also help you identify provisioning tasks and know what information will be needed to proceed with installation.
 
 Planning focuses mainly on three areas of concern:
 
@@ -36,7 +36,7 @@ In a Kismatic installation of Kubernetes, nodes are specialized to one of three 
 * worker
   * These nodes are where your Pods are instantiated.
 
-Nodes within a cluster should have latencies between them of 10ms or lower to prevent instability. If you would like to host workloads at multiple data centers, or in a hybrid cloud scenario, you should expect to set up at least one cluster in each geographically seperated region.
+Nodes within a cluster should have latencies between them of 10ms or lower to prevent instability. If you would like to host workloads at multiple data centers, or in a hybrid cloud scenario, you should expect to set up at least one cluster in each geographically separated region.
 
 ### Hardware & Operating System
 
@@ -277,7 +277,7 @@ Network policies for the local network on which nodes reside will need to be set
     <td>tcp:8888</td>
   </tr>
   <tr>
-    <td>To allow acces to the API server</td>
+    <td>To allow access to the API server</td>
     <td>worker</td>
     <td>worker nodes<br/>
         master nodes<br/>

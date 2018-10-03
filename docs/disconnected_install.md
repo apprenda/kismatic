@@ -22,7 +22,7 @@ Being disconnected means that you will not use public repositories or registries
 
 * Package repositories that are not accessible should be disabled or removed.
 Otherwise, the package manager will attempt to download metadata from these
-inaccessible repositories, and the installation wil fail.
+inaccessible repositories, and the installation will fail.
 
 * Local docker registry that is accessible from all nodes. 
 This registry must be seeded with the images required for the installation. See [Seeding a local container registry](#seeding-a-local-container-registry).
