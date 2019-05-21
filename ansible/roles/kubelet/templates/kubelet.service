@@ -9,9 +9,11 @@ ExecStart=/usr/bin/kubelet \
 {% set combined_options = kubelet_defaults | combine(kubelet_overrides) | combine(kubelet_node_overrides[inventory_hostname]) -%}
 {% for option in combined_options | dictsort %}
 {% if option[1] is defined and option[1] | string | length > 0 %}
-  --{{ option[0] }}={{ option[1] }} \
+  --{{ option[0] }}={{ option[1] }} {% if not loop.last %}\
+{% endif %}
 {% endif %}
 {% endfor %}
+
 Restart=on-failure
 RestartSec=3
 RestartForceExitStatus=SIGPIPE

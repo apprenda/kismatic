@@ -38,13 +38,13 @@ ifeq ($(origin CREATED_BY), undefined)
 endif
 
 # Versions of external dependencies
-GLIDE_VERSION = v0.13.1
+GLIDE_VERSION = v0.13.2
 ANSIBLE_VERSION = 2.3.0.0
 PROVISIONER_VERSION = v1.13.0
 KUBERANG_VERSION = v1.3.0
 GO_VERSION = 1.10.3
-KUBECTL_VERSION = v1.10.5
-HELM_VERSION = v2.9.1
+KUBECTL_VERSION = v1.14.2
+HELM_VERSION = v2.14.0
 
 install: 
 	@echo Building kismatic in container
