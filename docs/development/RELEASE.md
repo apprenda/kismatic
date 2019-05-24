@@ -11,8 +11,8 @@ All components are developed and versioned independently, however a released ver
 Once the master branch is ready for a release, it must be tagged and the tag pushed
 to the remote repository.
 ```
-git tag v1.1.0
-git push origin v1.1.0
+git tag v1.13.0-playtika
+git push origin v1.13.0-playtika
 ```
 
 Pushing the tag will trigger a new build on the CI/CD system, which will have the
