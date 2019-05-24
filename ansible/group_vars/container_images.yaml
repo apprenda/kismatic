@@ -1,7 +1,7 @@
 official_images:
   etcd:
     name: quay.io/coreos/etcd
-    version: v3.1.13
+    version: v3.3.10
   kube_proxy:
     name: gcr.io/google-containers/kube-proxy-amd64
     version: "{{ versions.kubernetes }}"

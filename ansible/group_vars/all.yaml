@@ -3,7 +3,7 @@
 kubernetes_yum_version: "{{ versions.kubernetes_yum }}"
 kubernetes_deb_version: "{{ versions.kubernetes_deb }}"
 docker_ce_yum_version: 17.03.2.ce-1.el7.centos
-docker_ce_apt_version: 17.03.2~ce-0~ubuntu-xenial
+docker_ce_apt_version: 5:18.09.6~3-0~ubuntu-xenial
 glusterfs_server_version_rhel: "3.8.15-2.el7"
 glusterfs_server_version_ubuntu: "3.8.15-ubuntu1~xenial1"
 
@@ -163,7 +163,6 @@ kubernetes_api_server_option_defaults:
   "proxy-client-cert-file": "{{ kubernetes_certificates.proxy_client }}"
   "proxy-client-key-file": "{{ kubernetes_certificates.proxy_client_key }}"
   "profiling": "false"
-  "repair-malformed-updates" : "false"
   "requestheader-allowed-names": ""
   "requestheader-extra-headers-prefix": "X-Remote-Extra-"
   "requestheader-group-headers": "X-Remote-Group"
@@ -221,7 +220,6 @@ kubelet_defaults:
   "authentication-token-webhook": "true"
   "authorization-mode": "Webhook"
   "event-qps": "0"
-  "cadvisor-port" : "0"
   "client-ca-file": "{{ kubernetes_certificates.ca }}"
   "cloud-provider": "{{ cloud_provider }}"
   "cloud-config": "{{ cloud_config }}"
