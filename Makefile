@@ -1,10 +1,11 @@
 # Setup some useful vars
 PKG = github.com/apprenda/kismatic
 BUILD_OUTPUT = out-$(GOOS)
+PLAYTIKA_TAG = "-playtika"
 
 # Set the build version
 ifeq ($(origin VERSION), undefined)
-	VERSION := $(shell git describe --tags --always --dirty)
+	VERSION := $(shell git describe --tags --always --dirty | sed "s/$(PLAYTIKA_TAG)//g")
 endif
 # Set the build branch
 ifeq ($(origin BRANCH), undefined)
