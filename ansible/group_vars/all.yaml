@@ -251,7 +251,7 @@ etcd_networking_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ hos
 etcd_k8s_cluster_ip_list: "{% for host in groups['etcd'] %}https://{{ host }}:{{ etcd_k8s_client_port }}{% if not loop.last %},{% endif %}{% endfor %}"
 
 #===============================================================================
-load_private_images: "{{ configure_docker_with_private_registry is defined and configure_docker_with_private_registry|bool == true and disconnected_installation is defined and disconnected_installation|bool == true }}"
+load_private_images: "{{ ( configure_docker_with_private_registry is defined and configure_docker_with_private_registry|bool == true ) or (disconnected_installation is defined and disconnected_installation|bool == true) }}"
 
 official_versioned_images:
   etcd: "{{official_images.etcd.name}}:{{official_images.etcd.version}}"

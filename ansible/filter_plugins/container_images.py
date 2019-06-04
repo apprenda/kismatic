@@ -7,7 +7,13 @@ def final_image(upstream_image, registry_url = '', private = False):
         return upstream_image
     if registry_url == '':
         raise errors.AnsibleFilterError('Must pass registry url when using private registry.')
-    return registry_url + "/" + upstream_image
+
+    # Playtika workaround for Artifactory as docker registry
+    registry = ['quay.io','gcr.io']
+    if upstream_image.split('/', 1)[0]  not in registry:
+      return registry_url + "/" + upstream_image
+    else:
+      return registry_url + "/" + upstream_image.split('/', 1)[-1]
 
 class FilterModule(object):
     filter_map = {
