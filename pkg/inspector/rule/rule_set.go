@@ -277,7 +277,7 @@ const defaultRuleSet = `---
   - ["etcd", "master", "worker", "ingress", "storage"]
   - ["ubuntu"]
   packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
+  packageVersion: 5:18.09.6~3-0~ubuntu-xenial
 - kind: PackageDependency
   when: 
   - ["master", "worker", "ingress", "storage"]
@@ -311,7 +311,7 @@ const defaultRuleSet = `---
   - ["etcd", "master", "worker", "ingress", "storage"]
   - ["ubuntu"]
   packageName: docker-ce
-  acceptablePackageVersion: 17.03.2~ce-0~ubuntu-xenial
+  acceptablePackageVersion: 5:18.09.6~3-0~ubuntu-xenial
 - kind: PackageNotInstalled
   when: 
   - ["etcd", "master", "worker", "ingress", "storage"]
@@ -471,7 +471,7 @@ const upgradeRuleSet = `---
   - ["etcd", "master", "worker", "ingress", "storage"]
   - ["ubuntu"]
   packageName: docker-ce
-  packageVersion: 17.03.2~ce-0~ubuntu-xenial
+  packageVersion: 5:18.09.6~3-0~ubuntu-xenial
 - kind: PackageDependency
   when: 
   - ["master", "worker", "ingress", "storage"]

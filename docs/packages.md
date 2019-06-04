@@ -89,8 +89,8 @@ sudo apt-get update
 
 | Component | Install Command |
 | ---- | ---- |
-| Etcd Node | `sudo apt-get install -y docker-ce=17.03.2~ce-0~ubuntu-xenial` |
-| Kubernetes Node | `sudo apt-get install -y docker-ce=17.03.2~ce-0~ubuntu-xenial nfs-common kubelet=1.10.5-00 kubectl=1.10.5-00` |
+| Etcd Node | `sudo apt-get install -y docker-ce=5:18.09.6~3-0~ubuntu-xenial` |
+| Kubernetes Node | `sudo apt-get install -y docker-ce=5:18.09.6~3-0~ubuntu-xenial nfs-common kubelet=1.10.5-00 kubectl=1.10.5-00` |
 
 #### Stop the kubelet
 When the Ubuntu kubelet package is installed the service will be started and will bind to ports. This will cause some preflight port checks to fail.
