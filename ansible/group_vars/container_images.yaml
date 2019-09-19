@@ -55,7 +55,7 @@ official_images:
     version: latest
   pause:
     name: gcr.io/google-containers/pause-amd64
-    version: 3.0
+    version: 3.1
   kubedns:
     name: gcr.io/google-containers/k8s-dns-kube-dns-amd64
     version: 1.14.10
