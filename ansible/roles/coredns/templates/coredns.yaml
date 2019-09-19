@@ -50,13 +50,13 @@ data:
         errors
         log
         health
-        endpoint_pod_names
         kubernetes cluster.local {{ kubernetes_services_cidr }} {{ kubernetes_pods_cidr }} {
           pods insecure
           upstream /etc/resolv.conf
+          endpoint_pod_names
         }
         prometheus :9153
-        proxy . /etc/resolv.conf
+        forward . /etc/resolv.conf
         cache 30
     }
 ---
