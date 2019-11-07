@@ -49,7 +49,10 @@ data:
     .:53 {
         errors
         log
-        health
+        health :8080 {
+          lameduck 30s
+        }
+        ready :8081
         kubernetes cluster.local {{ kubernetes_services_cidr }} {{ kubernetes_pods_cidr }} {
           pods insecure
           upstream /etc/resolv.conf
@@ -138,6 +141,14 @@ spec:
           timeoutSeconds: 5
           successThreshold: 1
           failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8081
+            scheme: HTTP
+          periodSeconds: 20
+          successThreshold: 1
+          timeoutSeconds: 5
       dnsPolicy: Default
       volumes:
         - name: config-volume
